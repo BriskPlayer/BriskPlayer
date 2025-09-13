@@ -1,5 +1,5 @@
 project('briskplayer', ['c', 'cpp'],
-    version : '2.20.0',
+    version : '3.0.0',
     license : 'GPL-2.0-or-later',
     default_options : ['warning_level=3', 'c_std=c11', 'cpp_std=c++11'])
 

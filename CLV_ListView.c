@@ -1039,9 +1039,9 @@ void CLV_Handle_WM_PAINT(CIs_ListViewData* pListData)
 								if (enDrawColour == cdcNormal)
 									SetTextColor(drawcontext.m_dcDraw, glb_pSkin->mpl_ListTextColour);
 								else if (enDrawColour == cdcLowlighted)
-									SetTextColor(drawcontext.m_dcDraw, glb_pSkin->mpl_ListTextColour_HotItem); // Use skin color instead of hardcoded black
+									SetTextColor(drawcontext.m_dcDraw, RGB(0, 0, 0));
 								else
-									SetTextColor(drawcontext.m_dcDraw, glb_pSkin->mpl_ListTextColour_Selected); // Use skin color instead of hardcoded white
+									SetTextColor(drawcontext.m_dcDraw, RGB(255, 255, 255));
 							}
 							
 							else
