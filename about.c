@@ -53,7 +53,7 @@ INT_PTR CALLBACK about_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 		case WM_INITDIALOG:
 		{
 			char cTitle[100];
-			sprintf(cTitle, "About CoolPlayer %d", CP_BUILD_NUMBER);
+			sprintf(cTitle, "About BriskPlayer %d", CP_BUILD_NUMBER);
 			SetWindowText(hwndDlg, cTitle);
 
 			// Setup up jumping head timer
