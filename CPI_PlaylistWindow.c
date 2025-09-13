@@ -25,7 +25,7 @@
 #include "globals.h"
 #include "WindowsOS.h"
 #include "CPI_Player.h"
-#include "CPI_ID3.h"
+#include "CPI_TagLib.h"
 #include "CPI_Playlist.h"
 #include "CPI_PlaylistItem.h"
 #include "CPI_PlaylistWindow.h"

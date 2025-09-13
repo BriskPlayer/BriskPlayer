@@ -24,7 +24,6 @@
 #include "globals.h"
 #include "CPI_Stream.h"
 #include "CPI_Player_CoDec.h"
-#include "CPI_ID3.h"
 
 #include "ogg/ogg.h"
 #include "vorbis/codec.h"

@@ -23,7 +23,6 @@
 #include "globals.h"
 #include "CPI_Stream.h"
 #include "CPI_Player_CoDec.h"
-#include "CPI_ID3.h"
 
 #define FLAC__NO_DLL
 #include "FLAC/stream_decoder.h"

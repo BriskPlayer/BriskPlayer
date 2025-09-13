@@ -1,7 +1,7 @@
-project('briskplayer', 'c',
+project('briskplayer', ['c', 'cpp'],
     version : '2.20.0',
     license : 'GPL-2.0-or-later',
-    default_options : ['warning_level=3', 'c_std=c11'])
+    default_options : ['warning_level=3', 'c_std=c11', 'cpp_std=c++11'])
 
 cc = meson.get_compiler('c')
 
@@ -11,6 +11,7 @@ oggdep = dependency('ogg', static : true)
 maddep = dependency('mad', static : true)
 flacdep = dependency('flac', static : true)
 zlibdep = dependency('zlib', static : true)
+taglibdep = dependency('taglib_c', static : true)
 faudiodep = dependency('FAudio', required : false, static : true)
 winmm = cc.find_library('winmm')
 comctl32 = cc.find_library('comctl32')
@@ -36,7 +37,7 @@ brisksrc = files([
     'CompositeFile.c',
     'CPI_CircleBuffer.c',
     'CPI_Equaliser_Basic.c',
-    'CPI_ID3_Genres.c',
+    'CPI_TagLib.c',
     'CPI_Image.c',
     'CPI_Indicators.c',
     'CPI_Interface.c',
@@ -56,7 +57,6 @@ brisksrc = files([
     'CPI_Player_Output_DirectSound.c',
     'CPI_Player_Output_FAudio.c',
     'CPI_Player_Output_File.c',
-    'CPI_Player_Output_Wave.c',
     'CPI_Player_Output_Wave.c',
     'CPI_Playlist.c',
     'CPI_Playlist_Callbacks.c',
@@ -81,7 +81,16 @@ brisksrc = files([
 ])
 
 # Determine dependencies based on availability
-deps = [zlibdep, oggdep, vorbisdep, vorbisfiledep, maddep, flacdep, winmm, comctl32, wininet, dsound]
+cpp = meson.get_compiler('cpp')
+libstdcpp = cpp.find_library('stdc++', required : false)
+if not libstdcpp.found()
+    libstdcpp = cpp.find_library('c++', required : false)
+endif
+
+deps = [zlibdep, oggdep, vorbisdep, vorbisfiledep, maddep, flacdep, taglibdep, winmm, comctl32, wininet, dsound]
+if libstdcpp.found()
+    deps += [libstdcpp]
+endif
 if faudiodep.found()
     deps += [faudiodep, mfplat, propsys, mfuuid, mfreadwrite]
     add_project_arguments('-DHAVE_FAUDIO', language : 'c')

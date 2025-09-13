@@ -32,7 +32,6 @@
 #include "mad.h"
 // #include "mmsystem.h"
 #include "CPI_Stream.h"
-#include "CPI_ID3.h"
 
 # define SAMPLE_DEPTH 16
 # define scale(x, y) dither((x), (y))
@@ -480,19 +479,18 @@ BOOL CPP_OMMP3_OpenFile(CPs_CoDecModule* pModule, char const *path, DWORD dwCook
 	
 	if (context->m_pInStream->IsSeekable(context->m_pInStream) == TRUE) // only works on seekable streams
 	{
-		CIs_ID3v2Tag tag;
+		unsigned char buffer[10];
 		size_t iBytesRead;
 		
-		memset(&tag, 0, sizeof(tag));
-		context->m_pInStream->Read(context->m_pInStream, &tag, sizeof(tag), &iBytesRead);
+		memset(buffer, 0, sizeof(buffer));
+		context->m_pInStream->Read(context->m_pInStream, buffer, sizeof(buffer), &iBytesRead);
 		
-		if (memcmp(tag.m_cTAG, "ID3", 3) == 0)
+		// Simple ID3v2 tag detection and skip
+		if (iBytesRead >= 10 && memcmp(buffer, "ID3", 3) == 0)
 		{
-			iStreamStart = sizeof(CIs_ID3v2Tag);
-			iStreamStart += (tag.m_cSize_Encoded[0] << 21)
-							| (tag.m_cSize_Encoded[1] << 14)
-							| (tag.m_cSize_Encoded[2] << 7)
-							| tag.m_cSize_Encoded[3];
+			// Calculate tag size from sync-safe integer
+			iStreamStart = 10; // Header size
+			iStreamStart += (buffer[6] << 21) | (buffer[7] << 14) | (buffer[8] << 7) | buffer[9];
 		}
 		
 		context->m_pInStream->Seek(context->m_pInStream, iStreamStart);

@@ -25,7 +25,6 @@
 #include "globals.h"
 #include "CPI_Player_CoDec.h"
 #include "CP_RIFFStructs.h"
-#include "CPI_ID3.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -148,20 +147,19 @@ BOOL CPP_OMWAV_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD 
 	
 	// Skip over ID3v2 tag (if there is one)
 	{
-		CIs_ID3v2Tag tag;
+		unsigned char buffer[10];
 		DWORD dwBytesRead;
 		int iStreamStart = 0;
 		
-		memset(&tag, 0, sizeof(tag));
-		ReadFile(pContext->m_hFile, &tag, sizeof(tag), &dwBytesRead, NULL);
+		memset(buffer, 0, sizeof(buffer));
+		ReadFile(pContext->m_hFile, buffer, sizeof(buffer), &dwBytesRead, NULL);
 		
-		if (memcmp(tag.m_cTAG, "ID3", 3) == 0)
+		// Simple ID3v2 tag detection and skip
+		if (dwBytesRead >= 10 && memcmp(buffer, "ID3", 3) == 0)
 		{
-			iStreamStart = sizeof(CIs_ID3v2Tag);
-			iStreamStart += (tag.m_cSize_Encoded[0] << 21)
-							| (tag.m_cSize_Encoded[1] << 14)
-							| (tag.m_cSize_Encoded[2] << 7)
-							| tag.m_cSize_Encoded[3];
+			// Calculate tag size from sync-safe integer
+			iStreamStart = 10; // Header size
+			iStreamStart += (buffer[6] << 21) | (buffer[7] << 14) | (buffer[8] << 7) | buffer[9];
 		}
 		
 		SetFilePointer(pContext->m_hFile, iStreamStart, NULL, FILE_BEGIN);

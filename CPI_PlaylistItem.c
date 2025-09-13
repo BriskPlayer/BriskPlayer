@@ -26,7 +26,7 @@
 #include "CPI_Playlist.h"
 #include "CPI_PlaylistItem.h"
 #include "CPI_PlaylistItem_Internal.h"
-#include "CPI_ID3.h"
+#include "CPI_TagLib.h"
 #include "ogg/ogg.h"
 #include "vorbis/codec.h"
 #include "vorbis/vorbisfile.h"
@@ -34,17 +34,12 @@
 
 void CPLI_OGG_SkipOverTab(FILE* pFile);
 void CPLI_SetPath(CPs_PlaylistItem* pItem, const char* pcNewPath);
-void CPLI_ReadTag_ID3v1(CPs_PlaylistItem* pItem, HANDLE hFile);
-void CPLI_ReadTag_ID3v2(CPs_PlaylistItem* pItem, HANDLE hFile);
+void CPLI_ReadTag_TagLib(CPs_PlaylistItem* pItem);
+void CPLI_WriteTag_TagLib(CPs_PlaylistItem* pItem);
 void CPLI_ReadTag_OGG(CPs_PlaylistItem* pItem);
-void CPLI_WriteTag_ID3v1(CPs_PlaylistItem* pItem, HANDLE hFile);
-void CPLI_WriteTag_ID3v2(CPs_PlaylistItem* pItem, HANDLE hFile);
-void CPLI_WriteTag_OGG(CPs_PlaylistItem* pItem, HANDLE hFile);
 void CPLI_CalculateLength_OGG(CPs_PlaylistItem* pItem);
 void CPLI_CalculateLength_MP3(CPs_PlaylistItem* pItem);
 void CPLI_CalculateLength_WAV(CPs_PlaylistItem* pItem);
-void CPLI_ShrinkFile(HANDLE hFile, const DWORD dwStartOffset, const unsigned int iNumBytes);
-BOOL CPLI_GrowFile(HANDLE hFile, const DWORD dwStartOffset, const unsigned int iNumBytes);
 ////////////////////////////////////////////////////////////////////////////////
 //
 //
@@ -352,73 +347,19 @@ CP_HPLAYLISTITEM CPLI_Prev(const CP_HPLAYLISTITEM hItem)
 //
 //
 //
-char* DecodeID3String(const char* pcSource, const int iLength)
-{
-	char* cWorkString = (char*)_alloca(iLength + 1);
-	char* pDestString;
-	char* pcLastWhiteSpace;
-	int iCharIDX;
-	
-	cWorkString[iLength] = '\0';
-	memcpy(cWorkString, pcSource, iLength);
-	
-	// Remove trailing whitespace
-	pcLastWhiteSpace = NULL;
-	
-	for (iCharIDX = 0; cWorkString[iCharIDX]; iCharIDX++)
-	{
-		if (cWorkString[iCharIDX] == ' ')
-		{
-			if (!pcLastWhiteSpace)
-				pcLastWhiteSpace = cWorkString + iCharIDX;
-		}
-		
-		else
-			pcLastWhiteSpace = NULL;
-	}
-	
-	if (pcLastWhiteSpace)
-		*pcLastWhiteSpace = '\0';
-		
-	// Copy string
-	STR_AllocSetString(&pDestString, cWorkString, FALSE);
-	
-	return pDestString;
-}
-
-//
-//
-//
 void CPLI_ReadTag(CP_HPLAYLISTITEM hItem)
 {
 	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
-	HANDLE hFile;
 	
 	CP_CHECKOBJECT(pItem);
 	
 	if (pItem->m_enTagType != ttUnread)
 		return;
 		
-	// - Try to open the file
-	hFile = CreateFile(pItem->m_pcPath, GENERIC_READ,
-					   FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
-					   OPEN_EXISTING, 0, 0);
-	                   
-	// Cannot open - fail silently
-	if (hFile == INVALID_HANDLE_VALUE)
-		return;
-		
-	// Try to read a V2 tag
-	if (options.support_id3v2)
-		CPLI_ReadTag_ID3v2(pItem, hFile);
-		
-	// Failed? - try a V1 tag instead
-	if (pItem->m_enTagType == ttUnread)
-		CPLI_ReadTag_ID3v1(pItem, hFile);
-		
-	CloseHandle(hFile);
+	// Use TagLib to read metadata
+	CPLI_ReadTag_TagLib(pItem);
 	
-	// Override information with any OGG tags that may be there
+	// Override information with any OGG tags that may be there (if native OGG tags are preferred)
 	if (options.prefer_native_ogg_tags
 			&& stricmp(".ogg", CPLI_GetExtension(hItem)) == 0)
 	{
@@ -493,211 +434,16 @@ void CPLI_DecodeLength(CPs_PlaylistItem* pItem, unsigned int iNewLength)
 //
 //
 //
-void CPLI_ReadTag_ID3v2(CPs_PlaylistItem* pItem, HANDLE hFile)
-{
-	DWORD dwBytesRead;
-	int iTagDataToRead;
-	CIs_ID3v2Tag ID3v2;
-	
-	SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-	ReadFile(hFile, &ID3v2, sizeof(ID3v2), &dwBytesRead, NULL);
-	
-	// Not enough file data returned - or the data returned does not look like an ID3
-	
-	if (dwBytesRead != sizeof(ID3v2)
-			|| memcmp(ID3v2.m_cTAG, "ID3", 3) != 0
-			|| (ID3v2.m_cVersion[0] != 0x03 && ID3v2.m_cVersion[0] != 0x04)) // Major version wrong
-	{
-		return;
-	}
-	
-	// Work out the amount of tag left to read
-	iTagDataToRead = (ID3v2.m_cSize_Encoded[0] << 21)
-					 | (ID3v2.m_cSize_Encoded[1] << 14)
-					 | (ID3v2.m_cSize_Encoded[2] << 7)
-					 | ID3v2.m_cSize_Encoded[3];
-	                 
-	// Check for a big enough file now (to save endless checking)
-	if (GetFileSize(hFile, NULL) < (sizeof(ID3v2) + iTagDataToRead))
-		return;
-		
-	// Skip over extended header (if there is one)
-	if (ID3v2.m_cFlags & ID3v2_FLAG_EXTENDEDHEADER)
-	{
-		char cExtendedHeaderSize_Encoded[4];
-		int iExtendedHeaderSize;
-		
-		ReadFile(hFile, cExtendedHeaderSize_Encoded, sizeof(cExtendedHeaderSize_Encoded), &dwBytesRead, NULL);
-		
-		iExtendedHeaderSize = (cExtendedHeaderSize_Encoded[0] << 21)
-							  | (cExtendedHeaderSize_Encoded[1] << 14)
-							  | (cExtendedHeaderSize_Encoded[2] << 7)
-							  | cExtendedHeaderSize_Encoded[3];
-		                      
-		SetFilePointer(hFile, iExtendedHeaderSize - sizeof(cExtendedHeaderSize_Encoded), NULL, FILE_CURRENT);
-		iTagDataToRead -= iExtendedHeaderSize;
-	}
-	
-	while (iTagDataToRead > (int)sizeof(CIs_ID3v2Frame))
-	{
-		CIs_ID3v2Frame ID3v2Frame;
-		BYTE* pFrameData;
-		int iFrameSize;
-		
-		ReadFile(hFile, &ID3v2Frame, sizeof(ID3v2Frame), &dwBytesRead, NULL);
-		
-		// Have we encountered padding?
-		
-		if (ID3v2Frame.m_cFrameID[0] == '\0')
-			break;
-			
-		if (ID3v2.m_cVersion[0] == 0x03)
-		{
-			iFrameSize = (ID3v2Frame.m_cSize_Encoded[0] << 24)
-						 | (ID3v2Frame.m_cSize_Encoded[1] << 16)
-						 | (ID3v2Frame.m_cSize_Encoded[2] << 8)
-						 | ID3v2Frame.m_cSize_Encoded[3];
-		}
-		
-		else
-		{
-			iFrameSize = (ID3v2Frame.m_cSize_Encoded[0] << 21)
-						 | (ID3v2Frame.m_cSize_Encoded[1] << 14)
-						 | (ID3v2Frame.m_cSize_Encoded[2] << 7)
-						 | ID3v2Frame.m_cSize_Encoded[3];
-		}
-		
-		// Frame size invalid?
-		
-		if (iFrameSize > iTagDataToRead)
-			return;
-			
-		pFrameData = malloc(iFrameSize + 1);
-		
-		if (!ReadFile(hFile, pFrameData, iFrameSize, &dwBytesRead, NULL)) return;
-		
-		pFrameData[iFrameSize] = '\0';
-		
-		// Decode frames
-		if (memcmp(ID3v2Frame.m_cFrameID, "TIT2", 4) == 0)
-			pItem->m_pcTrackName = CPLI_ID3v2_DecodeString(pFrameData, iFrameSize);
-		else if (memcmp(ID3v2Frame.m_cFrameID, "TPE1", 4) == 0)
-			pItem->m_pcArtist = CPLI_ID3v2_DecodeString(pFrameData, iFrameSize);
-		else if (memcmp(ID3v2Frame.m_cFrameID, "TALB", 4) == 0)
-			pItem->m_pcAlbum = CPLI_ID3v2_DecodeString(pFrameData, iFrameSize);
-		else if (memcmp(ID3v2Frame.m_cFrameID, "TRCK", 4) == 0)
-		{
-			pItem->m_pcTrackNum_AsText = CPLI_ID3v2_DecodeString(pFrameData, iFrameSize);
-			
-			if (pItem->m_pcTrackNum_AsText)
-				pItem->m_cTrackNum = (unsigned char)atoi(pItem->m_pcTrackNum_AsText);
-		}
-		
-		else if (memcmp(ID3v2Frame.m_cFrameID, "TYER", 4) == 0)
-			pItem->m_pcYear = CPLI_ID3v2_DecodeString(pFrameData, iFrameSize);
-		else if (memcmp(ID3v2Frame.m_cFrameID, "TENC", 4) == 0)
-			pItem->m_pcComment = CPLI_ID3v2_DecodeString(pFrameData, iFrameSize);
-		else if (memcmp(ID3v2Frame.m_cFrameID, "TCON", 4) == 0)
-		{
-			char* pcGenre = CPLI_ID3v2_DecodeString(pFrameData, iFrameSize);
-			
-			if (pcGenre)
-			{
-				// Search for this genre among the ID3v1 genres (don't read it if we cannot find it)
-				int iGenreIDX;
-				
-				for (iGenreIDX = 0; iGenreIDX < CIC_NUMGENRES; iGenreIDX++)
-				{
-					if (stricmp(pcGenre, glb_pcGenres[iGenreIDX]) == 0)
-					{
-						pItem->m_cGenre = (unsigned char)iGenreIDX;
-						break;
-					}
-				}
-				
-				free(pcGenre);
-			}
-		}
-		
-		else if (memcmp(ID3v2Frame.m_cFrameID, "TLEN", 4) == 0)
-		{
-			char* pcLength = CPLI_ID3v2_DecodeString(pFrameData, iFrameSize);
-			
-			if (pcLength)
-			{
-				CPLI_DecodeLength(pItem, atoi(pcLength) / 1000);
-				free(pcLength);
-			}
-		}
-		
-#ifdef _DEBUG
-		/*
-		else if(ID3v2Frame.m_cFrameID[0] == 'T')
-		 CP_TRACE2("Text frame %4s \"%s\"", ID3v2Frame.m_cFrameID, pFrameData+1);
-		else
-		 CP_TRACE1("Any old frame %4s", ID3v2Frame.m_cFrameID);
-		*/
-#endif
-		free(pFrameData);
-		
-		iTagDataToRead -= iFrameSize + sizeof(ID3v2Frame);
-	}
-	
-	pItem->m_enTagType = ttID3v2;
-}
-
 //
 //
 //
+// Temporary stub - old ID3v1 function replaced by TagLib  
 void CPLI_ReadTag_ID3v1(CPs_PlaylistItem* pItem, HANDLE hFile)
 {
-	DWORD dwBytesRead;
-	CIs_ID3Tag ID3;
-	
-	SetFilePointer(hFile, -(LONG)sizeof(ID3), NULL, FILE_END);
-	ReadFile(hFile, &ID3, sizeof(ID3), &dwBytesRead, NULL);
-	
-	// Not enough file data returned - or the data returned does not look like an ID3
-	
-	if (dwBytesRead != sizeof(ID3) || memcmp(ID3.m_cTAG, "TAG", 3) != 0)
-		return;
-		
-	// Decode the fixed strings into our dynamic strings
-	CPLII_RemoveTagInfo(pItem);
-	
-	pItem->m_pcTrackName = DecodeID3String(ID3.m_cSong, 30);
-	pItem->m_pcArtist = DecodeID3String(ID3.m_cArtist, 30);
-	pItem->m_pcAlbum = DecodeID3String(ID3.m_cAlbum, 30);
-	pItem->m_pcYear = DecodeID3String(ID3.m_cYear, 4);
-	
-	// ID3v1.1 - If the 29th byte of the comment is 0 then the 30th byte is the track num
-	// ** Some dodgy implementations of ID3v1.1 just slap a <32 char byte at position 30 and hope
-	//    for the best - handle these too <hmph!>
-	if (ID3.m_cComment[28] == '\0' || ID3.m_cComment[29] < 32)
-	{
-		char cTempString[33];
-		
-		pItem->m_pcComment = DecodeID3String(ID3.m_cComment, 28);
-		pItem->m_cTrackNum = ID3.m_cComment[29];
-		
-		if (pItem->m_cTrackNum != CIC_INVALIDTRACKNUM)
-		{
-			_itoa(pItem->m_cTrackNum, cTempString, 10);
-			pItem->m_pcTrackNum_AsText = (char*)malloc(CPC_TRACKNUMASTEXTBUFFERSIZE);
-			strncpy(pItem->m_pcTrackNum_AsText, cTempString, CPC_TRACKNUMASTEXTBUFFERSIZE);
-		}
-	}
-	
-	else
-	{
-		pItem->m_pcComment = DecodeID3String(ID3.m_cComment, 30);
-		pItem->m_cTrackNum = CIC_INVALIDTRACKNUM;
-	}
-	
-	if (ID3.m_cGenre < CIC_NUMGENRES)
-		pItem->m_cGenre = ID3.m_cGenre;
-		
-	pItem->m_enTagType = ttID3v1;
+	// This function is deprecated - use CPLI_ReadTag_TagLib instead
+	(void)pItem;  // Suppress unused parameter warning
+	(void)hFile;  // Suppress unused parameter warning
+	return;
 }
 
 //
@@ -717,266 +463,31 @@ BOOL CPLI_IsTagDirty(CP_HPLAYLISTITEM hItem)
 void CPLI_WriteTag(CP_HPLAYLISTITEM hItem)
 {
 	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
-	HANDLE hFile;
 	
 	CP_CHECKOBJECT(pItem);
 	
 	if (pItem->m_bID3Tag_SaveRequired == FALSE)
 		return;
 		
+	// Check if file format is supported
 	if (stricmp(".ogg", CPLI_GetExtension(hItem)) != 0 &&
-			stricmp(".mp3", CPLI_GetExtension(hItem)) != 0)
+			stricmp(".mp3", CPLI_GetExtension(hItem)) != 0 &&
+			stricmp(".flac", CPLI_GetExtension(hItem)) != 0 &&
+			stricmp(".m4a", CPLI_GetExtension(hItem)) != 0 &&
+			stricmp(".mp4", CPLI_GetExtension(hItem)) != 0)
 		return;
 		
-	// Try to open the file
-	hFile = CreateFile(pItem->m_pcPath, GENERIC_READ | GENERIC_WRITE,
-					   FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
-					   OPEN_EXISTING, 0, 0);
-	                   
-	// Cannot open - fail silently
-	if (hFile == INVALID_HANDLE_VALUE)
+	// Check if we can write to the file
+	if (!CPTL_CanWriteToFile(pItem->m_pcPath))
 		return;
 		
 	pItem->m_bID3Tag_SaveRequired = FALSE;
-	
-	if (options.prefer_native_ogg_tags
-			&& stricmp(".ogg", CPLI_GetExtension(hItem)) == 0)
-	{
-		CPLI_WriteTag_OGG(pItem, hFile);
-	}
-	
-	else if (stricmp(".mp3", CPLI_GetExtension(hItem)) == 0)
-	{
-		CPLI_WriteTag_ID3v1(pItem, hFile);
-		
-		if (options.support_id3v2)
-			CPLI_WriteTag_ID3v2(pItem, hFile);
-	}
-	
-	CloseHandle(hFile);
+
+	// Use TagLib for all metadata writing
+	CPLI_WriteTag_TagLib(pItem);
 }
 
 //
-//
-//
-void CPLI_WriteTag_ID3v1(CPs_PlaylistItem* pItem, HANDLE hFile)
-{
-	DWORD dwBytesTransferred;
-	CIs_ID3Tag ID3;
-	char cTagMagic[3];
-	
-	// Build the tag (of ID3v1.1 format)
-	memset(&ID3, 32, sizeof(ID3));
-	memcpy(ID3.m_cTAG, "TAG", 3);
-	
-	if (pItem->m_pcTrackName)
-		strncpy(ID3.m_cSong, pItem->m_pcTrackName, 30);
-		
-	if (pItem->m_pcArtist)
-		strncpy(ID3.m_cArtist, pItem->m_pcArtist, 30);
-		
-	if (pItem->m_pcAlbum)
-		strncpy(ID3.m_cAlbum, pItem->m_pcAlbum, 30);
-		
-	if (pItem->m_pcYear)
-		strncpy(ID3.m_cYear, pItem->m_pcYear, 4);
-		
-	if (pItem->m_pcComment)
-	{
-		if (strlen(pItem->m_pcComment) > 28)
-		{
-			strncpy(ID3.m_cComment, pItem->m_pcComment, 30);
-		}
-		
-		else
-		{
-			strncpy(ID3.m_cComment, pItem->m_pcComment, 28);
-			ID3.m_cComment[28] = '\0';
-			ID3.m_cComment[29] = pItem->m_cTrackNum;
-		}
-	}
-	
-	ID3.m_cGenre = pItem->m_cGenre;
-	
-	// Set the file pointer to the end of the file (or the start of the tag if there is one already)
-	SetFilePointer(hFile, -(LONG)sizeof(ID3), NULL, FILE_END);
-	ReadFile(hFile, cTagMagic, sizeof(cTagMagic), &dwBytesTransferred, NULL);
-	
-	if (memcmp(cTagMagic, "TAG", 3) == 0)
-		SetFilePointer(hFile, -(LONG)sizeof(ID3), NULL, FILE_END);
-	else
-		SetFilePointer(hFile, 0, NULL, FILE_END);
-		
-	WriteFile(hFile, &ID3, sizeof(ID3), &dwBytesTransferred, NULL);
-}
-
-//
-//
-//
-void CPLI_ID3v2_WriteSyncSafeInt(unsigned char cDest[4], const int iSource)
-{
-	cDest[0] = (iSource >> 21) & 0x7F;
-	cDest[1] = (iSource >> 14) & 0x7F;
-	cDest[2] = (iSource >> 7) & 0x7F;
-	cDest[3] = iSource & 0x7F;
-}
-
-//
-//
-//
-void CPLI_ID3v2_WriteTextFrame(BYTE** ppDest, const char pcTag[4], const char* pcString)
-{
-    CIs_ID3v2Frame* pFrame = (CIs_ID3v2Frame*) * ppDest;
-    BYTE* pFrameData;
-    int iFrameDataLength;
-    
-    iFrameDataLength = strlen(pcString) + 1; // 1-byte for encoding
-    
-    memcpy(pFrame->m_cFrameID, pcTag, 4);  // Use explicit length instead of sizeof(pcTag)
-    CPLI_ID3v2_WriteSyncSafeInt((unsigned char*)pFrame->m_cSize_Encoded, iFrameDataLength);
-    pFrame->m_cFlags = 0x0;
-    
-    // Write frame data
-    pFrameData = ((*ppDest) + sizeof(CIs_ID3v2Frame));
-    pFrameData[0] = 0x0;
-    memcpy(pFrameData + 1, pcString, iFrameDataLength - 1);
-    
-    *ppDest += iFrameDataLength + sizeof(CIs_ID3v2Frame);
-}
-
-//
-//
-//
-void CPLI_WriteTag_ID3v2(CPs_PlaylistItem* pItem, HANDLE hFile)
-{
-	unsigned int iTagDataLength;
-	unsigned int iExistingTagLength;
-	DWORD dwBytesTransferred;
-	char atiobuffer[33];
-	BYTE* pTag;
-	BYTE* pTag_Cursor;
-	
-	// Work out the size of the data in the tag frames
-	iTagDataLength = 0;
-	
-	if (pItem->m_pcTrackName)
-		iTagDataLength += strlen(pItem->m_pcTrackName) + 1 + sizeof(CIs_ID3v2Frame); // 1-byte for encoding and a frame header
-		
-	if (pItem->m_pcArtist)
-		iTagDataLength += strlen(pItem->m_pcArtist) + 1 + sizeof(CIs_ID3v2Frame); // 1-byte for encoding and a frame header
-		
-	if (pItem->m_pcAlbum)
-		iTagDataLength += strlen(pItem->m_pcAlbum) + 1 + sizeof(CIs_ID3v2Frame); // 1-byte for encoding and a frame header
-		
-	if (pItem->m_pcYear)
-		iTagDataLength += strlen(pItem->m_pcYear) + 1 + sizeof(CIs_ID3v2Frame); // 1-byte for encoding and a frame header
-		
-	if (pItem->m_pcComment)
-		iTagDataLength += strlen(pItem->m_pcComment) + 1 + sizeof(CIs_ID3v2Frame); // 1-byte for encoding and a frame header
-		
-	if (pItem->m_cGenre != CIC_INVALIDGENRE)
-		iTagDataLength += strlen(glb_pcGenres[pItem->m_cGenre]) + 1 + sizeof(CIs_ID3v2Frame); // 1-byte for encoding and a frame header
-		
-	if (pItem->m_cTrackNum != CIC_INVALIDTRACKNUM)
-		iTagDataLength += strlen(_itoa(pItem->m_cTrackNum, atiobuffer, 10)) + 1 + sizeof(CIs_ID3v2Frame); // 1-byte for encoding and a frame header
-		
-	if (pItem->m_iTrackLength != 0)
-		iTagDataLength += strlen(_itoa(pItem->m_iTrackLength * 1000, atiobuffer, 10)) + 1 + sizeof(CIs_ID3v2Frame); // 1-byte for encoding and a frame header
-		
-	// Add ID3v2 overhead
-	iTagDataLength += sizeof(CIs_ID3v2Tag);
-	
-	// Quantise tag to the nearest 1K
-	iTagDataLength = ((iTagDataLength >> 10) + 1) << 10;
-	
-	// Is there a tag big enough in the file
-	{
-		CIs_ID3v2Tag existingtagheader;
-		
-		SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-		ReadFile(hFile, &existingtagheader, sizeof(existingtagheader), &dwBytesTransferred, NULL);
-		
-		if (memcmp(existingtagheader.m_cTAG, "ID3", 3) == 0)
-		{
-			iExistingTagLength = (existingtagheader.m_cSize_Encoded[0] << 21)
-								 | (existingtagheader.m_cSize_Encoded[1] << 14)
-								 | (existingtagheader.m_cSize_Encoded[2] << 7)
-								 | existingtagheader.m_cSize_Encoded[3];
-			iExistingTagLength += sizeof(CIs_ID3v2Tag); // count the header
-			
-			if (iExistingTagLength > iTagDataLength)
-				iTagDataLength = iExistingTagLength;
-		}
-		
-		else
-			iExistingTagLength = 0;
-	}
-	
-	// Do we need to enlarge the file?
-	
-	if (iExistingTagLength < iTagDataLength)
-	{
-		if (CPLI_GrowFile(hFile, 0, iTagDataLength - iExistingTagLength) == FALSE)
-			return;
-	}
-	
-	// Build tag
-	pTag = malloc(iTagDataLength);
-	
-	memset(pTag, 0, iTagDataLength); // ** must do this as all padding should be 0x00
-	
-	pTag_Cursor = pTag;
-	
-	// Header
-	{
-		CIs_ID3v2Tag* pHeader = (CIs_ID3v2Tag*)pTag_Cursor;
-		int iSizeLessHeader = iTagDataLength - sizeof(CIs_ID3v2Tag);
-		
-		pHeader->m_cTAG[0] = 'I';
-		pHeader->m_cTAG[1] = 'D';
-		pHeader->m_cTAG[2] = '3';
-		
-		pHeader->m_cVersion[0] = 0x4;
-		pHeader->m_cVersion[1] = 0x0;
-		
-		pHeader->m_cFlags = 0x0;
-		
-		CPLI_ID3v2_WriteSyncSafeInt(pHeader->m_cSize_Encoded, iSizeLessHeader);
-		pTag_Cursor += sizeof(CIs_ID3v2Tag);
-	}
-	
-	// Frames
-	
-	if (pItem->m_pcTrackName)
-		CPLI_ID3v2_WriteTextFrame(&pTag_Cursor, "TIT2", pItem->m_pcTrackName);
-		
-	if (pItem->m_pcArtist)
-		CPLI_ID3v2_WriteTextFrame(&pTag_Cursor, "TPE1", pItem->m_pcArtist);
-		
-	if (pItem->m_pcAlbum)
-		CPLI_ID3v2_WriteTextFrame(&pTag_Cursor, "TALB", pItem->m_pcAlbum);
-		
-	if (pItem->m_pcYear)
-		CPLI_ID3v2_WriteTextFrame(&pTag_Cursor, "TYER", pItem->m_pcYear);
-		
-	if (pItem->m_pcComment)
-		CPLI_ID3v2_WriteTextFrame(&pTag_Cursor, "TENC", pItem->m_pcComment);
-		
-	if (pItem->m_cGenre != CIC_INVALIDGENRE)
-		CPLI_ID3v2_WriteTextFrame(&pTag_Cursor, "TCON", glb_pcGenres[pItem->m_cGenre]);
-		
-	if (pItem->m_cTrackNum != CIC_INVALIDTRACKNUM)
-		CPLI_ID3v2_WriteTextFrame(&pTag_Cursor, "TRCK", _itoa(pItem->m_cTrackNum, atiobuffer, 10));
-		
-	if (pItem->m_iTrackLength != 0)
-		CPLI_ID3v2_WriteTextFrame(&pTag_Cursor, "TLEN", _itoa(pItem->m_iTrackLength * 1000, atiobuffer, 10));
-		
-	// Output tag
-	SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-	WriteFile(hFile, pTag, iTagDataLength, &dwBytesTransferred, NULL);
-	CP_ASSERT(dwBytesTransferred == iTagDataLength);
-}
-
 //
 //
 //
@@ -1261,22 +772,23 @@ void CPLI_CalculateLength_WAV(CPs_PlaylistItem* pItem)
 		return;
 	}
 	
-	// Skip over ID3v2 tag (if there is one)
+	// Skip over ID3v2 tag (if there is one) 
+	// TODO: Use TagLib to detect and skip ID3v2 tags properly
 	{
-		CIs_ID3v2Tag tag;
+		char tag_header[10];
 		DWORD dwBytesRead;
 		int iStreamStart = 0;
 		
-		memset(&tag, 0, sizeof(tag));
-		ReadFile(hFile, &tag, sizeof(tag), &dwBytesRead, NULL);
+		ReadFile(hFile, tag_header, 10, &dwBytesRead, NULL);
 		
-		if (memcmp(tag.m_cTAG, "ID3", 3) == 0)
+		if (dwBytesRead == 10 && memcmp(tag_header, "ID3", 3) == 0)
 		{
-			iStreamStart = sizeof(CIs_ID3v2Tag);
-			iStreamStart += (tag.m_cSize_Encoded[0] << 21)
-							| (tag.m_cSize_Encoded[1] << 14)
-							| (tag.m_cSize_Encoded[2] << 7)
-							| tag.m_cSize_Encoded[3];
+			// Simple ID3v2 tag size calculation (sync-safe format)
+			iStreamStart = 10; // Header size
+			iStreamStart += ((tag_header[6] & 0x7F) << 21)
+							| ((tag_header[7] & 0x7F) << 14)
+							| ((tag_header[8] & 0x7F) << 7)
+							| (tag_header[9] & 0x7F);
 		}
 		
 		SetFilePointer(hFile, iStreamStart, NULL, FILE_BEGIN);
@@ -1396,16 +908,16 @@ void CPLI_CalculateLength_MP3(CPs_PlaylistItem* pItem)
 	iBufferCursor = 0;
 	
 	// Skip over a any ID3v2 tag
+	// TODO: Use TagLib to detect and skip ID3v2 tags properly
 	{
-		CIs_ID3v2Tag* pHeader = (CIs_ID3v2Tag*)(pbBuffer + iBufferCursor);
-		
-		if (memcmp(pHeader->m_cTAG, "ID3", 3) == 0)
+		if (dwBufferSize >= 10 && memcmp(pbBuffer + iBufferCursor, "ID3", 3) == 0)
 		{
-			iBufferCursor += (pHeader->m_cSize_Encoded[0] << 21)
-							 | (pHeader->m_cSize_Encoded[1] << 14)
-							 | (pHeader->m_cSize_Encoded[2] << 7)
-							 | pHeader->m_cSize_Encoded[3];
-			iBufferCursor += sizeof(CIs_ID3v2Tag); // count the header
+			// Simple ID3v2 tag size calculation (sync-safe format)
+			iBufferCursor += ((pbBuffer[iBufferCursor + 6] & 0x7F) << 21)
+							 | ((pbBuffer[iBufferCursor + 7] & 0x7F) << 14)
+							 | ((pbBuffer[iBufferCursor + 8] & 0x7F) << 7)
+							 | (pbBuffer[iBufferCursor + 9] & 0x7F);
+			iBufferCursor += 10; // count the header
 		}
 	}
 	
@@ -1720,19 +1232,17 @@ const char* CPLI_GetExtension(const CP_HPLAYLISTITEM hItem)
 //
 void CPLI_OGG_SkipOverTab(FILE* pFile)
 {
-	CIs_ID3v2Tag tag;
+	char tag_header[10];
 	int iStreamStart = 0;
 	
-	memset(&tag, 0, sizeof(tag));
-	fread(&tag, sizeof(tag), 1, pFile);
-	
-	if (memcmp(tag.m_cTAG, "ID3", 3) == 0)
+	if (fread(tag_header, 1, 10, pFile) == 10 && memcmp(tag_header, "ID3", 3) == 0)
 	{
-		iStreamStart = sizeof(CIs_ID3v2Tag);
-		iStreamStart += (tag.m_cSize_Encoded[0] << 21)
-						| (tag.m_cSize_Encoded[1] << 14)
-						| (tag.m_cSize_Encoded[2] << 7)
-						| tag.m_cSize_Encoded[3];
+		// Simple ID3v2 tag size calculation (sync-safe format)
+		iStreamStart = 10; // Header size
+		iStreamStart += ((tag_header[6] & 0x7F) << 21)
+						| ((tag_header[7] & 0x7F) << 14)
+						| ((tag_header[8] & 0x7F) << 7)
+						| (tag_header[9] & 0x7F);
 	}
 	
 	fseek(pFile, iStreamStart, SEEK_SET);
@@ -1912,439 +1422,32 @@ BOOL CPLI_OGG_SyncToNextFrame(HANDLE hFile)
 //
 //
 //
-void CPLI_OGG_UpdateCommentString(CIs_OGGComment* pComment, const char* pcTag, const char* _pcTagValue)
+void CPLI_OGG_UpdateCommentString(void* pComment, const char* pcTag, const char* _pcTagValue)
 {
-	unsigned int iCommentIDX;
-	char* pcCommentBuffer;
-	int iTagLength;
-	int iValueLength;
-	int iCommentBufferLength;
-	const char* pcTagValue;
-	
-	if (_pcTagValue)
-		pcTagValue = _pcTagValue;
-	else
-		pcTagValue = "";
-		
-	// Build the comment
-	iTagLength = strlen(pcTag);
-	iValueLength = strlen(pcTagValue);
-	iCommentBufferLength = iTagLength + 1 + iValueLength + 1; // 1 for = sign and 1 for terminating null
-	
-	pcCommentBuffer = (char*)malloc(iCommentBufferLength);
-	memcpy(pcCommentBuffer, pcTag, iTagLength);
-	pcCommentBuffer[iTagLength] = '=';
-	memcpy(pcCommentBuffer + iTagLength + 1, pcTagValue, iValueLength);
-	pcCommentBuffer[iTagLength + 1 + iValueLength] = '\0';
-	
-	// Search for the tag
-	for (iCommentIDX = 0; iCommentIDX < pComment->m_iNumComments; iCommentIDX++)
-	{
-		char cTag[128];
-		
-		if (sscanf(pComment->m_ppUserStrings[iCommentIDX], " %[^= ] =", cTag) == 1
-				&& stricmp(cTag, pcTag) == 0)
-		{
-			free(pComment->m_ppUserStrings[iCommentIDX]);
-			pComment->m_ppUserStrings[iCommentIDX] = pcCommentBuffer;
-			return;
-		}
-	}
-	
-	// No existing tag - we need to append one
-	pComment->m_iNumComments++;
-	pComment->m_ppUserStrings = (char**)realloc(pComment->m_ppUserStrings, pComment->m_iNumComments * sizeof(char*));
-	pComment->m_ppUserStrings[pComment->m_iNumComments-1] = pcCommentBuffer;
+	// Old OGG function - replaced by TagLib
+	(void)pComment;
+	(void)pcTag;
+	(void)_pcTagValue;
 }
+
+//
+//
+//
+//
+//
 
 //
 //
 //
 void CPLI_WriteTag_OGG(CPs_PlaylistItem* pItem, HANDLE hFile)
 {
-	CIs_OGGFrame info_comment;
-	DWORD dwBytesTransferred;
-	int iCommentFrameLength;
-	int iRequiredFrameLength;
-	CIs_OGGComment comment;
-	DWORD dwCommentStartOffset;
-	BYTE* pCodeBook;
-	unsigned int iCodeBookLength;
-	
-	// Remove ID3v1 tag from file
-	{
-		CIs_ID3Tag ID3;
-		
-		SetFilePointer(hFile, -(LONG)sizeof(ID3), NULL, FILE_END);
-		ReadFile(hFile, &ID3, sizeof(ID3), &dwBytesTransferred, NULL);
-		
-		// Is there a tag? - remove it
-		
-		if (dwBytesTransferred == sizeof(ID3) && memcmp(ID3.m_cTAG, "TAG", 3) == 0)
-		{
-			SetFilePointer(hFile, -(LONG)sizeof(ID3), NULL, FILE_END);
-			SetEndOfFile(hFile);
-		}
-	}
-	
-	// Remove ID3v2 tag from file
-	{
-		CIs_ID3v2Tag tag;
-		unsigned int iStreamOffset = 0;
-		
-		SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-		ReadFile(hFile, &tag, sizeof(tag), &dwBytesTransferred, NULL);
-		
-		if (dwBytesTransferred == sizeof(tag) && memcmp(tag.m_cTAG, "ID3", 3) == 0)
-		{
-			iStreamOffset = sizeof(CIs_ID3v2Tag);
-			iStreamOffset += (tag.m_cSize_Encoded[0] << 21)
-							 | (tag.m_cSize_Encoded[1] << 14)
-							 | (tag.m_cSize_Encoded[2] << 7)
-							 | tag.m_cSize_Encoded[3];
-		}
-		
-		if (iStreamOffset > 0)
-			CPLI_ShrinkFile(hFile, 0L, iStreamOffset);
-	}
-	
-	// Sync to first frame
-	SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-	
-	if (CPLI_OGG_SyncToNextFrame(hFile) == FALSE)
-		return;
-		
-	// Step over the first frame (which is the vorbis info)
-	{
-		CIs_OGGFrame info;
-		int iFrameLength;
-		int iSegmentIDX;
-		
-		ReadFile(hFile, &info.m_Header, sizeof(info.m_Header), &dwBytesTransferred, NULL);
-		
-		if (dwBytesTransferred != sizeof(info.m_Header))
-			return;
-			
-		ReadFile(hFile, info.m_cSegments, sizeof(info.m_cSegments[0]) * info.m_Header.m_cNumSegments, &dwBytesTransferred, NULL);
-		
-		if (dwBytesTransferred != (sizeof(info.m_cSegments[0]) * info.m_Header.m_cNumSegments))
-			return;
-			
-		// Work out how much more data in this frame - we are skipping it
-		iFrameLength = 0;
-		
-		for (iSegmentIDX = 0; iSegmentIDX < info.m_Header.m_cNumSegments; iSegmentIDX++)
-			iFrameLength += info.m_cSegments[iSegmentIDX];
-			
-		SetFilePointer(hFile, iFrameLength, NULL, FILE_CURRENT);
-	}
-	
-	// Seek to next frame
-	
-	if (CPLI_OGG_SyncToNextFrame(hFile) == FALSE)
-		return;
-		
-	dwCommentStartOffset = SetFilePointer(hFile, 0, NULL, FILE_CURRENT);
-	
-	// Get the length of the next frame (and set the file pointer to it's end)
-	{
-		int iSegmentIDX;
-		BYTE* pCommentPacket;
-		int iPacketByteIDX;
-		int iSegment2PacketStart = 0;
-		
-		ReadFile(hFile, &info_comment.m_Header, sizeof(info_comment.m_Header), &dwBytesTransferred, NULL);
-		
-		if (dwBytesTransferred != sizeof(info_comment.m_Header))
-			return;
-			
-		ReadFile(hFile, info_comment.m_cSegments, sizeof(info_comment.m_cSegments[0]) * info_comment.m_Header.m_cNumSegments, &dwBytesTransferred, NULL);
-		
-		if (dwBytesTransferred != (sizeof(info_comment.m_cSegments[0]) * info_comment.m_Header.m_cNumSegments))
-			return;
-			
-		// Read in the first packet
-		// - work out length first
-		iCommentFrameLength = 0;
-		
-		for (iSegmentIDX = 0; iSegmentIDX < info_comment.m_Header.m_cNumSegments; iSegmentIDX++)
-		{
-			iCommentFrameLength += info_comment.m_cSegments[iSegmentIDX];
-			
-			if (info_comment.m_cSegments[iSegmentIDX] != 0xFF)
-			{
-				iSegment2PacketStart = iSegmentIDX + 1;
-				break;
-			}
-		}
-		
-		// - read packet
-		pCommentPacket = (BYTE*)malloc(iCommentFrameLength);
-		
-		ReadFile(hFile, pCommentPacket, iCommentFrameLength, &dwBytesTransferred, NULL);
-		
-		if ((int)dwBytesTransferred != iCommentFrameLength || iCommentFrameLength < 8)
-		{
-			free(pCommentPacket);
-			return;
-		}
-		
-		// Read the packet following the header (the codebook)
-		iCodeBookLength = 0;
-		
-		for (iSegmentIDX = iSegment2PacketStart; iSegmentIDX < info_comment.m_Header.m_cNumSegments; iSegmentIDX++)
-		{
-			iCodeBookLength += info_comment.m_cSegments[iSegmentIDX];
-			
-			if (info_comment.m_cSegments[iSegmentIDX] != 0xFF)
-				break;
-		}
-		
-		pCodeBook = (BYTE*)malloc(iCodeBookLength);
-		
-		ReadFile(hFile, pCodeBook, iCodeBookLength, &dwBytesTransferred, NULL);
-		
-		if (dwBytesTransferred != iCodeBookLength || iCodeBookLength < 8)
-		{
-			free(pCodeBook);
-			free(pCommentPacket);
-			return;
-		}
-		
-		// Read the vorbis header from the comment packet (and ensure that this is a type 0x3 packet)
-		
-		if (pCommentPacket[0] != 3 || memcmp(pCommentPacket + 1, "vorbis", 6) != 0)
-		{
-			free(pCodeBook);
-			free(pCommentPacket);
-			return;
-		}
-		
-		// Decode packet
-		iPacketByteIDX = 7;
-		
-		// Decode strings
-		{
-			unsigned int iStringLength;
-			unsigned int iCommentIDX;
-			
-			iStringLength = *(unsigned int*)(pCommentPacket + iPacketByteIDX);
-			iPacketByteIDX += 4;
-			comment.m_pcVendorString = (char*)malloc(iStringLength + 1);
-			memcpy(comment.m_pcVendorString, pCommentPacket + iPacketByteIDX, iStringLength);
-			iPacketByteIDX += iStringLength;
-			comment.m_pcVendorString[iStringLength] = '\0';
-			
-			// Read in the comments
-			comment.m_iNumComments = *(unsigned int*)(pCommentPacket + iPacketByteIDX);
-			iPacketByteIDX += 4;
-			
-			if (comment.m_iNumComments)
-			{
-				comment.m_ppUserStrings = (char**)malloc(sizeof(char*) * comment.m_iNumComments);
-				
-				for (iCommentIDX = 0; iCommentIDX < comment.m_iNumComments; iCommentIDX++)
-				{
-					iStringLength = *(unsigned int*)(pCommentPacket + iPacketByteIDX);
-					iPacketByteIDX += 4;
-					comment.m_ppUserStrings[iCommentIDX] = (char*)malloc(iStringLength + 1);
-					memcpy(comment.m_ppUserStrings[iCommentIDX], pCommentPacket + iPacketByteIDX, iStringLength);
-					iPacketByteIDX += iStringLength;
-					comment.m_ppUserStrings[iCommentIDX][iStringLength] = '\0';
-				}
-			}
-			
-			else
-				comment.m_ppUserStrings = NULL;
-				
-		}
-		
-		free(pCommentPacket);
-	}
-	
-	// Update the comment struct
-	{
-		CPLI_OGG_UpdateCommentString(&comment, "TITLE", pItem->m_pcTrackName);
-		CPLI_OGG_UpdateCommentString(&comment, "ARTIST", pItem->m_pcArtist);
-		CPLI_OGG_UpdateCommentString(&comment, "ALBUM", pItem->m_pcAlbum);
-		CPLI_OGG_UpdateCommentString(&comment, "TRACKNUMBER", pItem->m_pcTrackNum_AsText);
-		
-		if (pItem->m_cGenre != CIC_INVALIDGENRE)
-			CPLI_OGG_UpdateCommentString(&comment, "GENRE", glb_pcGenres[pItem->m_cGenre]);
-		else
-			CPLI_OGG_UpdateCommentString(&comment, "GENRE", "");
-	}
-	
-	// Work out the size of the packet
-	{
-		unsigned int iCommentIDX;
-		
-		iRequiredFrameLength = 0;
-		
-		iRequiredFrameLength += 7;  // vorbis packet header
-		iRequiredFrameLength += 4 + strlen(comment.m_pcVendorString);
-		
-		iRequiredFrameLength += 4;  // number of comments
-		
-		for (iCommentIDX = 0; iCommentIDX < comment.m_iNumComments; iCommentIDX++)
-			iRequiredFrameLength += 4 + strlen(comment.m_ppUserStrings[iCommentIDX]);
-			
-		iRequiredFrameLength++;  // framing bit (byte??)
-	}
-	
-	// Resize file to accomodate new data
-	
-	if (iRequiredFrameLength > iCommentFrameLength)
-		CPLI_GrowFile(hFile, dwCommentStartOffset, iRequiredFrameLength - iCommentFrameLength);
-	else if (iRequiredFrameLength < iCommentFrameLength)
-		CPLI_ShrinkFile(hFile, dwCommentStartOffset, iCommentFrameLength - iRequiredFrameLength);
-		
-	// Pack data into block
-	{
-		BYTE* pFrame;
-		int iFrameAndHeaderLength;
-		int iChunkBytes;
-		int iWriteCursor;
-		int iChunkSizeRemaining;
-		int iLacingBytesWritten;
-		
-		// Work out frame length - including the header
-		iFrameAndHeaderLength = sizeof(info_comment.m_Header);
-		iChunkBytes = (iRequiredFrameLength >> 8) + 1; // comment packet
-		iChunkBytes += (iCodeBookLength >> 8) + 1; // codebook packet
-		
-		iFrameAndHeaderLength += iChunkBytes;
-		iFrameAndHeaderLength += iRequiredFrameLength;  // actual frame data (comment)
-		iFrameAndHeaderLength += iCodeBookLength;    // actual frame data (codebook)
-		
-		pFrame = (BYTE*)malloc(iFrameAndHeaderLength);
-		
-		// Write the header
-		info_comment.m_Header.m_cNumSegments = iChunkBytes;
-		iWriteCursor = 0;
-		info_comment.m_Header.m_cPageCheckum[0] = 0x0;
-		info_comment.m_Header.m_cPageCheckum[1] = 0x0;
-		info_comment.m_Header.m_cPageCheckum[2] = 0x0;
-		info_comment.m_Header.m_cPageCheckum[3] = 0x0;
-		memcpy(pFrame, &info_comment.m_Header, sizeof(info_comment.m_Header));
-		iWriteCursor += sizeof(info_comment.m_Header);
-		
-		// Write the chunk bytes for the primary packet lacing
-		iLacingBytesWritten = 0;
-		
-		for (iChunkSizeRemaining = iRequiredFrameLength; iChunkSizeRemaining > 0;)
-		{
-			int iThisChunkByte;
-			
-			if (iChunkSizeRemaining > 0xFF)
-				iThisChunkByte = 0xFF;
-			else
-				iThisChunkByte = iChunkSizeRemaining;
-				
-			pFrame[iWriteCursor++] = iThisChunkByte;
-			iChunkSizeRemaining -= iThisChunkByte;
-			iLacingBytesWritten++;
-		}
-		
-		// Write out secondry packet lacing
-		
-		for (iChunkSizeRemaining = iCodeBookLength; iChunkSizeRemaining > 0;)
-		{
-			int iThisChunkByte;
-			
-			if (iChunkSizeRemaining > 0xFF)
-				iThisChunkByte = 0xFF;
-			else
-				iThisChunkByte = iChunkSizeRemaining;
-				
-			pFrame[iWriteCursor++] = iThisChunkByte;
-			iChunkSizeRemaining -= iThisChunkByte;
-			iLacingBytesWritten++;
-		}
-		
-		// Write out the primary packet data
-		{
-			unsigned int iStringLength;
-			unsigned int iCommentIDX;
-			
-			// Voribs header
-			pFrame[iWriteCursor++] = 0x3;
-			memcpy(pFrame + iWriteCursor, "vorbis", 6);
-			iWriteCursor += 6;
-			
-			// Vendor string
-			iStringLength = strlen(comment.m_pcVendorString);
-			*(unsigned int*)(pFrame + iWriteCursor) = iStringLength;
-			iWriteCursor += 4;
-			memcpy(pFrame + iWriteCursor, comment.m_pcVendorString, iStringLength);
-			iWriteCursor += iStringLength;
-			
-			// Comments
-			*(unsigned int*)(pFrame + iWriteCursor) = comment.m_iNumComments;
-			iWriteCursor += 4;
-			
-			for (iCommentIDX = 0; iCommentIDX < comment.m_iNumComments; iCommentIDX++)
-			{
-				iStringLength = strlen(comment.m_ppUserStrings[iCommentIDX]);
-				*(unsigned int*)(pFrame + iWriteCursor) = iStringLength;
-				iWriteCursor += 4;
-				memcpy(pFrame + iWriteCursor, comment.m_ppUserStrings[iCommentIDX], iStringLength);
-				iWriteCursor += iStringLength;
-			}
-			
-			// Stop bit
-			pFrame[iWriteCursor++] = 0xFF;
-		}
-		
-		// Write out secondry packet data
-		CP_ASSERT(iWriteCursor + (int)iCodeBookLength == iFrameAndHeaderLength);
-		
-		memcpy(pFrame + iWriteCursor, pCodeBook, iCodeBookLength);
-		
-		// Build the CRC
-		{
-			unsigned int iCRC;
-			int iByteIDX;
-			const ogg_uint32_t crc_lookup[256]; // found in framing.c (ogg)
-			
-			iCRC = 0;
-			
-			for (iByteIDX = 0; iByteIDX < iFrameAndHeaderLength; iByteIDX++)
-				iCRC = (iCRC << 8) ^ crc_lookup[((iCRC >> 24)&0xff)^pFrame[iByteIDX] ];
-				
-			// Paste the CRC into the stream
-			memset(pFrame + 22, 0, 4);
-			pFrame[22] = (BYTE)(iCRC & 0xff);
-			pFrame[23] = (BYTE)((iCRC >> 8) & 0xff);
-			pFrame[24] = (BYTE)((iCRC >> 16) & 0xff);
-			pFrame[25] = (BYTE)((iCRC >> 24) & 0xff);
-		}
-		
-		// Write out the comment
-		SetFilePointer(hFile, dwCommentStartOffset, 0, FILE_BEGIN);
-		
-		WriteFile(hFile, pFrame, iFrameAndHeaderLength, &dwBytesTransferred, NULL);
-		
-		free(pFrame);
-		
-		free(pCodeBook);
-	}
-	
-	// Clean up comment struct
-	{
-		unsigned int iCommentIDX;
-		
-		for (iCommentIDX = 0; iCommentIDX < comment.m_iNumComments; iCommentIDX++)
-			free(comment.m_ppUserStrings[iCommentIDX]);
-			
-		free(comment.m_ppUserStrings);
-		free(comment.m_pcVendorString);
-	}
+	// This function has been replaced by TagLib-based metadata writing
+	// OGG files are now handled by the TagLib wrapper functions
+	(void)pItem;  // Suppress unused parameter warning
+	(void)hFile;  // Suppress unused parameter warning
 }
 
-//
-//
-//
+
 void CPLI_ShrinkFile(HANDLE hFile, const DWORD dwStartOffset, const unsigned int iNumBytes)
 {
 	BYTE pBuffer[0x10000];
@@ -2442,6 +1545,111 @@ BOOL CPLI_GrowFile(HANDLE hFile, const DWORD dwStartOffset, const unsigned int i
 	}
 	
 	return TRUE;
+}
+
+//
+//
+// TagLib-based tag reading/writing functions
+//
+void CPLI_ReadTag_TagLib(CPs_PlaylistItem* pItem)
+{
+	char* pcTitle = NULL;
+	char* pcArtist = NULL;
+	char* pcAlbum = NULL;
+	char* pcYear = NULL;
+	char* pcComment = NULL;
+	char* pcGenre = NULL;
+	unsigned int iTrackNum = 0;
+	unsigned int iLength = 0;
+	int iTagType = 0;
+	
+	if (!pItem || !pItem->m_pcPath)
+	{
+		CPLII_RemoveTagInfo(pItem);
+		pItem->m_enTagType = ttNone;
+		return;
+	}
+
+	// Try to read tags using TagLib
+	BOOL bSuccess = CPTL_ReadTags(pItem->m_pcPath,
+								  &pcTitle, &pcArtist, &pcAlbum,
+								  &pcYear, &pcComment, &pcGenre,
+								  &iTrackNum, &iLength, &iTagType);
+
+	if (bSuccess)
+	{
+		// Set the tag information
+		STR_AllocSetString(&pItem->m_pcArtist, pcArtist, FALSE);
+		STR_AllocSetString(&pItem->m_pcAlbum, pcAlbum, FALSE);
+		STR_AllocSetString(&pItem->m_pcTrackName, pcTitle, FALSE);
+		STR_AllocSetString(&pItem->m_pcComment, pcComment, FALSE);
+		STR_AllocSetString(&pItem->m_pcYear, pcYear, FALSE);
+		
+		// Handle genre - convert string to genre index
+		if (pcGenre)
+		{
+			int iGenreIndex = CPTL_GetGenreIndex(pcGenre);
+			if (iGenreIndex >= 0 && iGenreIndex < 256)
+				pItem->m_cGenre = (unsigned char)iGenreIndex;
+			else
+				pItem->m_cGenre = 255; // "Unknown" or default
+		}
+		else
+		{
+			pItem->m_cGenre = 255;
+		}
+		
+		// Handle track number - convert to unsigned char
+		if (iTrackNum > 0 && iTrackNum <= 255)
+			pItem->m_cTrackNum = (unsigned char)iTrackNum;
+		else
+			pItem->m_cTrackNum = 0;
+		
+		// Set tag type
+		if (iTagType == 2)
+			pItem->m_enTagType = ttID3v2;
+		else if (iTagType == 1)
+			pItem->m_enTagType = ttID3v1;
+		else
+			pItem->m_enTagType = ttNone;
+		
+		// Clean up allocated strings from TagLib
+		if (pcTitle) free(pcTitle);
+		if (pcArtist) free(pcArtist);
+		if (pcAlbum) free(pcAlbum);
+		if (pcYear) free(pcYear);
+		if (pcComment) free(pcComment);
+		if (pcGenre) free(pcGenre);
+	}
+	else
+	{
+		// No tags found
+		CPLII_RemoveTagInfo(pItem);
+		pItem->m_enTagType = ttNone;
+	}
+}
+
+void CPLI_WriteTag_TagLib(CPs_PlaylistItem* pItem)
+{
+	const char* pcGenre = NULL;
+	
+	if (!pItem || !pItem->m_pcPath)
+		return;
+
+	// Convert genre index back to string
+	if (pItem->m_cGenre < CIC_NUMGENRES)
+		pcGenre = CPTL_GetGenreString(pItem->m_cGenre);
+
+	// Write tags using TagLib
+	CPTL_WriteTags(pItem->m_pcPath,
+				   pItem->m_pcTrackName,
+				   pItem->m_pcArtist,
+				   pItem->m_pcAlbum,
+				   pItem->m_pcYear,
+				   pItem->m_pcComment,
+				   pcGenre,
+				   pItem->m_cTrackNum,
+				   0); // length is not typically written to tags
 }
 
 //
