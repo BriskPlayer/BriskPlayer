@@ -596,12 +596,10 @@ void CP_InitialiseCodec_WinAmpPlugin(CPs_CoDecModule* pCoDec)
 	   RegQueryValue(hKeyWinAmp, NULL, NULL, &iValueLen);
 	   pcValue = (char*)malloc(iValueLen);
 	   RegQueryValue(hKeyWinAmp, NULL, pcValue, &iValueLen);
-	
-	   if(sscanf(pcValue, "\"%255[^\"]", cWinAmpPath) == 1)
+
+	   if(sscanf_s(pcValue, "\"%255[^\"]", cWinAmpPath, (unsigned)sizeof(cWinAmpPath)) == 1)
 	   {
-	    int iLastSlashPos, iCharIDX;
-	
-	    // Remove the WinAmp exe name
+	    int iLastSlashPos, iCharIDX;	    // Remove the WinAmp exe name
 	    iLastSlashPos = CP_INVALIDCHARPOS;
 	    for(iCharIDX=0; cWinAmpPath[iCharIDX]; iCharIDX++)
 	    {

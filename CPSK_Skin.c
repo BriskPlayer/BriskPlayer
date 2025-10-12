@@ -124,7 +124,7 @@ COLORREF CPSK_DecodeColour(const char* pcColour)
 {
 	unsigned long dwColour;
 	
-	if (sscanf(pcColour, "#%lx", &dwColour) == 1)
+	if (sscanf_s(pcColour, "#%lx", &dwColour) == 1)
 	{
 		// Swap red and blue bytes
 		return ((dwColour&0x0000FF) << 16) | (dwColour&0x00FF00) | ((dwColour&0xFF0000) >> 16);
@@ -144,14 +144,14 @@ void CPSK_ReadSkinCommand_Define(CP_COMPOSITEFILE hComposite, CPs_Skin* pSkin, c
 	
 	// Decode params
 	
-	if (sscanf(pcParams, " %32[A-Za-z_] = \"%128[^\"]\"", cSymbol, cValue) != 2)
+	if (sscanf_s(pcParams, " %32[A-Za-z_] = \"%128[^\"]\"", cSymbol, (unsigned)sizeof(cSymbol), cValue, (unsigned)sizeof(cValue)) != 2)
 		return;
 		
 	if (stricmp(cSymbol, "CoolSkinVersion") == 0)
 	{
 		unsigned long version;
 		
-		sscanf(cValue, " %lu ", &version);
+		sscanf_s(cValue, " %lu ", &version);
 		pSkin->m_dwSkinVersion = version;
 	}
 	
@@ -200,7 +200,7 @@ void CPSK_ReadSkinCommand_Define(CP_COMPOSITEFILE hComposite, CPs_Skin* pSkin, c
 	{
 		long left, top, right, bottom;
 		
-		if (sscanf(cValue, " %ld , %ld ,  %ld , %ld ",
+		if (sscanf_s(cValue, " %ld , %ld ,  %ld , %ld ",
 				   &left,
 				   &right,
 				   &top,
@@ -222,7 +222,7 @@ void CPSK_ReadSkinCommand_Define(CP_COMPOSITEFILE hComposite, CPs_Skin* pSkin, c
 	{
 		long cx, cy;
 		
-		if (sscanf(cValue, " %ld , %ld ", &cx, &cy) != 2)
+		if (sscanf_s(cValue, " %ld , %ld ", &cx, &cy) != 2)
 		{
 			cx = 400;
 			cy = 200;
@@ -247,8 +247,8 @@ void CPSK_ReadSkinCommand_TiledDraw(CP_COMPOSITEFILE hComposite, CPs_Skin* pSkin
 	
 	// Decode params
 	
-	if (sscanf(pcParams, " %32[A-Za-z_-] , \"%128[^\"]\" , %ld , %ld , %ld , %ld ",
-			   cElement, cFile, &left, &top, &right, &bottom) != 6)
+	if (sscanf_s(pcParams, " %32[A-Za-z_-] , \"%128[^\"]\" , %ld , %ld , %ld , %ld ",
+			   cElement, (unsigned)sizeof(cElement), cFile, (unsigned)sizeof(cFile), &left, &top, &right, &bottom) != 6)
 	{
 		return;
 	}
@@ -363,8 +363,8 @@ void CPSK_ReadSkinCommand_ButtonDraw(CP_COMPOSITEFILE hComposite, CPs_Skin* pSki
 	
 	// Decode params
 	
-	if (sscanf(pcParams, " %32[A-Za-z_-] , \"%128[^\"]\" , %12s ",
-			   cElement, cFile, cStates) != 3)
+	if (sscanf_s(pcParams, " %32[A-Za-z_-] , \"%128[^\"]\" , %12s ",
+			   cElement, (unsigned)sizeof(cElement), cFile, (unsigned)sizeof(cFile), cStates, (unsigned)sizeof(cStates)) != 3)
 	{
 		return;
 	}
@@ -420,7 +420,7 @@ DWORD CPSK_DecodeAlign(const char* pcAlign)
 	strcpy(cAlign, pcAlign);
 	// while(sscanf(cAlign, " %128[a-zA-Z_] | %[^\0]", cAlignFlag, cAlign_Remains) > 0)
 	
-	while (sscanf(cAlign, " %128[a-zA-Z_] | %128s", cAlignFlag, cAlign_Remains) > 0)
+	while (sscanf_s(cAlign, " %128[a-zA-Z_] | %128s", cAlignFlag, (unsigned)sizeof(cAlignFlag), cAlign_Remains, (unsigned)sizeof(cAlign_Remains)) > 0)
 	{
 		strcpy(cAlign, cAlign_Remains);
 		cAlign_Remains[0] = '\0';
@@ -456,8 +456,8 @@ void CPSK_ReadSkinCommand_AddVerb(CP_COMPOSITEFILE hComposite, CPs_CommandTarget
 	
 	// Decode params
 	
-	if (sscanf(pcParams, " %32[A-Za-z_-] , \"%128[^\"]\" , %12[0-9a-zA-Z] , %ld , %ld , \"%128[^\"]\" ",
-			   cElement, cFile, cStates, &x, &y, cAlign) != 6)
+	if (sscanf_s(pcParams, " %32[A-Za-z_-] , \"%128[^\"]\" , %12[0-9a-zA-Z] , %ld , %ld , \"%128[^\"]\" ",
+			   cElement, (unsigned)sizeof(cElement), cFile, (unsigned)sizeof(cFile), cStates, (unsigned)sizeof(cStates), &x, &y, cAlign, (unsigned)sizeof(cAlign)) != 6)
 	{
 		return;
 	}
@@ -521,8 +521,8 @@ void CPSK_ReadSkinCommand_AddIndicator(CP_COMPOSITEFILE hComposite, CPs_Skin* pS
 	
 	// Decode params
 	
-	if (sscanf(pcParams, " %32[A-Za-z_-] , %ld , %ld , %ld , %ld , \"%128[^\"]\" ",
-			   cElement, &left, &top, &right, &bottom, cAlign) != 6)
+	if (sscanf_s(pcParams, " %32[A-Za-z_-] , %ld , %ld , %ld , %ld , \"%128[^\"]\" ",
+			   cElement, (unsigned)sizeof(cElement), &left, &top, &right, &bottom, cAlign, (unsigned)sizeof(cAlign)) != 6)
 	{
 		return;
 	}
@@ -561,7 +561,7 @@ void CPSK_ReadSkinLine(CP_COMPOSITEFILE hComposite, CPs_Skin* pSkin, const char*
 	// Decode command
 	// if(sscanf(pcLine, " %32s %480[^\0]", cCommand, cParams) != 2)
 	
-	if (sscanf(pcLine, " %32s", cCommand) != 1)
+	if (sscanf_s(pcLine, " %32s", cCommand, (unsigned)sizeof(cCommand)) != 1)
 		return;
 		
 		

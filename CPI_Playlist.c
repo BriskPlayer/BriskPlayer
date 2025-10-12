@@ -1227,7 +1227,7 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 					
 					// Is there a file on this line (strip whitespace from start)
 					
-					if (sscanf(pcPlaylistBuffer + iLastLineStartIDX, " %511[^\r\n]", cBuffer) == 1)
+					if (sscanf_s(pcPlaylistBuffer + iLastLineStartIDX, " %511[^\r\n]", cBuffer, (unsigned)sizeof(cBuffer)) == 1)
 					{
 						// Something has been read - ignore lines starting with #
 						if (cBuffer[0] != '#')
@@ -1278,7 +1278,7 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 							
 							// Is there a file on this line (strip whitespace from start)
 							
-							if (sscanf(pcPlaylistBuffer + iLastLineStartIDX, " %511[^\r\n]", cBuffer) == 1)
+							if (sscanf_s(pcPlaylistBuffer + iLastLineStartIDX, " %511[^\r\n]", cBuffer, (unsigned)sizeof(cBuffer)) == 1)
 							{
 								// Something has been read - ignore lines starting with #
 								if (cBuffer[0] != '#')

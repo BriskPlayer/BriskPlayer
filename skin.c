@@ -476,8 +476,8 @@ void    main_skin_check_ini_value(char *textposition,
 	}
 	
 	// sscanf(textposition, "%s %d %d %d %d %d %d %d %d %d %[^\0]",
-	sscanf(textposition, "%s %d %d %d %d %d %d %d %d %d %s",
-		   name, &x, &y, &w, &h, &maxw, &x2, &y2, &w2, &h2, tooltip);
+	sscanf_s(textposition, "%s %d %d %d %d %d %d %d %d %d %s",
+		   name, (unsigned)sizeof(name), &x, &y, &w, &h, &maxw, &x2, &y2, &w2, &h2, tooltip, (unsigned)sizeof(tooltip));
 	       
 	for (teller = 0; teller < Lastone; teller++)
 	{
@@ -509,7 +509,7 @@ void    main_skin_check_ini_value(char *textposition,
 		if (stricmp(name, "transparentcolor") == 0)
 		{
 			unsigned int     colortext;
-			sscanf(textposition, "%s %x", name, &colortext);
+			sscanf_s(textposition, "%s %x", name, (unsigned)sizeof(name), &colortext);
 			Skin.transparentcolor = colortext;
 			return;
 		}
