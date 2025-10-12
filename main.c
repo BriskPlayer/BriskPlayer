@@ -496,6 +496,7 @@ int     playlist_open_file(BOOL clearlist)
 		"All Supported files\0*.mp1;*.mp2;*.mp3;*.m3u;*.pls;*.wav;*.ogg;*.oga\0"
 		"MPEG audio files (*.mp1;*.mp2;*.mp3)\0*.mp1;*.mp2;*.mp3\0"
 		"Vorbis files (*.ogg;*.oga)\0*.ogg;*.oga\0"
+		"FLAC files (*.flac)\0*.flac\0"
 		"Playlist files (*.m3u;*.pls)\0*.m3u;*.pls\0"
 		"WAV files (*.wav)\0*.wav\0"
 		"All Files (*.*)\0*.*\0";
