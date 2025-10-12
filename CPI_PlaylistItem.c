@@ -1599,11 +1599,35 @@ void CPLI_ReadTag_TagLib(CPs_PlaylistItem* pItem)
 			pItem->m_cGenre = 255;
 		}
 		
-		// Handle track number - convert to unsigned char
+		// Handle track number - convert to unsigned char and generate text
 		if (iTrackNum > 0 && iTrackNum <= 255)
+		{
+			char cTempString[33];
 			pItem->m_cTrackNum = (unsigned char)iTrackNum;
+			
+			// Generate track number text
+			if (pItem->m_pcTrackNum_AsText)
+				free(pItem->m_pcTrackNum_AsText);
+				
+			pItem->m_pcTrackNum_AsText = (char*)malloc(CPC_TRACKNUMASTEXTBUFFERSIZE);
+			_itoa_s(pItem->m_cTrackNum, cTempString, sizeof(cTempString), 10);
+			strncpy(pItem->m_pcTrackNum_AsText, cTempString, CPC_TRACKNUMASTEXTBUFFERSIZE);
+		}
 		else
-			pItem->m_cTrackNum = 0;
+		{
+			pItem->m_cTrackNum = CIC_INVALIDTRACKNUM;
+			if (pItem->m_pcTrackNum_AsText)
+			{
+				free(pItem->m_pcTrackNum_AsText);
+				pItem->m_pcTrackNum_AsText = NULL;
+			}
+		}
+		
+		// Handle track length - convert and format duration
+		if (iLength > 0)
+		{
+			CPLI_DecodeLength(pItem, iLength);
+		}
 		
 		// Set tag type
 		if (iTagType == 2)

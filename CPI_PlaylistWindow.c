@@ -220,7 +220,7 @@ void CPlaylistWindow_CreateListView(void)
 				  "Stack",
 				  options.playlist_column_widths[0],
 				  (wp_GetItemText)CPLI_GetTrackStackPos_AsText,
-				  CPLV_COLFLAG_NOHIDE);
+				  options.playlist_column_visible[0] ? CPLV_COLFLAG_NONE : CPLV_COLFLAG_HIDDEN);
 	CLV_SetColumnCustomDrawColour(globals.m_hPlaylistViewControl, PLAYLIST_TRACKSTACK, LVCB_GetTrackStackItemColour);
 	CLV_SetColumnAlign(globals.m_hPlaylistViewControl, PLAYLIST_TRACKSTACK, lcaRight);
 	CLV_AddColumn(globals.m_hPlaylistViewControl,
@@ -247,7 +247,7 @@ void CPlaylistWindow_CreateListView(void)
 				  "TrackNum",
 				  options.playlist_column_widths[5],
 				  (wp_GetItemText)CPLI_GetTrackNum_AsText,
-				  options.playlist_column_visible[5] ? CPLV_COLFLAG_NONE : CPLV_COLFLAG_HIDDEN);
+				  CPLV_COLFLAG_NONE);
 	CLV_SetColumnAlign(globals.m_hPlaylistViewControl, PLAYLIST_TRACKNUM, lcaRight);
 	CLV_AddColumn(globals.m_hPlaylistViewControl,
 				  "Comment",
@@ -273,7 +273,7 @@ void CPlaylistWindow_CreateListView(void)
 				  "Length",
 				  options.playlist_column_widths[10],
 				  (wp_GetItemText)CPLI_GetTrackLength_AsText,
-				  options.playlist_column_visible[10] ? CPLV_COLFLAG_NONE : CPLV_COLFLAG_HIDDEN);
+				  CPLV_COLFLAG_NONE);
 	CLV_SetColumnAlign(globals.m_hPlaylistViewControl, PLAYLIST_LENGTH, lcaRight);
 	
 	for (iColumnIDX = 1; iColumnIDX <= PLAYLIST_last; iColumnIDX++)

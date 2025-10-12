@@ -43,8 +43,9 @@ void    options_read(void)
 {
 	char    pathbuf[MAX_PATH];
 	int     teller;
-	int     widths[] = {   20,   200,  200,  200,  50,   50,   70,    100,  100,   100, 50};
-	int     visibles[] = { TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, TRUE };
+	int     widths[] = {   20,   200,  200,  200,  50,   70,   70,    100,  100,   100, 80};
+	int     visibles[] = { FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, TRUE };
+	int     sequences[] = { 5,    1,    2,    3,    4,    6,    7,     8,    9,     0,   10};
 	int iColIDX;
 	
 	main_get_program_path(NULL, pathbuf, MAX_PATH);
@@ -57,7 +58,7 @@ void    options_read(void)
 		options.playlist_column_widths[iColIDX] = GetPrivateProfileInt("WindowPos", keyname, widths[iColIDX], pathbuf);
 		
 		sprintf(keyname, "PlaylistSeq%d", iColIDX);
-		options.playlist_column_seq[iColIDX] = GetPrivateProfileInt("WindowPos", keyname, iColIDX, pathbuf);
+		options.playlist_column_seq[iColIDX] = GetPrivateProfileInt("WindowPos", keyname, sequences[iColIDX], pathbuf);
 		
 		sprintf(keyname, "PlaylistVis%d", iColIDX);
 		options.playlist_column_visible[iColIDX] = GetPrivateProfileInt("WindowPos", keyname, visibles[iColIDX], pathbuf) ? TRUE : FALSE;
@@ -171,7 +172,7 @@ void    options_read(void)
 		GetPrivateProfileInt("Misc", "Autoplay", 0, pathbuf);
 	    
 	options.show_on_taskbar =
-		GetPrivateProfileInt("Misc", "TaskBar", 0, pathbuf);
+		GetPrivateProfileInt("Misc", "TaskBar", 1, pathbuf);
 	    
 	options.show_playlist = GetPrivateProfileInt("Misc", "ShowPlaylist", 0, pathbuf);
 	
