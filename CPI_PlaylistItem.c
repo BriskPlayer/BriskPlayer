@@ -609,7 +609,7 @@ void CPLI_SetTrackNum(CP_HPLAYLISTITEM hItem, const unsigned char iNewValue)
 			
 		pItem->m_pcTrackNum_AsText = (char*)malloc(CPC_TRACKNUMASTEXTBUFFERSIZE);
 		
-		_itoa(pItem->m_cTrackNum, cTempString, 10);
+		_itoa_s(pItem->m_cTrackNum, cTempString, sizeof(cTempString), 10);
 		
 		strncpy(pItem->m_pcTrackNum_AsText, cTempString, CPC_TRACKNUMASTEXTBUFFERSIZE);
 	}

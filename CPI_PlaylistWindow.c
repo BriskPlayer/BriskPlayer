@@ -859,7 +859,10 @@ void CPlaylistWindow_CreateIPEdit(const int iItem, const int iSubItem)
 				iTrackNum = CPLI_GetTrackNum(hClickedItem);
 				
 				if (iTrackNum != CIC_INVALIDTRACKNUM && iTrackNum != 0)
-					SendMessage(windows.wnd_playlist_IPEdit, WM_SETTEXT, 0L, (LPARAM)_itoa(iTrackNum, cTrackNum, 10));
+				{
+					_itoa_s(iTrackNum, cTrackNum, sizeof(cTrackNum), 10);
+					SendMessage(windows.wnd_playlist_IPEdit, WM_SETTEXT, 0L, (LPARAM)cTrackNum);
+				}
 			}
 			
 			SendMessage(windows.wnd_playlist_IPEdit, EM_LIMITTEXT, 3, 0);

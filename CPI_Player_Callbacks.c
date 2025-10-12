@@ -57,20 +57,20 @@ void CPI_Player_cb_OnStreamInfo(CP_HPLAYER hPlayer, const CPs_FileInfo* pInfo)
 
 	// For those people who do like to know the bitrate (!!)
 	if (pInfo->m_iBitRate_Kbs >= 1000)
-		_itoa(pInfo->m_iBitRate_Kbs, globals.main_text_bitrate, 10);
+		_itoa_s(pInfo->m_iBitRate_Kbs, globals.main_text_bitrate, BITRATE_STRLEN, 10);
 	else if (pInfo->m_iBitRate_Kbs < 1000 && pInfo->m_iBitRate_Kbs > 100)
-		_itoa(pInfo->m_iBitRate_Kbs, globals.main_text_bitrate+1, 10);
+		_itoa_s(pInfo->m_iBitRate_Kbs, globals.main_text_bitrate+1, BITRATE_STRLEN-1, 10);
 	else if (pInfo->m_iBitRate_Kbs < 100 && pInfo->m_iBitRate_Kbs > 10)
-		_itoa(pInfo->m_iBitRate_Kbs, globals.main_text_bitrate+2, 10);
+		_itoa_s(pInfo->m_iBitRate_Kbs, globals.main_text_bitrate+2, BITRATE_STRLEN-2, 10);
 	else if (pInfo->m_iBitRate_Kbs < 10)
-		_itoa(pInfo->m_iBitRate_Kbs, globals.main_text_bitrate+3, 10);
+		_itoa_s(pInfo->m_iBitRate_Kbs, globals.main_text_bitrate+3, BITRATE_STRLEN-3, 10);
 	else
 		globals.main_text_bitrate[0] = '\0';
 		
 
 
 	if (pInfo->m_iFreq_Hz)
-		_itoa(pInfo->m_iFreq_Hz / 1000, globals.main_text_frequency, 10);
+		_itoa_s(pInfo->m_iFreq_Hz / 1000, globals.main_text_frequency, FREQ_STRLEN, 10);
 	else
 		globals.main_text_frequency[0] = '\0';
 		

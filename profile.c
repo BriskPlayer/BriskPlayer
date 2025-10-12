@@ -283,51 +283,55 @@ void    options_write(void)
 		
 		// Write the width
 		sprintf(keyname, "PlaylistCol%d", iColIDX);
-		WritePrivateProfileString("WindowPos", keyname, _itoa(options.playlist_column_widths[iColIDX], intbuf, 10), pathbuf);
+		_itoa_s(options.playlist_column_widths[iColIDX], intbuf, sizeof(intbuf), 10);
+		WritePrivateProfileString("WindowPos", keyname, intbuf, pathbuf);
 		
 		// Write the order array
 		sprintf(keyname, "PlaylistSeq%d", iColIDX);
-		WritePrivateProfileString("WindowPos", keyname, _itoa(options.playlist_column_seq[iColIDX], intbuf, 10), pathbuf);
+		_itoa_s(options.playlist_column_seq[iColIDX], intbuf, sizeof(intbuf), 10);
+		WritePrivateProfileString("WindowPos", keyname, intbuf, pathbuf);
 		
 		// Write the visiblity array
 		sprintf(keyname, "PlaylistVis%d", iColIDX);
 		WritePrivateProfileString("WindowPos", keyname, options.playlist_column_visible[iColIDX] ? "1" : "0", pathbuf);
 	}
 	
+	_itoa_s(options.main_window_pos.x, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("WindowPos", // pointer to section name
 	
 							  "WindowX", // pointer to key name
-							  _itoa(options.main_window_pos.x, intbuf, 10), // pointer to string to add
+							  intbuf, // pointer to string to add
 							  pathbuf // pointer to initialization filename
 							 );
+	_itoa_s(options.main_window_pos.y, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("WindowPos", // pointer to section name
 							  "WindowY", // pointer to key name
-							  _itoa(options.main_window_pos.y, intbuf, 10), // pointer to string to add
+							  intbuf, // pointer to string to add
 							  pathbuf // pointer to initialization filename
 							 );
 	                         
+	_itoa_s(options.playlist_window_pos.left, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("WindowPos", // pointer to section name
 							  "PlaylistX", // pointer to key name
-							  _itoa(options.playlist_window_pos.left,
-									intbuf, 10), // pointer to string to add
+							  intbuf, // pointer to string to add
 							  pathbuf // pointer to initialization filename
 							 );
+	_itoa_s(options.playlist_window_pos.top, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("WindowPos", // pointer to section name
 							  "PlaylistY", // pointer to key name
-							  _itoa(options.playlist_window_pos.top,
-									intbuf, 10), // pointer to string to add
+							  intbuf, // pointer to string to add
 							  pathbuf // pointer to initialization filename
 							 );
+	_itoa_s(options.playlist_window_pos.right - options.playlist_window_pos.left, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("WindowPos", // pointer to section name
 							  "PlaylistW", // pointer to key name
-							  _itoa(options.playlist_window_pos.right -
-									options.playlist_window_pos.left, intbuf, 10), // pointer to string to add
+							  intbuf, // pointer to string to add
 							  pathbuf // pointer to initialization filename
 							 );
+	_itoa_s(options.playlist_window_pos.bottom - options.playlist_window_pos.top, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("WindowPos", // pointer to section name
 							  "PlaylistH", // pointer to key name
-							  _itoa(options.playlist_window_pos.bottom -
-									options.playlist_window_pos.top, intbuf, 10), // pointer to string to add
+							  intbuf, // pointer to string to add
 							  pathbuf // pointer to initialization filename
 							 );
 	                         
@@ -378,69 +382,82 @@ void    options_write(void)
 		}
 	}
 	
+	_itoa_s(options.last_selected_skin_number, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Skin", "LastSkin",
-							  _itoa(options.last_selected_skin_number,
-									intbuf, 10), pathbuf);
+							  intbuf, pathbuf);
+	_itoa_s(options.use_playlist_skin, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Skin", "UsePlaylistSkin",
-							  _itoa(options.use_playlist_skin, intbuf, 10),
+							  intbuf,
 							  pathbuf);
 	                          
+	_itoa_s(options.use_default_skin, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Skin", "UseDefault",
-							  _itoa(options.use_default_skin, intbuf, 10),
+							  intbuf,
 							  pathbuf);
+	_itoa_s(options.repeat_playlist, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "Repeat",
-							  _itoa(options.repeat_playlist, intbuf, 10),
+							  intbuf,
 							  pathbuf);
+	_itoa_s(options.shuffle_play, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "Shuffle",
-							  _itoa(options.shuffle_play, intbuf, 10),
+							  intbuf,
 							  pathbuf);
+	_itoa_s(options.easy_move, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "Easymove",
-							  _itoa(options.easy_move, intbuf, 10),
+							  intbuf,
 							  pathbuf);
+	_itoa_s(options.rotate_systray_icon, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "RotateIcon",
-							  _itoa(options.rotate_systray_icon, intbuf,
-									10), pathbuf);
+							  intbuf, pathbuf);
+	_itoa_s(options.always_on_top, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "Ontop",
-							  _itoa(options.always_on_top, intbuf, 10),
+							  intbuf,
 							  pathbuf);
+	_itoa_s(options.auto_exit_after_playing, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "Autoexit",
-							  _itoa(options.auto_exit_after_playing,
-									intbuf, 10), pathbuf);
+							  intbuf, pathbuf);
+	_itoa_s(options.remember_playlist, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "Rememberpls",
-							  _itoa(options.remember_playlist, intbuf, 10),
+							  intbuf,
 							  pathbuf);
+	_itoa_s(options.show_remaining_time, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "Remaining",
-							  _itoa(options.show_remaining_time, intbuf,
-									10), pathbuf);
+							  intbuf, pathbuf);
+	_itoa_s(options.read_id3_tag, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "ReadID3tag",
-							  _itoa(options.read_id3_tag, intbuf, 10),
+							  intbuf,
 							  pathbuf);
+	_itoa_s(options.read_id3_tag_of_selected, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "ReadSelID3tag",
-							  _itoa(options.read_id3_tag_of_selected,
-									intbuf, 10), pathbuf);
+							  intbuf, pathbuf);
+	_itoa_s(options.support_id3v2, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "SuportID3v2",
-							  _itoa(options.support_id3v2, intbuf, 10),
+							  intbuf,
 							  pathbuf);
+	_itoa_s(options.prefer_native_ogg_tags, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "PreferNativeOGGtags",
-							  _itoa(options.prefer_native_ogg_tags, intbuf, 10),
+							  intbuf,
 							  pathbuf);
+	_itoa_s(options.read_id3_tag_in_background, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "BackgroundReadID3",
-							  _itoa(options.read_id3_tag_in_background, intbuf, 10),
+							  intbuf,
 							  pathbuf);
+	_itoa_s(options.work_out_track_lengths, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "WorkOutTrackLengths",
-							  _itoa(options.work_out_track_lengths, intbuf, 10),
+							  intbuf,
 							  pathbuf);
+	_itoa_s(options.allow_multiple_instances, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "AllowMultipleInstances",
-							  _itoa(options.allow_multiple_instances, intbuf,
-									10), pathbuf);
+							  intbuf, pathbuf);
+	_itoa_s(options.decoder_output_mode, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "Outputmode",
-							  _itoa(options.decoder_output_mode, intbuf,
-									10), pathbuf);
+							  intbuf, pathbuf);
+	_itoa_s(options.scroll_track_title, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "Scrolltitle",
-							  _itoa(options.scroll_track_title, intbuf,
-									10), pathbuf);
+							  intbuf, pathbuf);
+	_itoa_s(options.show_playlist, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "ShowPlaylist",
-							  _itoa(options.show_playlist, intbuf, 10),
+							  intbuf,
 							  pathbuf);
 	                          
 	{
@@ -450,32 +467,34 @@ void    options_write(void)
 			WritePrivateProfileString("Misc", "RememberLastSong", "", pathbuf);
 	}
 	
+	_itoa_s(options.allow_file_once_in_playlist, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "Fileonce",
-							  _itoa(options.allow_file_once_in_playlist,
-									intbuf, 10), pathbuf);
+							  intbuf, pathbuf);
+	_itoa_s(options.auto_play_when_started, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "Autoplay",
-							  _itoa(options.auto_play_when_started, intbuf,
-									10), pathbuf);
+							  intbuf, pathbuf);
+	_itoa_s(options.show_on_taskbar, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "TaskBar",
-							  _itoa(options.show_on_taskbar, intbuf, 10),
+							  intbuf,
 							  pathbuf);
+	_itoa_s(options.seconds_delay_after_track, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "DelayTime",
-							  _itoa(options.seconds_delay_after_track,
-									intbuf, 10), pathbuf);
+							  intbuf, pathbuf);
+	_itoa_s(options.remember_skin_count, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "RememberSkins",
-							  _itoa(options.remember_skin_count, intbuf,
-									10), pathbuf);
+							  intbuf, pathbuf);
+	_itoa_s(options.equalizer, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Equalizer", "Active",
-							  _itoa(options.equalizer, intbuf, 10),
+							  intbuf,
 							  pathbuf);
 	                          
 	for (teller = 1; teller <= 8; teller++)
 	{
 		char    keyname[100];
 		sprintf(keyname, "Eq%d", teller);
+		_itoa_s(options.eq_settings[teller], intbuf, sizeof(intbuf), 10);
 		WritePrivateProfileString("Equalizer", keyname,
-								  _itoa(options.eq_settings[teller],
-										intbuf, 10), pathbuf);
+								  intbuf, pathbuf);
 	}
 	
 	// Write quick find defaults
@@ -502,5 +521,6 @@ void    options_write(void)
 	else
 		WritePrivateProfileString("Mixer", "Mode", "Internal", pathbuf);
 		
-	WritePrivateProfileString("Mixer", "InternalVolume", _itoa(globals.m_iVolume, intbuf, 10), pathbuf);
+	_itoa_s(globals.m_iVolume, intbuf, sizeof(intbuf), 10);
+	WritePrivateProfileString("Mixer", "InternalVolume", intbuf, pathbuf);
 }
