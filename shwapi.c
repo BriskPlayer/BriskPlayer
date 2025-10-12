@@ -35,7 +35,7 @@ BOOL    path_is_relative(const char *path)
 	char fname[_MAX_FNAME];
 	char ext[_MAX_EXT];
 	
-	_splitpath(path, drive, dir, fname, ext);
+	_splitpath_s(path, drive, _MAX_DRIVE, dir, _MAX_DIR, fname, _MAX_FNAME, ext, _MAX_EXT);
 	
 	if (!*drive)
 	{
@@ -72,8 +72,8 @@ BOOL    path_remove_filespec(LPTSTR path)
 	char fname[_MAX_FNAME];
 	char ext[_MAX_EXT];
 	
-	_splitpath(path, drive, dir, fname, ext);
-	_makepath(path, drive, dir, NULL, NULL);
+	_splitpath_s(path, drive, _MAX_DRIVE, dir, _MAX_DIR, fname, _MAX_FNAME, ext, _MAX_EXT);
+	_makepath_s(path, MAX_PATH, drive, dir, NULL, NULL);
 	return TRUE;
 }
 

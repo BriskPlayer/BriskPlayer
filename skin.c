@@ -564,8 +564,8 @@ void    main_skin_check_ini_value(char *textposition,
 				
 				main_get_program_path(GetModuleHandle(NULL), modpathbuf,
 									  MAX_PATH);
-				_splitpath(textposition + strlen(name) + 1, drive, dir,
-						   fname, ext);
+				_splitpath_s(textposition + strlen(name) + 1, drive, _MAX_DRIVE, dir, _MAX_DIR,
+						   fname, MAX_PATH, ext, _MAX_EXT);
 				           
 				if (strcmp(drive, "") == 0)
 				{
