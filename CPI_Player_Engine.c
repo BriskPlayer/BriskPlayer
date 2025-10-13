@@ -47,6 +47,111 @@ CPs_CoDecModule* OpenCoDec(CPs_PlayerContext* pContext, const char* pcFilename);
 void CleanupCoDecs(CPs_PlayerContext* pContext);
 void SetCurrentOutputModule(CPs_PlayerContext* pContext, CPs_OutputModule* pNewOuputModule, BOOL* pbForceRefill);
 void AssociateFileExtensions(CPs_PlayerContext* pContext);
+
+// Playlist support
+char* ExtractStreamURLFromPlaylist(const char* pcPlaylistURL);
+
+//
+// Download playlist to temp file and return temp file path
+//
+char* DownloadPlaylistToTempFile(const char* pcPlaylistURL)
+{
+	HINTERNET hInternet, hURL;
+	char* pcTempPath = NULL;
+	char szTempDir[MAX_PATH];
+	char szTempFile[MAX_PATH];
+	HANDLE hFile;
+	DWORD dwBytesRead, dwBytesWritten;
+	const DWORD dwChunkSize = 4096;
+	BYTE buffer[4096];
+	
+	printf("DownloadPlaylistToTempFile: Downloading %s\n", pcPlaylistURL);
+	
+	// Get temp directory
+	if (GetTempPath(sizeof(szTempDir), szTempDir) == 0)
+	{
+		printf("DownloadPlaylistToTempFile: GetTempPath failed\n");
+		return NULL;
+	}
+	
+	// Generate temp filename
+	if (GetTempFileName(szTempDir, "BRP", 0, szTempFile) == 0)
+	{
+		printf("DownloadPlaylistToTempFile: GetTempFileName failed\n");
+		return NULL;
+	}
+	
+	// Determine file extension from URL
+	char* pcExt = ".tmp";
+	if (strstr(pcPlaylistURL, ".pls")) pcExt = ".pls";
+	else if (strstr(pcPlaylistURL, ".m3u")) pcExt = ".m3u";
+	else if (strstr(pcPlaylistURL, ".m3u8")) pcExt = ".m3u8";
+	
+	// Append proper extension
+	strcat(szTempFile, pcExt);
+	
+	printf("DownloadPlaylistToTempFile: Temp file: %s\n", szTempFile);
+	
+	// Download the playlist
+	hInternet = InternetOpen("BriskPlayer/3.0", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0L);
+	if (!hInternet) 
+	{
+		printf("DownloadPlaylistToTempFile: InternetOpen failed\n");
+		return NULL;
+	}
+	
+	hURL = InternetOpenUrl(hInternet, pcPlaylistURL, NULL, 0, 
+						   INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD, 0);
+	if (!hURL)
+	{
+		printf("DownloadPlaylistToTempFile: InternetOpenUrl failed\n");
+		InternetCloseHandle(hInternet);
+		return NULL;
+	}
+	
+	// Create temp file
+	hFile = CreateFile(szTempFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY, NULL);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		printf("DownloadPlaylistToTempFile: CreateFile failed\n");
+		InternetCloseHandle(hURL);
+		InternetCloseHandle(hInternet);
+		return NULL;
+	}
+	
+	// Download and write to file
+	DWORD dwTotalBytes = 0;
+	while (InternetReadFile(hURL, buffer, dwChunkSize, &dwBytesRead) && dwBytesRead > 0)
+	{
+		if (!WriteFile(hFile, buffer, dwBytesRead, &dwBytesWritten, NULL) || dwBytesWritten != dwBytesRead)
+		{
+			printf("DownloadPlaylistToTempFile: WriteFile failed\n");
+			CloseHandle(hFile);
+			InternetCloseHandle(hURL);
+			InternetCloseHandle(hInternet);
+			DeleteFile(szTempFile);
+			return NULL;
+		}
+		dwTotalBytes += dwBytesRead;
+	}
+	
+	CloseHandle(hFile);
+	InternetCloseHandle(hURL);
+	InternetCloseHandle(hInternet);
+	
+	printf("DownloadPlaylistToTempFile: Downloaded %lu bytes to %s\n", dwTotalBytes, szTempFile);
+	
+	if (dwTotalBytes == 0)
+	{
+		printf("DownloadPlaylistToTempFile: No content downloaded\n");
+		DeleteFile(szTempFile);
+		return NULL;
+	}
+	
+	// Return the temp file path
+	pcTempPath = _strdup(szTempFile);
+	return pcTempPath;
+}
 ////////////////////////////////////////////////////////////////////////////////
 //
 //
@@ -76,6 +181,9 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 	CP_InitialiseCodec_WAV(&playercontext.m_CoDecs[CP_CODEC_WAV]);
 	CP_InitialiseCodec_OGG(&playercontext.m_CoDecs[CP_CODEC_OGG]);
 	CP_InitialiseCodec_FLAC(&playercontext.m_CoDecs[CP_CODEC_FLAC]);
+#ifdef HAVE_FAAD2
+	CP_InitialiseCodec_AAC(&playercontext.m_CoDecs[CP_CODEC_AAC]);
+#endif
 	CP_InitialiseCodec_WinAmpPlugin(&playercontext.m_CoDecs[CP_CODEC_WINAMPPLUGIN]);
 	
 	// Initialise output module
@@ -159,8 +267,40 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 						}
 						
 						CP_TRACE1("Openfile \"%s\"", pcFilename);
+						printf("Player Engine: Opening file: %s\n", pcFilename);
 						
-						pNewCoDec = OpenCoDec(&playercontext, pcFilename);
+						// Check if this is a playlist file and download it to temp folder
+						char* pcActualFilename = (char*)pcFilename;
+						char* pcTempPlaylistFile = NULL;
+						
+						if (strstr(pcFilename, ".pls") != NULL || strstr(pcFilename, ".PLS") != NULL ||
+							strstr(pcFilename, ".m3u") != NULL || strstr(pcFilename, ".M3U") != NULL ||
+							strstr(pcFilename, ".m3u8") != NULL || strstr(pcFilename, ".M3U8") != NULL)
+						{
+							printf("Player Engine: Detected playlist file, downloading to temp folder...\n");
+							pcTempPlaylistFile = DownloadPlaylistToTempFile(pcFilename);
+							if (pcTempPlaylistFile)
+							{
+								printf("Player Engine: Downloaded playlist to: %s\n", pcTempPlaylistFile);
+								pcActualFilename = pcTempPlaylistFile;
+							}
+							else
+							{
+								printf("Player Engine: Failed to download playlist file\n");
+								// Continue with original URL as fallback
+							}
+						}
+						
+						pNewCoDec = OpenCoDec(&playercontext, pcActualFilename);
+						
+						// Clean up temp file if we created one
+						if (pcTempPlaylistFile)
+						{
+							// Note: We don't delete the temp file immediately as the playlist
+							// system might need it. It will be cleaned up when the OS cleans temp files
+							// or we could implement a cleanup mechanism later
+							free(pcTempPlaylistFile);
+						}
 						
 						// If the open failed then request a new stream from the interface
 						
@@ -528,8 +668,10 @@ CPs_CoDecModule* OpenCoDec(CPs_PlayerContext* pContext, const char* pcFilename)
 {
 	// const char* pcLastDot = NULL;
 	int iCoDecIDX = 0;
-	BOOL bOpenSucceeded;
+	BOOL bOpenSucceeded = FALSE;
 	DWORD dwCookie = 0;
+	
+	printf("OpenCoDec: Attempting to open file: %s\n", pcFilename);
 	
 	// Find  the extension
 	char *extension = NULL;
@@ -539,10 +681,14 @@ CPs_CoDecModule* OpenCoDec(CPs_PlayerContext* pContext, const char* pcFilename)
 	
 	if (dot)
 	{
+		printf("OpenCoDec: Found extension: %s\n", extension);
+		
 		for (iCoDecIDX = CP_CODEC_first; iCoDecIDX <= CP_CODEC_last; iCoDecIDX++)
 		{
 			if (CPFA_IsAssociated(&pContext->m_CoDecs[iCoDecIDX], extension, &dwCookie) == TRUE)
 			{
+				printf("OpenCoDec: Trying codec %d for extension %s\n", iCoDecIDX, extension);
+				
 				bOpenSucceeded = pContext->m_CoDecs[iCoDecIDX].OpenFile(
 									 &pContext->m_CoDecs[iCoDecIDX],
 									 pcFilename,
@@ -550,11 +696,56 @@ CPs_CoDecModule* OpenCoDec(CPs_PlayerContext* pContext, const char* pcFilename)
 									 pContext->m_pBaseEngineParams->m_hWndNotify);
 									 
 				if (bOpenSucceeded == TRUE)
-					return &pContext->m_CoDecs[iCoDecIDX];		
+				{
+					printf("OpenCoDec: Successfully opened with codec %d\n", iCoDecIDX);
+					return &pContext->m_CoDecs[iCoDecIDX];
+				}
+				else
+				{
+					printf("OpenCoDec: Failed to open with codec %d\n", iCoDecIDX);
+				}
+			}
+		}
+	}
+	else
+	{
+		printf("OpenCoDec: No extension found\n");
+	}
+
+	// If no extension or no codec matched, try fallback for streaming URLs
+	if (!bOpenSucceeded && (!dot || strstr(pcFilename, "http://") == pcFilename || strstr(pcFilename, "https://") == pcFilename || strstr(pcFilename, "icy://") == pcFilename))
+	{
+		printf("OpenCoDec: No extension found or no codec matched - trying fallback for streaming URL\n");
+		
+		// For streaming URLs, try codecs in order of likelihood
+		// Most internet streams are MP3, then AAC, then FLAC, then OGG
+		int iFallbackOrder[] = { CP_CODEC_MPEG, CP_CODEC_AAC, CP_CODEC_FLAC, CP_CODEC_OGG, CP_CODEC_WINAMPPLUGIN };
+		int iFallbackCount = sizeof(iFallbackOrder) / sizeof(iFallbackOrder[0]);
+		
+		for (int i = 0; i < iFallbackCount && !bOpenSucceeded; i++)
+		{
+			iCoDecIDX = iFallbackOrder[i];
+			printf("OpenCoDec: Trying fallback codec %d for streaming URL\n", iCoDecIDX);
+			
+			bOpenSucceeded = pContext->m_CoDecs[iCoDecIDX].OpenFile(
+								 &pContext->m_CoDecs[iCoDecIDX],
+								 pcFilename,
+								 0, // No cookie for fallback attempts
+								 pContext->m_pBaseEngineParams->m_hWndNotify);
+								 
+			if (bOpenSucceeded == TRUE)
+			{
+				printf("OpenCoDec: Successfully opened with fallback codec %d\n", iCoDecIDX);
+				return &pContext->m_CoDecs[iCoDecIDX];
+			}
+			else
+			{
+				printf("OpenCoDec: Failed with fallback codec %d\n", iCoDecIDX);
 			}
 		}
 	}
 
+	printf("OpenCoDec: All attempts failed, returning NULL\n");
 	return NULL;
 }
 

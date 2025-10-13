@@ -1163,6 +1163,7 @@ void CPLI_SetPath(CPs_PlaylistItem* pItem, const char* pcPath)
 		
 	// Store the full path to the file if this isn't a stream
 	if (_strnicmp(CIC_HTTPHEADER, pcPath, 5) != 0
+			&& _strnicmp(CIC_ICYHEADER, pcPath, 4) != 0
 			&& _strnicmp(CIC_HTTPSHEADER, pcPath, 6) != 0
 			&& _strnicmp(CIC_FTPHEADER, pcPath, 4) != 0)
 	{

@@ -32,6 +32,15 @@ if not flacdep.found()
     flacdep = dependency('flac', static : true, method : 'cmake', required : true)
 endif
 
+# FAAD2 for AAC decoding
+faad2dep = dependency('faad2', static : true, method : 'pkg-config', required : false)
+if not faad2dep.found()
+    faad2dep = dependency('faad2', static : true, method : 'cmake', required : false)
+endif
+if not faad2dep.found()
+    faad2dep = dependency('FAAD2', static : true, method : 'cmake', required : false)
+endif
+
 zlibdep = dependency('zlib', static : true, method : 'pkg-config', required : false)
 if not zlibdep.found()
     zlibdep = dependency('zlib', static : true, method : 'cmake', required : true)
@@ -123,6 +132,7 @@ brisksrc = files([
     'CPI_Player_CoDec_OGG.c',
     'CPI_Player_CoDec_WAV.c',
     'CPI_Player_CoDec_FLAC.c',
+    'CPI_Player_CoDec_AAC.c',
     'CPI_Player_CoDec_WinAmpPlugin.c',
     'CPI_Player_Engine.c',
     'CPI_Player_FileAssoc.c',
@@ -166,6 +176,10 @@ endif
 if faudiodep.found()
     deps += [faudiodep, mfplat, propsys, mfuuid, mfreadwrite]
     add_project_arguments('-DHAVE_FAUDIO', language : 'c')
+endif
+if faad2dep.found()
+    deps += [faad2dep]
+    add_project_arguments('-DHAVE_FAAD2', language : 'c')
 endif
 
 briskplayer_exe = executable('briskplayer', brisksrc, briskres, 

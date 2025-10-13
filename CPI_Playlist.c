@@ -321,7 +321,8 @@ void CPL_AddSingleFile_pt2(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hNewFile, co
 		int iLastDotIDX = CPC_INVALIDCHAR;
 		int iLastCharIDX = CPC_INVALIDCHAR;
 		
-		if (_strnicmp(pcPath, CIC_HTTPHEADER, strlen(CIC_HTTPHEADER)) == 0)
+		if (_strnicmp(pcPath, CIC_HTTPHEADER, strlen(CIC_HTTPHEADER)) == 0 ||
+		    _strnicmp(pcPath, CIC_ICYHEADER, strlen(CIC_ICYHEADER)) == 0)
 			iLastCharIDX = strlen(pcPath);
 		else
 			for (iCharIDX = 0; pcPath[iCharIDX]; iCharIDX++)
@@ -408,6 +409,7 @@ void CPL_AddSingleFile(CP_HPLAYLIST hPlaylist, const char* pcPath, const char* p
 		// file name such as http://ipaddr:port/filename.ogg
 		
 		if (_strnicmp(CIC_HTTPHEADER, pcPath, 5) == 0
+				|| _strnicmp(CIC_ICYHEADER, pcPath, 4) == 0
 				|| _strnicmp("https:", pcPath, 6) == 0
 				|| _strnicmp("ftp:", pcPath, 4) == 0)
 			valid = TRUE;
@@ -892,6 +894,8 @@ unsigned int CPL_GetPathVolumeBytes(const char* pcPath)
 	
 	else if (_strnicmp(pcPath, CIC_HTTPHEADER, sizeof(CIC_HTTPHEADER) - 1) == 0)
 		return sizeof(CIC_HTTPHEADER);
+	else if (_strnicmp(pcPath, CIC_ICYHEADER, sizeof(CIC_ICYHEADER) - 1) == 0)
+		return sizeof(CIC_ICYHEADER);
 	else if (_strnicmp(pcPath, CIC_HTTPSHEADER, sizeof(CIC_HTTPSHEADER) - 1) == 0)
 		return sizeof(CIC_HTTPSHEADER);
 	else if (_strnicmp(pcPath, CIC_FTPHEADER, sizeof(CIC_FTPHEADER) - 1) == 0)
@@ -1100,32 +1104,151 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 	
 	if (enFileType == pftPLS)
 	{
-		int iNumFiles, iFileIDX;
-		
-		iNumFiles = GetPrivateProfileInt("playlist", "NumberOfEntries", 0, pcFilename);
-		
-		for (iFileIDX = 0; iFileIDX < iNumFiles; iFileIDX++)
+		// Check if this is a URL or local file
+		if ((_strnicmp(pcFilename, CIC_HTTPHEADER, sizeof(CIC_HTTPHEADER) - 1) == 0) ||
+				(_strnicmp(pcFilename, CIC_ICYHEADER, sizeof(CIC_ICYHEADER) - 1) == 0) ||
+				(_strnicmp(pcFilename, CIC_HTTPSHEADER, sizeof(CIC_HTTPSHEADER) - 1) == 0) ||
+				(_strnicmp(pcFilename, CIC_FTPHEADER, sizeof(CIC_FTPHEADER) - 1) == 0))
 		{
-			DWORD dwNumCharsRead;
-			char cPlsFileHeader[32];
-			char cBuffer[MAX_PATH];
-			char cTitle[1024];
-			sprintf(cPlsFileHeader, "File%d", iFileIDX + 1);
+			// Handle PLS URL - download and parse content
+			HINTERNET hInternet, hURLStream;
+			DWORD dwTimeout, dwBytesRead;
+			INTERNET_BUFFERS internetbuffer;
+			char *pcPlaylistBuffer;
 			
-			// Get the path - leave room for a drive
-			dwNumCharsRead = GetPrivateProfileString("playlist", cPlsFileHeader, NULL, cBuffer, MAX_PATH, pcFilename);
+			printf("CPL_AddFile: Processing PLS URL: %s\n", pcFilename);
 			
-			if (dwNumCharsRead == 0)
-				continue;
+			hInternet = InternetOpen(CP_COOLPLAYER, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0L);
+			if (hInternet == NULL)
+			{
+				printf("CPL_AddFile: InternetOpen failed for PLS URL\n");
+				CPL_cb_LockWindowUpdates(FALSE);
+				return;
+			}
+			
+			dwTimeout = 5000;
+			InternetSetOption(hInternet, INTERNET_OPTION_CONNECT_TIMEOUT, &dwTimeout, sizeof(dwTimeout));
+			
+			hURLStream = InternetOpenUrl(hInternet, pcFilename, NULL, 0, 
+				INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE, 0);
 				
-			sprintf(cPlsFileHeader, "Title%d", iFileIDX + 1);
+			if (hURLStream == NULL)
+			{
+				printf("CPL_AddFile: InternetOpenUrl failed for PLS URL: %s\n", pcFilename);
+				InternetCloseHandle(hInternet);
+				CPL_cb_LockWindowUpdates(FALSE);
+				return;
+			}
 			
-			dwNumCharsRead = GetPrivateProfileString("playlist", cPlsFileHeader, NULL, cTitle, 1024, pcFilename);
+			// Allocate buffer for playlist content
+			pcPlaylistBuffer = (char*)malloc(0x40001);
+			if (!pcPlaylistBuffer)
+			{
+				printf("CPL_AddFile: Memory allocation failed for PLS URL\n");
+				InternetCloseHandle(hURLStream);
+				InternetCloseHandle(hInternet);
+				CPL_cb_LockWindowUpdates(FALSE);
+				return;
+			}
 			
-			if (dwNumCharsRead == 0)
-				CPL_AddPrefixedFile(hPlaylist, cBuffer, NULL, pcFilename, iPlaylist_VolumeBytes, iPlaylist_DirectoryBytes);
-			else
-				CPL_AddPrefixedFile(hPlaylist, cBuffer, cTitle, pcFilename, iPlaylist_VolumeBytes, iPlaylist_DirectoryBytes);
+			// Setup internet buffer
+			internetbuffer.dwStructSize = sizeof(internetbuffer);
+			internetbuffer.Next = NULL;
+			internetbuffer.lpcszHeader = NULL;
+			internetbuffer.lpvBuffer = pcPlaylistBuffer;
+			internetbuffer.dwBufferLength = 0x40000;
+			
+			// Download the playlist
+			BOOL bReadResult = InternetReadFileEx(hURLStream, &internetbuffer, IRF_NO_WAIT, 0);
+			
+			InternetCloseHandle(hURLStream);
+			InternetCloseHandle(hInternet);
+			
+			if ((!bReadResult) || (!internetbuffer.dwBufferLength))
+			{
+				printf("CPL_AddFile: Failed to download PLS content from: %s\n", pcFilename);
+				free(pcPlaylistBuffer);
+				CPL_cb_LockWindowUpdates(FALSE);
+				return;
+			}
+			
+			// Null-terminate the buffer
+			pcPlaylistBuffer[internetbuffer.dwBufferLength] = '\0';
+			printf("CPL_AddFile: Downloaded %lu bytes of PLS content\n", internetbuffer.dwBufferLength);
+			
+			// Parse PLS content manually
+			char* pcLine = pcPlaylistBuffer;
+			char* pcNextLine;
+			
+			while (pcLine && *pcLine)
+			{
+				// Find the end of this line
+				pcNextLine = strchr(pcLine, '\n');
+				if (pcNextLine)
+				{
+					*pcNextLine = '\0';
+					pcNextLine++;
+				}
+				
+				// Remove trailing \r if present
+				int len = strlen(pcLine);
+				if (len > 0 && pcLine[len-1] == '\r')
+					pcLine[len-1] = '\0';
+				
+				// Check if this line contains a File entry
+				if (_strnicmp(pcLine, "File", 4) == 0)
+				{
+					char* pcEquals = strchr(pcLine, '=');
+					if (pcEquals)
+					{
+						pcEquals++; // Skip the '='
+						// Trim leading whitespace
+						while (*pcEquals && (*pcEquals == ' ' || *pcEquals == '\t'))
+							pcEquals++;
+						
+						if (*pcEquals)
+						{
+							printf("CPL_AddFile: Found stream URL: %s\n", pcEquals);
+							CPL_AddPrefixedFile(hPlaylist, pcEquals, NULL, pcFilename, iPlaylist_VolumeBytes, iPlaylist_DirectoryBytes);
+						}
+					}
+				}
+				
+				pcLine = pcNextLine;
+			}
+			
+			free(pcPlaylistBuffer);
+		}
+		else
+		{
+			// Handle local PLS file using GetPrivateProfileString
+			int iNumFiles, iFileIDX;
+			
+			iNumFiles = GetPrivateProfileInt("playlist", "NumberOfEntries", 0, pcFilename);
+			
+			for (iFileIDX = 0; iFileIDX < iNumFiles; iFileIDX++)
+			{
+				DWORD dwNumCharsRead;
+				char cPlsFileHeader[32];
+				char cBuffer[MAX_PATH];
+				char cTitle[1024];
+				sprintf(cPlsFileHeader, "File%d", iFileIDX + 1);
+				
+				// Get the path - leave room for a drive
+				dwNumCharsRead = GetPrivateProfileString("playlist", cPlsFileHeader, NULL, cBuffer, MAX_PATH, pcFilename);
+				
+				if (dwNumCharsRead == 0)
+					continue;
+					
+				sprintf(cPlsFileHeader, "Title%d", iFileIDX + 1);
+				
+				dwNumCharsRead = GetPrivateProfileString("playlist", cPlsFileHeader, NULL, cTitle, 1024, pcFilename);
+				
+				if (dwNumCharsRead == 0)
+					CPL_AddPrefixedFile(hPlaylist, cBuffer, NULL, pcFilename, iPlaylist_VolumeBytes, iPlaylist_DirectoryBytes);
+				else
+					CPL_AddPrefixedFile(hPlaylist, cBuffer, cTitle, pcFilename, iPlaylist_VolumeBytes, iPlaylist_DirectoryBytes);
+			}
 		}
 	}
 	
@@ -1147,6 +1270,7 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 		// If the path is a URL, we will read the playlist from the internet.
 		
 		if ((_strnicmp(pcFilename, CIC_HTTPHEADER, sizeof(CIC_HTTPHEADER) - 1) == 0) ||
+				(_strnicmp(pcFilename, CIC_ICYHEADER, sizeof(CIC_ICYHEADER) - 1) == 0) ||
 				(_strnicmp(pcFilename, CIC_HTTPSHEADER, sizeof(CIC_HTTPSHEADER) - 1) == 0) ||
 				(_strnicmp(pcFilename, CIC_FTPHEADER, sizeof(CIC_FTPHEADER) - 1) == 0))
 		{

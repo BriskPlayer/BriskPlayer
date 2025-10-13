@@ -106,5 +106,6 @@ void CP_InitialiseCodec_MPEG(CPs_CoDecModule* pCoDec);
 void CP_InitialiseCodec_WAV(CPs_CoDecModule* pCoDec);
 void CP_InitialiseCodec_OGG(CPs_CoDecModule* pCoDec);
 void CP_InitialiseCodec_FLAC(CPs_CoDecModule* pCoDec);
+void CP_InitialiseCodec_AAC(CPs_CoDecModule* pCoDec);
 void CP_InitialiseCodec_WinAmpPlugin(CPs_CoDecModule* pCoDec);
 ////////////////////////////////////////////////////////////////////////////////

@@ -185,7 +185,8 @@ void CPP_OMFL_RefillBuffers(CPs_OutputModule* pModule)
 		
 		// saving internet stream
 		
-		if (_strnicmp(pathname, CIC_HTTPHEADER, strlen(CIC_HTTPHEADER)) == 0)
+		if (_strnicmp(pathname, CIC_HTTPHEADER, strlen(CIC_HTTPHEADER)) == 0 ||
+		    _strnicmp(pathname, CIC_ICYHEADER, strlen(CIC_ICYHEADER)) == 0)
 		{
 			strcpy(newpath, "Stream.wav");
 			pFileInfo.m_iFileLength_Secs = 0xffffffff;

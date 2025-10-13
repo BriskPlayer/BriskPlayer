@@ -65,6 +65,7 @@ typedef void* CP_HSYSICON;
 #define CP_COOLPLAYER					"BriskPlayer"
 #define CIC_HTTPHEADER					"http://"
 #define CIC_HTTPSHEADER					"https://"
+#define CIC_ICYHEADER					"icy://"
 #define CIC_FTPHEADER					"ftp://"
 
 #ifdef _DEBUG

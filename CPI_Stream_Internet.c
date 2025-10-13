@@ -46,7 +46,8 @@ typedef struct _CPs_BufferFillerContext
 	CPs_CircleBuffer* m_pCircleBuffer;
 	BOOL m_bTerminate;
 	HWND m_hWndNotify;
-	
+	DWORD m_dwIcyMetaInt;      // Metadata interval from server
+	DWORD m_dwAudioBytesRead;  // Audio bytes read since last metadata
 	
 } CPs_BufferFillerContext;
 
@@ -73,6 +74,276 @@ void CPSINET_Seek(CPs_InStream* pStream, const size_t iNewOffset);
 UINT CPSINET_Tell(CPs_InStream* pStream);
 UINT CPSINET_GetLength(CPs_InStream* pStream);
 BOOL CPSINET_IsSeekable(CPs_InStream* pStream);
+//
+// Helper function to read data while handling Icecast metadata
+//
+BOOL ReadStreamData(HINTERNET hURLStream, CPs_BufferFillerContext* pContext, BYTE* pBuffer, DWORD dwRequestedBytes, DWORD* pdwBytesRead)
+{
+	*pdwBytesRead = 0;
+	
+	// If no metadata interval is set, just read normally
+	if (pContext->m_dwIcyMetaInt == 0)
+	{
+		return InternetReadFile(hURLStream, pBuffer, dwRequestedBytes, pdwBytesRead);
+	}
+	
+	// Calculate how many audio bytes we can read before hitting metadata
+	DWORD dwBytesUntilMeta = pContext->m_dwIcyMetaInt - pContext->m_dwAudioBytesRead;
+	DWORD dwBytesToRead = min(dwRequestedBytes, dwBytesUntilMeta);
+	
+	if (dwBytesToRead > 0)
+	{
+		BOOL bResult = InternetReadFile(hURLStream, pBuffer, dwBytesToRead, pdwBytesRead);
+		if (bResult && *pdwBytesRead > 0)
+		{
+			pContext->m_dwAudioBytesRead += *pdwBytesRead;
+		}
+		return bResult;
+	}
+	else
+	{
+		// We've hit the metadata boundary - read metadata
+		BYTE bMetaLength;
+		DWORD dwMetaBytes;
+		
+		if (!InternetReadFile(hURLStream, &bMetaLength, 1, &dwMetaBytes) || dwMetaBytes != 1)
+		{
+			return FALSE;
+		}
+		
+		DWORD dwMetaDataSize = bMetaLength * 16;
+		CP_TRACE1("EP_FillerThread::Reading metadata block of %lu bytes", dwMetaDataSize);
+		
+		if (dwMetaDataSize > 0)
+		{
+			// Read and discard metadata (or parse it for song info)
+			BYTE* pMetaBuffer = (BYTE*)malloc(dwMetaDataSize);
+			if (pMetaBuffer)
+			{
+				DWORD dwMetaRead;
+				if (InternetReadFile(hURLStream, pMetaBuffer, dwMetaDataSize, &dwMetaRead))
+				{
+					// Parse metadata for song info (optional)
+					char* pcMetadata = (char*)pMetaBuffer;
+					char* pcTitle = strstr(pcMetadata, "StreamTitle='");
+					if (pcTitle)
+					{
+						pcTitle += 13; // Skip "StreamTitle='"
+						char* pcTitleEnd = strstr(pcTitle, "';");
+						if (pcTitleEnd)
+						{
+							*pcTitleEnd = '\0';
+							CP_TRACE1("EP_FillerThread::Now playing: %s", pcTitle);
+						}
+					}
+				}
+				free(pMetaBuffer);
+			}
+		}
+		
+		// Reset audio byte counter
+		pContext->m_dwAudioBytesRead = 0;
+		
+		// Now try to read audio data again
+		return ReadStreamData(hURLStream, pContext, pBuffer, dwRequestedBytes, pdwBytesRead);
+	}
+}
+
+//
+// Helper function to download playlist content
+//
+char* DownloadPlaylistContent(const char* pcURL)
+{
+	HINTERNET hInternet, hURL;
+	char* pcContent = NULL;
+	DWORD dwBytesRead, dwTotalSize = 0;
+	const DWORD dwChunkSize = 4096;
+	
+	// Simple test - output to console regardless of debug mode
+	printf("DownloadPlaylistContent: Starting download of %s\n", pcURL);
+	
+	hInternet = InternetOpen("BriskPlayer/3.0", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0L);
+	if (!hInternet) 
+	{
+		DWORD dwError = GetLastError();
+		printf("DownloadPlaylistContent: InternetOpen failed with error %lu\n", dwError);
+		return NULL;
+	}
+	
+	// Set timeouts for playlist downloads
+	DWORD dwTimeout = 10000; // 10 seconds
+	InternetSetOption(hInternet, INTERNET_OPTION_CONNECT_TIMEOUT, &dwTimeout, sizeof(dwTimeout));
+	InternetSetOption(hInternet, INTERNET_OPTION_RECEIVE_TIMEOUT, &dwTimeout, sizeof(dwTimeout));
+	
+	hURL = InternetOpenUrl(hInternet, pcURL, NULL, 0, 
+						   INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD, 0);
+	if (!hURL)
+	{
+		DWORD dwError = GetLastError();
+		printf("DownloadPlaylistContent: InternetOpenUrl failed for %s with error %lu\n", pcURL, dwError);
+		InternetCloseHandle(hInternet);
+		return NULL;
+	}
+	
+	printf("DownloadPlaylistContent: Successfully opened URL, starting to read content\n");
+	
+	// Read the content in chunks
+	char* pcBuffer = (char*)malloc(dwChunkSize);
+	pcContent = (char*)malloc(1); // Start with minimal allocation
+	pcContent[0] = '\0';
+	
+	while (InternetReadFile(hURL, pcBuffer, dwChunkSize, &dwBytesRead) && dwBytesRead > 0)
+	{
+		pcContent = (char*)realloc(pcContent, dwTotalSize + dwBytesRead + 1);
+		memcpy(pcContent + dwTotalSize, pcBuffer, dwBytesRead);
+		dwTotalSize += dwBytesRead;
+		pcContent[dwTotalSize] = '\0';
+		printf("DownloadPlaylistContent: Reading chunk\n");
+	}
+	
+	free(pcBuffer);
+	InternetCloseHandle(hURL);
+	InternetCloseHandle(hInternet);
+	
+	if (!pcContent || dwTotalSize == 0)
+	{
+		printf("DownloadPlaylistContent: No content downloaded or empty file\n");
+		if (pcContent) free(pcContent);
+		return NULL;
+	}
+	
+	printf("DownloadPlaylistContent: Download complete - %lu bytes from %s\n", dwTotalSize, pcURL);
+	
+	if (dwTotalSize > 0 && dwTotalSize < 500)
+	{
+		printf("DownloadPlaylistContent: Content: %s\n", pcContent);
+	}
+	
+	return pcContent;
+}
+
+//
+// Helper function to parse .pls playlist files
+//
+char* ParsePLSPlaylist(const char* pcContent)
+{
+	char* pcStreamURL = NULL;
+	char* pcContentCopy = _strdup(pcContent); // Work with a copy since strtok modifies the string
+	char* pcLine = strtok(pcContentCopy, "\r\n");
+	
+	CP_TRACE0("ParsePLSPlaylist: Starting to parse PLS content");
+	
+	while (pcLine)
+	{
+		CP_TRACE1("ParsePLSPlaylist: Processing line: %s", pcLine);
+		
+		// Look for File1=URL, File2=URL, etc.
+		if (_strnicmp(pcLine, "File", 4) == 0)
+		{
+			char* pcEquals = strchr(pcLine, '=');
+			if (pcEquals)
+			{
+				pcEquals++; // Skip the '=' character
+				while (*pcEquals == ' ' || *pcEquals == '\t') pcEquals++; // Skip whitespace
+				
+				if (strlen(pcEquals) > 0)
+				{
+					pcStreamURL = _strdup(pcEquals);
+					CP_TRACE1("ParsePLSPlaylist: Found stream URL: %s", pcStreamURL);
+					break; // Use the first URL found
+				}
+			}
+		}
+		pcLine = strtok(NULL, "\r\n");
+	}
+	
+	if (!pcStreamURL)
+	{
+		CP_TRACE0("ParsePLSPlaylist: No stream URLs found in PLS file");
+	}
+	
+	free(pcContentCopy);
+	return pcStreamURL;
+}
+
+//
+// Helper function to parse .m3u/.m3u8 playlist files
+//
+char* ParseM3UPlaylist(const char* pcContent)
+{
+	char* pcStreamURL = NULL;
+	char* pcContentCopy = _strdup(pcContent); // Work with a copy since strtok modifies the string
+	char* pcLine = strtok(pcContentCopy, "\r\n");
+	
+	while (pcLine)
+	{
+		// Skip comments and empty lines
+		while (*pcLine == ' ' || *pcLine == '\t') pcLine++; // Skip leading whitespace
+		
+		if (strlen(pcLine) > 0 && pcLine[0] != '#')
+		{
+			// This should be a URL
+			if (strstr(pcLine, "://") != NULL) // Basic URL validation
+			{
+				pcStreamURL = _strdup(pcLine);
+				CP_TRACE1("ParseM3UPlaylist: Found stream URL: %s", pcStreamURL);
+				break; // Use the first URL found
+			}
+		}
+		pcLine = strtok(NULL, "\r\n");
+	}
+	
+	free(pcContentCopy);
+	return pcStreamURL;
+}
+
+//
+// Helper function to extract stream URL from playlist
+//
+char* ExtractStreamURLFromPlaylist(const char* pcPlaylistURL)
+{
+	char* pcContent = DownloadPlaylistContent(pcPlaylistURL);
+	char* pcStreamURL = NULL;
+	
+	if (!pcContent)
+	{
+		CP_TRACE1("ExtractStreamURLFromPlaylist: Failed to download playlist: %s", pcPlaylistURL);
+		return NULL;
+	}
+	
+	// Determine playlist format and parse accordingly
+	// Check for .pls first (case insensitive)
+	if (strstr(pcPlaylistURL, ".pls") != NULL || strstr(pcPlaylistURL, ".PLS") != NULL)
+	{
+		CP_TRACE0("ExtractStreamURLFromPlaylist: Parsing as PLS format");
+		pcStreamURL = ParsePLSPlaylist(pcContent);
+	}
+	// Check for .m3u formats (case insensitive)
+	else if (strstr(pcPlaylistURL, ".m3u") != NULL || strstr(pcPlaylistURL, ".M3U") != NULL)
+	{
+		CP_TRACE0("ExtractStreamURLFromPlaylist: Parsing as M3U format");
+		pcStreamURL = ParseM3UPlaylist(pcContent);
+	}
+	else
+	{
+		// Try to auto-detect format by content
+		CP_TRACE0("ExtractStreamURLFromPlaylist: Auto-detecting format by content");
+		if (strstr(pcContent, "File1=") != NULL || strstr(pcContent, "[playlist]") != NULL)
+		{
+			CP_TRACE0("ExtractStreamURLFromPlaylist: Content appears to be PLS format");
+			pcStreamURL = ParsePLSPlaylist(pcContent);
+		}
+		else
+		{
+			CP_TRACE0("ExtractStreamURLFromPlaylist: Assuming M3U format");
+			pcStreamURL = ParseM3UPlaylist(pcContent);
+		}
+	}
+	
+	free(pcContent);
+	return pcStreamURL;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 //
@@ -84,52 +355,146 @@ unsigned int _stdcall EP_FillerThread(void* _pContext)
 	HINTERNET hURLStream;
 	DWORD dwTimeout;
 	BOOL bStreamComplete = FALSE;
-	INTERNET_BUFFERS internetbuffer;
 	BYTE bReadBuffer[CIC_READCHUNKSIZE];
+	char* pcActualURL = NULL;
+	char* pcHeaders = NULL;
+	BOOL bIsIcyStream = FALSE;
 	
 	CP_CHECKOBJECT(pContext);
 	
 	PostMessage(pContext->m_hWndNotify, CPNM_SETSTREAMINGSTATE, (WPARAM)TRUE, (LPARAM)0);
 	
+	CP_TRACE1("EP_FillerThread::Starting stream for URL: %s", pContext->m_pcFlexiURL);
+	
+	// Check if this is an icy:// URL and convert to http://
+	if (_strnicmp(pContext->m_pcFlexiURL, "icy://", 6) == 0)
+	{
+		bIsIcyStream = TRUE;
+		// Convert icy:// to http://
+		size_t urlLen = strlen(pContext->m_pcFlexiURL);
+		pcActualURL = (char*)malloc(urlLen + 3); // +3 for "http" vs "icy" difference
+		if (pcActualURL)
+		{
+			strcpy_s(pcActualURL, urlLen + 3, "http://");
+			strcat_s(pcActualURL, urlLen + 3, pContext->m_pcFlexiURL + 6); // Skip "icy://"
+		}
+	}
+	else
+	{
+		// Check if it's a regular HTTP stream that might be Icecast/SHOUTcast
+		bIsIcyStream = TRUE; // Assume all HTTP streams might have metadata
+		pcActualURL = _strdup(pContext->m_pcFlexiURL);
+	}
+	
+	// Prepare headers for Icecast/SHOUTcast metadata support
+	// For testing, we can disable metadata to see if that's the issue
+	if (bIsIcyStream)
+	{
+		// Try without metadata first to see if that fixes the issue
+		pcHeaders = _strdup("User-Agent: BriskPlayer/3.0\r\n"
+							"Accept: */*\r\n"
+							"Connection: close\r\n");
+		// TODO: Re-enable metadata later: "Icy-MetaData: 1\r\n"
+	}
+	
+	// Validate URL format
+	if (!pcActualURL)
+	{
+		if (pcHeaders) free(pcHeaders);
+		pContext->m_pCircleBuffer->SetComplete(pContext->m_pCircleBuffer);
+		CP_TRACE0("EP_FillerThread::URL allocation failed");
+		return 0;
+	}
+	
 	// Check that we can open this file
-	hInternet = InternetOpen(CP_COOLPLAYER,
+	hInternet = InternetOpen("BriskPlayer/3.0",
 							 INTERNET_OPEN_TYPE_PRECONFIG,
 							 NULL, NULL, 0L);
 	                         
 	if (hInternet == NULL)
 	{
+		DWORD dwError = GetLastError();
+		if (pcActualURL) free(pcActualURL);
+		if (pcHeaders) free(pcHeaders);
 		pContext->m_pCircleBuffer->SetComplete(pContext->m_pCircleBuffer);
-		CP_TRACE0("EP_FillerThread::NoInternetOpen");
+		CP_TRACE1("EP_FillerThread::InternetOpen failed with error: %lu", dwError);
 		return 0;
 	}
 	
-	dwTimeout = 2000;
+	CP_TRACE0("EP_FillerThread::InternetOpen successful");
+	
+	dwTimeout = 10000; // 10 second timeout for streaming servers
 	InternetSetOption(hInternet, INTERNET_OPTION_CONNECT_TIMEOUT, &dwTimeout, sizeof(dwTimeout));
+	InternetSetOption(hInternet, INTERNET_OPTION_RECEIVE_TIMEOUT, &dwTimeout, sizeof(dwTimeout));
+	InternetSetOption(hInternet, INTERNET_OPTION_SEND_TIMEOUT, &dwTimeout, sizeof(dwTimeout));
+	
+	CP_TRACE1("EP_FillerThread::Attempting to connect to: %s", pcActualURL);
 	
 	hURLStream = InternetOpenUrl(hInternet,
-								 pContext->m_pcFlexiURL,
-								 NULL,
-								 0,
+								 pcActualURL,
+								 pcHeaders,
+								 pcHeaders ? strlen(pcHeaders) : 0,
 								 INTERNET_FLAG_NO_CACHE_WRITE
-								 | INTERNET_FLAG_PRAGMA_NOCACHE,
+								 | INTERNET_FLAG_PRAGMA_NOCACHE
+								 | INTERNET_FLAG_RELOAD,
 								 0);
 	                             
 	if (hURLStream == NULL)
 	{
+		DWORD dwError = GetLastError();
 		InternetCloseHandle(hInternet);
+		if (pcActualURL) free(pcActualURL);
+		if (pcHeaders) free(pcHeaders);
 		pContext->m_pCircleBuffer->SetComplete(pContext->m_pCircleBuffer);
-		CP_TRACE1("EP_FillerThread::NoOpenURL %s", pContext->m_pcFlexiURL);
+		CP_TRACE2("EP_FillerThread::Failed to open URL %s (Error: %lu)", pcActualURL ? pcActualURL : pContext->m_pcFlexiURL, dwError);
 		return 0;
 	}
 	
-	// Setup the internet buffer
-	internetbuffer.dwStructSize = sizeof(internetbuffer);
-	internetbuffer.Next = NULL;
-	internetbuffer.lpcszHeader = NULL;
-	internetbuffer.lpvBuffer = bReadBuffer;
-	internetbuffer.dwBufferLength = CIC_READCHUNKSIZE;
+	// Clean up temporary strings
+	if (pcActualURL) free(pcActualURL);
+	if (pcHeaders) free(pcHeaders);
+	
+	CP_TRACE0("EP_FillerThread::Successfully opened URL stream");
+	
+	// Check if we got any response headers indicating this is a streaming server
+	{
+		char szBuffer[1024];
+		DWORD dwBufferSize = sizeof(szBuffer);
+		if (HttpQueryInfo(hURLStream, HTTP_QUERY_SERVER, szBuffer, &dwBufferSize, NULL))
+		{
+			CP_TRACE1("EP_FillerThread::Server: %s", szBuffer);
+		}
+		
+		dwBufferSize = sizeof(szBuffer);
+		if (HttpQueryInfo(hURLStream, HTTP_QUERY_CONTENT_TYPE, szBuffer, &dwBufferSize, NULL))
+		{
+			CP_TRACE1("EP_FillerThread::Content-Type: %s", szBuffer);
+		}
+		
+		// Check for Icecast metadata interval
+		dwBufferSize = sizeof(szBuffer);
+		if (HttpQueryInfo(hURLStream, HTTP_QUERY_CUSTOM, szBuffer, &dwBufferSize, NULL))
+		{
+			// Need to use HttpQueryInfo with a custom header name
+			DWORD dwIndex = 0;
+			while (HttpQueryInfo(hURLStream, HTTP_QUERY_RAW_HEADERS_CRLF, szBuffer, &dwBufferSize, &dwIndex))
+			{
+				if (_strnicmp(szBuffer, "icy-metaint:", 12) == 0)
+				{
+					char* pcValue = szBuffer + 12;
+					while (*pcValue == ' ' || *pcValue == '\t') pcValue++; // Skip whitespace
+					pContext->m_dwIcyMetaInt = atol(pcValue);
+					CP_TRACE1("EP_FillerThread::Found icy-metaint: %lu", pContext->m_dwIcyMetaInt);
+					break;
+				}
+				dwBufferSize = sizeof(szBuffer);
+			}
+		}
+	}
 	
 	// Perform reading
+	CP_TRACE0("EP_FillerThread::Starting data reading loop");
+	
 	while (pContext->m_bTerminate == FALSE && bStreamComplete == FALSE)
 	{
 		BOOL bReadResult;
@@ -142,28 +507,41 @@ unsigned int _stdcall EP_FillerThread(void* _pContext)
 			continue;
 		}
 		
-		// Read in another chunk - if we don't get any data that's ok - we would rather poll the
-		// buffers than just hang on the socket (so the stream can be shutdown if needed)
-		internetbuffer.dwBufferLength = CIC_READCHUNKSIZE;
-		bReadResult = InternetReadFileEx(hURLStream, &internetbuffer, IRF_NO_WAIT, 0);
+		// Read in another chunk - for now, use simple reading without metadata
+		DWORD dwBytesRead = 0;
+		bReadResult = InternetReadFile(hURLStream, bReadBuffer, CIC_READCHUNKSIZE, &dwBytesRead);
 		
 		if (bReadResult == FALSE)
-			bStreamComplete = TRUE;
-			
-		if (internetbuffer.dwBufferLength)
 		{
+			DWORD dwError = GetLastError();
+			CP_TRACE1("EP_FillerThread::InternetReadFile failed with error: %lu", dwError);
+			bStreamComplete = TRUE;
+		}
+		else if (dwBytesRead == 0)
+		{
+			// No more data available - this might be normal for some streams
+			Sleep(50);
+		}
+		else
+		{
+			static DWORD dwTotalBytesRead = 0;
+			dwTotalBytesRead += dwBytesRead;
+			
 			pContext->m_pCircleBuffer->Write(pContext->m_pCircleBuffer,
-											 internetbuffer.lpvBuffer,
-											 internetbuffer.dwBufferLength);
+											 bReadBuffer,
+											 dwBytesRead);
 			                                 
+			// Log every 64KB received
+			if ((dwTotalBytesRead % 65536) < dwBytesRead)
+			{
+				CP_TRACE1("EP_FillerThread::Received %lu total bytes", dwTotalBytesRead);
+			}
+			
 			PostMessage(pContext->m_hWndNotify,
 						CPNM_SETSTREAMINGSTATE,
 						(WPARAM)TRUE,
 						(LPARAM)(pContext->m_pCircleBuffer->GetUsedSize(pContext->m_pCircleBuffer)*100) / CIC_STREAMBUFFERSIZE);
 		}
-		
-		else
-			Sleep(20);
 	}
 	
 	InternetCloseHandle(hURLStream);
@@ -184,6 +562,38 @@ CPs_InStream* CP_CreateInStream_Internet(const char* pcFlexiURL, HWND hWndOwner)
 	CPs_InStream* pNewStream;
 	CPs_InStream_Internet* pContext;
 	unsigned int iUsedSpace;
+	char* pcActualURL = NULL;
+	
+	CP_TRACE1("CP_CreateInStream_Internet: Entry point with URL: %s", pcFlexiURL);
+	
+	// Check if this is a playlist file (case insensitive)
+	if (strstr(pcFlexiURL, ".pls") != NULL || strstr(pcFlexiURL, ".PLS") != NULL ||
+		strstr(pcFlexiURL, ".m3u") != NULL || strstr(pcFlexiURL, ".M3U") != NULL ||
+		strstr(pcFlexiURL, ".m3u8") != NULL || strstr(pcFlexiURL, ".M3U8") != NULL)
+	{
+		CP_TRACE1("CP_CreateInStream_Internet: Detected playlist file: %s", pcFlexiURL);
+		
+		// Extract the actual stream URL from the playlist
+		pcActualURL = ExtractStreamURLFromPlaylist(pcFlexiURL);
+		if (!pcActualURL)
+		{
+			CP_TRACE1("CP_CreateInStream_Internet: Failed to extract stream URL from playlist: %s", pcFlexiURL);
+			return NULL;
+		}
+		CP_TRACE1("CP_CreateInStream_Internet: Extracted stream URL: %s", pcActualURL);
+	}
+	else
+	{
+		CP_TRACE0("CP_CreateInStream_Internet: Not a playlist file, using URL directly");
+		// Use the URL directly
+		pcActualURL = _strdup(pcFlexiURL);
+	}
+	
+	if (!pcActualURL)
+	{
+		CP_TRACE0("CP_CreateInStream_Internet: No URL to work with");
+		return NULL;
+	}
 	
 	// Setup stream object
 	{
@@ -209,8 +619,10 @@ CPs_InStream* CP_CreateInStream_Internet(const char* pcFlexiURL, HWND hWndOwner)
 		pBufferFillContext = (CPs_BufferFillerContext*)malloc(sizeof(CPs_BufferFillerContext));
 		pBufferFillContext->m_pCircleBuffer = pContext->m_pCircleBuffer;
 		pBufferFillContext->m_bTerminate = FALSE;
-		STR_AllocSetString(&pBufferFillContext->m_pcFlexiURL, pcFlexiURL, FALSE);
+		STR_AllocSetString(&pBufferFillContext->m_pcFlexiURL, pcActualURL, FALSE); // Use the actual stream URL
 		pBufferFillContext->m_hWndNotify = hWndOwner;
+		pBufferFillContext->m_dwIcyMetaInt = 0;      // Will be set from server response
+		pBufferFillContext->m_dwAudioBytesRead = 0;  // Reset counter
 		
 		// Start thread
 		pContext->m_hFillerThread = (HANDLE)_beginthreadex(NULL, 0, EP_FillerThread, pBufferFillContext, 0, &uiThreadID);
@@ -218,29 +630,59 @@ CPs_InStream* CP_CreateInStream_Internet(const char* pcFlexiURL, HWND hWndOwner)
 	}
 	
 	// Pre buffer some data
+	CP_TRACE0("EP_FillerThread::Starting prebuffering");
 	
-	do
 	{
-		MSG msg;
-		BOOL bMessageReceived;
+		int iMaxWaitIterations = 100; // Maximum 10 seconds of waiting (100 * 100ms)
+		int iWaitIterations = 0;
 		
-		// Stream is never going to have more data in it
-		
-		if (pContext->m_pCircleBuffer->IsComplete(pContext->m_pCircleBuffer))
-			break;
+		do
+		{
+			MSG msg;
+			BOOL bMessageReceived;
 			
-		Sleep(100);
-		
-		iUsedSpace = pContext->m_pCircleBuffer->GetUsedSize(pContext->m_pCircleBuffer);
-		
-		// Stop prebuffering if there is a stop in the queue for the engine
-		bMessageReceived = PeekMessage(&msg, NULL, CPTM_STOP, CPTM_STOP, PM_NOREMOVE);
-		
-		if (bMessageReceived)
-			break;
+			// Stream is never going to have more data in it
+			if (pContext->m_pCircleBuffer->IsComplete(pContext->m_pCircleBuffer))
+			{
+				CP_TRACE0("EP_FillerThread::Stream marked complete during prebuffering");
+				break;
+			}
+				
+			Sleep(100);
+			iWaitIterations++;
+			
+			iUsedSpace = pContext->m_pCircleBuffer->GetUsedSize(pContext->m_pCircleBuffer);
+			
+			// Log progress every second
+			if (iWaitIterations % 10 == 0)
+			{
+				CP_TRACE2("EP_FillerThread::Prebuffering: %d bytes, iteration %d", iUsedSpace, iWaitIterations);
+			}
+			
+			// Stop prebuffering if there is a stop in the queue for the engine
+			bMessageReceived = PeekMessage(&msg, NULL, CPTM_STOP, CPTM_STOP, PM_NOREMOVE);
+			
+			if (bMessageReceived)
+			{
+				CP_TRACE0("EP_FillerThread::Stop message received during prebuffering");
+				break;
+			}
+			
+			// Timeout protection - don't wait forever
+			if (iWaitIterations >= iMaxWaitIterations)
+			{
+				CP_TRACE0("EP_FillerThread::Prebuffering timeout - proceeding with available data");
+				break;
+			}
+		}
+		while (iUsedSpace < CIC_PREBUFFERAMOUNT);
 	}
 	
-	while (iUsedSpace < CIC_PREBUFFERAMOUNT);
+	CP_TRACE1("EP_FillerThread::Prebuffering complete - %d bytes available", iUsedSpace);
+	
+	// Clean up allocated URL string
+	if (pcActualURL) 
+		free(pcActualURL);
 	
 	return pNewStream;
 }
