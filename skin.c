@@ -71,57 +71,57 @@ int main_set_default_skin(void)
 
 	memset(&Skin, 0, sizeof(Skin));
 	
-	main_skin_set_struct_value(PlaySwitch, 52, 108, 31, 32, 0, 52, 108, 31,
-							   32, "");
-	main_skin_set_struct_value(StopSwitch, 120, 113, 27, 27, 0, 120, 113, 27, 27,
+	main_skin_set_struct_value(PlaySwitch, 172, 23, 24, 16, 0, 19, 60, 24,
+							   7, "");
+	main_skin_set_struct_value(StopSwitch, 222, 23, 24, 16, 0, 0, 0, 0, 0,
 							   "");
-	main_skin_set_struct_value(PauseSwitch, 87, 111, 29, 29, 0, 87, 111,
-							   29, 29, "");
-	main_skin_set_struct_value(RepeatSwitch, 274, 33, 33, 32, 0, 274, 33,
-							   33, 32, "");
-	main_skin_set_struct_value(ShuffleSwitch, 306, 32, 30, 26, 0, 306, 32,
-							   30, 26, "");
-	main_skin_set_struct_value(EqSwitch, 359, 14, 51, 20, 0, 359, 14, 51, 20,
+	main_skin_set_struct_value(PauseSwitch, 197, 23, 24, 16, 0, 197, 23,
+							   25, 17, "");
+	main_skin_set_struct_value(RepeatSwitch, 197, 57, 24, 16, 0, 96, 60,
+							   35, 7, "");
+	main_skin_set_struct_value(ShuffleSwitch, 158, 57, 38, 16, 0, 50, 60,
+							   39, 7, "");
+	main_skin_set_struct_value(EqSwitch, 97, 93, 17, 28, 0, 97, 93, 18, 29,
 							   "");
-	main_skin_set_struct_value(MinimizeButton, 262, 0, 27, 14, 0, 0, 0, 0, 0,
+	main_skin_set_struct_value(MinimizeButton, 230, 5, 7, 8, 0, 0, 0, 0, 0,
 							   "");
-	main_skin_set_struct_value(ExitButton, 315, 0, 28, 14, 0, 0, 0, 0, 0,
+	main_skin_set_struct_value(ExitButton, 239, 5, 7, 8, 0, 0, 0, 0, 0,
 							   "");
-	main_skin_set_struct_value(NextSkinButton, 288, 0, 28, 14, 0, 0, 0, 0,
+	main_skin_set_struct_value(NextSkinButton, 254, 44, 9, 27, 0, 0, 0, 0,
 							   0, "");
-	main_skin_set_struct_value(EjectButton, 186, 113, 27, 28, 0, 0, 0, 0, 0,
+	main_skin_set_struct_value(EjectButton, 222, 40, 24, 16, 0, 0, 0, 0, 0,
 							   "");
-	main_skin_set_struct_value(NextButton, 151, 114, 26, 25, 0, 0, 0, 0, 0,
+	main_skin_set_struct_value(NextButton, 197, 40, 24, 16, 0, 0, 0, 0, 0,
 							   "");
-	main_skin_set_struct_value(PrevButton, 22, 114, 26, 25, 0, 0, 0, 0, 0,
+	main_skin_set_struct_value(PrevButton, 172, 40, 24, 16, 0, 0, 0, 0, 0,
 							   "");
 	main_skin_set_struct_value(MoveArea, 0, 0, 229, 12, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(PlaylistButton, 214, 113, 28, 28, 0, 0, 0, 0,
+	main_skin_set_struct_value(PlaylistButton, 222, 57, 24, 16, 0, 0, 0, 0,
 							   0, "");
-	main_skin_set_struct_value(VolumeSlider, 252, 121, 65, 11, 0, 252, 121, 20, 11,
+	main_skin_set_struct_value(VolumeSlider, 84, 95, 9, 75, 1, 0, 0, 0, 0,
 							   "");
-	main_skin_set_struct_value(PositionSlider, 19, 92, 298, 11, 0, 18, 92, 20, 11,
-							   "");
-	main_skin_set_struct_value(Eq1, 360, 40, 9, 53, 1, 360, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq2, 378, 40, 9, 53, 1, 378, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq3, 396, 40, 9, 53, 1, 396, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq4, 414, 40, 9, 53, 1, 414, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq5, 432, 40, 9, 53, 1, 432, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq6, 450, 40, 9, 53, 1, 450, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq7, 468, 40, 9, 53, 1, 468, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq8, 486, 40, 9, 53, 1, 486, 40, 9, 11, "");
-	main_skin_set_struct_value(SongtitleText, 30, 70, 6, 11, 30, 0, 0, 0,
+	main_skin_set_struct_value(PositionSlider, 12, 78, 233, 8, 0, 0, 0, 0,
 							   0, "");
-	main_skin_set_struct_value(TrackText, 42, 37, 14, 21, 0, 0, 0, 0, 0,
+	main_skin_set_struct_value(Eq1, 115, 95, 9, 75, 1, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(Eq2, 132, 95, 9, 75, 1, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(Eq3, 149, 95, 9, 75, 1, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(Eq4, 166, 95, 9, 75, 1, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(Eq5, 183, 95, 9, 75, 1, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(Eq6, 200, 95, 9, 75, 1, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(Eq7, 217, 95, 9, 75, 1, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(Eq8, 234, 95, 9, 75, 1, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(SongtitleText, 18, 21, 6, 13, 23, 0, 0, 0,
+							   0, "");
+	main_skin_set_struct_value(TrackText, 18, 44, 13, 14, 0, 0, 0, 0, 0,
 							   "");
-	main_skin_set_struct_value(TimeText, 105, 37, 14, 21, 0, 0, 0, 0, 0,
+	main_skin_set_struct_value(TimeText, 59, 35, 13, 14, 0, 0, 0, 0, 0,
 							   "");
 
-	main_skin_set_struct_value(BitrateText, 280, 70, 6, 11, 4, 0, 0, 0, 0,
+	main_skin_set_struct_value(BitrateText, 83, 48, 0, 0, 0, 0, 0, 0, 0,
 							   "");
-	main_skin_set_struct_value(FreqText, 316, 70, 6, 11, 4, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(FreqText, 125, 48, 0, 0, 0, 0, 0, 0, 0, "");
 	
-	Skin.transparentcolor = 0xff00ff;
+	Skin.transparentcolor = 0x0000ff00;
 	hInstance = GetModuleHandle(NULL);
 	graphics.bmp_main_up =
 		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_MAINUP),
