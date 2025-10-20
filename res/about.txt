@@ -1,4 +1,4 @@
-- CoolPlayer -
+- CoolPlayer/BriskPlayer -
 ___________________________________________________
 
 Credits:
@@ -12,6 +12,7 @@ Niek Albers <nieka@daansystems.com>
 Zach Bacon <wowzaman12@gmail.com>
  - Project lead for BriskPlayer
  - Added Native FLAC Support
+ - Added Native AAC Support
  - Added FAudio Plugout
 
 Marcus Platts <plattsm@dreamrender.com>

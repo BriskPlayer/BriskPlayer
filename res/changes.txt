@@ -1,11 +1,13 @@
 BriskPlayer Revision History
 ============================
-Version 3.0.0
+Version 300
  + Inagural version of BriskPlayer
- + Ported build system to support meson
+ + Ported build system to support meson and use system deps from either msys2 or vcpkg
  + Added FAudio Output (based on XAudio2 but able to redistribute)
  + Added native FLAC Support
+ + Added native AAC Support
  + Ripped out the ID3 system to bring in taglib library support, this now populates the playlist with ID3 data
+ + Changed the playlist to show Track Number first, Song title, Artist, Album, Year, Genre and song length
 
 CoolPlayer Revision History
 ===========================

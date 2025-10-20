@@ -61,7 +61,7 @@ typedef void* CP_HSYSICON;
 #define CP_VERSION_MAJOR				1
 #define CP_VERSION_MINOR				1
 #define CP_VERSION_BUILD				0
-#define CP_BUILD_NUMBER					220
+#define CP_BUILD_NUMBER					300
 #define CP_COOLPLAYER					"BriskPlayer"
 #define CIC_HTTPHEADER					"http://"
 #define CIC_HTTPSHEADER					"https://"
