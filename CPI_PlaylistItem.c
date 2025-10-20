@@ -421,13 +421,13 @@ void CPLI_DecodeLength(CPs_PlaylistItem* pItem, unsigned int iNewLength)
 	if (iHours > 0)
 	{
 		pItem->m_pcTrackLength_AsText = (char*)malloc(9);
-		sprintf(pItem->m_pcTrackLength_AsText, "%02d:%02d:%02d", iHours, iMins, iSecs);
+		sprintf_s(pItem->m_pcTrackLength_AsText, 9, "%02d:%02d:%02d", iHours, iMins, iSecs);
 	}
 	
 	else
 	{
 		pItem->m_pcTrackLength_AsText = (char*)malloc(6);
-		sprintf(pItem->m_pcTrackLength_AsText, "%02d:%02d", iMins, iSecs);
+		sprintf_s(pItem->m_pcTrackLength_AsText, 6, "%02d:%02d", iMins, iSecs);
 	}
 }
 
@@ -690,7 +690,7 @@ void CPLI_SetTrackStackPos(CP_HPLAYLISTITEM hItem, const int iNewPos)
 	
 	else
 	{
-		_snprintf(pItem->m_cTrackStackPos_AsText, sizeof(pItem->m_cTrackStackPos_AsText), "%d", iNewPos);
+		_snprintf_s(pItem->m_cTrackStackPos_AsText, sizeof(pItem->m_cTrackStackPos_AsText), _TRUNCATE, "%d", iNewPos);
 	}
 }
 
@@ -730,9 +730,9 @@ void CPLI_CalculateLength_OGG(CPs_PlaylistItem* pItem)
 	FILE *hFile;
 	OggVorbis_File vorbisfileinfo;
 	
-	hFile = fopen(pItem->m_pcPath, "rb");
+	errno_t err = fopen_s(&hFile, pItem->m_pcPath, "rb");
 	
-	if (hFile == NULL)
+	if (err != 0 || hFile == NULL)
 		return;
 		
 	CPLI_OGG_SkipOverTab(hFile);
@@ -1085,27 +1085,27 @@ BOOL CPLI_RenameTrack(CP_HPLAYLISTITEM hItem, const CPe_FilenameFormat enFormat)
 		{
 		
 			case rwsArtistAlbumNumberTitle:
-				sprintf(cNewFilename, "%s - %s - %02d - %s%s", pcArtist, pcAlbum, (int)pItem->m_cTrackNum, pcTitle, pcExtension);
+				sprintf_s(cNewFilename, MAX_PATH, "%s - %s - %02d - %s%s", pcArtist, pcAlbum, (int)pItem->m_cTrackNum, pcTitle, pcExtension);
 				break;
 				
 			case rwsArtistNumberTitle:
-				sprintf(cNewFilename, "%s - %02d - %s%s", pcArtist, (int)pItem->m_cTrackNum, pcTitle, pcExtension);
+				sprintf_s(cNewFilename, MAX_PATH, "%s - %02d - %s%s", pcArtist, (int)pItem->m_cTrackNum, pcTitle, pcExtension);
 				break;
 				
 			case rwsAlbumNumberTitle:
-				sprintf(cNewFilename, "%s - %02d - %s%s", pcAlbum, (int)pItem->m_cTrackNum, pcTitle, pcExtension);
+				sprintf_s(cNewFilename, MAX_PATH, "%s - %02d - %s%s", pcAlbum, (int)pItem->m_cTrackNum, pcTitle, pcExtension);
 				break;
 				
 			case rwsAlbumNumber:
-				sprintf(cNewFilename, "%s - %02d%s", pcAlbum, (int)pItem->m_cTrackNum, pcExtension);
+				sprintf_s(cNewFilename, MAX_PATH, "%s - %02d%s", pcAlbum, (int)pItem->m_cTrackNum, pcExtension);
 				break;
 				
 			case rwsNumberTitle:
-				sprintf(cNewFilename, "%02d - %s%s", (int)pItem->m_cTrackNum, pcTitle, pcExtension);
+				sprintf_s(cNewFilename, MAX_PATH, "%02d - %s%s", (int)pItem->m_cTrackNum, pcTitle, pcExtension);
 				break;
 				
 			case rwsTitle:
-				sprintf(cNewFilename, "%s%s", pcTitle, pcExtension);
+				sprintf_s(cNewFilename, MAX_PATH, "%s%s", pcTitle, pcExtension);
 				break;
 				
 			default:
@@ -1128,7 +1128,7 @@ BOOL CPLI_RenameTrack(CP_HPLAYLISTITEM hItem, const CPe_FilenameFormat enFormat)
 			}
 		}
 		
-		sprintf(cNewPath, "%s\\%s", cPath, cNewFilename);
+		sprintf_s(cNewPath, MAX_PATH, "%s\\%s", cPath, cNewFilename);
 	}
 	
 	CP_TRACE2("Rename \"%s\" to \"%s\"", pItem->m_pcPath, cNewPath);
@@ -1275,9 +1275,9 @@ void CPLI_ReadTag_OGG(CPs_PlaylistItem* pItem)
 	OggVorbis_File vorbisfileinfo;
 	vorbis_comment* pComment;
 	
-	hFile = fopen(pItem->m_pcPath, "rb");
+	errno_t err = fopen_s(&hFile, pItem->m_pcPath, "rb");
 	
-	if (hFile == NULL)
+	if (err != 0 || hFile == NULL)
 		return;
 		
 	CPLI_OGG_SkipOverTab(hFile);

@@ -283,7 +283,7 @@ BOOL CPTL_ReadTags(const char* pcFilePath,
     {
         *ppcYear = (char*)malloc(16);
         if (*ppcYear)
-            sprintf(*ppcYear, "%u", year);
+            sprintf_s(*ppcYear, 16, "%u", year);
     }
     
     // Read comment

@@ -54,13 +54,13 @@ void    options_read(void)
 	for (iColIDX = PLAYLIST_first; iColIDX <= PLAYLIST_last; iColIDX++)
 	{
 		char keyname[100];
-		sprintf(keyname, "PlaylistCol%d", iColIDX);
+		sprintf_s(keyname, sizeof(keyname), "PlaylistCol%d", iColIDX);
 		options.playlist_column_widths[iColIDX] = GetPrivateProfileInt("WindowPos", keyname, widths[iColIDX], pathbuf);
 		
-		sprintf(keyname, "PlaylistSeq%d", iColIDX);
+		sprintf_s(keyname, sizeof(keyname), "PlaylistSeq%d", iColIDX);
 		options.playlist_column_seq[iColIDX] = GetPrivateProfileInt("WindowPos", keyname, sequences[iColIDX], pathbuf);
 		
-		sprintf(keyname, "PlaylistVis%d", iColIDX);
+		sprintf_s(keyname, sizeof(keyname), "PlaylistVis%d", iColIDX);
 		options.playlist_column_visible[iColIDX] = GetPrivateProfileInt("WindowPos", keyname, visibles[iColIDX], pathbuf) ? TRUE : FALSE;
 	}
 	

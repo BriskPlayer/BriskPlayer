@@ -239,9 +239,9 @@ void CPP_OMFL_RefillBuffers(CPs_OutputModule* pModule)
 			if (!returnval)
 				return;
 			
-			pContext->m_hFile = fopen(fn.lpstrFile, "wb");
+			errno_t err = fopen_s(&pContext->m_hFile, fn.lpstrFile, "wb");
 			
-			if (pContext->m_hFile)
+			if (err == 0 && pContext->m_hFile)
 				break;
 		}
 		

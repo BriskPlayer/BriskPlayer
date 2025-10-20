@@ -310,8 +310,9 @@ BOOL CPP_OMAAC_GetPCMBlock(CPs_CoDecModule* pModule, void* pBlock, DWORD* pdwBlo
 	CP_CHECKOBJECT(pModule);
 	pContext = (CPs_CoDec_AAC*)pModule->m_pModuleCookie;
 	CP_CHECKOBJECT(pContext);
-	CP_CHECKOBJECT(pBlock);
-	CP_CHECKOBJECT(pdwBlockSize);
+	
+	if (!pBlock || !pdwBlockSize)
+		return FALSE;
 	
 	if (pContext->eof_reached)
 	{

@@ -228,8 +228,9 @@ char* DownloadPlaylistContent(const char* pcURL)
 char* ParsePLSPlaylist(const char* pcContent)
 {
 	char* pcStreamURL = NULL;
-	char* pcContentCopy = _strdup(pcContent); // Work with a copy since strtok modifies the string
-	char* pcLine = strtok(pcContentCopy, "\r\n");
+	char* pcContentCopy = _strdup(pcContent); // Work with a copy since strtok_s modifies the string
+	char* pcContext = NULL;
+	char* pcLine = strtok_s(pcContentCopy, "\r\n", &pcContext);
 	
 	CP_TRACE0("ParsePLSPlaylist: Starting to parse PLS content");
 	
@@ -254,7 +255,7 @@ char* ParsePLSPlaylist(const char* pcContent)
 				}
 			}
 		}
-		pcLine = strtok(NULL, "\r\n");
+		pcLine = strtok_s(NULL, "\r\n", &pcContext);
 	}
 	
 	if (!pcStreamURL)
@@ -272,8 +273,9 @@ char* ParsePLSPlaylist(const char* pcContent)
 char* ParseM3UPlaylist(const char* pcContent)
 {
 	char* pcStreamURL = NULL;
-	char* pcContentCopy = _strdup(pcContent); // Work with a copy since strtok modifies the string
-	char* pcLine = strtok(pcContentCopy, "\r\n");
+	char* pcContentCopy = _strdup(pcContent); // Work with a copy since strtok_s modifies the string
+	char* pcContext = NULL;
+	char* pcLine = strtok_s(pcContentCopy, "\r\n", &pcContext);
 	
 	while (pcLine)
 	{
@@ -290,7 +292,7 @@ char* ParseM3UPlaylist(const char* pcContent)
 				break; // Use the first URL found
 			}
 		}
-		pcLine = strtok(NULL, "\r\n");
+		pcLine = strtok_s(NULL, "\r\n", &pcContext);
 	}
 	
 	free(pcContentCopy);

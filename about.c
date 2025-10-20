@@ -53,7 +53,7 @@ INT_PTR CALLBACK about_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 		case WM_INITDIALOG:
 		{
 			char cTitle[100];
-			sprintf(cTitle, "About BriskPlayer %d", CP_BUILD_NUMBER);
+			sprintf_s(cTitle, sizeof(cTitle), "About BriskPlayer %d", CP_BUILD_NUMBER);
 			SetWindowText(hwndDlg, cTitle);
 
 			// Setup up jumping head timer
@@ -101,7 +101,7 @@ INT_PTR CALLBACK about_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 					break;
 
 				case IDC_WEBSITE:
-					ShellExecute(0, 0, "https://thatzachbacon.com", 0, 0, SW_SHOWDEFAULT);
+					ShellExecute(0, 0, "https://github.com/BriskPlayer/BriskPlayer", 0, 0, SW_SHOWDEFAULT);
 					break;
 
 				case IDC_KEYBOARDRADIO:

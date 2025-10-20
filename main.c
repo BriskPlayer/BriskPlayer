@@ -307,7 +307,7 @@ void main_update_title_text(void)
 		if (CPLI_GetTrackName(hItem_Current) && CPLI_GetArtist(hItem_Current))
 		{
 			char cBuffer[2060];
-			sprintf(cBuffer, "%.1024s - %.1024s", CPLI_GetArtist(hItem_Current), CPLI_GetTrackName(hItem_Current));
+			sprintf_s(cBuffer, sizeof(cBuffer), "%.1024s - %.1024s", CPLI_GetArtist(hItem_Current), CPLI_GetTrackName(hItem_Current));
 			
 			CPSYSICON_SetTipText(globals.m_hSysIcon, cBuffer);
 		}
@@ -1965,7 +1965,7 @@ BOOL cmdline_parse_argument(char *token)
 	{
 		char    exepath[MAX_PATH];
 		main_get_program_path(GetModuleHandle(NULL), exepath, MAX_PATH);
-		sprintf(expath, "%s%s", exepath, buffie);
+		sprintf_s(expath, MAX_PATH, "%s%s", exepath, buffie);
 	}
 	
 	else
@@ -2045,6 +2045,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	BOOL    bAlreadyRuning;
 	HWND hWndCoolPlayer = NULL;
 	
+	// Add diagnostic output for debugging 32-bit build issues
+	#ifdef _DEBUG
+	OutputDebugStringA("BriskPlayer: Starting initialization...\n");
+	#endif
+	
 	// Ensure that this system is audio capable
 	if (waveOutGetNumDevs() < 1)
 	{
@@ -2052,7 +2057,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return -1;
 	}
 	
+	#ifdef _DEBUG
+	OutputDebugStringA("BriskPlayer: Audio devices found, reading options...\n");
+	#endif
+	
 	options_read();
+	
+	#ifdef _DEBUG
+	OutputDebugStringA("BriskPlayer: Options read, creating mutex...\n");
+	#endif
 	
 	CreateMutex(NULL, FALSE, CLC_COOLPLAYER_MUTEX);
 	bAlreadyRuning = (GetLastError() == ERROR_ALREADY_EXISTS
@@ -2109,6 +2122,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	InitCommonControlsEx(&controls);
 	
+	#ifdef _DEBUG
+	OutputDebugStringA("BriskPlayer: Common controls initialized, setting up globals...\n");
+	#endif
+	
 	//    options.shuffle_play = FALSE;
 	//  options.repeat_playlist = FALSE;
 	//    options.equalizer = FALSE;
@@ -2123,13 +2140,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	memset(&drawables, 0, sizeof(drawables));
 	memset(&graphics, 0, sizeof(graphics));
 	
+	#ifdef _DEBUG
+	OutputDebugStringA("BriskPlayer: Global structures initialized, creating playlist...\n");
+	#endif
+	
 	globals.playlist_int_last_searched_track = 0;
 	globals.m_iLastPlaylistSortColoumn = -1;
 	globals.m_bQuickFindWindowPos_Valid = FALSE;
 	globals.m_hPlaylist = CPL_CreatePlaylist();
 	if (globals.m_hPlaylist == NULL) {
+		#ifdef _DEBUG
+		OutputDebugStringA("BriskPlayer: FAILED to create playlist - exiting!\n");
+		#endif
+		MessageBox(GetDesktopWindow(), "Failed to create playlist", CP_COOLPLAYER, MB_ICONSTOP | MB_OK);
 		return -1;
 	}
+	
+	#ifdef _DEBUG
+	OutputDebugStringA("BriskPlayer: Playlist created successfully, initializing skin...\n");
+	#endif
+	
 	globals.m_hhkListView_Posted = NULL;
 	globals.playlist_bool_addsong = FALSE;
 	globals.playlist_last_add_time = 0;

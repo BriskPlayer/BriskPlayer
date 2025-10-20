@@ -973,7 +973,7 @@ void CPL_ExportPlaylist(CP_HPLAYLIST hPlaylist, const char* pcOutputName)
 			for (hCursor = pPlaylist->m_hFirst; hCursor; hCursor = CPLI_Next(hCursor))
 				iNumberOfEntries++;
 				
-			sprintf(cNumEntriesLine, "NumberOfEntries=%d", iNumberOfEntries);
+			sprintf_s(cNumEntriesLine, sizeof(cNumEntriesLine), "NumberOfEntries=%d", iNumberOfEntries);
 			
 			WriteFile_Text(hOutputFile, cNumEntriesLine, TRUE);
 		}
@@ -1023,7 +1023,7 @@ void CPL_ExportPlaylist(CP_HPLAYLIST hPlaylist, const char* pcOutputName)
 			if (enFileType == pftPLS)
 			{
 				char cPlsFileHeader[32];
-				sprintf(cPlsFileHeader, "File%d=", iFileNumber + 1);
+				sprintf_s(cPlsFileHeader, sizeof(cPlsFileHeader), "File%d=", iFileNumber + 1);
 				WriteFile_Text(hOutputFile, cPlsFileHeader, FALSE);
 			}
 			
@@ -1232,7 +1232,7 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 				char cPlsFileHeader[32];
 				char cBuffer[MAX_PATH];
 				char cTitle[1024];
-				sprintf(cPlsFileHeader, "File%d", iFileIDX + 1);
+				sprintf_s(cPlsFileHeader, sizeof(cPlsFileHeader), "File%d", iFileIDX + 1);
 				
 				// Get the path - leave room for a drive
 				dwNumCharsRead = GetPrivateProfileString("playlist", cPlsFileHeader, NULL, cBuffer, MAX_PATH, pcFilename);
@@ -1240,7 +1240,7 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 				if (dwNumCharsRead == 0)
 					continue;
 					
-				sprintf(cPlsFileHeader, "Title%d", iFileIDX + 1);
+				sprintf_s(cPlsFileHeader, sizeof(cPlsFileHeader), "Title%d", iFileIDX + 1);
 				
 				dwNumCharsRead = GetPrivateProfileString("playlist", cPlsFileHeader, NULL, cTitle, 1024, pcFilename);
 				

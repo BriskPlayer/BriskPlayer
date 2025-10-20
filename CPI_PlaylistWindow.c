@@ -326,7 +326,7 @@ void CPlaylistWindow_DestroyIPEdit(void)
 			if (CPLI_IsTagDirty(hCursor) == FALSE)
 				continue;
 				
-			sprintf(cStatusMessage, "Tagging \"%s\"", CPLI_GetFilename(hCursor));
+			sprintf_s(cStatusMessage, sizeof(cStatusMessage), "Tagging \"%s\"", CPLI_GetFilename(hCursor));
 			CPIC_SetIndicatorValue("status", cStatusMessage);
 			UpdateWindow(IF_GetHWnd(windows.m_hifPlaylist));
 			CPLI_WriteTag(hCursor);
@@ -694,7 +694,7 @@ void CPlaylistWindow_CreateIPEdit(const int iItem, const int iSubItem)
 		{
 			CP_HPLAYLISTITEM hItem = (CP_HPLAYLISTITEM)CLV_GetItemData(globals.m_hPlaylistViewControl, iSearchItemIDX);
 			
-			sprintf(cStatusMessage, "Tagging \"%s\"", CPLI_GetFilename(hItem));
+			sprintf_s(cStatusMessage, sizeof(cStatusMessage), "Tagging \"%s\"", CPLI_GetFilename(hItem));
 			CP_TRACE1("status: %s", cStatusMessage);
 			CPIC_SetIndicatorValue("status", cStatusMessage);
 			UpdateWindow(IF_GetHWnd(windows.m_hifPlaylist));
@@ -724,7 +724,7 @@ void CPlaylistWindow_CreateIPEdit(const int iItem, const int iSubItem)
 			CP_HPLAYLISTITEM hItem = (CP_HPLAYLISTITEM)CLV_GetItemData(globals.m_hPlaylistViewControl, iSearchItemIDX);
 			
 			CPLI_CalculateLength(hItem);
-			sprintf(cStatusMessage, "Tagging \"%s\"", CPLI_GetFilename(hItem));
+			sprintf_s(cStatusMessage, sizeof(cStatusMessage), "Tagging \"%s\"", CPLI_GetFilename(hItem));
 			
 			CPIC_SetIndicatorValue("status", cStatusMessage);
 			CP_TRACE1("status: %s", cStatusMessage);

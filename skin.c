@@ -324,7 +324,7 @@ int     main_skin_open(char *name)
 	if (returnval == 0)
 	{
 		char    textbuf[MAX_PATH + 50];
-		sprintf(textbuf, "Not a valid BriskPlayer Skin file: %s", pathbuf);
+		sprintf_s(textbuf, sizeof(textbuf), "Not a valid BriskPlayer Skin file: %s", pathbuf);
 		MessageBox(GetForegroundWindow(), textbuf, "error", MB_ICONERROR);
 		options.use_default_skin = TRUE;
 		return FALSE;
@@ -430,7 +430,7 @@ int     main_skin_open(char *name)
 	{
 		char    errorstring[5000];
 		
-		sprintf(errorstring, "Can\'t load bitmaps!\n%s", errorbuf);
+		sprintf_s(errorstring, sizeof(errorstring), "Can\'t load bitmaps!\n%s", errorbuf);
 		MessageBox(GetForegroundWindow(), errorstring, "error",
 				   MB_ICONERROR);
 		options.use_default_skin = TRUE;
@@ -569,7 +569,7 @@ void    main_skin_check_ini_value(char *textposition,
 				           
 				if (strcmp(drive, "") == 0)
 				{
-					sprintf((char*)options.main_skin_file, "%s%s%s", skinfile2,
+					sprintf_s((char*)options.main_skin_file, sizeof(options.main_skin_file), "%s%s%s", skinfile2,
 							fname, ext);
 				}
 				
@@ -579,7 +579,7 @@ void    main_skin_check_ini_value(char *textposition,
 					       
 				if (_access((char*)options.main_skin_file, 0) == -1)
 				{
-					sprintf((char*)options.main_skin_file, "%s%s%s%s", modpathbuf,
+					sprintf_s((char*)options.main_skin_file, sizeof(options.main_skin_file), "%s%s%s%s", modpathbuf,
 							dir, fname, ext);
 				}
 				

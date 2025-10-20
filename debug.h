@@ -53,10 +53,10 @@ int _CrtDbgReport(
 #define CP_TRACE4(format, arg1, arg2, arg3, arg4) _CrtDbgReport(_CRT_WARN, __FILE__, __LINE__, NULL, format "\n", arg1, arg2, arg3, arg4)
 #define CP_TRACE5(format, arg1, arg2, arg3, arg4, arg5) _CrtDbgReport(_CRT_WARN, __FILE__, __LINE__, NULL, format "\n", arg1, arg2, arg3, arg4, arg5)
 //
-#define CP_ASSERT(expr) if(!(expr)) { CP_TRACE1("ASSERTION %s FAILS", #expr); __asm { int 3 }  }
-#define CP_FAIL(errstring) { CP_TRACE1("HARD FAILURE %s", #errstring); __asm { int 3 } }
+#define CP_ASSERT(expr) if(!(expr)) { CP_TRACE1("ASSERTION %s FAILS", #expr); DebugBreak(); }
+#define CP_FAIL(errstring) { CP_TRACE1("HARD FAILURE %s", #errstring); DebugBreak(); }
 //
-#define CP_CHECKOBJECT(obj_ptr_typed) if(!obj_ptr_typed || !_CrtIsMemoryBlock(obj_ptr_typed, sizeof(*obj_ptr_typed), NULL, NULL, NULL)) { CP_TRACE1("POINTER %s is Bogus", #obj_ptr_typed); __asm { int 3 } }
+#define CP_CHECKOBJECT(obj_ptr_typed) if(!obj_ptr_typed) { CP_TRACE1("POINTER %s is NULL", #obj_ptr_typed); DebugBreak(); }
 
 
 
