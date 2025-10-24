@@ -169,19 +169,16 @@ if not libstdcpp.found()
     libstdcpp = cpp.find_library('c++', required : false)
 endif
 
-deps = [zlibdep, oggdep, vorbisdep, vorbisfiledep, maddep, flacdep, taglibdep, winmm, comctl32, wininet, dsound]
-if libstdcpp.found()
-    deps += [libstdcpp]
-endif
-if faudiodep.found()
-    deps += [faudiodep, mfplat, propsys, mfuuid, mfreadwrite]
-    add_project_arguments('-DHAVE_FAUDIO', language : 'c')
-endif
-if faad2dep.found()
-    deps += [faad2dep]
-    add_project_arguments('-DHAVE_FAAD2', language : 'c')
+deps = [zlibdep, oggdep, vorbisdep, vorbisfiledep, maddep, flacdep, taglibdep, winmm, comctl32, wininet, dsound, faudiodep, mfplat, propsys, mfuuid, mfreadwrite, faad2dep, libstdcpp]
+
+# Configure static linking for MinGW/GCC, which unfortuntely doesn't support clang and libc++ yet
+static_link_args = []
+if cc.get_id() == 'gcc' and host_machine.system() == 'windows'
+    # Use full static linking to avoid symbol conflicts
+    static_link_args = ['-static']
 endif
 
 briskplayer_exe = executable('briskplayer', brisksrc, briskres, 
     dependencies : deps,
+    link_args : static_link_args,
     win_subsystem : 'windows')

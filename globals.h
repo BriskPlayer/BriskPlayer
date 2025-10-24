@@ -58,8 +58,8 @@ typedef void* CP_HSYSICON;
 #define SKIN_SUBMENU_INDEX		5
 
 // Handle to player
-#define CP_VERSION_MAJOR				1
-#define CP_VERSION_MINOR				1
+#define CP_VERSION_MAJOR				3
+#define CP_VERSION_MINOR				0
 #define CP_VERSION_BUILD				0
 #define CP_BUILD_NUMBER					300
 #define CP_COOLPLAYER					"BriskPlayer"
