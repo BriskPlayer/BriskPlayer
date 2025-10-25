@@ -181,9 +181,7 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 	CP_InitialiseCodec_WAV(&playercontext.m_CoDecs[CP_CODEC_WAV]);
 	CP_InitialiseCodec_OGG(&playercontext.m_CoDecs[CP_CODEC_OGG]);
 	CP_InitialiseCodec_FLAC(&playercontext.m_CoDecs[CP_CODEC_FLAC]);
-#ifdef HAVE_FAAD2
 	CP_InitialiseCodec_AAC(&playercontext.m_CoDecs[CP_CODEC_AAC]);
-#endif
 	CP_InitialiseCodec_WinAmpPlugin(&playercontext.m_CoDecs[CP_CODEC_WINAMPPLUGIN]);
 	
 	// Initialise output module
@@ -196,9 +194,7 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 	CPI_Player_Output_Initialise_WaveMapper(&playercontext.m_OutputModules[CP_OUTPUT_WAVE]);
 	CPI_Player_Output_Initialise_DirectSound(&playercontext.m_OutputModules[CP_OUTPUT_DIRECTSOUND]);
 	CPI_Player_Output_Initialise_File(&playercontext.m_OutputModules[CP_OUTPUT_FILE]);
-#ifdef HAVE_FAUDIO
 	CPI_Player_Output_Initialise_FAudio(&playercontext.m_OutputModules[CP_OUTPUT_FAUDIO]);
-#endif
 	
 	playercontext.m_pCurrentOutputModule = &playercontext.m_OutputModules[playercontext.m_dwCurrentOutputModule];
 	

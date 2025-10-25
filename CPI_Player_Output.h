@@ -86,8 +86,6 @@ typedef struct _CPs_OutputModule
 void CPI_Player_Output_Initialise_WaveMapper(CPs_OutputModule* pModule);
 void CPI_Player_Output_Initialise_DirectSound(CPs_OutputModule* pModule);
 void CPI_Player_Output_Initialise_File(CPs_OutputModule* pModule);
-#ifdef HAVE_FAUDIO
 void CPI_Player_Output_Initialise_FAudio(CPs_OutputModule* pModule);
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////

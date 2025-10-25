@@ -26,7 +26,6 @@
 #include "CPI_Player_Output.h"
 #include "CPI_Equaliser.h"
 
-#ifdef HAVE_FAUDIO
 #include <FAudio.h>
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -506,25 +505,3 @@ void FAUDIOCALL CPP_OMFA_VoiceCallback(FAudioVoiceCallback* callback, void* pBuf
 		SetEvent(pContext->m_evtBufferComplete);
 	}
 }
-
-#else // !HAVE_FAUDIO
-
-// Stub implementation when FAudio is not available
-void CPI_Player_Output_Initialise_FAudio(CPs_OutputModule* pModule)
-{
-	// This is a one off call to set up the function pointers
-	pModule->Initialise = NULL;
-	pModule->Uninitialise = NULL;
-	pModule->RefillBuffers = NULL;
-	pModule->SetPause = NULL;
-	pModule->IsOutputComplete = NULL;
-	pModule->Flush = NULL;
-	pModule->OnEQChanged = NULL;
-	pModule->SetInternalVolume = NULL;
-	pModule->m_pModuleCookie = NULL;
-	pModule->m_pcModuleName = "FAudio Output (unavailable)";
-	pModule->m_pCoDec = NULL;
-	pModule->m_pEqualiser = NULL;
-}
-
-#endif // HAVE_FAUDIO

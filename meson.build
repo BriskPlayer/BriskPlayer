@@ -58,9 +58,9 @@ if not taglibdep.found()
     taglibdep = dependency('taglib', static : true, method : 'cmake', required : true)
 endif
 
-faudiodep = dependency('FAudio', required : false, static : true, method : 'pkg-config')
+faudiodep = dependency('FAudio', required : true, static : true, method : 'pkg-config')
 if not faudiodep.found()
-    faudiodep = dependency('FAudio', required : false, static : true, method : 'cmake')
+    faudiodep = dependency('FAudio', required : true, static : true, method : 'cmake')
 endif
 winmm = cc.find_library('winmm')
 comctl32 = cc.find_library('comctl32')
@@ -162,23 +162,44 @@ brisksrc = files([
     'WindowsOS.c'
 ])
 
-# Determine dependencies based on availability
+# Determine dependencies based on availability and compiler
 cpp = meson.get_compiler('cpp')
-libstdcpp = cpp.find_library('stdc++', required : false)
-if not libstdcpp.found()
+cc = meson.get_compiler('c')
+
+# Handle C++ standard library based on compiler
+libstdcpp = dependency('', required : false)
+cpp_stdlib_args = []
+if cc.get_id() == 'clang' and host_machine.system() == 'windows'
+    # For clang, prefer libc++ if available
     libstdcpp = cpp.find_library('c++', required : false)
+    if libstdcpp.found()
+        cpp_stdlib_args = ['-stdlib=libc++']
+    else
+        # Fallback to libstdc++
+        libstdcpp = cpp.find_library('stdc++', required : true)
+    endif
+else
+    # For GCC and other compilers, use libstdc++
+    libstdcpp = cpp.find_library('stdc++', required : false)
+    if not libstdcpp.found()
+        libstdcpp = cpp.find_library('c++', required : false)
+    endif
 endif
 
 deps = [zlibdep, oggdep, vorbisdep, vorbisfiledep, maddep, flacdep, taglibdep, winmm, comctl32, wininet, dsound, faudiodep, mfplat, propsys, mfuuid, mfreadwrite, faad2dep, libstdcpp]
 
-# Configure static linking for MinGW/GCC, which unfortuntely doesn't support clang and libc++ yet
+# Configure static linking for different compilers
 static_link_args = []
 if cc.get_id() == 'gcc' and host_machine.system() == 'windows'
     # Use full static linking to avoid symbol conflicts
     static_link_args = ['-static']
+elif cc.get_id() == 'clang' and host_machine.system() == 'windows'
+    # For clang, use static linking with libc++
+    static_link_args = ['-static-libgcc', '-static'] + cpp_stdlib_args
 endif
 
 briskplayer_exe = executable('briskplayer', brisksrc, briskres, 
     dependencies : deps,
     link_args : static_link_args,
+    cpp_args : cpp_stdlib_args,
     win_subsystem : 'windows')
