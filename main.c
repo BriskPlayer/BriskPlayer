@@ -515,7 +515,8 @@ int     playlist_open_file(BOOL clearlist)
 {
 	OPENFILENAMEW fn;
 	WCHAR filefilter[] =
-		L"All Supported files\0*.mp1;*.mp2;*.mp3;*.m3u;*.pls;*.wav;*.ogg;*.oga\0"
+		L"All Supported files\0*.mp1;*.mp2;*.mp3;*.m3u;*.pls;*.wav;*.ogg;*.oga;*.flac;*.aac\0"
+		L"AAC audio files (*.aac;*.m4a)\0*.aac;*.m4a\0"
 		L"MPEG audio files (*.mp1;*.mp2;*.mp3)\0*.mp1;*.mp2;*.mp3\0"
 		L"Vorbis files (*.ogg;*.oga)\0*.ogg;*.oga\0"
 		L"FLAC files (*.flac)\0*.flac\0"
