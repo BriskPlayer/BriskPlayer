@@ -22,6 +22,7 @@
 #include "stdafx.h"
 #include "CPI_TagLib.h"
 #include "CPI_PlaylistItem.h"
+#include "CPString.h"
 #include <string.h>
 #include <stdlib.h>
 #define TAGLIB_STATIC
@@ -403,10 +404,16 @@ BOOL CPTL_CanWriteToFile(const char* pcFilePath)
     if (!pcFilePath)
         return FALSE;
         
+    // Convert filename to Unicode for better filename support
+    WCHAR* pwcFilePath = STR_ConvertToUnicode(pcFilePath);
+    if (!pwcFilePath)
+        return FALSE;
+        
     // Try to open the file for writing
-    hFile = CreateFile(pcFilePath, GENERIC_WRITE,
-                       FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
-                       OPEN_EXISTING, 0, 0);
+    hFile = CreateFileW(pwcFilePath, GENERIC_WRITE,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
+                        OPEN_EXISTING, 0, 0);
+    free(pwcFilePath);
                        
     if (hFile == INVALID_HANDLE_VALUE)
         return FALSE;

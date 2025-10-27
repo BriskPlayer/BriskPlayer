@@ -57,6 +57,98 @@ unsigned int STR_AllocSetString(char** ppcDest, const char* pcSource, const BOOL
 	return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Unicode utility functions for filename support
+//
+
+//
+// Convert ANSI string to Unicode (wide character)
+//
+WCHAR* STR_ConvertToUnicode(const char* pcSource)
+{
+	if (!pcSource)
+		return NULL;
+		
+	int iLength = MultiByteToWideChar(CP_ACP, 0, pcSource, -1, NULL, 0);
+	if (iLength == 0)
+		return NULL;
+		
+	WCHAR* pwcResult = (WCHAR*)malloc(iLength * sizeof(WCHAR));
+	if (!pwcResult)
+		return NULL;
+		
+	if (MultiByteToWideChar(CP_ACP, 0, pcSource, -1, pwcResult, iLength) == 0)
+	{
+		free(pwcResult);
+		return NULL;
+	}
+	
+	return pwcResult;
+}
+
+//
+// Convert Unicode (wide character) to ANSI string
+//
+char* STR_ConvertFromUnicode(const WCHAR* pwcSource)
+{
+	if (!pwcSource)
+		return NULL;
+		
+	int iLength = WideCharToMultiByte(CP_ACP, 0, pwcSource, -1, NULL, 0, NULL, NULL);
+	if (iLength == 0)
+		return NULL;
+		
+	char* pcResult = (char*)malloc(iLength);
+	if (!pcResult)
+		return NULL;
+		
+	if (WideCharToMultiByte(CP_ACP, 0, pwcSource, -1, pcResult, iLength, NULL, NULL) == 0)
+	{
+		free(pcResult);
+		return NULL;
+	}
+	
+	return pcResult;
+}
+
+//
+// Allocate and set wide character string (similar to STR_AllocSetString but for Unicode)
+//
+unsigned int STR_AllocSetStringW(WCHAR** ppwcDest, const WCHAR* pwcSource, const BOOL bFreeExisting)
+{
+	if (bFreeExisting == TRUE && *ppwcDest)
+		free(*ppwcDest);
+		
+	if (pwcSource)
+	{
+		unsigned int uStringLength;
+		
+		uStringLength = (wcslen(pwcSource) + 1) * sizeof(WCHAR);
+		*ppwcDest = (WCHAR*)malloc(uStringLength);
+		
+		if (!*ppwcDest)
+		{
+			// Failed to allocate memory
+			return 0;
+		}
+		
+		memcpy(*ppwcDest, pwcSource, uStringLength);
+		
+		return uStringLength;
+	}
+	
+	*ppwcDest = NULL;
+	return 0;
+}
+
+//
+// Convert Unicode string to ANSI and allocate memory for it
+//
+char* STR_AllocConvertFromUnicode(const WCHAR* pwcSource)
+{
+	return STR_ConvertFromUnicode(pwcSource);
+}
+
 //
 //
 //

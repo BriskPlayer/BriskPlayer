@@ -24,6 +24,7 @@
 #include "stdafx.h"
 #include "globals.h"
 #include "CPI_Player_CoDec.h"
+#include "CPString.h"
 #include "CP_RIFFStructs.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -137,7 +138,16 @@ BOOL CPP_OMWAV_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD 
 	// Open our new stream
 	CP_TRACE1("Openfile \"%s\"", pcFilename);
 	
-	pContext->m_hFile = CreateFile(pcFilename, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+	// Convert filename to Unicode for better filename support
+	WCHAR* pwcFilename = STR_ConvertToUnicode(pcFilename);
+	if (!pwcFilename)
+	{
+		CP_TRACE0("Failed to convert filename to Unicode");
+		return FALSE;
+	}
+	
+	pContext->m_hFile = CreateFileW(pwcFilename, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+	free(pwcFilename);
 	
 	if (pContext->m_hFile == INVALID_HANDLE_VALUE)
 	{

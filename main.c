@@ -30,6 +30,7 @@
 #include "CPI_PlaylistWindow.h"
 #include "RotatingIcon.h"
 #include "CPI_Indicators.h"
+#include "CPString.h"
 
 
 
@@ -163,23 +164,27 @@ DWORD   main_get_program_path(HINSTANCE hInst, LPTSTR pszBuffer,
 //
 int playlist_write(void)
 {
-	OPENFILENAME fn;
+	OPENFILENAMEW fn;
 	BOOL bResult;
-	char pcOutputName[MAX_PATH] = "";
+	WCHAR pwcOutputName[MAX_PATH] = L"";
 	
 	// Get filename to save
-	fn.lStructSize = sizeof(OPENFILENAME);
+	fn.lStructSize = sizeof(OPENFILENAMEW);
 	fn.hwndOwner = windows.m_hWndPlaylist;
 	fn.hInstance = NULL;
-	fn.lpstrFilter = "M3U Playlist Files (*.m3u)\0*.m3u\0PLS Playlist files (*.pls)\0*.pls\0";
+	fn.lpstrFilter = L"M3U Playlist Files (*.m3u)\0*.m3u\0PLS Playlist files (*.pls)\0*.pls\0";
 	fn.lpstrCustomFilter = NULL;
 	fn.nMaxCustFilter = 0;
 	fn.nFilterIndex = 0;
-	fn.lpstrFile = pcOutputName;
+	fn.lpstrFile = pwcOutputName;
 	fn.nMaxFile = MAX_PATH;
 	fn.lpstrFileTitle = NULL;
 	fn.nMaxFileTitle = 0;
-	fn.lpstrInitialDir = options.last_used_directory;
+	
+	// Convert last used directory to Unicode
+	WCHAR* pwcLastUsedDir = STR_ConvertToUnicode(options.last_used_directory);
+	fn.lpstrInitialDir = pwcLastUsedDir;
+	
 	fn.lpstrTitle = NULL;
 	fn.Flags = OFN_HIDEREADONLY
 			   | OFN_EXPLORER
@@ -188,16 +193,27 @@ int playlist_write(void)
 			   | OFN_ENABLESIZING;
 	fn.nFileOffset = 0;
 	fn.nFileExtension = 0;
-	fn.lpstrDefExt = "m3u";
+	fn.lpstrDefExt = L"m3u";
 	fn.lCustData = 0;
 	fn.lpfnHook = NULL;
 	fn.lpTemplateName = NULL;
-	bResult = GetSaveFileName(&fn);
+	bResult = GetSaveFileNameW(&fn);
 	
 	if (bResult == FALSE)
+	{
+		if (pwcLastUsedDir) free(pwcLastUsedDir);
 		return FALSE;
-		
-	CPL_ExportPlaylist(globals.m_hPlaylist, pcOutputName);
+	}
+	
+	// Convert Unicode filename back to ANSI for CPL_ExportPlaylist
+	char* pcOutputName = STR_ConvertFromUnicode(pwcOutputName);
+	if (pcOutputName)
+	{
+		CPL_ExportPlaylist(globals.m_hPlaylist, pcOutputName);
+		free(pcOutputName);
+	}
+	
+	if (pwcLastUsedDir) free(pwcLastUsedDir);
 	
 	return TRUE;
 }
@@ -481,9 +497,15 @@ void    main_draw_tracknr(HWND hWnd)
 
 BOOL    path_is_directory(char *filename)
 {
-	DWORD attribs = GetFileAttributes(filename);
+	// Convert to Unicode for better filename support
+	WCHAR* pwcFilename = STR_ConvertToUnicode(filename);
+	if (!pwcFilename)
+		return FALSE;
 	
-	if (attribs & FILE_ATTRIBUTE_DIRECTORY)
+	DWORD attribs = GetFileAttributesW(pwcFilename);
+	free(pwcFilename);
+	
+	if (attribs != INVALID_FILE_ATTRIBUTES && (attribs & FILE_ATTRIBUTE_DIRECTORY))
 		return TRUE;
 	else
 		return FALSE;
@@ -491,18 +513,18 @@ BOOL    path_is_directory(char *filename)
 
 int     playlist_open_file(BOOL clearlist)
 {
-	OPENFILENAME fn;
-	char filefilter[] =
-		"All Supported files\0*.mp1;*.mp2;*.mp3;*.m3u;*.pls;*.wav;*.ogg;*.oga\0"
-		"MPEG audio files (*.mp1;*.mp2;*.mp3)\0*.mp1;*.mp2;*.mp3\0"
-		"Vorbis files (*.ogg;*.oga)\0*.ogg;*.oga\0"
-		"FLAC files (*.flac)\0*.flac\0"
-		"Playlist files (*.m3u;*.pls)\0*.m3u;*.pls\0"
-		"WAV files (*.wav)\0*.wav\0"
-		"All Files (*.*)\0*.*\0";
+	OPENFILENAMEW fn;
+	WCHAR filefilter[] =
+		L"All Supported files\0*.mp1;*.mp2;*.mp3;*.m3u;*.pls;*.wav;*.ogg;*.oga\0"
+		L"MPEG audio files (*.mp1;*.mp2;*.mp3)\0*.mp1;*.mp2;*.mp3\0"
+		L"Vorbis files (*.ogg;*.oga)\0*.ogg;*.oga\0"
+		L"FLAC files (*.flac)\0*.flac\0"
+		L"Playlist files (*.m3u;*.pls)\0*.m3u;*.pls\0"
+		L"WAV files (*.wav)\0*.wav\0"
+		L"All Files (*.*)\0*.*\0";
 	BOOL    returnval;
-	char    initialfilename[MAX_PATH * 200] = "";
-	fn.lStructSize = sizeof(OPENFILENAME);
+	WCHAR    initialfilename[MAX_PATH * 200] = L"";
+	fn.lStructSize = sizeof(OPENFILENAMEW);
 	fn.hwndOwner = (HWND)windows.wnd_main;
 	fn.hInstance = NULL;
 	fn.lpstrFilter = filefilter;
@@ -513,7 +535,11 @@ int     playlist_open_file(BOOL clearlist)
 	fn.nMaxFile = MAX_PATH * 200;
 	fn.lpstrFileTitle = NULL;
 	fn.nMaxFileTitle = 0;
-	fn.lpstrInitialDir = options.last_used_directory;
+	
+	// Convert last used directory to Unicode
+	WCHAR* pwcLastUsedDir = STR_ConvertToUnicode(options.last_used_directory);
+	fn.lpstrInitialDir = pwcLastUsedDir;
+	
 	fn.lpstrTitle = NULL;
 	fn.Flags =
 		OFN_ALLOWMULTISELECT | OFN_HIDEREADONLY | OFN_EXPLORER |
@@ -524,45 +550,68 @@ int     playlist_open_file(BOOL clearlist)
 	fn.lCustData = 0;
 	fn.lpfnHook = NULL;
 	fn.lpTemplateName = NULL;
-	returnval = GetOpenFileName(&fn);
+	returnval = GetOpenFileNameW(&fn);
 	
 	if (returnval != FALSE)
 	{
-		char   *newfilename;
-		char    path_buffer[_MAX_PATH];
-		char    path_buffer2[_MAX_PATH];
+		WCHAR   *newfilename;
+		WCHAR    path_buffer[_MAX_PATH];
+		WCHAR    path_buffer2[_MAX_PATH];
 		
 		if (clearlist)
 			CPL_Empty(globals.m_hPlaylist);
 			
-		strcpy(path_buffer, fn.lpstrFile);
+		wcscpy(path_buffer, fn.lpstrFile);
 		
-		if (path_is_directory(fn.lpstrFile) == TRUE)
+		// Convert to ANSI for path operations (these functions need to be updated later)
+		char* pcPathBuffer = STR_ConvertFromUnicode(path_buffer);
+		if (pcPathBuffer)
 		{
-			path_add_backslash(path_buffer);
+			if (path_is_directory(pcPathBuffer) == TRUE)
+			{
+				path_add_backslash(pcPathBuffer);
+			}
+			else
+			{
+				path_remove_filespec(pcPathBuffer);
+			}
+			
+			strcpy(options.last_used_directory, pcPathBuffer);
+			
+			// Convert back to Unicode for processing
+			WCHAR* pwcPathBuffer = STR_ConvertToUnicode(pcPathBuffer);
+			if (pwcPathBuffer)
+			{
+				wcscpy(path_buffer, pwcPathBuffer);
+				free(pwcPathBuffer);
+			}
+			free(pcPathBuffer);
 		}
-		
-		else
-		{
-			path_remove_filespec(path_buffer);
-		}
-		
-		strcpy(options.last_used_directory, path_buffer);
 		
 		newfilename = fn.lpstrFile + fn.nFileOffset;
 		
 		while (newfilename[0] != 0)
 		{
-			strcpy(path_buffer2, path_buffer);
-			strcat(path_buffer2, newfilename);
-			CPL_SyncLoadNextFile(globals.m_hPlaylist);
-			CPL_AddFile(globals.m_hPlaylist, path_buffer2);
-			newfilename = newfilename + strlen(newfilename) + 1;
+			wcscpy(path_buffer2, path_buffer);
+			wcscat(path_buffer2, newfilename);
+			
+			// Convert Unicode filename to ANSI for playlist operations
+			char* pcFullPath = STR_ConvertFromUnicode(path_buffer2);
+			if (pcFullPath)
+			{
+				CPL_SyncLoadNextFile(globals.m_hPlaylist);
+				CPL_AddFile(globals.m_hPlaylist, pcFullPath);
+				free(pcFullPath);
+			}
+			
+			newfilename = newfilename + wcslen(newfilename) + 1;
 		}
 		
+		if (pwcLastUsedDir) free(pwcLastUsedDir);
 		return 1;
 	}
 	
+	if (pwcLastUsedDir) free(pwcLastUsedDir);
 	return 0;
 }
 
@@ -1971,7 +2020,19 @@ BOOL cmdline_parse_argument(char *token)
 	else
 		strcpy(expath, buffie);
 		
-	if (_access(expath, 0) != -1)
+	// Convert to Unicode for better filename support
+	WCHAR* pwcExpath = STR_ConvertToUnicode(expath);
+	BOOL bFileExists = FALSE;
+	
+	if (pwcExpath)
+	{
+		// Use GetFileAttributesW instead of _access for Unicode support
+		DWORD dwAttribs = GetFileAttributesW(pwcExpath);
+		bFileExists = (dwAttribs != INVALID_FILE_ATTRIBUTES);
+		free(pwcExpath);
+	}
+	
+	if (bFileExists)
 	{
 		if (globals.playlist_bool_addsong == FALSE
 				&& globals.cmdline_bool_clear_playlist_first == TRUE)

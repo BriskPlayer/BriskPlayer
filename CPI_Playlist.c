@@ -28,6 +28,7 @@
 #include "CPI_PlaylistItem_Internal.h"
 #include "CPI_Player.h"
 #include "CPI_Player_Engine.h"
+#include "CPString.h"
 
 #define CPC_TRACKSTACK_BUFFER_QUANTISATION 32
 typedef int (__cdecl *wp_SortFN)(const void *elem1, const void *elem2);
@@ -945,8 +946,14 @@ void CPL_ExportPlaylist(CP_HPLAYLIST hPlaylist, const char* pcOutputName)
 	if (enFileType == pftUnknown)
 		return;
 		
+	// Convert filename to Unicode for better filename support
+	WCHAR* pwcOutputName = STR_ConvertToUnicode(pcOutputName);
+	if (!pwcOutputName)
+		return;
+		
 	// Open the file
-	hOutputFile = CreateFile(pcOutputName, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	hOutputFile = CreateFileW(pwcOutputName, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	free(pwcOutputName);
 	
 	if (hOutputFile == INVALID_HANDLE_VALUE)
 	{
@@ -1373,7 +1380,13 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 		else
 		{
 			// It's not a URL, so we will read the file from a local (UNC) resource
-			hFile = CreateFile(pcFilename, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			// Convert filename to Unicode for better filename support
+			WCHAR* pwcFilename = STR_ConvertToUnicode(pcFilename);
+			if (!pwcFilename)
+				return;
+				
+			hFile = CreateFileW(pwcFilename, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			free(pwcFilename);
 			
 			if (hFile != INVALID_HANDLE_VALUE)
 			{

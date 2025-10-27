@@ -20,12 +20,29 @@
  */
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifndef CPSTRING_H
+#define CPSTRING_H
+
+// Forward declaration for Windows types
+#ifndef _WINDEF_
+typedef int BOOL;
+typedef unsigned short WCHAR;
+#endif
 
 
+////////////////////////////////////////////////////////////////////////////////
 
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Some basic string utility stuff
 unsigned int STR_AllocSetString(char** ppcDest, const char* pcSource, const BOOL bFreeExisting);
+
+// Unicode utility functions for filename support
+WCHAR* STR_ConvertToUnicode(const char* pcSource);
+char* STR_ConvertFromUnicode(const WCHAR* pwcSource);
+unsigned int STR_AllocSetStringW(WCHAR** ppwcDest, const WCHAR* pwcSource, const BOOL bFreeExisting);
+char* STR_AllocConvertFromUnicode(const WCHAR* pwcSource);
+
+#endif // CPSTRING_H
 

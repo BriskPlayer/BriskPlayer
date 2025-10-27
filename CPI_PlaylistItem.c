@@ -27,6 +27,7 @@
 #include "CPI_PlaylistItem.h"
 #include "CPI_PlaylistItem_Internal.h"
 #include "CPI_TagLib.h"
+#include "CPString.h"
 #include "ogg/ogg.h"
 #include "vorbis/codec.h"
 #include "vorbis/vorbisfile.h"
@@ -500,29 +501,37 @@ CPe_ReadWriteState CPLI_GetReadWriteState(const CP_HPLAYLISTITEM hItem)
 	// We will check this every time (and not cache the result) because the
 	// file could have been played with outside of CoolPlayer
 	
+	// Convert filename to Unicode
+	WCHAR* pwcFilename = STR_ConvertToUnicode(pItem->m_pcPath);
+	if (!pwcFilename)
+		return rwsBadFile;
+	
 	// Try to open the file in RW mode
-	hFile = CreateFile(pItem->m_pcPath, GENERIC_READ | GENERIC_WRITE,
-					   FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
-					   OPEN_EXISTING, 0, 0);
+	hFile = CreateFileW(pwcFilename, GENERIC_READ | GENERIC_WRITE,
+					    FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
+					    OPEN_EXISTING, 0, 0);
 	                   
 	if (hFile != INVALID_HANDLE_VALUE)
 	{
 		// Only cache
 		CloseHandle(hFile);
+		free(pwcFilename);
 		return rwsReadWrite;
 	}
 	
 	// That didn't work - try a RO open
-	hFile = CreateFile(pItem->m_pcPath, GENERIC_READ,
-					   FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
-					   OPEN_EXISTING, 0, 0);
+	hFile = CreateFileW(pwcFilename, GENERIC_READ,
+					    FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
+					    OPEN_EXISTING, 0, 0);
 	                   
 	if (hFile != INVALID_HANDLE_VALUE)
 	{
 		CloseHandle(hFile);
+		free(pwcFilename);
 		return rwsReadOnly;
 	}
 	
+	free(pwcFilename);
 	return rwsBadFile;
 }
 
@@ -759,12 +768,18 @@ void CPLI_CalculateLength_OGG(CPs_PlaylistItem* pItem)
 void CPLI_CalculateLength_WAV(CPs_PlaylistItem* pItem)
 {
 	
-	FILE* hFile;
+	HANDLE* hFile;
 	DWORD bps;
 	extern BOOL SkipToChunk(HANDLE hFile, CPs_RIFFChunk* pChunk, const char cChunkID[4]); // in CoDec_WAV.c
 	CP_TRACE1("Openfile \"%s\"", pItem->m_pcPath);
 	
-	hFile = CreateFile(pItem->m_pcPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+	// Convert filename to Unicode
+	WCHAR* pwcFilename = STR_ConvertToUnicode(pItem->m_pcPath);
+	if (!pwcFilename)
+		return;
+	
+	hFile = CreateFileW(pwcFilename, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+	free(pwcFilename);
 	
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
@@ -889,10 +904,17 @@ void CPLI_CalculateLength_MP3(CPs_PlaylistItem* pItem)
 	BOOL bMono;
 	unsigned int iVBRHeader;
 	
+	// Convert filename to Unicode
+	WCHAR* pwcFilename = STR_ConvertToUnicode(pItem->m_pcPath);
+	if (!pwcFilename)
+		return;
+	
 	// - Try to open the file
-	hFile = CreateFile(pItem->m_pcPath, GENERIC_READ,
-					   FILE_SHARE_READ, 0,
-					   OPEN_EXISTING, 0, 0);
+	hFile = CreateFileW(pwcFilename, GENERIC_READ,
+					    FILE_SHARE_READ, 0,
+					    OPEN_EXISTING, 0, 0);
+	free(pwcFilename);
+	
 	dwFileSize = GetFileSize(hFile, NULL);
 	
 	// Cannot open - fail silently
@@ -1132,7 +1154,18 @@ BOOL CPLI_RenameTrack(CP_HPLAYLISTITEM hItem, const CPe_FilenameFormat enFormat)
 	}
 	
 	CP_TRACE2("Rename \"%s\" to \"%s\"", pItem->m_pcPath, cNewPath);
-	bMoved = MoveFile(pItem->m_pcPath, cNewPath);
+	
+	// Convert both paths to Unicode for better filename support
+	WCHAR* pwcOldPath = STR_ConvertToUnicode(pItem->m_pcPath);
+	WCHAR* pwcNewPath = STR_ConvertToUnicode(cNewPath);
+	
+	if (pwcOldPath && pwcNewPath)
+		bMoved = MoveFileW(pwcOldPath, pwcNewPath);
+	else
+		bMoved = FALSE;
+	
+	if (pwcOldPath) free(pwcOldPath);
+	if (pwcNewPath) free(pwcNewPath);
 	
 	if (bMoved)
 	{

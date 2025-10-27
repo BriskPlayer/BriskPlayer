@@ -24,6 +24,7 @@
 #include "stdafx.h"
 #include "globals.h"
 #include "CPI_Stream.h"
+#include "CPString.h"
 
 
 
@@ -58,12 +59,19 @@ CPs_InStream* CP_CreateInStream_LocalFile(const char* pcFlexiURL, HWND hWndOwner
 	// Check that we can open this file
 	HANDLE hFile;
 	
-	hFile = CreateFile(pcFlexiURL, GENERIC_READ,
-					   FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
-					   OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, 0);
-	                   
-	// Cannot open
+	// Convert ANSI filename to Unicode for better filename support
+	WCHAR* pwcUnicodeFilename = STR_ConvertToUnicode(pcFlexiURL);
+	if (!pwcUnicodeFilename)
+		return NULL;
 	
+	hFile = CreateFileW(pwcUnicodeFilename, GENERIC_READ,
+					    FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
+					    OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, 0);
+	                   
+	// Free the Unicode filename
+	free(pwcUnicodeFilename);
+	
+	// Cannot open
 	if (hFile == INVALID_HANDLE_VALUE)
 		return NULL;
 		
