@@ -37,17 +37,17 @@ static const char* g_defaultStrings[STR_COUNT] = {
     "BriskPlayer Playlist",                           // STR_APP_PLAYLIST_DESC
     
     // Menu items
-    "&Open...\\tL",                                   // STR_MENU_OPEN
+    "&Open...\tL",                                   // STR_MENU_OPEN
     "Open &URL...",                                   // STR_MENU_OPEN_URL
-    "&Add...\\tA",                                    // STR_MENU_ADD
-    "Playlist &Editor\\tP",                           // STR_MENU_PLAYLIST_EDITOR
+    "&Add...\tA",                                    // STR_MENU_ADD
+    "Playlist &Editor\tP",                           // STR_MENU_PLAYLIST_EDITOR
     "&Skin",                                          // STR_MENU_SKIN
     "Default",                                        // STR_MENU_SKIN_DEFAULT
     "&Language",                                      // STR_MENU_LANGUAGE
     "English",                                        // STR_MENU_LANGUAGE_ENGLISH
     "Deutsch",                                        // STR_MENU_LANGUAGE_GERMAN
     "Play &Control",                                  // STR_MENU_PLAY_CONTROL
-    "&Play\\tX",                                      // STR_MENU_PLAY
+    "&Play\tX",                                      // STR_MENU_PLAY
     "&Stop\\tV",                                      // STR_MENU_STOP
     "Pa&use\\tC",                                     // STR_MENU_PAUSE
     "&Next\\tB",                                      // STR_MENU_NEXT
@@ -338,6 +338,23 @@ void CPT_Cleanup(void)
     g_initialized = FALSE;
 }
 
+// Convert UTF-8 string to ANSI (Windows code page)
+static BOOL ConvertUTF8ToANSI(const char* utf8String, char* ansiString, int ansiBufferSize)
+{
+    // First convert UTF-8 to Unicode
+    wchar_t unicodeBuffer[512];
+    int unicodeLength = MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, unicodeBuffer, sizeof(unicodeBuffer) / sizeof(wchar_t));
+    
+    if (unicodeLength == 0) {
+        return FALSE;  // Conversion failed
+    }
+    
+    // Then convert Unicode to ANSI (system default code page)
+    int ansiLength = WideCharToMultiByte(CP_ACP, 0, unicodeBuffer, -1, ansiString, ansiBufferSize, NULL, NULL);
+    
+    return (ansiLength > 0);
+}
+
 // Process escape sequences in strings (e.g., \t -> tab character)
 static void ProcessEscapeSequences(char* str)
 {
@@ -388,7 +405,7 @@ BOOL CPT_LoadLanguage(const char* languageCode)
     strcat(iniPath, ".ini");
     
     // Check if file exists
-    DWORD fileAttributes = GetFileAttributes(iniPath);
+    DWORD fileAttributes = GetFileAttributesA(iniPath);
     if (fileAttributes == INVALID_FILE_ATTRIBUTES) {
         // File doesn't exist, use defaults
         return FALSE;
@@ -397,7 +414,7 @@ BOOL CPT_LoadLanguage(const char* languageCode)
     // Load strings from INI file
     char buffer[512];
     for (int i = 0; i < STR_COUNT; i++) {
-        DWORD result = GetPrivateProfileString(
+        DWORD result = GetPrivateProfileStringA(
             g_stringMappings[i].section,
             g_stringMappings[i].key,
             g_defaultStrings[i],  // Default value if key not found
@@ -407,7 +424,13 @@ BOOL CPT_LoadLanguage(const char* languageCode)
         );
         
         if (result > 0) {
-            strncpy(g_translationStrings[i], buffer, sizeof(g_translationStrings[i]) - 1);
+            // Convert UTF-8 to ANSI for proper display
+            char convertedBuffer[512];
+            if (ConvertUTF8ToANSI(buffer, convertedBuffer, sizeof(convertedBuffer))) {
+                strncpy(g_translationStrings[i], convertedBuffer, sizeof(g_translationStrings[i]) - 1);
+            } else {
+                strncpy(g_translationStrings[i], buffer, sizeof(g_translationStrings[i]) - 1);
+            }
             g_translationStrings[i][sizeof(g_translationStrings[i]) - 1] = '\0';
             
             // Process escape sequences like \t -> tab character
@@ -464,4 +487,29 @@ BOOL CPT_LanguageFileExists(const char* languageCode)
     
     DWORD fileAttributes = GetFileAttributes(iniPath);
     return (fileAttributes != INVALID_FILE_ATTRIBUTES);
+}
+
+// Get language-specific dialog size
+DialogSize CPT_GetDialogSize(const char* dialogName)
+{
+    DialogSize defaultSize = {250, 300}; // Default size
+    
+    if (!g_initialized) {
+        return defaultSize;
+    }
+    
+    // Language-specific adjustments
+    if (strcmp(g_currentLanguage, "de") == 0) {
+        // German text is typically 20-30% longer
+        if (strcmp(dialogName, "Options") == 0) {
+            DialogSize germanSize = {300, 320}; // Wider for German
+            return germanSize;
+        }
+        else if (strcmp(dialogName, "URL") == 0) {
+            DialogSize germanSize = {350, 120}; // Wider for German URL dialog
+            return germanSize;
+        }
+    }
+    
+    return defaultSize;
 }

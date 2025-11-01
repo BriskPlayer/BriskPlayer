@@ -24,7 +24,57 @@
 #include "CPI_Playlist.h"
 #include "CPI_Translation.h"
 
+// Helper function to translate static text controls that have ID -1
+static void TranslateStaticControls(HWND hwndDlg)
+{
+    HWND hChild = GetWindow(hwndDlg, GW_CHILD);
+    char buffer[256];
+    
+    while (hChild) {
+        // Get the window text
+        GetWindowTextA(hChild, buffer, sizeof(buffer));
+        
+        // Check if this is one of our static texts that needs translation
+        if (strcmp(buffer, "Track Delay (sec)") == 0) {
+            SetWindowTextA(hChild, T(STR_OPTIONS_TRACK_DELAY_SEC));
+        }
+        else if (strcmp(buffer, "Skinlist length") == 0) {
+            SetWindowTextA(hChild, T(STR_OPTIONS_SKINLIST_LENGTH));
+        }
+        else if (strcmp(buffer, "Output") == 0) {
+            SetWindowTextA(hChild, T(STR_OPTIONS_OUTPUT));
+        }
+        else if (strcmp(buffer, "Volume controls") == 0) {
+            SetWindowTextA(hChild, T(STR_OPTIONS_VOLUME_CONTROLS));
+        }
+        else if (strcmp(buffer, "Skin") == 0) {
+            SetWindowTextA(hChild, T(STR_OPTIONS_SKIN));
+        }
+        
+        // Move to next child window
+        hChild = GetWindow(hChild, GW_HWNDNEXT);
+    }
+}
 
+// Helper function to resize dialog based on translated text lengths
+static void ResizeDialogForTranslations(HWND hwndDlg)
+{
+    // Dialog template has been updated to accommodate longer German text
+    // No dynamic resizing needed anymore
+    (void)hwndDlg; // Suppress unused parameter warning
+}
+
+// Helper function to adjust control positions for better layout with longer text
+static void AdjustControlLayout(HWND hwndDlg)
+{
+    // Dialog template has been updated to accommodate longer German text
+    // No dynamic adjustments needed anymore
+    (void)hwndDlg; // Suppress unused parameter warning
+}
+
+//
+//
+//
 INT_PTR CALLBACK
 url_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -118,6 +168,15 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			SetDlgItemText(hwndDlg, IDC_SKINBUTTON, T(STR_OPTIONS_OPEN));
 			SetDlgItemText(hwndDlg, IDOK, T(STR_OPTIONS_OK));
 			SetDlgItemText(hwndDlg, IDCANCEL, T(STR_OPTIONS_CANCEL));
+			
+			// Translate static text controls (these have ID -1, so we need to find them by text)
+			TranslateStaticControls(hwndDlg);
+			
+			// Resize dialog if needed to accommodate longer translations
+			ResizeDialogForTranslations(hwndDlg);
+			
+			// Adjust control layout for better appearance
+			AdjustControlLayout(hwndDlg);
 			
 			if (options.use_default_skin == TRUE)
 				SendDlgItemMessage(hwndDlg, IDC_PLAYERSKINCHECK,

@@ -142,4 +142,12 @@ BOOL CPT_LanguageFileExists(const char* languageCode);
 // Convenience macro for getting translated strings
 #define T(id) CPT_GetString(id)
 
+// Dialog sizing functions for different languages
+typedef struct {
+    int width;
+    int height;
+} DialogSize;
+
+DialogSize CPT_GetDialogSize(const char* dialogName);
+
 #endif // CPI_TRANSLATION_H

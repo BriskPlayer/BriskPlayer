@@ -2239,6 +2239,7 @@ int     cmdline_parse_files(int argc, char **argv)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	(void)hPrevInstance;  // Suppress unused parameter warning
+	(void)lpCmdLine;     // Suppress unused parameter warning
 	WNDCLASS wc;
 	HWND    hWnd;
 	MSG     msg;
