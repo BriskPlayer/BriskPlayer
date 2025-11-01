@@ -31,8 +31,138 @@
 #include "RotatingIcon.h"
 #include "CPI_Indicators.h"
 #include "CPString.h"
+#include "CPI_Translation.h"
 
 
+
+
+#include "CPI_Translation.h"
+
+// Structure to hold language information
+typedef struct {
+    const char* code;
+    const char* name;
+    UINT menuID;
+} LanguageInfo;
+
+// Available languages
+static const LanguageInfo g_availableLanguages[] = {
+    {"en", "English", MENU_LANGUAGE_EN},
+    {"de", "Deutsch", MENU_LANGUAGE_DE},
+    {NULL, NULL, 0}  // Terminator
+};
+
+// Forward declarations
+void main_translate_menu(void);
+
+// Function to populate language menu dynamically
+void main_populate_language_menu(void)
+{
+    HMENU languageMenu = GetSubMenu(globals.main_menu_popup, LANGUAGE_SUBMENU_INDEX);
+    if (!languageMenu) return;
+    
+    // Clear existing items
+    while (GetMenuItemCount(languageMenu) > 0) {
+        RemoveMenu(languageMenu, 0, MF_BYPOSITION);
+    }
+    
+    // Add language options (only if language file exists)
+    for (int i = 0; g_availableLanguages[i].code != NULL; i++) {
+        if (CPT_LanguageFileExists(g_availableLanguages[i].code)) {
+            UINT flags = MF_STRING;
+            
+            // Check if this is the current language
+            if (strcmp(CPT_GetCurrentLanguage(), g_availableLanguages[i].code) == 0) {
+                flags |= MF_CHECKED;
+            }
+            
+            AppendMenu(languageMenu, flags, g_availableLanguages[i].menuID, g_availableLanguages[i].name);
+        }
+    }
+}
+
+// Function to handle language switching
+void main_switch_language(const char* languageCode)
+{
+    if (CPT_LoadLanguage(languageCode)) {
+        // Language successfully loaded, save preference
+        strncpy(options.preferred_language, languageCode, sizeof(options.preferred_language) - 1);
+        options.preferred_language[sizeof(options.preferred_language) - 1] = '\0';
+        options_write(); // Save the preference immediately
+        
+        // Refresh the menu translations
+        main_translate_menu();
+        main_populate_language_menu();
+        
+        // You could add more UI refresh code here if needed
+        // For example, refreshing dialog titles, etc.
+    }
+}
+
+// Function to get language code from menu ID
+const char* main_get_language_from_menu_id(UINT menuID)
+{
+    for (int i = 0; g_availableLanguages[i].code != NULL; i++) {
+        if (g_availableLanguages[i].menuID == menuID) {
+            return g_availableLanguages[i].code;
+        }
+    }
+    return NULL;
+}
+
+// Function to translate menu items
+void main_translate_menu(void)
+{
+    if (!globals.main_menu_popup) return;
+    
+    // Translate main menu items
+    ModifyMenu(globals.main_menu_popup, MENU_OPENFILE, MF_BYCOMMAND | MF_STRING, MENU_OPENFILE, T(STR_MENU_OPEN));
+    ModifyMenu(globals.main_menu_popup, MENU_OPENLOC, MF_BYCOMMAND | MF_STRING, MENU_OPENLOC, T(STR_MENU_OPEN_URL));
+    ModifyMenu(globals.main_menu_popup, MENU_ADDFILE, MF_BYCOMMAND | MF_STRING, MENU_ADDFILE, T(STR_MENU_ADD));
+    ModifyMenu(globals.main_menu_popup, MENU_PLAYLIST, MF_BYCOMMAND | MF_STRING, MENU_PLAYLIST, T(STR_MENU_PLAYLIST_EDITOR));
+    ModifyMenu(globals.main_menu_popup, MENU_OPTIONS, MF_BYCOMMAND | MF_STRING, MENU_OPTIONS, T(STR_MENU_OPTIONS));
+    ModifyMenu(globals.main_menu_popup, MENU_ABOUT, MF_BYCOMMAND | MF_STRING, MENU_ABOUT, T(STR_MENU_ABOUT));
+    ModifyMenu(globals.main_menu_popup, MENU_EXIT, MF_BYCOMMAND | MF_STRING, MENU_EXIT, T(STR_MENU_EXIT));
+    
+    // Translate Play Control submenu items
+    ModifyMenu(globals.main_menu_popup, ID_PLAY, MF_BYCOMMAND | MF_STRING, ID_PLAY, T(STR_MENU_PLAY));
+    ModifyMenu(globals.main_menu_popup, ID_STOP, MF_BYCOMMAND | MF_STRING, ID_STOP, T(STR_MENU_STOP));
+    ModifyMenu(globals.main_menu_popup, ID_PAUSE, MF_BYCOMMAND | MF_STRING, ID_PAUSE, T(STR_MENU_PAUSE));
+    ModifyMenu(globals.main_menu_popup, ID_NEXT, MF_BYCOMMAND | MF_STRING, ID_NEXT, T(STR_MENU_NEXT));
+    ModifyMenu(globals.main_menu_popup, ID_PREVIOUS, MF_BYCOMMAND | MF_STRING, ID_PREVIOUS, T(STR_MENU_PREVIOUS));
+    
+    // Translate Skin submenu - get the submenu handle and modify the first item (Default)
+    HMENU skinMenu = GetSubMenu(globals.main_menu_popup, SKIN_SUBMENU_INDEX);
+    if (skinMenu) {
+        ModifyMenu(skinMenu, MENU_SKIN_DEFAULT, MF_BYCOMMAND | MF_STRING, MENU_SKIN_DEFAULT, T(STR_MENU_SKIN_DEFAULT));
+    }
+    
+    // For submenu titles, we need to modify by position
+    // Find the positions of the submenus
+    int menuItemCount = GetMenuItemCount(globals.main_menu_popup);
+    for (int i = 0; i < menuItemCount; i++) {
+        HMENU subMenu = GetSubMenu(globals.main_menu_popup, i);
+        if (subMenu) {
+            // Check if this is the Skin submenu
+            if (i == SKIN_SUBMENU_INDEX) {
+                ModifyMenu(globals.main_menu_popup, i, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT_PTR)subMenu, T(STR_MENU_SKIN));
+            }
+            // Check if this is the Language submenu
+            else if (i == LANGUAGE_SUBMENU_INDEX) {
+                ModifyMenu(globals.main_menu_popup, i, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT_PTR)subMenu, T(STR_MENU_LANGUAGE));
+            }
+            // Check if this is the Play Control submenu by looking for known menu items
+            else {
+                MENUITEMINFO mii = {0};
+                mii.cbSize = sizeof(MENUITEMINFO);
+                mii.fMask = MIIM_ID;
+                if (GetMenuItemInfo(subMenu, 0, TRUE, &mii) && mii.wID == ID_PLAY) {
+                    ModifyMenu(globals.main_menu_popup, i, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT_PTR)subMenu, T(STR_MENU_PLAY_CONTROL));
+                }
+            }
+        }
+    }
+}
 
 
 void    main_skin_select_menu(char *name)
@@ -1123,6 +1253,17 @@ void    main_menuproc(HWND hWnd, LPPOINT points)
 			break;
 		}
 		
+		case MENU_LANGUAGE_EN:
+		case MENU_LANGUAGE_DE:
+		case MENU_LANGUAGE_FR:
+		{
+			const char* languageCode = main_get_language_from_menu_id(retval);
+			if (languageCode) {
+				main_switch_language(languageCode);
+			}
+			break;
+		}
+		
 		default:
 		{
 			if (main_play_control((WORD) retval, hWnd) != -1)
@@ -2125,8 +2266,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	options_read();
 	
+	// Initialize translation system with saved language preference
+	if (strlen(options.preferred_language) > 0) {
+		CPT_SetDefaultLanguage(options.preferred_language);
+	}
+	CPT_Initialize();
+	
 	#ifdef _DEBUG
-	OutputDebugStringA("BriskPlayer: Options read, creating mutex...\n");
+	OutputDebugStringA("BriskPlayer: Translation system initialized...\n");
 	#endif
 	
 	CreateMutex(NULL, FALSE, CLC_COOLPLAYER_MUTEX);
@@ -2232,6 +2379,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	hpopup = LoadMenu(NULL, MAKEINTRESOURCE(IDR_MENU1));
 	
 	globals.main_menu_popup = GetSubMenu(hpopup, 0);
+	
+	// Populate language menu with available languages
+	main_populate_language_menu();
+	
+	// Translate menu items to current language
+	main_translate_menu();
 	
 	globals.m_hPlaylistImages = ImageList_LoadBitmap(hInstance,
 								MAKEINTRESOURCE(IDB_PLAYLIST_CURRENTTRACK),
@@ -2467,6 +2620,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				ImageList_Destroy(globals.m_hPlaylistImages);
 				CPSK_Uninitialise();
 				IF_ProcessDeInit();
+				CPT_Cleanup();  // Cleanup translation system
 				
 				return (int)msg.wParam;
 			}

@@ -48,6 +48,7 @@ typedef void* CP_HSYSICON;
 #include "CPI_Image.h"
 #include "CPI_Interface.h"
 #include "CPSK_Skin.h"
+#include "CPI_Translation.h"
 #include "CLV_ListView.h"
 #include "CPString.h"
 
@@ -56,13 +57,20 @@ typedef void* CP_HSYSICON;
 
 // menu id's and locations
 #define SKIN_SUBMENU_INDEX		5
+#define LANGUAGE_SUBMENU_INDEX	6
 
 // Handle to player
 #define CP_VERSION_MAJOR				3
 #define CP_VERSION_MINOR				0
 #define CP_VERSION_BUILD				0
 #define CP_BUILD_NUMBER					300
-#define CP_COOLPLAYER					"BriskPlayer"
+
+// Translatable application constants - use T() macro for runtime translation
+#define CP_COOLPLAYER					T(STR_APP_NAME)
+#define CIC_COOLPLAYER_FILEDESC			T(STR_APP_AUDIO_FILE_DESC)
+#define CIC_COOLPLAYER_PLAYLISTFILEDESC	T(STR_APP_PLAYLIST_DESC)
+
+// Non-translatable constants
 #define CIC_HTTPHEADER					"http://"
 #define CIC_HTTPSHEADER					"https://"
 #define CIC_ICYHEADER					"icy://"
@@ -80,9 +88,7 @@ typedef void* CP_HSYSICON;
 
 // Registry
 #define CIC_COOLPLAYER_FILETYPE						"BriskPlayer.Audio"
-#define CIC_COOLPLAYER_FILEDESC						"BriskPlayer Audio file"
 #define CIC_COOLPLAYER_PLAYLISTFILETYPE				"BriskPlayer.Playlist"
-#define CIC_COOLPLAYER_PLAYLISTFILEDESC				"BriskPlayer Playlist"
 #define CLC_COOLPLAYER_INTERFACECLASSNAME			"BriskPlayer_Interface"
 #define CLC_COOLPLAYER_WINDOWCLASSNAME				"BriskPlayer"
 #define CLC_COOLPLAYER_PLAYLIST_WINDOWCLASSNAME		"BriskPlayer_Playlist"
@@ -409,6 +415,7 @@ typedef struct
 	unsigned char playlist_skin_file[MAX_PATH];
 	unsigned char main_skin_file[MAX_PATH];
 	unsigned int seconds_delay_after_track;
+	char    preferred_language[8];
 	CPe_QuickFindTerm m_enQuickFindTerm;
 } options_t;
 

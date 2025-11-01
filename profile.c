@@ -158,6 +158,10 @@ void    options_read(void)
 	    
 	options.decoder_output_mode =
 		GetPrivateProfileInt("Misc", "Outputmode", 1, pathbuf);
+	
+	// Read preferred language
+	GetPrivateProfileString("Misc", "Language", "", options.preferred_language, 
+	                        sizeof(options.preferred_language), pathbuf);
 	    
 	options.easy_move =
 		GetPrivateProfileInt("Misc", "Easymove", 1, pathbuf);
@@ -453,6 +457,11 @@ void    options_write(void)
 	_itoa_s(options.decoder_output_mode, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "Outputmode",
 							  intbuf, pathbuf);
+	
+	// Write preferred language
+	WritePrivateProfileString("Misc", "Language", 
+							  options.preferred_language, pathbuf);
+	
 	_itoa_s(options.scroll_track_title, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "Scrolltitle",
 							  intbuf, pathbuf);

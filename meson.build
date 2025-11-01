@@ -147,6 +147,7 @@ brisksrc = files([
     'CPI_Stream.c',
     'CPI_Stream_Internet.c',
     'CPI_Stream_LocalFile.c',
+    'CPI_Translation.c',
     'CPString.c',
     'CPI_Verbs.c',
     'CPSK_Skin.c',
@@ -203,3 +204,7 @@ briskplayer_exe = executable('briskplayer', brisksrc, briskres,
     link_args : static_link_args,
     cpp_args : cpp_stdlib_args,
     win_subsystem : 'windows')
+
+# Install language files
+install_data('lang/en.ini', install_dir : 'lang')
+install_data('lang/de.ini', install_dir : 'lang')

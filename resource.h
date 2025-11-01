@@ -102,12 +102,20 @@
 #define IDC_URL_ICON                    1063
 #define IDC_URL_DESCRIPTION             1064
 #define MENU_SKIN_DEFAULT               5000
+#define MENU_ADDFILE                    40039
 #define MENU_OPENFILE                   40001
 #define MENU_OPENLOC                    40002
 #define MENU_PLAYLIST                   40003
 #define MENU_OPTIONS                    40004
 #define MENU_ABOUT                      40005
 #define MENU_EXIT                       40006
+
+// Language menu IDs (start at 6000 to avoid conflicts)
+#define MENU_LANGUAGE_BASE              6000
+#define MENU_LANGUAGE_EN                6001
+#define MENU_LANGUAGE_DE                6002
+#define MENU_LANGUAGE_FR                6003
+// Add more language IDs as needed (6004, 6005, etc.)
 #define ID_DELETE                       40007
 #define ID_REPEAT                       40008
 #define ID_SHUFFLE                      40009

@@ -22,6 +22,7 @@
 #include "globals.h"
 #include "CPI_Player.h"
 #include "CPI_Playlist.h"
+#include "CPI_Translation.h"
 
 
 INT_PTR CALLBACK
@@ -32,6 +33,12 @@ url_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 	
 		case WM_INITDIALOG:
+			// Set translated dialog title and text
+			SetWindowText(hwndDlg, T(STR_DLG_URL_TITLE));
+			SetDlgItemText(hwndDlg, IDC_URL_DESCRIPTION, T(STR_URL_DESCRIPTION));
+			SetDlgItemText(hwndDlg, IDC_URL_STATIC, T(STR_URL_LABEL));
+			SetDlgItemText(hwndDlg, IDOK, T(STR_OPTIONS_OK));
+			SetDlgItemText(hwndDlg, IDCANCEL, T(STR_OPTIONS_CANCEL));
 			return TRUE;
 			
 		case WM_CLOSE:
@@ -83,6 +90,34 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			// this is needed as the options dialog is created with DialogBox
 			windows.dlg_options = hwndDlg;
+			
+			// Set translated dialog title and control text
+			SetWindowText(hwndDlg, T(STR_DLG_OPTIONS_TITLE));
+			SetDlgItemText(hwndDlg, IDC_ONTOP, T(STR_OPTIONS_ALWAYS_ON_TOP));
+			SetDlgItemText(hwndDlg, IDC_AUTOEXIT, T(STR_OPTIONS_EXIT_AFTER_PLAYING));
+			SetDlgItemText(hwndDlg, IDC_ROTATE, T(STR_OPTIONS_ROTATE_SYSTRAY));
+			SetDlgItemText(hwndDlg, IDC_SCROLLTITLE, T(STR_OPTIONS_SCROLL_TITLE));
+			SetDlgItemText(hwndDlg, IDC_FILEONCE, T(STR_OPTIONS_FILE_ONCE_PLAYLIST));
+			SetDlgItemText(hwndDlg, IDC_AUTOPLAY, T(STR_OPTIONS_AUTOPLAY_STARTUP));
+			SetDlgItemText(hwndDlg, IDC_MULTIPLEINSTANCES, T(STR_OPTIONS_MULTIPLE_INSTANCES));
+			SetDlgItemText(hwndDlg, IDC_REMAINING, T(STR_OPTIONS_SHOW_REMAINING_TIME));
+			SetDlgItemText(hwndDlg, IDC_TASKBAR, T(STR_OPTIONS_SHOW_ON_TASKBAR));
+			SetDlgItemText(hwndDlg, IDC_REGFILETYPE, T(STR_OPTIONS_REGISTER_FILETYPES));
+			SetDlgItemText(hwndDlg, IDC_ADDICONS, T(STR_OPTIONS_ADD_START_MENU));
+			SetDlgItemText(hwndDlg, IDC_READTAG, T(STR_OPTIONS_READ_ID3_TAG));
+			SetDlgItemText(hwndDlg, IDC_READSELTAG, T(STR_OPTIONS_READ_ID3_SELECTED));
+			SetDlgItemText(hwndDlg, IDC_SUPPORTID3_V2, T(STR_OPTIONS_SUPPORT_ID3V2));
+			SetDlgItemText(hwndDlg, IDC_PREFERNATIVEOGGTAGS, T(STR_OPTIONS_PREFER_NATIVE_OGG));
+			SetDlgItemText(hwndDlg, IDC_READID3INBACKGROUND, T(STR_OPTIONS_READ_ID3_BACKGROUND));
+			SetDlgItemText(hwndDlg, IDC_READTRACKTIME, T(STR_OPTIONS_WORK_OUT_LENGTHS));
+			SetDlgItemText(hwndDlg, IDC_EASYMOVE, T(STR_OPTIONS_EASY_MOVE));
+			SetDlgItemText(hwndDlg, IDC_REMEMBERPLS, T(STR_OPTIONS_REMEMBER_PLAYLIST));
+			SetDlgItemText(hwndDlg, IDC_REMSONG, T(STR_OPTIONS_REMEMBER_LAST_PLAYED));
+			SetDlgItemText(hwndDlg, IDC_FLUSH_SKINLIST, T(STR_OPTIONS_FLUSH));
+			SetDlgItemText(hwndDlg, IDC_PLAYERSKINCHECK, T(STR_OPTIONS_PLAYER));
+			SetDlgItemText(hwndDlg, IDC_SKINBUTTON, T(STR_OPTIONS_OPEN));
+			SetDlgItemText(hwndDlg, IDOK, T(STR_OPTIONS_OK));
+			SetDlgItemText(hwndDlg, IDCANCEL, T(STR_OPTIONS_CANCEL));
 			
 			if (options.use_default_skin == TRUE)
 				SendDlgItemMessage(hwndDlg, IDC_PLAYERSKINCHECK,
@@ -164,13 +199,11 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   BM_SETCHECK, options.use_playlist_skin,
 								   0);
 				                   
-			SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_ADDSTRING, 0, (LPARAM)"System MASTER volume");
+					SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_ADDSTRING, 0, (LPARAM)T(STR_VOLUME_SYSTEM_MASTER));
 			
-			SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_ADDSTRING, 0, (LPARAM)"System WAVE volume");
+			SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_ADDSTRING, 0, (LPARAM)T(STR_VOLUME_SYSTEM_WAVE));
 			
-			SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_ADDSTRING, 0, (LPARAM)"Internal volume");
-			
-			if (globals.m_enMixerMode == mmMasterVolume)
+			SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_ADDSTRING, 0, (LPARAM)T(STR_VOLUME_INTERNAL));			if (globals.m_enMixerMode == mmMasterVolume)
 				SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_SETCURSEL, 0, 0);
 			else if (globals.m_enMixerMode == mmWaveVolume)
 				SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_SETCURSEL, 1, 0);
@@ -193,8 +226,8 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 				case IDC_SKINBUTTON:
 				{
 					OPENFILENAME fn;
-					char    filefilter[] =
-						"BriskPlayer Skin Initialization Files (*.ini)\0*.ini\0All Files (*.*)\0*.*\0";
+					char    filefilter[512];
+					sprintf(filefilter, "%s\\0*.ini\\0%s\\0*.*\\0", T(STR_FILTER_SKIN_FILES), T(STR_FILTER_ALL_FILES));
 					BOOL    returnval;
 					char    initialfilename[MAX_PATH * 100] = "";
 					char    pathbuffie[MAX_PATH];
@@ -438,7 +471,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
 					RegSetValueEx(result, NULL, 0, REG_SZ,
-								  (const BYTE*)CIC_COOLPLAYER_FILEDESC, sizeof(CIC_COOLPLAYER_FILEDESC));
+								  (const BYTE*)T(STR_APP_AUDIO_FILE_DESC), strlen(T(STR_APP_AUDIO_FILE_DESC)) + 1);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
 								   CIC_COOLPLAYER_FILETYPE "\\DefaultIcon",
@@ -508,7 +541,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
 					RegSetValueEx(result, NULL, 0, REG_SZ,
-								  (const BYTE*)CIC_COOLPLAYER_PLAYLISTFILETYPE, sizeof(CIC_COOLPLAYER_PLAYLISTFILETYPE));
+								  (const BYTE*)CIC_COOLPLAYER_PLAYLISTFILETYPE, strlen(CIC_COOLPLAYER_PLAYLISTFILETYPE) + 1);
 					RegCloseKey(result);
 					
 					RegCreateKeyEx(HKEY_CLASSES_ROOT, ".pls", 0, NULL,
@@ -516,7 +549,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
 					RegSetValueEx(result, NULL, 0, REG_SZ,
-								  (const BYTE*)CIC_COOLPLAYER_PLAYLISTFILETYPE, sizeof(CIC_COOLPLAYER_PLAYLISTFILETYPE));
+								  (const BYTE*)CIC_COOLPLAYER_PLAYLISTFILETYPE, strlen(CIC_COOLPLAYER_PLAYLISTFILETYPE) + 1);
 					RegCloseKey(result);
 					
 					RegCreateKeyEx(HKEY_CLASSES_ROOT, CIC_COOLPLAYER_PLAYLISTFILETYPE,
@@ -524,7 +557,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
 					RegSetValueEx(result, NULL, 0, REG_SZ,
-								  (const BYTE*)CIC_COOLPLAYER_PLAYLISTFILEDESC, sizeof(CIC_COOLPLAYER_PLAYLISTFILEDESC));
+								  (const BYTE*)T(STR_APP_PLAYLIST_DESC), strlen(T(STR_APP_PLAYLIST_DESC)) + 1);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
 								   CIC_COOLPLAYER_PLAYLISTFILETYPE "\\DefaultIcon",
@@ -622,8 +655,8 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					RegDeleteKey(HKEY_CLASSES_ROOT, CIC_COOLPLAYER_PLAYLISTFILETYPE "\\Shell\\Enqueue in BriskPlayer\\");
 					
 					MessageBox(hwndDlg,
-							   "Filetypes are registered.\nYou can doubleclick a supported file to run BriskPlayer.",
-							   CP_COOLPLAYER, MB_ICONINFORMATION);
+							   T(STR_MSG_FILETYPES_REGISTERED),
+							   T(STR_APP_NAME), MB_ICONINFORMATION);
 					           
 					break;
 				}
@@ -667,8 +700,8 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					path_create_link(pathname, linkname2, NULL);
 					CoUninitialize();
 					MessageBox(hwndDlg,
-							   "An icon for BriskPlayer has been created in the StartMenu and Desktop.",
-							   CP_COOLPLAYER, MB_ICONINFORMATION);
+							   T(STR_MSG_ICONS_CREATED),
+							   T(STR_APP_NAME), MB_ICONINFORMATION);
 					break;
 				}
 			}

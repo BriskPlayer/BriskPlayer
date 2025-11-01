@@ -92,6 +92,11 @@ BEGIN
         BEGIN
             MENUITEM "Default",                     MENU_SKIN_DEFAULT
         END
+        POPUP "&Language"
+        BEGIN
+            MENUITEM "English",                     MENU_LANGUAGE_EN
+            MENUITEM "Deutsch",                     MENU_LANGUAGE_DE
+        END
         MENUITEM SEPARATOR
         POPUP "Play &Control"
         BEGIN
