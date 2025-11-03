@@ -90,6 +90,10 @@ typedef struct _CPs_InterfaceWindowState
 
 LRESULT CALLBACK exp_InterfaceWindowProc(HWND hWnd, UINT uiMessage, WPARAM wParam, LPARAM lParam);
 void IF_PaintWindow(CPs_InterfaceWindowState* pState, CPs_DrawContext* pContext);
+
+// Forward declarations for window snapping functionality (defined in main.c)
+void SnapWindow(HWND hWnd, RECT* pRect);
+void MoveDockedWindows(HWND movedWindow, int deltaX, int deltaY);
 ////////////////////////////////////////////////////////////////////////////////
 //
 //
@@ -352,6 +356,13 @@ LRESULT CALLBACK exp_InterfaceWindowProc(HWND hWnd, UINT uiMessage, WPARAM wPara
 			
 			return 0;
 		} // end WM_MOUSEMOVE
+		
+		case WM_MOVING:
+		{
+			RECT* pRect = (RECT*)lParam;
+			SnapWindow(hWnd, pRect);
+			return TRUE;
+		} // end WM_MOVING
 
 		case WM_LBUTTONDOWN:
 		{
@@ -522,6 +533,24 @@ LRESULT CALLBACK exp_InterfaceWindowProc(HWND hWnd, UINT uiMessage, WPARAM wPara
 			rNewPos.top = pWP->y;
 			rNewPos.bottom = pWP->y + pWP->cy;
 			bSizeChanged = (pWP->flags & SWP_NOSIZE) ? FALSE : TRUE;
+			
+			// Handle moving docked windows if this window moved
+			if (!(pWP->flags & SWP_NOMOVE)) {
+				static POINT lastPos = {0, 0};
+				POINT currentPos = {pWP->x, pWP->y};
+				
+				// Calculate delta if this isn't the first move
+				if (lastPos.x != 0 || lastPos.y != 0) {
+					int deltaX = currentPos.x - lastPos.x;
+					int deltaY = currentPos.y - lastPos.y;
+					
+					if (deltaX != 0 || deltaY != 0) {
+						MoveDockedWindows(hWnd, deltaX, deltaY);
+					}
+				}
+				
+				lastPos = currentPos;
+			}
 			
 			pState->m_ptWindowPos.x = pWP->x;
 			pState->m_ptWindowPos.y = pWP->y;

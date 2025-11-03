@@ -38,76 +38,347 @@
 
 #include "CPI_Translation.h"
 
-// Structure to hold language information
-typedef struct {
-    const char* code;
-    const char* name;
-    UINT menuID;
-} LanguageInfo;
-
-// Available languages
-static const LanguageInfo g_availableLanguages[] = {
-    {"en", "English", MENU_LANGUAGE_EN},
-    {"de", "Deutsch", MENU_LANGUAGE_DE},
-    {NULL, NULL, 0}  // Terminator
-};
-
 // Forward declarations
 void main_translate_menu(void);
+
+// Window snapping constants and functions
+#define SNAP_DISTANCE 12  // Pixels within which windows will snap (reduced for less aggressive snapping)
+#define SNAP_TO_SCREEN_EDGES 0  // Disable screen edge snapping
+#define SNAP_TO_OTHER_WINDOWS 1  // Enable snapping to other BriskPlayer windows
+
+// Window docking tracking
+typedef struct {
+    HWND window;
+    HWND dockedTo;
+    int offsetX;  // Horizontal offset from docked window
+    int offsetY;  // Vertical offset from docked window
+    BOOL isDocked;
+} WindowDockInfo;
+
+static WindowDockInfo g_dockInfo[4] = {0}; // Track up to 4 windows
+static BOOL g_movingDockedWindows = FALSE; // Prevent infinite recursion
+
+// Helper functions for window docking
+void SetWindowDocking(HWND window, HWND dockedTo, int offsetX, int offsetY)
+{
+    for (int i = 0; i < 4; i++) {
+        if (g_dockInfo[i].window == window || g_dockInfo[i].window == NULL) {
+            g_dockInfo[i].window = window;
+            g_dockInfo[i].dockedTo = dockedTo;
+            g_dockInfo[i].offsetX = offsetX;
+            g_dockInfo[i].offsetY = offsetY;
+            g_dockInfo[i].isDocked = TRUE;
+            break;
+        }
+    }
+}
+
+void ClearWindowDocking(HWND window)
+{
+    for (int i = 0; i < 4; i++) {
+        if (g_dockInfo[i].window == window) {
+            g_dockInfo[i].window = NULL;
+            g_dockInfo[i].dockedTo = NULL;
+            g_dockInfo[i].offsetX = 0;
+            g_dockInfo[i].offsetY = 0;
+            g_dockInfo[i].isDocked = FALSE;
+            break;
+        }
+    }
+}
+
+WindowDockInfo* GetWindowDockInfo(HWND window)
+{
+    for (int i = 0; i < 4; i++) {
+        if (g_dockInfo[i].window == window && g_dockInfo[i].isDocked) {
+            return &g_dockInfo[i];
+        }
+    }
+    return NULL;
+}
+
+void MoveDockedWindows(HWND movedWindow, int deltaX, int deltaY)
+{
+    if (g_movingDockedWindows) return; // Prevent recursion
+    
+    g_movingDockedWindows = TRUE;
+    
+    // Find all windows docked to the moved window and move them
+    for (int i = 0; i < 4; i++) {
+        if (g_dockInfo[i].isDocked && g_dockInfo[i].dockedTo == movedWindow) {
+            HWND dockedWindow = g_dockInfo[i].window;
+            if (IsWindow(dockedWindow) && IsWindowVisible(dockedWindow)) {
+                RECT dockedRect;
+                if (GetWindowRect(dockedWindow, &dockedRect)) {
+                    SetWindowPos(dockedWindow, NULL, 
+                               dockedRect.left + deltaX, 
+                               dockedRect.top + deltaY,
+                               0, 0, SWP_NOSIZE | SWP_NOZORDER);
+                }
+            }
+        }
+    }
+    
+    g_movingDockedWindows = FALSE;
+}
+
+// Helper function to snap windows together
+void SnapWindow(HWND hWnd, RECT* pMovingRect)
+{
+    if (!pMovingRect) return;
+    
+    RECT snapRect = *pMovingRect;
+    int snapTolerance = SNAP_DISTANCE;
+    BOOL snapped = FALSE;
+    
+    // Get screen dimensions for edge snapping
+    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+    
+    // Snap to screen edges
+    if (SNAP_TO_SCREEN_EDGES) {
+        // Left edge
+        if (abs(snapRect.left) <= snapTolerance) {
+            int offset = -snapRect.left;
+            snapRect.left += offset;
+            snapRect.right += offset;
+            snapped = TRUE;
+        }
+        // Right edge
+        else if (abs(snapRect.right - screenWidth) <= snapTolerance) {
+            int offset = screenWidth - snapRect.right;
+            snapRect.left += offset;
+            snapRect.right += offset;
+            snapped = TRUE;
+        }
+        
+        // Top edge
+        if (abs(snapRect.top) <= snapTolerance) {
+            int offset = -snapRect.top;
+            snapRect.top += offset;
+            snapRect.bottom += offset;
+            snapped = TRUE;
+        }
+        // Bottom edge
+        else if (abs(snapRect.bottom - screenHeight) <= snapTolerance) {
+            int offset = screenHeight - snapRect.bottom;
+            snapRect.top += offset;
+            snapRect.bottom += offset;
+            snapped = TRUE;
+        }
+    }
+    
+    // Snap to other BriskPlayer windows
+    if (SNAP_TO_OTHER_WINDOWS) {
+        HWND snapTargets[] = {
+            windows.wnd_main,
+            windows.dlg_playlist,
+            windows.m_hWndPlaylist,
+            windows.dlg_options
+        };
+        
+        HWND dockedToWindow = NULL;
+        int bestSnapDistance = snapTolerance + 1;
+        RECT bestSnapRect = snapRect;
+        
+        for (size_t i = 0; i < sizeof(snapTargets) / sizeof(HWND); i++) {
+            HWND targetWnd = snapTargets[i];
+            if (!targetWnd || targetWnd == hWnd || !IsWindowVisible(targetWnd)) {
+                continue;
+            }
+            
+            RECT targetRect;
+            if (GetWindowRect(targetWnd, &targetRect)) {
+                RECT candidateRect = snapRect;
+                int snapDistance = snapTolerance + 1;
+                BOOL candidateSnapped = FALSE;
+                
+                // Check horizontal snapping (left/right edges)
+                int rightEdgeDistance = abs(candidateRect.left - targetRect.right);
+                int leftEdgeDistance = abs(candidateRect.right - targetRect.left);
+                int leftAlignDistance = abs(candidateRect.left - targetRect.left);
+                int rightAlignDistance = abs(candidateRect.right - targetRect.right);
+                
+                if (rightEdgeDistance <= snapTolerance && rightEdgeDistance < snapDistance) {
+                    // Snap to right edge of target
+                    int offset = targetRect.right - candidateRect.left;
+                    candidateRect.left += offset;
+                    candidateRect.right += offset;
+                    snapDistance = rightEdgeDistance;
+                    candidateSnapped = TRUE;
+                }
+                else if (leftEdgeDistance <= snapTolerance && leftEdgeDistance < snapDistance) {
+                    // Snap to left edge of target
+                    int offset = targetRect.left - candidateRect.right;
+                    candidateRect.left += offset;
+                    candidateRect.right += offset;
+                    snapDistance = leftEdgeDistance;
+                    candidateSnapped = TRUE;
+                }
+                else if (leftAlignDistance <= snapTolerance && leftAlignDistance < snapDistance) {
+                    // Align left edges
+                    int offset = targetRect.left - candidateRect.left;
+                    candidateRect.left += offset;
+                    candidateRect.right += offset;
+                    snapDistance = leftAlignDistance;
+                    candidateSnapped = TRUE;
+                }
+                else if (rightAlignDistance <= snapTolerance && rightAlignDistance < snapDistance) {
+                    // Align right edges
+                    int offset = targetRect.right - candidateRect.right;
+                    candidateRect.left += offset;
+                    candidateRect.right += offset;
+                    snapDistance = rightAlignDistance;
+                    candidateSnapped = TRUE;
+                }
+                
+                // Check vertical snapping (top/bottom edges) - only if not already snapped horizontally
+                if (!candidateSnapped) {
+                    int bottomEdgeDistance = abs(candidateRect.top - targetRect.bottom);
+                    int topEdgeDistance = abs(candidateRect.bottom - targetRect.top);
+                    int topAlignDistance = abs(candidateRect.top - targetRect.top);
+                    int bottomAlignDistance = abs(candidateRect.bottom - targetRect.bottom);
+                    
+                    if (bottomEdgeDistance <= snapTolerance && bottomEdgeDistance < snapDistance) {
+                        // Snap to bottom edge of target
+                        int offset = targetRect.bottom - candidateRect.top;
+                        candidateRect.top += offset;
+                        candidateRect.bottom += offset;
+                        snapDistance = bottomEdgeDistance;
+                        candidateSnapped = TRUE;
+                    }
+                    else if (topEdgeDistance <= snapTolerance && topEdgeDistance < snapDistance) {
+                        // Snap to top edge of target
+                        int offset = targetRect.top - candidateRect.bottom;
+                        candidateRect.top += offset;
+                        candidateRect.bottom += offset;
+                        snapDistance = topEdgeDistance;
+                        candidateSnapped = TRUE;
+                    }
+                    else if (topAlignDistance <= snapTolerance && topAlignDistance < snapDistance) {
+                        // Align top edges
+                        int offset = targetRect.top - candidateRect.top;
+                        candidateRect.top += offset;
+                        candidateRect.bottom += offset;
+                        snapDistance = topAlignDistance;
+                        candidateSnapped = TRUE;
+                    }
+                    else if (bottomAlignDistance <= snapTolerance && bottomAlignDistance < snapDistance) {
+                        // Align bottom edges
+                        int offset = targetRect.bottom - candidateRect.bottom;
+                        candidateRect.top += offset;
+                        candidateRect.bottom += offset;
+                        snapDistance = bottomAlignDistance;
+                        candidateSnapped = TRUE;
+                    }
+                }
+                
+                // Use this snap if it's the closest one so far
+                if (candidateSnapped && snapDistance < bestSnapDistance) {
+                    bestSnapDistance = snapDistance;
+                    bestSnapRect = candidateRect;
+                    dockedToWindow = targetWnd;
+                    snapped = TRUE;
+                }
+            }
+        }
+        
+        // Apply the best snap if we found one
+        if (snapped) {
+            snapRect = bestSnapRect;
+            
+            // Record docking relationship
+            if (dockedToWindow) {
+                RECT dockedToRect;
+                if (GetWindowRect(dockedToWindow, &dockedToRect)) {
+                    int offsetX = snapRect.left - dockedToRect.left;
+                    int offsetY = snapRect.top - dockedToRect.top;
+                    SetWindowDocking(hWnd, dockedToWindow, offsetX, offsetY);
+                }
+            }
+        }
+        else {
+            // Clear docking if we're not snapped to anything
+            ClearWindowDocking(hWnd);
+        }
+    }
+    
+    // Update the rectangle if we snapped
+    if (snapped) {
+        *pMovingRect = snapRect;
+    }
+}
 
 // Function to populate language menu dynamically
 void main_populate_language_menu(void)
 {
     HMENU languageMenu = GetSubMenu(globals.main_menu_popup, LANGUAGE_SUBMENU_INDEX);
-    if (!languageMenu) return;
+    if (!languageMenu) {
+        return;
+    }
     
-    // Clear existing items
+    // Clear existing items first
     while (GetMenuItemCount(languageMenu) > 0) {
         RemoveMenu(languageMenu, 0, MF_BYPOSITION);
     }
     
-    // Add language options (only if language file exists)
-    for (int i = 0; g_availableLanguages[i].code != NULL; i++) {
-        if (CPT_LanguageFileExists(g_availableLanguages[i].code)) {
-            UINT flags = MF_STRING;
-            
-            // Check if this is the current language
-            if (strcmp(CPT_GetCurrentLanguage(), g_availableLanguages[i].code) == 0) {
-                flags |= MF_CHECKED;
-            }
-            
-            AppendMenu(languageMenu, flags, g_availableLanguages[i].menuID, g_availableLanguages[i].name);
+    // Add English menu item
+    UINT flags = MF_STRING;
+    if (strcmp(CPT_GetCurrentLanguage(), "en-US") == 0 || strcmp(CPT_GetCurrentLanguage(), "en") == 0) {
+        flags |= MF_CHECKED;
+    }
+    AppendMenuW(languageMenu, flags, MENU_LANGUAGE_EN, L"English (United States)");
+    
+    // Add German menu item if de-DE.ini exists
+    if (CPT_LanguageFileExists("de-DE")) {
+        flags = MF_STRING;
+        if (strcmp(CPT_GetCurrentLanguage(), "de-DE") == 0 || strcmp(CPT_GetCurrentLanguage(), "de") == 0) {
+            flags |= MF_CHECKED;
         }
+        AppendMenuW(languageMenu, flags, MENU_LANGUAGE_DE, L"Deutsch (Deutschland)");
+    }
+    
+    // Add French Canadian menu item if fr-CA.ini exists
+    if (CPT_LanguageFileExists("fr-CA")) {
+        flags = MF_STRING;
+        if (strcmp(CPT_GetCurrentLanguage(), "fr-CA") == 0 || strcmp(CPT_GetCurrentLanguage(), "fr") == 0) {
+            flags |= MF_CHECKED;
+        }
+        AppendMenuW(languageMenu, flags, MENU_LANGUAGE_FR, L"Français (Canada)");
     }
 }
 
 // Function to handle language switching
 void main_switch_language(const char* languageCode)
 {
+    // Add debug output to see what's happening
+    char debugMsg[256];
+    sprintf(debugMsg, "Attempting to switch to language: %s", languageCode);
+    OutputDebugStringA(debugMsg);
+    
     if (CPT_LoadLanguage(languageCode)) {
+        sprintf(debugMsg, "Successfully loaded language: %s", languageCode);
+        OutputDebugStringA(debugMsg);
+        
         // Language successfully loaded, save preference
         strncpy(options.preferred_language, languageCode, sizeof(options.preferred_language) - 1);
         options.preferred_language[sizeof(options.preferred_language) - 1] = '\0';
         options_write(); // Save the preference immediately
         
-        // Refresh the menu translations
+        // Refresh the menu translations and language menu
         main_translate_menu();
         main_populate_language_menu();
+    } else {
+        sprintf(debugMsg, "Failed to load language: %s", languageCode);
+        OutputDebugStringA(debugMsg);
         
-        // You could add more UI refresh code here if needed
-        // For example, refreshing dialog titles, etc.
-    }
-}
-
-// Function to get language code from menu ID
-const char* main_get_language_from_menu_id(UINT menuID)
-{
-    for (int i = 0; g_availableLanguages[i].code != NULL; i++) {
-        if (g_availableLanguages[i].menuID == menuID) {
-            return g_availableLanguages[i].code;
+        // Check if the file exists
+        if (CPT_LanguageFileExists(languageCode)) {
+            OutputDebugStringA("Language file exists but failed to load");
+        } else {
+            OutputDebugStringA("Language file does not exist");
         }
     }
-    return NULL;
 }
 
 // Function to translate menu items
@@ -115,26 +386,26 @@ void main_translate_menu(void)
 {
     if (!globals.main_menu_popup) return;
     
-    // Translate main menu items
-    ModifyMenu(globals.main_menu_popup, MENU_OPENFILE, MF_BYCOMMAND | MF_STRING, MENU_OPENFILE, T(STR_MENU_OPEN));
-    ModifyMenu(globals.main_menu_popup, MENU_OPENLOC, MF_BYCOMMAND | MF_STRING, MENU_OPENLOC, T(STR_MENU_OPEN_URL));
-    ModifyMenu(globals.main_menu_popup, MENU_ADDFILE, MF_BYCOMMAND | MF_STRING, MENU_ADDFILE, T(STR_MENU_ADD));
-    ModifyMenu(globals.main_menu_popup, MENU_PLAYLIST, MF_BYCOMMAND | MF_STRING, MENU_PLAYLIST, T(STR_MENU_PLAYLIST_EDITOR));
-    ModifyMenu(globals.main_menu_popup, MENU_OPTIONS, MF_BYCOMMAND | MF_STRING, MENU_OPTIONS, T(STR_MENU_OPTIONS));
-    ModifyMenu(globals.main_menu_popup, MENU_ABOUT, MF_BYCOMMAND | MF_STRING, MENU_ABOUT, T(STR_MENU_ABOUT));
-    ModifyMenu(globals.main_menu_popup, MENU_EXIT, MF_BYCOMMAND | MF_STRING, MENU_EXIT, T(STR_MENU_EXIT));
+    // Translate main menu items using Unicode
+    ModifyMenuW(globals.main_menu_popup, MENU_OPENFILE, MF_BYCOMMAND | MF_STRING, MENU_OPENFILE, TW(STR_MENU_OPEN));
+    ModifyMenuW(globals.main_menu_popup, MENU_OPENLOC, MF_BYCOMMAND | MF_STRING, MENU_OPENLOC, TW(STR_MENU_OPEN_URL));
+    ModifyMenuW(globals.main_menu_popup, MENU_ADDFILE, MF_BYCOMMAND | MF_STRING, MENU_ADDFILE, TW(STR_MENU_ADD));
+    ModifyMenuW(globals.main_menu_popup, MENU_PLAYLIST, MF_BYCOMMAND | MF_STRING, MENU_PLAYLIST, TW(STR_MENU_PLAYLIST_EDITOR));
+    ModifyMenuW(globals.main_menu_popup, MENU_OPTIONS, MF_BYCOMMAND | MF_STRING, MENU_OPTIONS, TW(STR_MENU_OPTIONS));
+    ModifyMenuW(globals.main_menu_popup, MENU_ABOUT, MF_BYCOMMAND | MF_STRING, MENU_ABOUT, TW(STR_MENU_ABOUT));
+    ModifyMenuW(globals.main_menu_popup, MENU_EXIT, MF_BYCOMMAND | MF_STRING, MENU_EXIT, TW(STR_MENU_EXIT));
     
     // Translate Play Control submenu items
-    ModifyMenu(globals.main_menu_popup, ID_PLAY, MF_BYCOMMAND | MF_STRING, ID_PLAY, T(STR_MENU_PLAY));
-    ModifyMenu(globals.main_menu_popup, ID_STOP, MF_BYCOMMAND | MF_STRING, ID_STOP, T(STR_MENU_STOP));
-    ModifyMenu(globals.main_menu_popup, ID_PAUSE, MF_BYCOMMAND | MF_STRING, ID_PAUSE, T(STR_MENU_PAUSE));
-    ModifyMenu(globals.main_menu_popup, ID_NEXT, MF_BYCOMMAND | MF_STRING, ID_NEXT, T(STR_MENU_NEXT));
-    ModifyMenu(globals.main_menu_popup, ID_PREVIOUS, MF_BYCOMMAND | MF_STRING, ID_PREVIOUS, T(STR_MENU_PREVIOUS));
+    ModifyMenuW(globals.main_menu_popup, ID_PLAY, MF_BYCOMMAND | MF_STRING, ID_PLAY, TW(STR_MENU_PLAY));
+    ModifyMenuW(globals.main_menu_popup, ID_STOP, MF_BYCOMMAND | MF_STRING, ID_STOP, TW(STR_MENU_STOP));
+    ModifyMenuW(globals.main_menu_popup, ID_PAUSE, MF_BYCOMMAND | MF_STRING, ID_PAUSE, TW(STR_MENU_PAUSE));
+    ModifyMenuW(globals.main_menu_popup, ID_NEXT, MF_BYCOMMAND | MF_STRING, ID_NEXT, TW(STR_MENU_NEXT));
+    ModifyMenuW(globals.main_menu_popup, ID_PREVIOUS, MF_BYCOMMAND | MF_STRING, ID_PREVIOUS, TW(STR_MENU_PREVIOUS));
     
     // Translate Skin submenu - get the submenu handle and modify the first item (Default)
     HMENU skinMenu = GetSubMenu(globals.main_menu_popup, SKIN_SUBMENU_INDEX);
     if (skinMenu) {
-        ModifyMenu(skinMenu, MENU_SKIN_DEFAULT, MF_BYCOMMAND | MF_STRING, MENU_SKIN_DEFAULT, T(STR_MENU_SKIN_DEFAULT));
+        ModifyMenuW(skinMenu, MENU_SKIN_DEFAULT, MF_BYCOMMAND | MF_STRING, MENU_SKIN_DEFAULT, TW(STR_MENU_SKIN_DEFAULT));
     }
     
     // For submenu titles, we need to modify by position
@@ -1253,19 +1524,23 @@ void    main_menuproc(HWND hWnd, LPPOINT points)
 			break;
 		}
 		
+		// Handle language menu items
 		case MENU_LANGUAGE_EN:
-		case MENU_LANGUAGE_DE:
-		case MENU_LANGUAGE_FR:
-		{
-			const char* languageCode = main_get_language_from_menu_id(retval);
-			if (languageCode) {
-				main_switch_language(languageCode);
-			}
+			main_switch_language("en-US");
 			break;
-		}
+			
+		case MENU_LANGUAGE_DE:
+			main_switch_language("de-DE");
+			break;
+			
+		case MENU_LANGUAGE_FR:
+			main_switch_language("fr-CA");
+			break;
 		
+		// Handle other commands
 		default:
 		{
+			
 			if (main_play_control((WORD) retval, hWnd) != -1)
 				break;
 				
@@ -1713,6 +1988,40 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			options.main_window_pos.x = (int)(short) LOWORD(lParam);  // horizontal position
 			options.main_window_pos.y = (int)(short) HIWORD(lParam);  // vertical position
 			return 0;
+			
+		case WM_MOVING:
+		{
+			// Window snapping during move
+			RECT* pMovingRect = (RECT*)lParam;
+			SnapWindow(hWnd, pMovingRect);
+			return TRUE;
+		}
+		
+		case WM_WINDOWPOSCHANGED:
+		{
+			// Handle moving docked windows after the main window has moved
+			const WINDOWPOS* pWP = (const WINDOWPOS*)lParam;
+			
+			// Only handle position changes (not size changes)
+			if (!(pWP->flags & SWP_NOMOVE)) {
+				static POINT lastPos = {0, 0};
+				POINT currentPos = {pWP->x, pWP->y};
+				
+				// Calculate delta if this isn't the first move
+				if (lastPos.x != 0 || lastPos.y != 0) {
+					int deltaX = currentPos.x - lastPos.x;
+					int deltaY = currentPos.y - lastPos.y;
+					
+					if (deltaX != 0 || deltaY != 0) {
+						MoveDockedWindows(hWnd, deltaX, deltaY);
+					}
+				}
+				
+				lastPos = currentPos;
+			}
+			
+			return DefWindowProc(hWnd, message, wParam, lParam);
+		}
 			
 		case WM_SYSKEYDOWN:
 		

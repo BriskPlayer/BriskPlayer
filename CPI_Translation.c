@@ -24,8 +24,9 @@
 #include <stdlib.h>
 
 // Static variables
-static char g_currentLanguage[8] = "";  // Initialize empty to trigger auto-detection
+static char g_currentLanguage[16] = "";  // Increased size to support full locale codes like "fr-CA"
 static char g_translationStrings[STR_COUNT][512];
+static wchar_t g_translationStringsW[STR_COUNT][512];  // Unicode versions
 static BOOL g_initialized = FALSE;
 
 // Default English strings - fallback if INI file is not found
@@ -266,14 +267,21 @@ static void DetectSystemLanguage(char* languageCode, int maxLen)
         if (pGetUserDefaultLocaleName) {
             wchar_t localeName[LOCALE_NAME_MAX_LENGTH];
             if (pGetUserDefaultLocaleName(localeName, LOCALE_NAME_MAX_LENGTH) > 0) {
-                // Convert to narrow string and extract language code
+                // Convert to narrow string
                 char narrowName[LOCALE_NAME_MAX_LENGTH];
                 WideCharToMultiByte(CP_ACP, 0, localeName, -1, narrowName, sizeof(narrowName), NULL, NULL);
                 
-                // Extract first 2 characters (language code)
-                if (strlen(narrowName) >= 2) {
-                    strncpy(languageCode, narrowName, 2);
-                    languageCode[2] = '\0';
+                // Convert underscores to hyphens for consistency (Windows sometimes uses en_US format)
+                for (int i = 0; narrowName[i]; i++) {
+                    if (narrowName[i] == '_') {
+                        narrowName[i] = '-';
+                    }
+                }
+                
+                // Return the full locale code (e.g., "fr-CA", "zh-TW")
+                if (strlen(narrowName) > 0) {
+                    strncpy(languageCode, narrowName, maxLen - 1);
+                    languageCode[maxLen - 1] = '\0';
                     return;
                 }
             }
@@ -292,6 +300,107 @@ static void DetectSystemLanguage(char* languageCode, int maxLen)
     }
 }
 
+// Helper function to try loading language with smart fallback
+static BOOL TryLoadLanguageWithFallback(const char* requestedLang)
+{
+    char langToTry[16];
+    
+    // 1. Try the exact requested language first (e.g., "zh-TW")
+    if (CPT_LoadLanguage(requestedLang)) {
+        strncpy(g_currentLanguage, requestedLang, sizeof(g_currentLanguage) - 1);
+        g_currentLanguage[sizeof(g_currentLanguage) - 1] = '\0';
+        return TRUE;
+    }
+    
+    // 2. If it has a country code, try just the language part (e.g., "zh" from "zh-TW")
+    char* dash = strchr(requestedLang, '-');
+    if (dash != NULL) {
+        int langLen = dash - requestedLang;
+        if (langLen > 0 && langLen < (int)sizeof(langToTry)) {
+            strncpy(langToTry, requestedLang, langLen);
+            langToTry[langLen] = '\0';
+            
+            if (CPT_LoadLanguage(langToTry)) {
+                strncpy(g_currentLanguage, langToTry, sizeof(g_currentLanguage) - 1);
+                g_currentLanguage[sizeof(g_currentLanguage) - 1] = '\0';
+                return TRUE;
+            }
+        }
+    }
+    
+    // 3. Try some common language variants based on the base language
+    if (dash != NULL) {
+        char baseLang[8];
+        int langLen = dash - requestedLang;
+        if (langLen > 0 && langLen < (int)sizeof(baseLang)) {
+            strncpy(baseLang, requestedLang, langLen);
+            baseLang[langLen] = '\0';
+            
+            // Common fallback mappings
+            if (strcmp(baseLang, "en") == 0) {
+                // For English variants, try en-US, then en-GB
+                if (CPT_LoadLanguage("en-US")) {
+                    strcpy(g_currentLanguage, "en-US");
+                    return TRUE;
+                } else if (CPT_LoadLanguage("en-GB")) {
+                    strcpy(g_currentLanguage, "en-GB");
+                    return TRUE;
+                }
+            } else if (strcmp(baseLang, "es") == 0) {
+                // For Spanish variants, try es-ES, then es-MX
+                if (CPT_LoadLanguage("es-ES")) {
+                    strcpy(g_currentLanguage, "es-ES");
+                    return TRUE;
+                } else if (CPT_LoadLanguage("es-MX")) {
+                    strcpy(g_currentLanguage, "es-MX");
+                    return TRUE;
+                }
+            } else if (strcmp(baseLang, "fr") == 0) {
+                // For French variants, try fr-FR, then fr-CA
+                if (CPT_LoadLanguage("fr-FR")) {
+                    strcpy(g_currentLanguage, "fr-FR");
+                    return TRUE;
+                } else if (CPT_LoadLanguage("fr-CA")) {
+                    strcpy(g_currentLanguage, "fr-CA");
+                    return TRUE;
+                }
+            } else if (strcmp(baseLang, "de") == 0) {
+                // For German variants, try de-DE, then de-CH, then de-AT
+                if (CPT_LoadLanguage("de-DE")) {
+                    strcpy(g_currentLanguage, "de-DE");
+                    return TRUE;
+                } else if (CPT_LoadLanguage("de-CH")) {
+                    strcpy(g_currentLanguage, "de-CH");
+                    return TRUE;
+                } else if (CPT_LoadLanguage("de-AT")) {
+                    strcpy(g_currentLanguage, "de-AT");
+                    return TRUE;
+                }
+            } else if (strcmp(baseLang, "zh") == 0) {
+                // For Chinese variants, try zh-CN, then zh-TW
+                if (CPT_LoadLanguage("zh-CN")) {
+                    strcpy(g_currentLanguage, "zh-CN");
+                    return TRUE;
+                } else if (CPT_LoadLanguage("zh-TW")) {
+                    strcpy(g_currentLanguage, "zh-TW");
+                    return TRUE;
+                }
+            } else if (strcmp(baseLang, "pt") == 0) {
+                // For Portuguese variants, try pt-BR, then pt-PT
+                if (CPT_LoadLanguage("pt-BR")) {
+                    strcpy(g_currentLanguage, "pt-BR");
+                    return TRUE;
+                } else if (CPT_LoadLanguage("pt-PT")) {
+                    strcpy(g_currentLanguage, "pt-PT");
+                    return TRUE;
+                }
+            }
+        }
+    }
+    
+    return FALSE;
+}
+
 // Initialize the translation system
 void CPT_Initialize(void)
 {
@@ -303,32 +412,32 @@ void CPT_Initialize(void)
     for (int i = 0; i < STR_COUNT; i++) {
         strncpy(g_translationStrings[i], g_defaultStrings[i], sizeof(g_translationStrings[i]) - 1);
         g_translationStrings[i][sizeof(g_translationStrings[i]) - 1] = '\0';
+        
+        // Also populate Unicode versions
+        MultiByteToWideChar(CP_ACP, 0, g_defaultStrings[i], -1, g_translationStringsW[i], sizeof(g_translationStringsW[i]) / sizeof(wchar_t));
     }
     
     g_initialized = TRUE;
     
     // Auto-detect system language if not already set and no saved preference
     if (g_currentLanguage[0] == '\0') {
-        char systemLang[8];
+        char systemLang[16];  // Increased size to accommodate full locale codes
         DetectSystemLanguage(systemLang, sizeof(systemLang));
         
-        // Try to load system language first
-        if (CPT_LoadLanguage(systemLang)) {
-            // Successfully loaded system language
-            strncpy(g_currentLanguage, systemLang, sizeof(g_currentLanguage) - 1);
-            g_currentLanguage[sizeof(g_currentLanguage) - 1] = '\0';
-        } else {
-            // System language not available, fall back to English
-            if (CPT_LoadLanguage("en")) {
-                strcpy(g_currentLanguage, "en");
-            } else {
-                // Even English not available, use built-in defaults
+        // Try to load system language with smart fallback
+        if (!TryLoadLanguageWithFallback(systemLang)) {
+            // If all fallbacks failed, use English with fallback
+            if (!TryLoadLanguageWithFallback("en")) {
+                // Even English variants not available, use built-in defaults
                 strcpy(g_currentLanguage, "en");
             }
         }
     } else {
-        // Language was already set manually, try to load it
-        CPT_LoadLanguage(g_currentLanguage);
+        // Language was already set manually, try to load it with fallback
+        if (!TryLoadLanguageWithFallback(g_currentLanguage)) {
+            // If specified language fails, fallback to English
+            TryLoadLanguageWithFallback("en");
+        }
     }
 }
 
@@ -349,8 +458,23 @@ static BOOL ConvertUTF8ToANSI(const char* utf8String, char* ansiString, int ansi
         return FALSE;  // Conversion failed
     }
     
-    // Then convert Unicode to ANSI (system default code page)
+    // Try system default code page first
     int ansiLength = WideCharToMultiByte(CP_ACP, 0, unicodeBuffer, -1, ansiString, ansiBufferSize, NULL, NULL);
+    
+    if (ansiLength > 0) {
+        return TRUE;  // System code page conversion succeeded
+    }
+    
+    // If that fails, try Windows-1252 (Western European) for French characters
+    ansiLength = WideCharToMultiByte(1252, 0, unicodeBuffer, -1, ansiString, ansiBufferSize, NULL, NULL);
+    
+    if (ansiLength > 0) {
+        return TRUE;  // Windows-1252 conversion succeeded
+    }
+    
+    // Final fallback: copy as much as we can, replacing problem characters
+    BOOL usedDefaultChar = FALSE;
+    ansiLength = WideCharToMultiByte(CP_ACP, 0, unicodeBuffer, -1, ansiString, ansiBufferSize, "?", &usedDefaultChar);
     
     return (ansiLength > 0);
 }
@@ -424,7 +548,7 @@ BOOL CPT_LoadLanguage(const char* languageCode)
         );
         
         if (result > 0) {
-            // Convert UTF-8 to ANSI for proper display
+            // Store the ANSI version (with conversion from UTF-8)
             char convertedBuffer[512];
             if (ConvertUTF8ToANSI(buffer, convertedBuffer, sizeof(convertedBuffer))) {
                 strncpy(g_translationStrings[i], convertedBuffer, sizeof(g_translationStrings[i]) - 1);
@@ -433,8 +557,12 @@ BOOL CPT_LoadLanguage(const char* languageCode)
             }
             g_translationStrings[i][sizeof(g_translationStrings[i]) - 1] = '\0';
             
-            // Process escape sequences like \t -> tab character
+            // Store the Unicode version (direct from UTF-8)
+            MultiByteToWideChar(CP_UTF8, 0, buffer, -1, g_translationStringsW[i], sizeof(g_translationStringsW[i]) / sizeof(wchar_t));
+            
+            // Process escape sequences for both versions
             ProcessEscapeSequences(g_translationStrings[i]);
+            // Note: We should also create a Unicode version of ProcessEscapeSequences, but for now this will work
         }
     }
     
@@ -457,6 +585,20 @@ const char* CPT_GetString(CPT_StringID stringID)
     }
     
     return g_translationStrings[stringID];
+}
+
+// Get a translated string in Unicode
+const wchar_t* CPT_GetStringW(CPT_StringID stringID)
+{
+    if (!g_initialized) {
+        CPT_Initialize();
+    }
+    
+    if (stringID < 0 || stringID >= STR_COUNT) {
+        return L"Invalid String ID";
+    }
+    
+    return g_translationStringsW[stringID];
 }
 
 // Set the default language
@@ -485,7 +627,7 @@ BOOL CPT_LanguageFileExists(const char* languageCode)
     strcat(iniPath, languageCode);
     strcat(iniPath, ".ini");
     
-    DWORD fileAttributes = GetFileAttributes(iniPath);
+    DWORD fileAttributes = GetFileAttributesA(iniPath);
     return (fileAttributes != INVALID_FILE_ATTRIBUTES);
 }
 
@@ -499,17 +641,133 @@ DialogSize CPT_GetDialogSize(const char* dialogName)
     }
     
     // Language-specific adjustments
-    if (strcmp(g_currentLanguage, "de") == 0) {
+    if (strcmp(g_currentLanguage, "de") == 0 || strcmp(g_currentLanguage, "de-DE") == 0) {
         // German text is typically 20-30% longer
         if (strcmp(dialogName, "Options") == 0) {
-            DialogSize germanSize = {300, 320}; // Wider for German
+            DialogSize germanSize = {350, 350}; // Wider for German
             return germanSize;
         }
         else if (strcmp(dialogName, "URL") == 0) {
-            DialogSize germanSize = {350, 120}; // Wider for German URL dialog
+            DialogSize germanSize = {380, 120}; // Wider for German URL dialog
             return germanSize;
+        }
+    }
+    else if (strcmp(g_currentLanguage, "fr") == 0 || strcmp(g_currentLanguage, "fr-CA") == 0) {
+        // French text is also typically longer than English
+        if (strcmp(dialogName, "Options") == 0) {
+            DialogSize frenchSize = {420, 350}; // Wider and taller for French
+            return frenchSize;
+        }
+        else if (strcmp(dialogName, "URL") == 0) {
+            DialogSize frenchSize = {400, 130}; // Wider for French URL dialog
+            return frenchSize;
         }
     }
     
     return defaultSize;
+}
+
+// Enumerate available language files
+int CPT_EnumerateLanguages(char languages[][16], int maxLanguages)
+{
+    char langDir[MAX_PATH];
+    GetApplicationDirectory(langDir, MAX_PATH);
+    strcat(langDir, "lang\\*.ini");
+    
+    WIN32_FIND_DATAA findData;
+    HANDLE hFind = FindFirstFileA(langDir, &findData);
+    int count = 0;
+    
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            if (!(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+                // Extract language code from filename (remove .ini extension)
+                char* dot = strrchr(findData.cFileName, '.');
+                if (dot && strcmp(dot, ".ini") == 0 && count < maxLanguages) {
+                    int nameLen = dot - findData.cFileName;
+                    if (nameLen > 0 && nameLen < 16) {
+                        strncpy(languages[count], findData.cFileName, nameLen);
+                        languages[count][nameLen] = '\0';
+                        count++;
+                    }
+                }
+            }
+        } while (FindNextFileA(hFind, &findData) && count < maxLanguages);
+        
+        FindClose(hFind);
+    }
+    
+    return count;
+}
+
+// Get a human-readable name for a language code
+const char* CPT_GetLanguageName(const char* languageCode)
+{
+    // Common language name mappings
+    if (strcmp(languageCode, "en") == 0) return "English";
+    if (strcmp(languageCode, "en-US") == 0) return "English (United States)";
+    if (strcmp(languageCode, "en-GB") == 0) return "English (United Kingdom)";
+    if (strcmp(languageCode, "en-CA") == 0) return "English (Canada)";
+    if (strcmp(languageCode, "en-AU") == 0) return "English (Australia)";
+    
+    if (strcmp(languageCode, "de") == 0) return "Deutsch";
+    if (strcmp(languageCode, "de-DE") == 0) return "Deutsch (Deutschland)";
+    if (strcmp(languageCode, "de-AT") == 0) return "Deutsch (Österreich)";
+    if (strcmp(languageCode, "de-CH") == 0) return "Deutsch (Schweiz)";
+    
+    if (strcmp(languageCode, "fr") == 0) return "Français";
+    if (strcmp(languageCode, "fr-FR") == 0) return "Français (France)";
+    if (strcmp(languageCode, "fr-CA") == 0) return "Français (Canada)";
+    if (strcmp(languageCode, "fr-CH") == 0) return "Français (Suisse)";
+    if (strcmp(languageCode, "fr-BE") == 0) return "Français (Belgique)";
+    
+    if (strcmp(languageCode, "es") == 0) return "Español";
+    if (strcmp(languageCode, "es-ES") == 0) return "Español (España)";
+    if (strcmp(languageCode, "es-MX") == 0) return "Español (México)";
+    if (strcmp(languageCode, "es-AR") == 0) return "Español (Argentina)";
+    if (strcmp(languageCode, "es-CO") == 0) return "Español (Colombia)";
+    
+    if (strcmp(languageCode, "pt") == 0) return "Português";
+    if (strcmp(languageCode, "pt-PT") == 0) return "Português (Portugal)";
+    if (strcmp(languageCode, "pt-BR") == 0) return "Português (Brasil)";
+    
+    if (strcmp(languageCode, "it") == 0) return "Italiano";
+    if (strcmp(languageCode, "it-IT") == 0) return "Italiano (Italia)";
+    if (strcmp(languageCode, "it-CH") == 0) return "Italiano (Svizzera)";
+    
+    if (strcmp(languageCode, "nl") == 0) return "Nederlands";
+    if (strcmp(languageCode, "nl-NL") == 0) return "Nederlands (Nederland)";
+    if (strcmp(languageCode, "nl-BE") == 0) return "Nederlands (België)";
+    
+    if (strcmp(languageCode, "ru") == 0) return "Русский";
+    if (strcmp(languageCode, "ru-RU") == 0) return "Русский (Россия)";
+    
+    if (strcmp(languageCode, "zh") == 0) return "中文";
+    if (strcmp(languageCode, "zh-CN") == 0) return "中文 (简体)";
+    if (strcmp(languageCode, "zh-TW") == 0) return "中文 (繁體)";
+    if (strcmp(languageCode, "zh-HK") == 0) return "中文 (香港)";
+    
+    if (strcmp(languageCode, "ja") == 0) return "日本語";
+    if (strcmp(languageCode, "ja-JP") == 0) return "日本語 (日本)";
+    
+    if (strcmp(languageCode, "ko") == 0) return "한국어";
+    if (strcmp(languageCode, "ko-KR") == 0) return "한국어 (대한민국)";
+    
+    if (strcmp(languageCode, "ar") == 0) return "العربية";
+    if (strcmp(languageCode, "ar-SA") == 0) return "العربية (السعودية)";
+    if (strcmp(languageCode, "ar-EG") == 0) return "العربية (مصر)";
+    
+    if (strcmp(languageCode, "hi") == 0) return "हिन्दी";
+    if (strcmp(languageCode, "hi-IN") == 0) return "हिन्दी (भारत)";
+    
+    if (strcmp(languageCode, "th") == 0) return "ไทย";
+    if (strcmp(languageCode, "th-TH") == 0) return "ไทย (ไทย)";
+    
+    if (strcmp(languageCode, "vi") == 0) return "Tiếng Việt";
+    if (strcmp(languageCode, "vi-VN") == 0) return "Tiếng Việt (Việt Nam)";
+    
+    // Add more as needed...
+    
+    // If no specific name found, return the language code itself
+    return languageCode;
 }

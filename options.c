@@ -24,6 +24,9 @@
 #include "CPI_Playlist.h"
 #include "CPI_Translation.h"
 
+// Forward declaration for window snapping functionality (defined in main.c)
+extern void SnapWindow(HWND hWnd, RECT* pRect);
+
 // Helper function to translate static text controls that have ID -1
 static void TranslateStaticControls(HWND hwndDlg)
 {
@@ -117,6 +120,13 @@ url_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					EndDialog(hwndDlg, TRUE);
 					break;
 			}
+			
+		case WM_MOVING:
+		{
+			RECT* pRect = (RECT*)lParam;
+			SnapWindow(hwndDlg, pRect);
+			return TRUE;
+		}
 	}
 	
 	return FALSE;
@@ -273,6 +283,13 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			
 			globals.m_bOptions_ChangedSkin = FALSE;
 			
+			return TRUE;
+		}
+		
+		case WM_MOVING:
+		{
+			RECT* pRect = (RECT*)lParam;
+			SnapWindow(hwndDlg, pRect);
 			return TRUE;
 		}
 		

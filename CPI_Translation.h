@@ -135,12 +135,18 @@ void CPT_Initialize(void);
 void CPT_Cleanup(void);
 BOOL CPT_LoadLanguage(const char* languageCode);
 const char* CPT_GetString(CPT_StringID stringID);
+const wchar_t* CPT_GetStringW(CPT_StringID stringID);  // Unicode version
 void CPT_SetDefaultLanguage(const char* languageCode);
 const char* CPT_GetCurrentLanguage(void);
 BOOL CPT_LanguageFileExists(const char* languageCode);
 
-// Convenience macro for getting translated strings
+// Language enumeration and information functions
+int CPT_EnumerateLanguages(char languages[][16], int maxLanguages);
+const char* CPT_GetLanguageName(const char* languageCode);
+
+// Convenience macros for getting translated strings
 #define T(id) CPT_GetString(id)
+#define TW(id) CPT_GetStringW(id)  // Unicode version
 
 // Dialog sizing functions for different languages
 typedef struct {
