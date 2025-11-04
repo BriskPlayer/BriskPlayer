@@ -1,0 +1,21 @@
+# Build options for BriskPlayer
+
+option('nls', 
+       type : 'feature', 
+       value : 'auto',
+       description : 'Enable Native Language Support (NLS) with gettext')
+
+option('static_link', 
+       type : 'boolean', 
+       value : true,
+       description : 'Enable static linking of dependencies')
+
+option('c23_features', 
+       type : 'boolean', 
+       value : true,
+       description : 'Enable C23 feature detection and usage')
+
+option('debug_output', 
+       type : 'boolean', 
+       value : false,
+       description : 'Enable debug output and tracing')

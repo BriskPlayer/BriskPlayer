@@ -1,0 +1,76 @@
+# List of source files that contain translatable strings
+# This file is used by xgettext to extract strings for translation
+
+# Main application files
+main.c
+globals.c
+options.c
+profile.c
+
+# Core player functionality
+CPI_Player.c
+CPI_Player_Engine.c
+CPI_Player_Callbacks.c
+CPI_Player_FileAssoc.c
+
+# Playlist management
+CPI_Playlist.c
+CPI_PlaylistItem.c
+CPI_PlaylistWindow.c
+CPI_Playlist_Callbacks.c
+
+# User interface
+CPI_Interface.c
+CPI_InterfacePart.c
+CPI_InterfacePart_CommandButton.c
+CPI_InterfacePart_Indicator.c
+CPI_Indicators.c
+CPI_Keyboard.c
+
+# Audio codecs
+CPI_Player_CoDec_FLAC.c
+CPI_Player_CoDec_MPEG.c
+CPI_Player_CoDec_OGG.c
+CPI_Player_CoDec_WAV.c
+CPI_Player_CoDec_AAC.c
+CPI_Player_CoDec_WinAmpPlugin.c
+
+# Audio output
+CPI_Player_Output_DirectSound.c
+CPI_Player_Output_FAudio.c
+CPI_Player_Output_File.c
+CPI_Player_Output_Wave.c
+
+# Streaming and file handling
+CPI_Stream.c
+CPI_Stream_LocalFile.c
+CPI_Stream_Internet.c
+
+# Tagging and metadata
+CPI_TagLib.c
+
+# Utilities
+CPI_Translation.c
+CPI_Gettext.c
+CPI_Verbs.c
+CPI_Image.c
+CPString.c
+
+# Dialog boxes
+DLG_Find.c
+about.c
+
+# Windows-specific
+WindowsOS.c
+RotatingIcon.c
+skin.c
+shwapi.c
+
+# Skin system
+CPSK_Skin.c
+
+# List view component
+CLV_ListView.c
+
+# Resource files (for string table extraction)
+res/

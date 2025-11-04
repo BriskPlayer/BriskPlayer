@@ -5,6 +5,7 @@ project('briskplayer', ['c', 'cpp'],
 
 cc = meson.get_compiler('c')
 fs = import('fs')  # Import filesystem module for file existence checks
+i18n = import('i18n')  # Import i18n module for gettext support
 
 # Check for C23 features
 c23_features = [
@@ -96,20 +97,52 @@ if not faudiodep.found()
     faudiodep = dependency('FAudio', required : true, static : true, method : 'cmake')
 endif
 
-# Gettext for internationalization
-gettextdep = dependency('intl', required : false, static : true)
-if not gettextdep.found()
-    # Try to find it as a library if dependency detection fails
-    gettextdep = cc.find_library('intl', required : false, static : true)
+# Internationalization setup with proper i18n module
+nls_option = get_option('nls')
+
+# Find gettext tools and libraries
+gettext_programs = ['xgettext', 'msgmerge', 'msgfmt']
+gettext_tools_found = true
+
+if nls_option.enabled() or nls_option.auto()
+    foreach prog : gettext_programs
+        tool = find_program(prog, required : nls_option.enabled())
+        if not tool.found()
+            gettext_tools_found = false
+            if nls_option.enabled()
+                error('Gettext tool ' + prog + ' is required but not found')
+            else
+                message('Gettext tool ' + prog + ' not found')
+            endif
+        endif
+    endforeach
+
+    # Find gettext library
+    gettextdep = dependency('intl', required : false, static : true)
+    if not gettextdep.found()
+        # Try to find it as a library if dependency detection fails
+        gettextdep = cc.find_library('intl', required : false, static : true)
+    endif
+    
+    if not gettextdep.found() and nls_option.enabled()
+        error('Gettext library is required but not found')
+    endif
+else
+    gettext_tools_found = false
+    gettextdep = dependency('', required : false)
 endif
 
-# Enable NLS if gettext is available
-nls_enabled = gettextdep.found()
+# Enable NLS if both gettext tools and library are available
+nls_enabled = gettextdep.found() and (gettext_tools_found or not nls_option.auto())
 if nls_enabled
     add_project_arguments('-DENABLE_NLS=1', language: 'c')
-    message('Gettext support enabled')
+    if gettext_tools_found
+        message('Full gettext support enabled (library + tools)')
+    else
+        message('Gettext library found but tools missing - runtime translations only')
+    endif
 else
-    message('Gettext not found, NLS disabled - will use fallback translations')
+    message('Gettext not available - NLS disabled')
 endif
 
 winmm = cc.find_library('winmm')
@@ -262,24 +295,24 @@ briskplayer_exe = executable('briskplayer', brisksrc, briskres,
     cpp_args : cpp_stdlib_args,
     win_subsystem : 'windows')
 
-# Install gettext translations if available
-if nls_enabled
-    # Install .mo files from locale directory
-    locale_files = []
-    
-    # Check for built translation files
-    foreach lang : ['de', 'fr', 'es', 'it', 'pt', 'ru', 'ja', 'zh']
-        mo_file = 'locale' / lang / 'LC_MESSAGES' / 'briskplayer.mo'
+# Process po subdirectory for translations
+if nls_enabled and gettext_tools_found
+    subdir('po')
+    message('Translation support: POT generation and PO compilation enabled')
+    message('Use "ninja briskplayer-pot" to update translation template')
+    message('Use "ninja briskplayer-update-po" to update existing translations')
+elif nls_enabled
+    # Fallback: install existing translations without regeneration
+    foreach lang : ['de', 'en']
+        mo_file = 'lang' / lang + '.mo'
         if fs.exists(mo_file)
-            install_data(mo_file, install_dir : 'locale' / lang / 'LC_MESSAGES')
-            message('Installing translation: ' + lang)
+            install_data(mo_file, install_dir : 'locale' / lang / 'LC_MESSAGES',
+                         rename: 'briskplayer.mo')
+            message('Installing pre-built translation: ' + lang)
         endif
     endforeach
     
-    # Install the translation template for translators
-    if fs.exists('po/briskplayer.pot')
-        install_data('po/briskplayer.pot', install_dir : 'po')
-    endif
+    message('Gettext library available but tools missing - using pre-built translations')
 else
-    message('Gettext not available - application will run in English only')
+    message('Translation support: Disabled - application will run in English only')
 endif
