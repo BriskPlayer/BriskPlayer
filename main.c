@@ -32,14 +32,12 @@
 #include "CPI_Indicators.h"
 #include "CPString.h"
 #include "CPI_Translation.h"
-
-
-
-
-#include "CPI_Translation.h"
+#include "CPI_Gettext.h"
 
 // Forward declarations
 void main_translate_menu(void);
+void main_populate_language_menu(void);
+void main_switch_language(const char* languageCode);
 
 // Window snapping constants and functions
 #define SNAP_DISTANCE 12  // Pixels within which windows will snap (reduced for less aggressive snapping)
@@ -322,29 +320,45 @@ void main_populate_language_menu(void)
         RemoveMenu(languageMenu, 0, MF_BYPOSITION);
     }
     
-    // Add English menu item
-    UINT flags = MF_STRING;
-    if (strcmp(CPT_GetCurrentLanguage(), "en-US") == 0 || strcmp(CPT_GetCurrentLanguage(), "en") == 0) {
-        flags |= MF_CHECKED;
-    }
-    AppendMenuW(languageMenu, flags, MENU_LANGUAGE_EN, L"English (United States)");
+    // Get available languages from gettext system
+    LanguageInfo languages[16];  // Support up to 16 languages
+    int languageCount = CPG_EnumerateLanguages(languages, 16);
     
-    // Add German menu item if de-DE.ini exists
-    if (CPT_LanguageFileExists("de-DE")) {
-        flags = MF_STRING;
-        if (strcmp(CPT_GetCurrentLanguage(), "de-DE") == 0 || strcmp(CPT_GetCurrentLanguage(), "de") == 0) {
+    const char* currentLang = CPG_GetCurrentLanguage();
+    
+    // Add menu items for each discovered language
+    for (int i = 0; i < languageCount; i++) {
+        const LanguageInfo* lang = &languages[i];
+        
+        // Create display name with native name and region
+        wchar_t displayName[128];
+        char tempName[128];
+        
+        if (strlen(lang->region) > 0) {
+            snprintf(tempName, sizeof(tempName), "%s (%s)", lang->name, lang->region);
+        } else {
+            strncpy(tempName, lang->name, sizeof(tempName) - 1);
+            tempName[sizeof(tempName) - 1] = '\0';
+        }
+        
+        // Convert to wide string for menu
+        MultiByteToWideChar(CP_UTF8, 0, tempName, -1, displayName, 128);
+        
+        // Determine if this language is currently selected
+        UINT flags = MF_STRING;
+        if (strcmp(currentLang, lang->code) == 0) {
             flags |= MF_CHECKED;
         }
-        AppendMenuW(languageMenu, flags, MENU_LANGUAGE_DE, L"Deutsch (Deutschland)");
+        
+        // Use dynamic menu ID based on language index
+        UINT menuId = MENU_LANGUAGE_BASE + i + 1;
+        AppendMenuW(languageMenu, flags, menuId, displayName);
     }
     
-    // Add French Canadian menu item if fr-CA.ini exists
-    if (CPT_LanguageFileExists("fr-CA")) {
-        flags = MF_STRING;
-        if (strcmp(CPT_GetCurrentLanguage(), "fr-CA") == 0 || strcmp(CPT_GetCurrentLanguage(), "fr") == 0) {
-            flags |= MF_CHECKED;
-        }
-        AppendMenuW(languageMenu, flags, MENU_LANGUAGE_FR, L"Français (Canada)");
+    // If no languages were found, add English as fallback
+    if (languageCount == 0) {
+        UINT flags = MF_STRING | MF_CHECKED;  // Default to checked since it's the only option
+        AppendMenuW(languageMenu, flags, MENU_LANGUAGE_EN, L"English (Fallback)");
     }
 }
 
@@ -356,29 +370,20 @@ void main_switch_language(const char* languageCode)
     sprintf(debugMsg, "Attempting to switch to language: %s", languageCode);
     OutputDebugStringA(debugMsg);
     
-    if (CPT_LoadLanguage(languageCode)) {
-        sprintf(debugMsg, "Successfully loaded language: %s", languageCode);
-        OutputDebugStringA(debugMsg);
-        
-        // Language successfully loaded, save preference
-        strncpy(options.preferred_language, languageCode, sizeof(options.preferred_language) - 1);
-        options.preferred_language[sizeof(options.preferred_language) - 1] = '\0';
-        options_write(); // Save the preference immediately
-        
-        // Refresh the menu translations and language menu
-        main_translate_menu();
-        main_populate_language_menu();
-    } else {
-        sprintf(debugMsg, "Failed to load language: %s", languageCode);
-        OutputDebugStringA(debugMsg);
-        
-        // Check if the file exists
-        if (CPT_LanguageFileExists(languageCode)) {
-            OutputDebugStringA("Language file exists but failed to load");
-        } else {
-            OutputDebugStringA("Language file does not exist");
-        }
-    }
+    // Use the new gettext system to set the language
+    CPG_SetLanguage(languageCode);
+    
+    sprintf(debugMsg, "Language set to: %s", languageCode);
+    OutputDebugStringA(debugMsg);
+    
+    // Save the preference
+    strncpy(options.preferred_language, languageCode, sizeof(options.preferred_language) - 1);
+    options.preferred_language[sizeof(options.preferred_language) - 1] = '\0';
+    options_write(); // Save the preference immediately
+    
+    // Refresh the menu translations and language menu
+    main_translate_menu();
+    main_populate_language_menu();
 }
 
 // Function to translate menu items
@@ -1526,20 +1531,42 @@ void    main_menuproc(HWND hWnd, LPPOINT points)
 		
 		// Handle language menu items
 		case MENU_LANGUAGE_EN:
-			main_switch_language("en-US");
-			break;
-			
 		case MENU_LANGUAGE_DE:
-			main_switch_language("de-DE");
-			break;
-			
 		case MENU_LANGUAGE_FR:
-			main_switch_language("fr-CA");
+		{
+			// Handle dynamic language menu items
+			if (retval >= MENU_LANGUAGE_BASE && retval < MENU_LANGUAGE_BASE + 32) {
+				// Get the language index from menu ID
+				int langIndex = retval - MENU_LANGUAGE_BASE - 1;
+				
+				// Get available languages
+				LanguageInfo languages[16];
+				int languageCount = CPG_EnumerateLanguages(languages, 16);
+				
+				if (langIndex >= 0 && langIndex < languageCount) {
+					main_switch_language(languages[langIndex].code);
+				}
+			}
 			break;
+		}
 		
 		// Handle other commands
 		default:
 		{
+			// Handle dynamic language menu items that might fall through
+			if (retval >= MENU_LANGUAGE_BASE && retval < MENU_LANGUAGE_BASE + 32) {
+				// Get the language index from menu ID
+				int langIndex = retval - MENU_LANGUAGE_BASE - 1;
+				
+				// Get available languages
+				LanguageInfo languages[16];
+				int languageCount = CPG_EnumerateLanguages(languages, 16);
+				
+				if (langIndex >= 0 && langIndex < languageCount) {
+					main_switch_language(languages[langIndex].code);
+				}
+				break;
+			}
 			
 			if (main_play_control((WORD) retval, hWnd) != -1)
 				break;

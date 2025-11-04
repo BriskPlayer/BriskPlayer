@@ -1162,7 +1162,16 @@ void LVCB_DrawBackgroundRect(CPs_DrawContext* pDC)
 	RECT rClient;
 	GetClientRect(IF_GetHWnd(windows.m_hifPlaylist), &rClient);
 	
-	// Draw the window background
+	// First fill with solid background to prevent transparency artifacts
+	HBRUSH hBrush = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
+	FillRect(pDC->m_dcDraw, &rClient, hBrush);
+	DeleteObject(hBrush);
+	
+	// Expand slightly to cover edge cases
+	rClient.right += 2;
+	rClient.bottom += 2;
+	
+	// Draw the window background with proper tiling
 	CPIG_TiledFill(pDC, &rClient, &glb_pSkin->mpl_rBackground_SourceTile, glb_pSkin->mpl_pBackground, CIC_TILEDFILOPTIONS_NONE);
 }
 
@@ -1356,6 +1365,17 @@ void CPlaylistWindow_CB_onDraw(CP_HINTERFACE hInterface, CPs_DrawContext* pConte
 	
 	// Draw the window background
 	GetClientRect(IF_GetHWnd(windows.m_hifPlaylist), &rClient);
+	
+	// First fill the entire area with a solid background to eliminate transparency issues
+	HBRUSH hBrush = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
+	FillRect(pContext->m_dcDraw, &rClient, hBrush);
+	DeleteObject(hBrush);
+	
+	// Expand the rectangle slightly to ensure we cover all edge cases
+	rClient.right += 2;
+	rClient.bottom += 2;
+	
+	// Then draw the tiled skin background
 	CPIG_TiledFill(pContext, &rClient, &glb_pSkin->mpl_rBackground_SourceTile, glb_pSkin->mpl_pBackground, CIC_TILEDFILOPTIONS_NONE);
 }
 
@@ -1429,6 +1449,22 @@ void CPlaylistWindow_CB_onCommandMessage(CP_HINTERFACE hInterface, const WPARAM 
 LRESULT CPlaylistWindow_CB_onAppMessage(CP_HINTERFACE hInterface, const UINT uiMessage, const WPARAM wParam, const LPARAM lParam)
 {
 	(void)hInterface;
+	
+	// Handle background erase to prevent transparency artifacts
+	if (uiMessage == WM_ERASEBKGND)
+	{
+		// Don't let Windows erase the background - we'll do it ourselves in onDraw
+		return 1;
+	}
+	
+	// Handle window resizing to ensure proper repaint
+	if (uiMessage == WM_SIZE)
+	{
+		// Invalidate the entire client area to ensure complete redraw
+		InvalidateRect(IF_GetHWnd(windows.m_hifPlaylist), NULL, FALSE);
+		return 0;
+	}
+	
 	if (uiMessage == CPPLM_CREATEINPLACE)
 	{
 		int iItem = (int)wParam;

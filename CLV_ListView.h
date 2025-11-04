@@ -126,15 +126,15 @@ void CLV_sethandler_ItemRightClick(CP_HLISTVIEW _hListData, wp_ItemSubCallback p
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Column flags
-#define CPLV_COLFLAG_NONE			0L
-#define CPLV_COLFLAG_LOCKRESIZE		1L
-#define CPLV_COLFLAG_NOHIDE			2L
-#define CPLV_COLFLAG_HIDDEN			4L
+// Column flags - using C23 binary literals for better bit pattern visibility
+#define CPLV_COLFLAG_NONE			0b00000000L
+#define CPLV_COLFLAG_LOCKRESIZE		0b00000001L
+#define CPLV_COLFLAG_NOHIDE			0b00000010L
+#define CPLV_COLFLAG_HIDDEN			0b00000100L
 //
 // Item flags
-#define CPLV_ITEMFLAG_NONE			0L
-#define CPLV_ITEMFLAG_SELECTED		1L
+#define CPLV_ITEMFLAG_NONE			0b00000000L
+#define CPLV_ITEMFLAG_SELECTED		0b00000001L
 //
 // General
 #define CPC_INVALIDCOLUMN			-1

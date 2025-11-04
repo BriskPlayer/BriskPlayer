@@ -23,28 +23,32 @@
 #define CPI_PLAYER_H
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Known CoDecs with ids (must be sequential and zero based)
-#define CP_CODEC_WINAMPPLUGIN		0x0
-#define CP_CODEC_OGG				0x1
-#define CP_CODEC_WAV				0x2
-#define CP_CODEC_MPEG				0x3
-#define CP_CODEC_FLAC				0x4
-#define CP_CODEC_AAC				0x5
-#define CP_CODEC_first				CP_CODEC_WINAMPPLUGIN
-#define CP_CODEC_last				CP_CODEC_AAC
+// C23 Enhanced Codec Enumeration with type safety
+typedef enum CP_CodecType : unsigned char {
+	CP_CODEC_WINAMPPLUGIN = 0,
+	CP_CODEC_OGG,
+	CP_CODEC_WAV,
+	CP_CODEC_MPEG,
+	CP_CODEC_FLAC,
+	CP_CODEC_AAC,
+	
+	CP_CODEC_first = CP_CODEC_WINAMPPLUGIN,
+	CP_CODEC_last = CP_CODEC_AAC,
+	CP_CODEC_default = CP_CODEC_WINAMPPLUGIN
+} CP_CodecType;
+static_assert(CP_CODEC_last < 16, "Codec types should fit in 4 bits for efficient storage");
 
-// Set the CoDec to use if we cannot match a file by it's extension
-#define CP_CODEC_default  CP_CODEC_WINAMPPLUGIN
-
-//
-// Known Output modules (must be sequential and zero based)
-//
-#define CP_OUTPUT_WAVE				0x0
-#define CP_OUTPUT_FAUDIO			0x1
-#define CP_OUTPUT_DIRECTSOUND		0x2
-#define CP_OUTPUT_FILE				0x3
-#define CP_OUTPUT_first				CP_OUTPUT_WAVE
-#define CP_OUTPUT_last				CP_OUTPUT_FILE
+// C23 Enhanced Output Module Enumeration
+typedef enum CP_OutputType : unsigned char {
+	CP_OUTPUT_WAVE = 0,
+	CP_OUTPUT_FAUDIO,
+	CP_OUTPUT_DIRECTSOUND,
+	CP_OUTPUT_FILE,
+	
+	CP_OUTPUT_first = CP_OUTPUT_WAVE,
+	CP_OUTPUT_last = CP_OUTPUT_FILE
+} CP_OutputType;
+static_assert(CP_OUTPUT_last < 8, "Output types should fit in 3 bits");
 
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -248,14 +248,15 @@ struct ListStruct
 /////////////////////////////////////////////////////////////////////////////////
 //
 // Player state
-typedef enum _CPe_PlayerState
+typedef enum _CPe_PlayerState : int
 {
-	cppsUndefined,
+	cppsUndefined = 0,
 	cppsEndOfStream,
 	cppsPaused,
 	cppsPlaying,
 	cppsStopped
 } CPe_PlayerState;
+static_assert(cppsStopped <= 8, "PlayerState should fit in 3 bits");
 //
 // File info
 
@@ -267,6 +268,9 @@ typedef struct _CPs_FileInfo
 	BOOL m_bStereo;
 	BOOL m_b16bit;
 } CPs_FileInfo;
+// C23 static_assert for structure validation
+static_assert(sizeof(CPs_FileInfo) <= 32, "FileInfo should remain compact");
+static_assert(offsetof(CPs_FileInfo, m_iFileLength_Secs) == 0, "FileLength should be first for performance");
 
 //
 // EQ settings
@@ -277,22 +281,27 @@ typedef struct _CPs_EQSettings
 	char m_aryBands[8];
 	
 } CPs_EQSettings;
+// C23 static_assert for EQ structure
+static_assert(sizeof(CPs_EQSettings) <= 16, "EQSettings should remain compact");
+static_assert(ARRAY_SIZE(((CPs_EQSettings*)0)->m_aryBands) == 8, "EQ should have exactly 8 bands");
 
 //
-typedef enum _CPe_QuickFindTerm
+typedef enum _CPe_QuickFindTerm : unsigned char
 {
-	qftUndefined,
+	qftUndefined = 0,
 	qftTitle,
 	qftAlbum,
 	qftArtist
 } CPe_QuickFindTerm;
+static_assert(qftArtist <= 255, "QuickFindTerm should fit in unsigned char");
 //
-typedef enum _CPe_MixerMode
+typedef enum _CPe_MixerMode : unsigned char
 {
-	mmMasterVolume,
+	mmMasterVolume = 0,
 	mmWaveVolume,
 	mmInternal
 } CPe_MixerMode;
+static_assert(mmInternal <= 255, "MixerMode should fit in unsigned char");
 //
 //
 /////////////////////////////////////////////////////////////////////////////////

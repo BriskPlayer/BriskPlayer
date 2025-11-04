@@ -83,28 +83,28 @@ void    options_read(void)
 		
 	options.playlist_window_pos.left = GetPrivateProfileInt("WindowPos", // address of section name
 									   "PlaylistX", // address of key name
-									   100, // return value if key name is not found
+									   350, // return value if key name is not found (offset from main window)
 									   pathbuf); // address of initialization filename
 	                                   
 	if (options.playlist_window_pos.left < -10)
-		options.playlist_window_pos.left = 100;
+		options.playlist_window_pos.left = 350;
 		
 	options.playlist_window_pos.top = GetPrivateProfileInt("WindowPos", // address of section name
 									  "PlaylistY", // address of key name
-									  100, // return value if key name is not found
+									  150, // return value if key name is not found (slightly below main window)
 									  pathbuf); // address of initialization filename
 	                                  
 	if (options.playlist_window_pos.top < -10)
-		options.playlist_window_pos.top = 100;
+		options.playlist_window_pos.top = 150;
 		
 	options.playlist_window_pos.right = GetPrivateProfileInt("WindowPos", // address of section name
 										"PlaylistW", // address of key name
-										300, // return value if key name is not found
+										650, // return value if key name is not found (increased default width)
 										pathbuf) + options.playlist_window_pos.left; // address of initialization filename
 	                                    
 	options.playlist_window_pos.bottom = GetPrivateProfileInt("WindowPos", // address of section name
 										 "PlaylistH", // address of key name
-										 400, // return value if key name is not found
+										 500, // return value if key name is not found (increased default height)
 										 pathbuf) + options.playlist_window_pos.top; // address of initialization filename
 	                                     
 	GetPrivateProfileString("LastDirectory", // points to section name

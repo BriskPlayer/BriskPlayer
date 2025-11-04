@@ -1,9 +1,42 @@
 project('briskplayer', ['c', 'cpp'],
     version : '3.0.0',
     license : 'GPL-2.0-or-later',
-    default_options : ['warning_level=3', 'c_std=c11', 'cpp_std=c++11'])
+    default_options : ['warning_level=3', 'c_std=c23', 'cpp_std=c++23'])
 
 cc = meson.get_compiler('c')
+fs = import('fs')  # Import filesystem module for file existence checks
+
+# Check for C23 features
+c23_features = [
+    'typeof',
+    'decimal_floating_point',
+    'binary_literals',
+    'enhanced_enumerations',
+    'auto_type_inference',
+    'improved_bitfields',
+    'enhanced_attributes'
+]
+
+c23_feature_defines = []
+foreach feature : c23_features
+    has_feature = cc.has_header_symbol('stddef.h', '_Static_assert', prefix: '#include <stddef.h>')
+    if has_feature
+        c23_feature_defines += '-DHAS_C23_' + feature.to_upper()
+    endif
+endforeach
+
+# Add C23-specific compiler flags
+c23_args = []
+if cc.get_id() == 'gcc'
+    # GCC C23 support
+    c23_args += ['-std=c23', '-Wno-declaration-after-statement']
+elif cc.get_id() == 'clang'
+    # Clang C23 support  
+    c23_args += ['-std=c23', '-Wno-declaration-after-statement']
+elif cc.get_id() == 'msvc'
+    # MSVC C23 support (when available)
+    c23_args += ['/std:c23']
+endif
 
 # Find dependencies with fallback support
 # Try both cmake and pkg-config methods for maximum compatibility
@@ -62,6 +95,23 @@ faudiodep = dependency('FAudio', required : true, static : true, method : 'pkg-c
 if not faudiodep.found()
     faudiodep = dependency('FAudio', required : true, static : true, method : 'cmake')
 endif
+
+# Gettext for internationalization
+gettextdep = dependency('intl', required : false, static : true)
+if not gettextdep.found()
+    # Try to find it as a library if dependency detection fails
+    gettextdep = cc.find_library('intl', required : false, static : true)
+endif
+
+# Enable NLS if gettext is available
+nls_enabled = gettextdep.found()
+if nls_enabled
+    add_project_arguments('-DENABLE_NLS=1', language: 'c')
+    message('Gettext support enabled')
+else
+    message('Gettext not found, NLS disabled - will use fallback translations')
+endif
+
 winmm = cc.find_library('winmm')
 comctl32 = cc.find_library('comctl32')
 wininet = cc.find_library('wininet')
@@ -148,6 +198,7 @@ brisksrc = files([
     'CPI_Stream_Internet.c',
     'CPI_Stream_LocalFile.c',
     'CPI_Translation.c',
+    'CPI_Gettext.c',
     'CPString.c',
     'CPI_Verbs.c',
     'CPSK_Skin.c',
@@ -189,6 +240,11 @@ endif
 
 deps = [zlibdep, oggdep, vorbisdep, vorbisfiledep, maddep, flacdep, taglibdep, winmm, comctl32, wininet, dsound, faudiodep, mfplat, propsys, mfuuid, mfreadwrite, faad2dep, libstdcpp]
 
+# Add gettext dependency if available
+if nls_enabled
+    deps += gettextdep
+endif
+
 # Configure static linking for different compilers
 static_link_args = []
 if cc.get_id() == 'gcc' and host_machine.system() == 'windows'
@@ -202,9 +258,28 @@ endif
 briskplayer_exe = executable('briskplayer', brisksrc, briskres, 
     dependencies : deps,
     link_args : static_link_args,
+    c_args : c23_args + c23_feature_defines,
     cpp_args : cpp_stdlib_args,
     win_subsystem : 'windows')
 
-# Install language files
-install_data('lang/en.ini', install_dir : 'lang')
-install_data('lang/de.ini', install_dir : 'lang')
+# Install gettext translations if available
+if nls_enabled
+    # Install .mo files from locale directory
+    locale_files = []
+    
+    # Check for built translation files
+    foreach lang : ['de', 'fr', 'es', 'it', 'pt', 'ru', 'ja', 'zh']
+        mo_file = 'locale' / lang / 'LC_MESSAGES' / 'briskplayer.mo'
+        if fs.exists(mo_file)
+            install_data(mo_file, install_dir : 'locale' / lang / 'LC_MESSAGES')
+            message('Installing translation: ' + lang)
+        endif
+    endforeach
+    
+    # Install the translation template for translators
+    if fs.exists('po/briskplayer.pot')
+        install_data('po/briskplayer.pot', install_dir : 'po')
+    endif
+else
+    message('Gettext not available - application will run in English only')
+endif

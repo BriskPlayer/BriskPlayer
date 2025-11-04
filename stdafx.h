@@ -10,6 +10,7 @@
 #include <math.h>
 #include <limits.h>
 #include "debug.h"
+#include "c23_compat.h"
 #include <process.h>
 #include <wininet.h>
 // #include <search.h>
@@ -21,7 +22,10 @@
 #include <shellapi.h>
 #include <io.h>
 
+// Only define sprintf as wsprintf if not already defined by libintl
+#ifndef sprintf
 #define sprintf wsprintf
+#endif
 #define strcpy lstrcpy
 #define strcmp lstrcmp
 #define strcat lstrcat

@@ -23,6 +23,7 @@
 #include "CPI_Player.h"
 #include "CPI_Playlist.h"
 #include "CPI_Translation.h"
+#include "CPI_Gettext.h"
 
 // Forward declaration for window snapping functionality (defined in main.c)
 extern void SnapWindow(HWND hWnd, RECT* pRect);

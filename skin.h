@@ -19,9 +19,9 @@
  */
 
 
-enum Objects
+enum Objects : int
 {
-	PlaySwitch,
+	PlaySwitch = 0,
 	StopSwitch,
 	PauseSwitch,
 	EjectButton,
@@ -56,6 +56,7 @@ enum Objects
 	ReducedSize,
 	Lastone
 };
+static_assert(Lastone <= 32, "Objects enum should fit in 32 slots for optimal performance");
 
 typedef struct
 {

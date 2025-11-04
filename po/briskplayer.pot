@@ -1,0 +1,382 @@
+# BriskPlayer translation template
+# Copyright (C) 2025 BriskPlayer Team
+# This file is distributed under the same license as the BriskPlayer package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: zach@zachbacon.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. Context: Application name and description
+msgctxt "app"
+msgid "BriskPlayer"
+msgstr ""
+
+msgctxt "app"
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr ""
+
+msgctxt "app"
+msgid "BriskPlayer Audio file"
+msgstr ""
+
+msgctxt "app"
+msgid "BriskPlayer Playlist"
+msgstr ""
+
+#. Context: Menu items
+msgctxt "menu"
+msgid "&Open...\tL"
+msgstr ""
+
+msgctxt "menu"
+msgid "Open &URL..."
+msgstr ""
+
+msgctxt "menu"
+msgid "&Add...\tA"
+msgstr ""
+
+msgctxt "menu"
+msgid "Playlist &Editor\tP"
+msgstr ""
+
+msgctxt "menu"
+msgid "&Skin"
+msgstr ""
+
+msgctxt "menu"
+msgid "Default"
+msgstr ""
+
+msgctxt "menu"
+msgid "&Language"
+msgstr ""
+
+msgctxt "menu"
+msgid "English"
+msgstr ""
+
+msgctxt "menu"
+msgid "Deutsch"
+msgstr ""
+
+msgctxt "menu"
+msgid "Play &Control"
+msgstr ""
+
+msgctxt "menu"
+msgid "&Play\tX"
+msgstr ""
+
+msgctxt "menu"
+msgid "&Stop\tV"
+msgstr ""
+
+msgctxt "menu"
+msgid "Pa&use\tC"
+msgstr ""
+
+msgctxt "menu"
+msgid "&Next\tB"
+msgstr ""
+
+msgctxt "menu"
+msgid "Pre&vious\tZ"
+msgstr ""
+
+msgctxt "menu"
+msgid "O&ptions"
+msgstr ""
+
+msgctxt "menu"
+msgid "A&bout...\tF1"
+msgstr ""
+
+msgctxt "menu"
+msgid "E&xit...\tESC"
+msgstr ""
+
+#. Context: Dialog titles
+msgctxt "dialog"
+msgid "About BriskPlayer"
+msgstr ""
+
+msgctxt "dialog"
+msgid "BriskPlayer Options"
+msgstr ""
+
+msgctxt "dialog"
+msgid "Open URL"
+msgstr ""
+
+msgctxt "dialog"
+msgid "Quick Find"
+msgstr ""
+
+#. Context: About dialog
+msgctxt "dialog"
+msgid "&About"
+msgstr ""
+
+msgctxt "dialog"
+msgid "&Keyboard Shortcuts"
+msgstr ""
+
+msgctxt "dialog"
+msgid "C&hanges"
+msgstr ""
+
+msgctxt "dialog"
+msgid "C&lose"
+msgstr ""
+
+#. Context: Options dialog
+msgctxt "options"
+msgid "General"
+msgstr ""
+
+msgctxt "options"
+msgid "Always on top"
+msgstr ""
+
+msgctxt "options"
+msgid "Exit after playing"
+msgstr ""
+
+msgctxt "options"
+msgid "Rotate systemtray icon"
+msgstr ""
+
+msgctxt "options"
+msgid "Scroll Songtitle"
+msgstr ""
+
+msgctxt "options"
+msgid "Allow file once in playlist"
+msgstr ""
+
+msgctxt "options"
+msgid "Autoplay on startup"
+msgstr ""
+
+msgctxt "options"
+msgid "Allow multiple instances"
+msgstr ""
+
+msgctxt "options"
+msgid "Show remaining time"
+msgstr ""
+
+msgctxt "options"
+msgid "Show on taskbar"
+msgstr ""
+
+msgctxt "options"
+msgid "Register Filetypes"
+msgstr ""
+
+msgctxt "options"
+msgid "Add to Start Menu"
+msgstr ""
+
+msgctxt "options"
+msgid "Read ID3 Tag (if any)"
+msgstr ""
+
+msgctxt "options"
+msgid "Read ID3 Tag of selected"
+msgstr ""
+
+msgctxt "options"
+msgid "Support ID3v2"
+msgstr ""
+
+msgctxt "options"
+msgid "Prefer native OGG tags"
+msgstr ""
+
+msgctxt "options"
+msgid "Load ID3 tags in background"
+msgstr ""
+
+msgctxt "options"
+msgid "Work out track lengths"
+msgstr ""
+
+msgctxt "options"
+msgid "Easy move"
+msgstr ""
+
+msgctxt "options"
+msgid "Remember playlist"
+msgstr ""
+
+msgctxt "options"
+msgid "Remember last played"
+msgstr ""
+
+msgctxt "options"
+msgid "Track Delay (sec)"
+msgstr ""
+
+msgctxt "options"
+msgid "Skinlist length"
+msgstr ""
+
+msgctxt "options"
+msgid "Flush"
+msgstr ""
+
+msgctxt "options"
+msgid "Output"
+msgstr ""
+
+msgctxt "options"
+msgid "Volume controls"
+msgstr ""
+
+msgctxt "options"
+msgid "Skin"
+msgstr ""
+
+msgctxt "options"
+msgid "Player"
+msgstr ""
+
+msgctxt "options"
+msgid "Open"
+msgstr ""
+
+msgctxt "options"
+msgid "OK"
+msgstr ""
+
+msgctxt "options"
+msgid "Cancel"
+msgstr ""
+
+#. Context: URL dialog
+msgid "Type the URL you would like to play. Supported formats are MP3 and OGG streaming, and M3U playlists."
+msgstr ""
+
+msgid "&URL:"
+msgstr ""
+
+#. Context: Quick Find dialog
+msgid "Find Text"
+msgstr ""
+
+msgid "Look in"
+msgstr ""
+
+msgid "&Titles"
+msgstr ""
+
+msgid "Artist &Names"
+msgstr ""
+
+msgid "&Album Names"
+msgstr ""
+
+#. Context: Volume control options
+msgctxt "audio"
+msgid "System MASTER volume"
+msgstr ""
+
+msgctxt "audio"
+msgid "System WAVE volume"
+msgstr ""
+
+msgctxt "audio"
+msgid "Internal volume"
+msgstr ""
+
+#. Context: Status messages
+msgctxt "status"
+msgid "Filetypes are registered.\nYou can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+
+msgctxt "status"
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr ""
+
+#. Context: File filters
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr ""
+
+msgid "All Files (*.*)"
+msgstr ""
+
+#. Context: Audio format strings
+msgctxt "audio"
+msgid "Bitrate: %d kbps"
+msgstr ""
+
+msgctxt "audio"
+msgid "Sample rate: %.1f kHz"
+msgstr ""
+
+#. Context: Time format (plural forms example)
+msgctxt "time"
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] ""
+msgstr[1] ""
+
+msgctxt "time"
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] ""
+msgstr[1] ""
+
+msgctxt "time"
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Context: Error messages
+msgctxt "error"
+msgid "Failed to initialize audio device"
+msgstr ""
+
+msgctxt "error"
+msgid "Unable to load audio file"
+msgstr ""
+
+msgctxt "error"
+msgid "Invalid String ID"
+msgstr ""
+
+msgctxt "error"
+msgid "Audio Error"
+msgstr ""
+
+msgctxt "error"
+msgid "File Error"
+msgstr ""
+
+#. Context: Processing messages
+msgctxt "status"
+msgid "Processing audio..."
+msgstr ""
+
+msgctxt "status"
+msgid "Loading..."
+msgstr ""
+
+msgctxt "status"
+msgid "Ready"
+msgstr ""

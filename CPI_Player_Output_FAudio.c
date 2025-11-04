@@ -36,10 +36,10 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-// Buffer configuration
-#define CPC_FAUDIO_NUMBEROFBUFFERS 4
-#define CPC_FAUDIO_BUFFERSIZE_MS 40  // 40ms per buffer for low latency
-#define CPC_FAUDIO_MAX_SAMPLE_RATE 192000
+// Buffer configuration - C23 constexpr for compile-time optimization
+constexpr int CPC_FAUDIO_NUMBEROFBUFFERS = 4;
+constexpr int CPC_FAUDIO_BUFFERSIZE_MS = 40;  // 40ms per buffer for low latency
+constexpr int CPC_FAUDIO_MAX_SAMPLE_RATE = 192000;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Voice callback structure (forward declaration)
@@ -58,8 +58,8 @@ typedef struct __CPs_OutputContext_FAudio
 	FAudioMasteringVoice* m_pMasteringVoice;
 	FAudioSourceVoice* m_pSourceVoice;
 	
-	// Buffer management
-	BYTE* m_pBuffers[CPC_FAUDIO_NUMBEROFBUFFERS];
+	// Buffer management - C23 aligned for optimal cache performance
+	_Alignas(64) BYTE* m_pBuffers[CPC_FAUDIO_NUMBEROFBUFFERS];  // 64-byte alignment for SIMD
 	DWORD m_dwBufferSize;
 	int m_iCurrentBuffer;
 	BOOL m_bBuffersSubmitted[CPC_FAUDIO_NUMBEROFBUFFERS];
@@ -83,6 +83,7 @@ typedef struct __CPs_OutputContext_FAudio
 	CPs_EqualiserModule* m_pEqualiser;
 	
 } CPs_OutputContext_FAudio;
+static_assert(_Alignof(CPs_OutputContext_FAudio) >= 8, "Audio context should be properly aligned");
 
 ////////////////////////////////////////////////////////////////////////////////
 // Forward declarations
@@ -179,14 +180,18 @@ void CPP_OMFA_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInf
 		return;
 	}
 	
-	// Set up wave format
-	pContext->m_WaveFormat.wFormatTag = FAUDIO_FORMAT_PCM;
-	pContext->m_WaveFormat.nChannels = pFileInfo->m_bStereo ? 2 : 1;
-	pContext->m_WaveFormat.nSamplesPerSec = pFileInfo->m_iFreq_Hz;
-	pContext->m_WaveFormat.wBitsPerSample = pFileInfo->m_b16bit ? 16 : 8;
+	// Set up wave format using C23 designated initializers for clarity
+	pContext->m_WaveFormat = (FAudioWaveFormatEx){
+		.wFormatTag = FAUDIO_FORMAT_PCM,
+		.nChannels = pFileInfo->m_bStereo ? 2 : 1,
+		.nSamplesPerSec = pFileInfo->m_iFreq_Hz,
+		.wBitsPerSample = pFileInfo->m_b16bit ? 16 : 8,
+		.cbSize = 0
+	};
+	
+	// Calculate dependent fields
 	pContext->m_WaveFormat.nBlockAlign = (pContext->m_WaveFormat.nChannels * pContext->m_WaveFormat.wBitsPerSample) / 8;
 	pContext->m_WaveFormat.nAvgBytesPerSec = pContext->m_WaveFormat.nSamplesPerSec * pContext->m_WaveFormat.nBlockAlign;
-	pContext->m_WaveFormat.cbSize = 0;
 	
 	// Calculate buffer size (40ms worth of audio data)
 	pContext->m_dwBufferSize = (pContext->m_WaveFormat.nAvgBytesPerSec * CPC_FAUDIO_BUFFERSIZE_MS) / 1000;
@@ -476,8 +481,9 @@ void CPP_OMFA_SetInternalVolume(CPs_OutputModule* pModule, const int iNewVolume)
 	if (!pContext || !pContext->m_bInitialized)
 		return;
 		
-	// Convert volume from 0-100 to 0.0-1.0
-	pContext->m_fVolume = (float)iNewVolume / 100.0f;
+	// Convert volume from 0-100 to 0.0-1.0 using decimal precision
+	auto volumePrecise = (audio_precision_t)iNewVolume / AUDIO_DECIMAL(100.0);
+	pContext->m_fVolume = (float)volumePrecise;
 	
 	// Apply volume to source voice
 	FAudioVoice_SetVolume(pContext->m_pSourceVoice, pContext->m_fVolume, FAUDIO_COMMIT_NOW);
