@@ -11,6 +11,17 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>   // For memset, memcpy
+#include <stdbool.h>  // For bool, true, false
+
+// Ensure Windows types are available for compatibility
+#ifndef NOMINMAX
+    #define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>  // For BOOL, DWORD, HWND types
 
 // C23 enhanced static_assert (message is optional in C23)
 #define STATIC_ASSERT_MSG(cond, msg) static_assert(cond, msg)

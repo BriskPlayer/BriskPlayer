@@ -379,7 +379,8 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 				
 					if (playercontext.m_pCurrentOutputModule->m_pCoDec)
 					{
-						playercontext.m_pCurrentOutputModule->m_pCoDec->CloseFile(playercontext.m_pCurrentOutputModule->m_pCoDec);
+						if (playercontext.m_pCurrentOutputModule->m_pCoDec->CloseFile)
+							playercontext.m_pCurrentOutputModule->m_pCoDec->CloseFile(playercontext.m_pCurrentOutputModule->m_pCoDec);
 						playercontext.m_pCurrentOutputModule->m_pCoDec = NULL;
 					}
 					

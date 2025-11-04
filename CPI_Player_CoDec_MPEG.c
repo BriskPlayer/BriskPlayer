@@ -1,6 +1,6 @@
 /*
- * CoolPlayer - Blazing fast audio player.
- * Copyright (C) 2000-2001 Niek Albers
+ * BriskPlayer - Blazing fast audio player.
+ * Copyright (C) 2000-2001 Niek Albers  
  * Copyright (C) 2025 Zach Bacon
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,22 +18,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/*
- * MPEG Audio codec (using MAD)
- * Copyright (C) 2001 Robert Leslie
- *
- * 19-Aug-2001: Created initial version
- */
-
-
 #include "stdafx.h"
 #include "globals.h"
 #include "CPI_Player_CoDec.h"
 #include "mad.h"
-// #include "mmsystem.h"
 #include "CPI_Stream.h"
 
 # define SAMPLE_DEPTH 16
+# define scale(x, y) dither((x), (y))
+
 # define scale(x, y) dither((x), (y))
 
 struct xing
@@ -65,38 +58,55 @@ typedef struct
 {
 	CPs_InStream* m_pInStream;
 	
-	unsigned long size;    /* stream size, in bytes */
-	CPs_CoDecOptions options;  /* codec options */
-	struct xing xing;    /* Xing VBR tag data */
-	struct mad_stream stream;  /* MAD stream structure */
-	struct mad_frame frame;   /* MAD frame structure */
-	struct mad_synth synth;   /* MAD synth structure */
+	CPs_FileInfo info;
+	CPs_CoDecOptions options;
 	
-	unsigned int samplecount;  /* samples output from current frame */
+	struct mad_stream stream;
+	struct mad_frame frame;
+	struct mad_synth synth;
 	
-	mad_timer_t timer;    /* current playing time position */
-	mad_timer_t length;    /* total playing time of current stream */
-	unsigned long rate;    /* bitrate sum for computing average */
-	unsigned long frames;   /* number of frames decoded */
+	unsigned char buffer[8192];
+	size_t buflen;
 	
-	CPs_FileInfo info;    /* stream info */
+	mad_timer_t timer;
+	mad_timer_t length;
 	
-	unsigned char buffer[40000]; /* input stream buffer */
-	size_t buflen;   /* input stream buffer length */
+	int rate;
+	unsigned long frames;
+	unsigned long size;
+	
+	struct xing xing;
+	
+	unsigned int samplecount;
 } CPs_CoDec_MPEG;
 
 /*
- * NAME:  parse_xing()
- * DESCRIPTION: read a Xing VBR tag
+ * NAME:  mad_timer_divide_int()
+ * DESCRIPTION: divide a timer by an integer value
  */
+static mad_timer_t mad_timer_divide_int(mad_timer_t timer, int divisor)
+{
+	mad_timer_t result;
+	
+	if (divisor <= 0) {
+		return timer;
+	}
+	
+	// Convert to total fractional units, divide, then convert back
+	signed long total_fraction = mad_timer_count(timer, MAD_UNITS_CENTISECONDS);
+	total_fraction /= divisor;
+	
+	mad_timer_set(&result, 0, total_fraction, MAD_UNITS_CENTISECONDS);
+	return result;
+}
 static
-int parse_xing(struct xing *xing, struct mad_bitptr ptr, unsigned int bitlen)
+int parse_xing(struct xing *xing,
+			   struct mad_bitptr ptr, unsigned int bitlen)
 {
 	if (bitlen < 64 || mad_bit_read(&ptr, 32) != XING_MAGIC)
 		goto fail;
 		
 	xing->flags = mad_bit_read(&ptr, 32);
-	
 	bitlen -= 64;
 	
 	if (xing->flags & XING_FRAMES)
@@ -105,7 +115,6 @@ int parse_xing(struct xing *xing, struct mad_bitptr ptr, unsigned int bitlen)
 			goto fail;
 			
 		xing->frames = mad_bit_read(&ptr, 32);
-		
 		bitlen -= 32;
 	}
 	
@@ -115,7 +124,6 @@ int parse_xing(struct xing *xing, struct mad_bitptr ptr, unsigned int bitlen)
 			goto fail;
 			
 		xing->bytes = mad_bit_read(&ptr, 32);
-		
 		bitlen -= 32;
 	}
 	
@@ -127,7 +135,7 @@ int parse_xing(struct xing *xing, struct mad_bitptr ptr, unsigned int bitlen)
 			goto fail;
 			
 		for (i = 0; i < 100; ++i)
-			xing->toc[i] = (unsigned char) mad_bit_read(&ptr, 8);
+			xing->toc[i] = mad_bit_read(&ptr, 8);
 			
 		bitlen -= 800;
 	}
@@ -156,9 +164,7 @@ fail:
 static
 int scan_header(CPs_InStream* pInStream, struct mad_header *header, struct xing *xing)
 {
-
 	struct mad_stream stream;
-	
 	struct mad_frame frame;
 	unsigned char buffer[8192];
 	size_t buflen = 0;
@@ -174,10 +180,10 @@ int scan_header(CPs_InStream* pInStream, struct mad_header *header, struct xing 
 	{
 		if (buflen < sizeof(buffer))
 		{
-			// DWORD bytes;
 			size_t bytes;
 			
-			if (pInStream->Read(pInStream, buffer + buflen, sizeof(buffer) - buflen, &bytes) == FALSE
+			if (pInStream->Read(pInStream, buffer + buflen, sizeof(buffer) - buflen,
+					&bytes) == FALSE
 					|| bytes == 0)
 			{
 				result = -1;
@@ -222,12 +228,10 @@ int scan_header(CPs_InStream* pInStream, struct mad_header *header, struct xing 
 		result = -1;
 		
 	mad_frame_finish(&frame);
-	
 	mad_stream_finish(&stream);
 	
 	return result;
 }
-
 
 /*
  * NAME:  prng()
@@ -372,21 +376,15 @@ static void cleanup(CPs_CoDec_MPEG *context)
 	}
 }
 
-
-
-////////////////////////////////////////////////////////////////////////////////
-//
-//
 // Module functions
 void CPP_OMMP3_Uninitialise(CPs_CoDecModule* pModule);
 BOOL CPP_OMMP3_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD dwCookie, HWND hWndOwner);
 void CPP_OMMP3_CloseFile(CPs_CoDecModule* pModule);
 void CPP_OMMP3_Seek(CPs_CoDecModule* pModule, const int iNumerator, const int iDenominator);
 void CPP_OMMP3_GetFileInfo(CPs_CoDecModule* pModule, CPs_FileInfo* pInfo);
-//
 BOOL CPP_OMMP3_GetPCMBlock(CPs_CoDecModule* pModule, void* pBlock, DWORD* pdwBlockSize);
 int CPP_OMMP3_GetCurrentPos_secs(CPs_CoDecModule* pModule);
-//
+
 void CP_InitialiseCodec_MPEG(CPs_CoDecModule* pCoDec)
 {
 	CPs_CoDec_MPEG *pContext;
@@ -415,29 +413,20 @@ void CP_InitialiseCodec_MPEG(CPs_CoDecModule* pCoDec)
 	
 	pContext->timer  = mad_timer_zero;
 	pContext->length = mad_timer_zero;
-	pContext->rate   = 0;
+	
+	pContext->rate = 0;
 	pContext->frames = 0;
-	
-	pContext->info.m_iFileLength_Secs = 0;
-	pContext->info.m_iBitRate_Kbs     = 0;
-	pContext->info.m_iFreq_Hz         = 0;
-	pContext->info.m_bStereo          = TRUE;
-	pContext->info.m_b16bit           = (SAMPLE_DEPTH == 16);
-	
-	pContext->buflen = 0;
 	
 	CPFA_InitialiseFileAssociations(pCoDec);
 	CPFA_AddFileAssociation(pCoDec, "MP3", 0L);
 	CPFA_AddFileAssociation(pCoDec, "MP2", 0L);
 	CPFA_AddFileAssociation(pCoDec, "MP1", 0L);
 	CPFA_AddFileAssociation(pCoDec, "MPEG", 0L);
-	CPFA_AddFileAssociation(pCoDec, "MPG", 0L);
 }
 
-
 /*
- * NAME:  codec->Destroy()
- * DESCRIPTION: clean-up and delete a codec object
+ * NAME:  codec->Uninitialise()
+ * DESCRIPTION: destroy the MPEG codec
  */
 void CPP_OMMP3_Uninitialise(CPs_CoDecModule* pModule)
 {
@@ -476,7 +465,6 @@ BOOL CPP_OMMP3_OpenFile(CPs_CoDecModule* pModule, char const *path, DWORD dwCook
 	}
 	
 	// Skip over ID3v2 tag (if there is one)
-	
 	if (context->m_pInStream->IsSeekable(context->m_pInStream) == TRUE) // only works on seekable streams
 	{
 		unsigned char buffer[10];
@@ -497,7 +485,6 @@ BOOL CPP_OMMP3_OpenFile(CPs_CoDecModule* pModule, char const *path, DWORD dwCook
 	}
 	
 	mad_stream_init(&context->stream);
-	
 	mad_frame_init(&context->frame);
 	mad_synth_init(&context->synth);
 	
@@ -532,18 +519,19 @@ BOOL CPP_OMMP3_OpenFile(CPs_CoDecModule* pModule, char const *path, DWORD dwCook
 	}
 	
 	context->rate   = 0;
-	
 	context->frames = 0;
 	
 	context->info.m_iFileLength_Secs =
-		mad_timer_count(context->length, MAD_UNITS_SECONDS);
+	mad_timer_count(context->length, MAD_UNITS_SECONDS);
 	context->info.m_iBitRate_Kbs     = context->frame.header.bitrate / 1000;
 	context->info.m_iFreq_Hz         = context->frame.header.samplerate;
-	context->info.m_bStereo          =
-		context->frame.header.mode == MAD_MODE_SINGLE_CHANNEL ? FALSE : TRUE;
-	context->info.m_b16bit           = (SAMPLE_DEPTH == 16);
+	context->info.m_bStereo          = (MAD_NCHANNELS(&context->frame.header) == 2);
+	context->info.m_b16bit           = TRUE; /* Always true for this implementation */
 	
-	context->buflen = 0;
+	if (context->m_pInStream->Read(context->m_pInStream, context->buffer, sizeof(context->buffer), &context->buflen) == FALSE)
+		context->buflen = 0;
+		
+	mad_stream_buffer(&context->stream, context->buffer, (unsigned long)context->buflen);
 	
 	return TRUE;
 }
@@ -576,26 +564,50 @@ void CPP_OMMP3_Seek(CPs_CoDecModule* pModule, int const numer, int const denom)
 	CP_ASSERT(numer >= 0 && denom > 0);
 	
 	// If the IStream doesn't support seeking - ignore the seek
-	
 	if (context->m_pInStream->IsSeekable(context->m_pInStream) == FALSE)
 		return;
 		
 	fraction = (double) numer / denom;
 	
-	position = (unsigned long)
-			   (mad_timer_count(context->length, MAD_UNITS_MILLISECONDS) * fraction);
-	           
-	mad_timer_set(&context->timer, position / 1000, position % 1000, 1000);
+	position = (unsigned long)(fraction * context->size);
 	
 	if (context->xing.flags & XING_TOC)
 	{
+		/* use Xing TOC to get file offset */
 		int percent, p1, p2;
+		double d1, d2, d;
 		
 		percent = (int)(fraction * 100);
-		p1 = (percent < 100) ? context->xing.toc[percent    ] : 0x100;
-		p2 = (percent <  99) ? context->xing.toc[percent + 1] : 0x100;
 		
-		fraction = (p1 + (p2 - p1) * (fraction * 100 - percent)) / 0x100;
+		if (percent == 0)
+			position = 0;
+		else if (percent == 100)
+			position = context->size;
+		else
+		{
+			p1 = percent;
+			
+			if (percent < 99)
+				p2 = percent + 1;
+			else
+			{
+				p1 = percent - 1;
+				p2 = percent;
+			}
+			
+			d1 = context->xing.toc[p1] / 256.0;
+			d2 = context->xing.toc[p2] / 256.0;
+			d = d1 + (d2 - d1) * (fraction * 100 - p1);
+			
+			position = (unsigned long)(d * context->size);
+		}
+	}
+	
+	context->timer = context->length;
+	mad_timer_multiply(&context->timer, numer);
+	// Use proper timer division for accurate position tracking
+	if (denom > 1) {
+		context->timer = mad_timer_divide_int(context->timer, denom);
 	}
 	
 	context->m_pInStream->Seek(context->m_pInStream, (LONG)(context->size * fraction));
@@ -606,7 +618,6 @@ void CPP_OMMP3_Seek(CPs_CoDecModule* pModule, int const numer, int const denom)
 	mad_stream_buffer(&context->stream, context->buffer, (unsigned long)context->buflen);
 	
 	mad_frame_mute(&context->frame);
-	
 	mad_synth_mute(&context->synth);
 	
 	if (numer)
@@ -631,10 +642,8 @@ void CPP_OMMP3_Seek(CPs_CoDecModule* pModule, int const numer, int const denom)
 	}
 	
 	context->synth.pcm.length = 0;
-	
 	context->samplecount      = 0;
 }
-
 
 /*
  * NAME:  codec->GetPCMBlock()
@@ -686,7 +695,6 @@ BOOL CPP_OMMP3_GetPCMBlock(CPs_CoDecModule* pModule, void *block, DWORD *size)
 		
 		while (mad_frame_decode(&context->frame, &context->stream) == -1)
 		{
-			// DWORD bytes;
 			size_t bytes;
 			
 			if (MAD_RECOVERABLE(context->stream.error))
@@ -696,37 +704,43 @@ BOOL CPP_OMMP3_GetPCMBlock(CPs_CoDecModule* pModule, void *block, DWORD *size)
 			{
 				memmove(context->buffer, context->stream.next_frame,
 						context->buflen = context->buffer +
-										  context->buflen - context->stream.next_frame);
+						sizeof(context->buffer) - context->stream.next_frame);
 			}
 			
-			if (context->m_pInStream->Read(context->m_pInStream,
-										   context->buffer + context->buflen,
-										   sizeof(context->buffer) - context->buflen, &bytes) == FALSE
-					|| bytes == 0)
+			else
+				context->buflen = 0;
+				
+			if (context->m_pInStream->Read(context->m_pInStream, context->buffer + context->buflen,
+					sizeof(context->buffer) - context->buflen, &bytes) == FALSE || bytes == 0)
 			{
+				*size = samples - (unsigned char *) block;
 				return FALSE;
 			}
 			
-			mad_stream_buffer(&context->stream,
+			context->buflen += bytes;
 			
-							  context->buffer, (unsigned long)(context->buflen += bytes));
+			mad_stream_buffer(&context->stream, context->buffer,
+							  (unsigned long)context->buflen);
 		}
 		
-		bitrate = context->frame.header.bitrate / 1000;
+		context->rate += context->frame.header.bitrate;
+		++context->frames;
 		
-		context->rate += bitrate;
-		context->frames++;
-		
-		context->info.m_iBitRate_Kbs = bitrate;
-		
+		// Only update timer during normal playback, not during seeking
+		mad_timer_add(&context->timer, context->frame.header.duration);
 		mad_synth_frame(&context->synth, &context->frame);
 		
 		context->samplecount = 0;
 		
-		mad_timer_add(&context->timer, context->frame.header.duration);
+		bitrate = context->rate / context->frames;
+		
+		if (context->info.m_iBitRate_Kbs != (int)bitrate)
+		{
+			context->info.m_iBitRate_Kbs = (int)bitrate;
+		}
 	}
 	
-	*size = (DWORD)(samples - (unsigned char *) block);
+	*size = samples - (unsigned char *) block;
 	
 	return TRUE;
 }
@@ -741,23 +755,17 @@ void CPP_OMMP3_GetFileInfo(CPs_CoDecModule* pModule, CPs_FileInfo *info)
 	
 	CP_CHECKOBJECT(context);
 	
-	if (!(context->xing.flags & XING_FRAMES) && context->frames)
+	// Only update length estimate if we don't have VBR info and this is the first time
+	if (!(context->xing.flags & XING_FRAMES) && context->frames > 0 && context->info.m_iFileLength_Secs == 0)
 	{
-		/* update length estimate */
+		/* calculate length estimate once */
+		mad_timer_t estimated_length;
 		
-		mad_timer_set(&context->length, 0,
-					  1, (context->rate / context->frames) * (1000 / 8));
-		mad_timer_multiply(&context->length, context->size);
+		mad_timer_set(&estimated_length, 0,
+					  1, (context->rate / context->frames) / 8);
+		mad_timer_multiply(&estimated_length, context->size);
 		
-		if (mad_timer_compare(context->timer, context->length) > 0)
-		{
-			context->length = context->timer;
-			context->size   = context->m_pInStream->GetLength(context->m_pInStream);
-		}
-		
-		context->info.m_iFileLength_Secs =
-		
-			mad_timer_count(context->length, MAD_UNITS_SECONDS);
+		context->info.m_iFileLength_Secs = mad_timer_count(estimated_length, MAD_UNITS_SECONDS);
 	}
 	
 	*info = context->info;
@@ -775,13 +783,3 @@ int CPP_OMMP3_GetCurrentPos_secs(CPs_CoDecModule* pModule)
 	
 	return mad_timer_count(context->timer, MAD_UNITS_SECONDS);
 }
-
-/*
- * The following makes editing nicer under Emacs!
- *
- * Local Variables:
- * c-indentation-style: "msvc++"
- * c-basic-offset: 4
- * tab-width: 4
- * End:
- */
