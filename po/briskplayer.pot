@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: BriskPlayer 3.0.0\n"
-"Report-Msgid-Bugs-To: zach@zachbacon.com\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
 "POT-Creation-Date: 2025-11-03 12:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
@@ -37,23 +37,23 @@ msgstr ""
 
 #. Context: Menu items
 msgctxt "menu"
-msgid "&Open...\tL"
+msgid "Open File..."
 msgstr ""
 
 msgctxt "menu"
-msgid "Open &URL..."
+msgid "Open URL..."
 msgstr ""
 
 msgctxt "menu"
-msgid "&Add...\tA"
+msgid "Add Files..."
 msgstr ""
 
 msgctxt "menu"
-msgid "Playlist &Editor\tP"
+msgid "Playlist Editor"
 msgstr ""
 
 msgctxt "menu"
-msgid "&Skin"
+msgid "Skin"
 msgstr ""
 
 msgctxt "menu"
@@ -61,7 +61,7 @@ msgid "Default"
 msgstr ""
 
 msgctxt "menu"
-msgid "&Language"
+msgid "Language"
 msgstr ""
 
 msgctxt "menu"
@@ -73,39 +73,39 @@ msgid "Deutsch"
 msgstr ""
 
 msgctxt "menu"
-msgid "Play &Control"
+msgid "Playback"
 msgstr ""
 
 msgctxt "menu"
-msgid "&Play\tX"
+msgid "Play"
 msgstr ""
 
 msgctxt "menu"
-msgid "&Stop\tV"
+msgid "Stop"
 msgstr ""
 
 msgctxt "menu"
-msgid "Pa&use\tC"
+msgid "Pause"
 msgstr ""
 
 msgctxt "menu"
-msgid "&Next\tB"
+msgid "Next"
 msgstr ""
 
 msgctxt "menu"
-msgid "Pre&vious\tZ"
+msgid "Previous"
 msgstr ""
 
 msgctxt "menu"
-msgid "O&ptions"
+msgid "Options..."
 msgstr ""
 
 msgctxt "menu"
-msgid "A&bout...\tF1"
+msgid "About"
 msgstr ""
 
 msgctxt "menu"
-msgid "E&xit...\tESC"
+msgid "Exit"
 msgstr ""
 
 #. Context: Dialog titles

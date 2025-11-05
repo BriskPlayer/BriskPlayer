@@ -11,10 +11,11 @@ gettext_domain = 'briskplayer'
 # Generate POT file and handle PO files
 i18n.gettext(gettext_domain,
     preset: 'glib',
-    data_dirs: ['../res'],
     args: [
         '--keyword=_',
         '--keyword=N_',
+        '--keyword=T',
+        '--keyword=TW',
         '--keyword=C_:1c,2', 
         '--keyword=NC_:1c,2',
         '--from-code=UTF-8',
@@ -23,5 +24,6 @@ i18n.gettext(gettext_domain,
         '--package-version=' + meson.project_version(),
         '--msgid-bugs-address=zachbacon@outlook.com',
         '--copyright-holder=Zach Bacon',
+        '--no-location',
     ]
 )

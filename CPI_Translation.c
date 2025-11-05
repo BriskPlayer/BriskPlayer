@@ -44,6 +44,43 @@ BOOL Translation_Initialize(void)
     return CPG_Initialize(&config);
 }
 
+// Function to mark all translatable strings (for POT file generation)
+// This function is never called at runtime - it's only used by xgettext
+// to extract strings for translation
+static void __translation_strings_marker(void) 
+{
+    // Menu strings
+    _(STR_MENU_OPEN);
+    _(STR_MENU_OPEN_URL);
+    _(STR_MENU_ADD);
+    _(STR_MENU_PLAYLIST_EDITOR);
+    _(STR_MENU_OPTIONS);
+    _(STR_MENU_ABOUT);
+    _(STR_MENU_EXIT);
+    _(STR_MENU_PLAY);
+    _(STR_MENU_STOP);
+    _(STR_MENU_PAUSE);
+    _(STR_MENU_NEXT);
+    _(STR_MENU_PREVIOUS);
+    _(STR_MENU_SKIN_DEFAULT);
+    _(STR_MENU_SKIN);
+    _(STR_MENU_LANGUAGE);
+    _(STR_MENU_PLAY_CONTROL);
+    
+    // Dialog strings
+    _(STR_DLG_URL_TITLE);
+    _(STR_URL_DESCRIPTION);
+    _(STR_URL_LABEL);
+    _(STR_OPTIONS_OK);
+    _(STR_OPTIONS_CANCEL);
+    _(STR_DLG_OPTIONS_TITLE);
+    _(STR_OPTIONS_ALWAYS_ON_TOP);
+    _(STR_OPTIONS_EXIT_AFTER_PLAYING);
+    _(STR_OPTIONS_ROTATE_SYSTRAY);
+    _(STR_OPTIONS_SCROLL_TITLE);
+    _(STR_OPTIONS_FILE_ONCE_PLAYLIST);
+}
+
 // Set language
 void Translation_SetLanguage(const char* languageCode)
 {
