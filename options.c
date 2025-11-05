@@ -25,9 +25,6 @@
 #include "CPI_Translation.h"
 #include "CPI_Gettext.h"
 
-// Forward declaration for window snapping functionality (defined in main.c)
-extern void SnapWindow(HWND hWnd, RECT* pRect);
-
 // Helper function to translate static text controls that have ID -1
 static void TranslateStaticControls(HWND hwndDlg)
 {
@@ -121,13 +118,6 @@ url_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					EndDialog(hwndDlg, TRUE);
 					break;
 			}
-			
-		case WM_MOVING:
-		{
-			RECT* pRect = (RECT*)lParam;
-			SnapWindow(hwndDlg, pRect);
-			return TRUE;
-		}
 	}
 	
 	return FALSE;
@@ -273,7 +263,8 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			
 			SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_ADDSTRING, 0, (LPARAM)T(STR_VOLUME_SYSTEM_WAVE));
 			
-			SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_ADDSTRING, 0, (LPARAM)T(STR_VOLUME_INTERNAL));			if (globals.m_enMixerMode == mmMasterVolume)
+			SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_ADDSTRING, 0, (LPARAM)T(STR_VOLUME_INTERNAL));
+			if (globals.m_enMixerMode == mmMasterVolume)
 				SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_SETCURSEL, 0, 0);
 			else if (globals.m_enMixerMode == mmWaveVolume)
 				SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_SETCURSEL, 1, 0);
@@ -286,14 +277,6 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			
 			return TRUE;
 		}
-		
-		case WM_MOVING:
-		{
-			RECT* pRect = (RECT*)lParam;
-			SnapWindow(hwndDlg, pRect);
-			return TRUE;
-		}
-		
 
 		case WM_COMMAND:
 		

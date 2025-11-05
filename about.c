@@ -20,9 +20,6 @@
 #include "stdafx.h"
 #include "globals.h"
 
-// Forward declaration for window snapping functionality (defined in main.c)
-extern void SnapWindow(HWND hWnd, RECT* pRect);
-
 HWND about_create(HWND hWnd)
 {
 	HANDLE  hinst;
@@ -137,13 +134,6 @@ INT_PTR CALLBACK about_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 			}
 			break;
 		} // end WM_NOTIFY
-		
-		case WM_MOVING:
-		{
-			RECT* pRect = (RECT*)lParam;
-			SnapWindow(hwndDlg, pRect);
-			return TRUE;
-		} // end WM_MOVING
 	}
 
 	return FALSE;
