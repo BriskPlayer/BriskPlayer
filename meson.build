@@ -66,13 +66,13 @@ if not flacdep.found()
     flacdep = dependency('flac', static : true, method : 'cmake', required : true)
 endif
 
-# FAAD2 for AAC decoding
-faad2dep = dependency('faad2', static : true, method : 'pkg-config', required : false)
-if not faad2dep.found()
-    faad2dep = dependency('faad2', static : true, method : 'cmake', required : false)
+# fdk-aac for AAC decoding
+fdkaacDep = dependency('fdk-aac', static : true, method : 'pkg-config', required : false)
+if not fdkaacDep.found()
+    fdkaacDep = dependency('fdk-aac', static : true, method : 'cmake', required : false)
 endif
-if not faad2dep.found()
-    faad2dep = dependency('FAAD2', static : true, method : 'cmake', required : false)
+if not fdkaacDep.found()
+    fdkaacDep = dependency('FDK-AAC', static : true, method : 'cmake', required : false)
 endif
 
 zlibdep = dependency('zlib', static : true, method : 'pkg-config', required : false)
@@ -271,7 +271,7 @@ else
     endif
 endif
 
-deps = [zlibdep, oggdep, vorbisdep, vorbisfiledep, maddep, flacdep, taglibdep, winmm, comctl32, wininet, dsound, faudiodep, mfplat, propsys, mfuuid, mfreadwrite, faad2dep, libstdcpp]
+deps = [zlibdep, oggdep, vorbisdep, vorbisfiledep, maddep, flacdep, taglibdep, winmm, comctl32, wininet, dsound, faudiodep, mfplat, propsys, mfuuid, mfreadwrite, fdkaacDep, libstdcpp]
 
 # Add gettext dependency if available
 if nls_enabled

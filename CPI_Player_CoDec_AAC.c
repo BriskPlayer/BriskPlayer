@@ -24,11 +24,11 @@
 #include "CPI_Stream.h"
 #include "CPI_Player_CoDec.h"
 
-#include <neaacdec.h>
+#include <fdk-aac/aacdecoder_lib.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// This is the AAC CoDec module using FAAD2
+// This is the AAC CoDec module using fdk-aac
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -38,11 +38,11 @@ typedef struct __CPs_CoDec_AAC
 	
 	CPs_FileInfo m_FileInfo;
 	
-	// FAAD2 decoder handle
-	NeAACDecHandle decoder;
+	// fdk-aac decoder handle
+	HANDLE_AACDECODER decoder;
 	
 	// Audio format info
-	NeAACDecFrameInfo frame_info;
+	CStreamInfo* stream_info;
 	
 	// File buffer for reading
 	unsigned char* input_buffer;
@@ -51,7 +51,7 @@ typedef struct __CPs_CoDec_AAC
 	unsigned long input_buffer_fill;
 	
 	// PCM output buffer
-	void* output_buffer;
+	INT_PCM* output_buffer;
 	unsigned long output_buffer_size;
 	unsigned long output_buffer_pos;
 	unsigned long output_buffer_fill;
@@ -118,11 +118,10 @@ void CPP_OMAAC_Uninitialise(CPs_CoDecModule* pModule)
 BOOL CPP_OMAAC_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD dwCookie, HWND hWndOwner)
 {
 	CPs_CoDec_AAC* pContext;
-	NeAACDecConfigurationPtr config;
-	unsigned long sample_rate;
-	unsigned char channels;
-	long bytes_consumed;
+	AAC_DECODER_ERROR error;
 	size_t bytes_read;
+	UINT valid_bytes;
+	UINT buffer_sizes[1];
 	
 	(void)dwCookie;
 	(void)hWndOwner;
@@ -137,8 +136,8 @@ BOOL CPP_OMAAC_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD 
 	if (!pContext->m_pInStream)
 		return FALSE;
 		
-	// Initialize FAAD2 decoder
-	pContext->decoder = NeAACDecOpen();
+	// Initialize fdk-aac decoder
+	pContext->decoder = aacDecoder_Open(TT_MP4_RAW, 1);
 	
 	if (!pContext->decoder)
 	{
@@ -147,19 +146,15 @@ BOOL CPP_OMAAC_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD 
 		return FALSE;
 	}
 	
-	// Configure decoder
-	config = NeAACDecGetCurrentConfiguration(pContext->decoder);
-	config->outputFormat = FAAD_FMT_16BIT;
-	config->defSampleRate = 44100;
-	config->defObjectType = LC;
-	NeAACDecSetConfiguration(pContext->decoder, config);
+	// Configure decoder - fdk-aac outputs interleaved PCM by default
+	// No specific configuration needed for PCM output format
 	
 	// Allocate input buffer
 	pContext->input_buffer_size = AAC_INPUT_BUFFER_SIZE;
 	pContext->input_buffer = (unsigned char*)malloc(pContext->input_buffer_size);
 	if (!pContext->input_buffer)
 	{
-		NeAACDecClose(pContext->decoder);
+		aacDecoder_Close(pContext->decoder);
 		pContext->m_pInStream->Uninitialise(pContext->m_pInStream);
 		pContext->m_pInStream = NULL;
 		return FALSE;
@@ -173,37 +168,63 @@ BOOL CPP_OMAAC_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD 
 	pContext->input_buffer_fill = bytes_read;
 	pContext->input_buffer_pos = 0;
 	
-	// Initialize decoder with first frame
-	bytes_consumed = NeAACDecInit(pContext->decoder, 
-								  pContext->input_buffer, 
-								  pContext->input_buffer_fill,
-								  &sample_rate, 
-								  &channels);
+	// Fill decoder with initial data
+	valid_bytes = (UINT)pContext->input_buffer_fill;
+	buffer_sizes[0] = (UINT)pContext->input_buffer_fill;
+	error = aacDecoder_Fill(pContext->decoder, 
+							&pContext->input_buffer, 
+							buffer_sizes,
+							&valid_bytes);
 	
-	if (bytes_consumed < 0)
+	if (error != AAC_DEC_OK)
 	{
 		free(pContext->input_buffer);
-		NeAACDecClose(pContext->decoder);
+		aacDecoder_Close(pContext->decoder);
 		pContext->m_pInStream->Uninitialise(pContext->m_pInStream);
 		pContext->m_pInStream = NULL;
 		return FALSE;
 	}
 	
-	// Update buffer position
-	pContext->input_buffer_pos = bytes_consumed;
+	// Try to decode first frame to get stream info
+	error = aacDecoder_DecodeFrame(pContext->decoder, NULL, 0, 0);
+	if (error == AAC_DEC_NOT_ENOUGH_BITS)
+	{
+		// Need more data - this is normal for the first frame
+		error = AAC_DEC_OK;
+	}
+	
+	if (error != AAC_DEC_OK)
+	{
+		free(pContext->input_buffer);
+		aacDecoder_Close(pContext->decoder);
+		pContext->m_pInStream->Uninitialise(pContext->m_pInStream);
+		pContext->m_pInStream = NULL;
+		return FALSE;
+	}
+	
+	// Get stream info
+	pContext->stream_info = aacDecoder_GetStreamInfo(pContext->decoder);
+	if (!pContext->stream_info || pContext->stream_info->sampleRate == 0)
+	{
+		free(pContext->input_buffer);
+		aacDecoder_Close(pContext->decoder);
+		pContext->m_pInStream->Uninitialise(pContext->m_pInStream);
+		pContext->m_pInStream = NULL;
+		return FALSE;
+	}
 	
 	// Store stream info
-	pContext->sample_rate = sample_rate;
-	pContext->channels = channels;
+	pContext->sample_rate = pContext->stream_info->sampleRate;
+	pContext->channels = pContext->stream_info->numChannels;
 	pContext->decoder_initialized = TRUE;
 	
 	// Allocate output buffer
 	pContext->output_buffer_size = AAC_OUTPUT_BUFFER_SIZE;
-	pContext->output_buffer = malloc(pContext->output_buffer_size);
+	pContext->output_buffer = (INT_PCM*)malloc(pContext->output_buffer_size);
 	if (!pContext->output_buffer)
 	{
 		free(pContext->input_buffer);
-		NeAACDecClose(pContext->decoder);
+		aacDecoder_Close(pContext->decoder);
 		pContext->m_pInStream->Uninitialise(pContext->m_pInStream);
 		pContext->m_pInStream = NULL;
 		return FALSE;
@@ -213,8 +234,8 @@ BOOL CPP_OMAAC_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD 
 	pContext->output_buffer_pos = 0;
 	
 	// Set up file info
-	pContext->m_FileInfo.m_bStereo = (channels == 2);
-	pContext->m_FileInfo.m_iFreq_Hz = sample_rate;
+	pContext->m_FileInfo.m_bStereo = (pContext->channels == 2);
+	pContext->m_FileInfo.m_iFreq_Hz = pContext->sample_rate;
 	pContext->m_FileInfo.m_b16bit = TRUE;
 	pContext->m_FileInfo.m_iFileLength_Secs = 0; // Unknown for streams
 	pContext->m_FileInfo.m_iBitRate_Kbs = 0; // Will be calculated during playback
@@ -244,7 +265,7 @@ void CPP_OMAAC_CloseFile(CPs_CoDecModule* pModule)
 		
 	if (pContext->decoder)
 	{
-		NeAACDecClose(pContext->decoder);
+		aacDecoder_Close(pContext->decoder);
 		pContext->decoder = NULL;
 	}
 	
@@ -268,6 +289,7 @@ void CPP_OMAAC_CloseFile(CPs_CoDecModule* pModule)
 	
 	pContext->decoder_initialized = FALSE;
 	pContext->eof_reached = FALSE;
+	pContext->stream_info = NULL;
 }
 
 //
@@ -306,6 +328,12 @@ BOOL CPP_OMAAC_GetPCMBlock(CPs_CoDecModule* pModule, void* pBlock, DWORD* pdwBlo
 	DWORD dwBytesRequired;
 	unsigned char* pOutputPtr;
 	DWORD dwBytesAvailable;
+	AAC_DECODER_ERROR error;
+	size_t bytes_read;
+	DWORD remaining_input;
+	UINT valid_bytes;
+	unsigned char* buffer_ptr;
+	UINT buffer_sizes[1];
 	
 	CP_CHECKOBJECT(pModule);
 	pContext = (CPs_CoDec_AAC*)pModule->m_pModuleCookie;
@@ -353,9 +381,6 @@ BOOL CPP_OMAAC_GetPCMBlock(CPs_CoDecModule* pModule, void* pBlock, DWORD* pdwBlo
 		else
 		{
 			// Need to decode more data
-			void* decode_result;
-			size_t bytes_read;
-			DWORD remaining_input;
 			
 			// Ensure we have enough input data
 			remaining_input = pContext->input_buffer_fill - pContext->input_buffer_pos;
@@ -387,34 +412,53 @@ BOOL CPP_OMAAC_GetPCMBlock(CPs_CoDecModule* pModule, void* pBlock, DWORD* pdwBlo
 				pContext->input_buffer_fill += bytes_read;
 			}
 			
-			// Decode one frame
-			decode_result = NeAACDecDecode(pContext->decoder, 
-										   &pContext->frame_info,
-										   pContext->input_buffer + pContext->input_buffer_pos,
-										   pContext->input_buffer_fill - pContext->input_buffer_pos);
+			// Fill decoder with data
+			valid_bytes = (UINT)(pContext->input_buffer_fill - pContext->input_buffer_pos);
+			buffer_ptr = pContext->input_buffer + pContext->input_buffer_pos;
+			buffer_sizes[0] = valid_bytes;
 			
-			if (pContext->frame_info.error != 0)
+			error = aacDecoder_Fill(pContext->decoder, &buffer_ptr, buffer_sizes, &valid_bytes);
+			if (error != AAC_DEC_OK)
 			{
-				// Decode error - try to skip this frame
+				// Fill error - try to skip this data
 				pContext->input_buffer_pos += 1;
 				continue;
 			}
 			
-			if (decode_result && pContext->frame_info.samples > 0)
+			// Update input buffer position based on consumed data
+			pContext->input_buffer_pos += (buffer_sizes[0] - valid_bytes);
+			
+			// Decode one frame
+			error = aacDecoder_DecodeFrame(pContext->decoder, 
+										   pContext->output_buffer,
+										   pContext->output_buffer_size / sizeof(INT_PCM),
+										   0);
+			
+			if (error == AAC_DEC_NOT_ENOUGH_BITS)
+			{
+				// Need more input data - continue reading
+				continue;
+			}
+			else if (error != AAC_DEC_OK)
+			{
+				// Decode error - try to skip this data
+				pContext->input_buffer_pos += 1;
+				continue;
+			}
+			
+			// Get updated stream info
+			pContext->stream_info = aacDecoder_GetStreamInfo(pContext->decoder);
+			if (pContext->stream_info && pContext->stream_info->frameSize > 0)
 			{
 				// Successfully decoded a frame
-				DWORD frame_bytes = pContext->frame_info.samples * sizeof(short);
+				DWORD frame_bytes = pContext->stream_info->frameSize * pContext->stream_info->numChannels * sizeof(INT_PCM);
 				
-				// Store in our output buffer
-				memcpy(pContext->output_buffer, decode_result, frame_bytes);
+				// Store frame size in our output buffer tracking
 				pContext->output_buffer_fill = frame_bytes;
 				pContext->output_buffer_pos = 0;
 				
-				// Update input buffer position
-				pContext->input_buffer_pos += pContext->frame_info.bytesconsumed;
-				
 				// Update sample position
-				pContext->current_sample += pContext->frame_info.samples / pContext->channels;
+				pContext->current_sample += pContext->stream_info->frameSize;
 			}
 			else
 			{
