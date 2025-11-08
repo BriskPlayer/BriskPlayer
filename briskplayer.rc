@@ -55,7 +55,7 @@ IDI_ICON_PLS            ICON                    "res\\pls.ico"
 IDR_ABOUT1              TEXT                    "res\\about.txt"
 IDR_KEYBOARD            TEXT                    "res\\keyboard.txt"
 IDR_USAGE               TEXT                    "res\\usage.txt"
-IDR_CHANGES             TEXT                    "res\\changes.txt"
+IDR_CHANGES             TEXT                    "res\\gplv2.txt"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -129,9 +129,9 @@ BEGIN
     CONTROL         "Spin1",IDC_SPIN1,"msctls_updown32",UDS_ARROWKEYS,13,167,11,13
     CONTROL         "&About",IDC_ABOUTRADIO,"Button",BS_AUTORADIOBUTTON | BS_PUSHLIKE,31,7,70,15
     CONTROL         "&Keyboard Shortcuts",IDC_KEYBOARDRADIO,"Button",BS_AUTORADIOBUTTON | BS_PUSHLIKE,105,7,92,15
-    CONTROL         "C&hanges",IDC_CHANGELOG,"Button",BS_AUTORADIOBUTTON | BS_PUSHLIKE,201,7,70,15
+    CONTROL         "&License",IDC_CHANGELOG,"Button",BS_AUTORADIOBUTTON | BS_PUSHLIKE,201,7,70,15
     EDITTEXT        IDC_ABOUTTEXT,31,27,240,153,ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
-    PUSHBUTTON      "https://github.com/BriskPlayer/BriskPlayer",IDC_WEBSITE,31,189,155,15
+    PUSHBUTTON      "Github",IDC_WEBSITE,31,189,155,15
     DEFPUSHBUTTON   "C&lose",IDOK,201,189,70,15
 END
 
