@@ -55,7 +55,7 @@ IDI_ICON_PLS            ICON                    "res\\pls.ico"
 IDR_ABOUT1              TEXT                    "res\\about.txt"
 IDR_KEYBOARD            TEXT                    "res\\keyboard.txt"
 IDR_USAGE               TEXT                    "res\\usage.txt"
-IDR_CHANGES             TEXT                    "res\\gplv2.txt"
+IDR_CHANGES             TEXT                    "res\\license.txt"
 
 
 /////////////////////////////////////////////////////////////////////////////
