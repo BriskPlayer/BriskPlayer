@@ -4,6 +4,7 @@ project('briskplayer', ['c', 'cpp'],
     default_options : ['warning_level=3', 'c_std=c23', 'cpp_std=c++23'])
 
 cc = meson.get_compiler('c')
+cpp = meson.get_compiler('cpp')
 fs = import('fs')  # Import filesystem module for file existence checks
 i18n = import('i18n')  # Import i18n module for gettext support
 
@@ -68,9 +69,6 @@ endif
 
 # fdk-aac for AAC decoding
 fdkaacDep = dependency('fdk-aac', static : true, method : 'pkg-config', required : false)
-if not fdkaacDep.found()
-    fdkaacDep = dependency('fdk-aac', static : true, method : 'cmake', required : false)
-endif
 if not fdkaacDep.found()
     fdkaacDep = dependency('FDK-AAC', static : true, method : 'cmake', required : false)
 endif
@@ -145,14 +143,14 @@ else
     message('Gettext not available - NLS disabled')
 endif
 
-winmm = cc.find_library('winmm')
-comctl32 = cc.find_library('comctl32')
-wininet = cc.find_library('wininet')
-dsound = cc.find_library('dsound')
-mfplat = cc.find_library('mfplat')
-propsys = cc.find_library('propsys')
-mfuuid = cc.find_library('mfuuid')
-mfreadwrite = cc.find_library('mfreadwrite')
+winmm = cc.find_library('winmm', static : true)
+comctl32 = cc.find_library('comctl32', static : true)
+wininet = cc.find_library('wininet', static : true)
+dsound = cc.find_library('dsound', static : true)
+mfplat = cc.find_library('mfplat', static : true)
+propsys = cc.find_library('propsys', static : true)
+mfuuid = cc.find_library('mfuuid', static : true)
+mfreadwrite = cc.find_library('mfreadwrite', static : true)
 
 # Resource compiler detection - support both MinGW and Visual Studio
 compiler_id = cc.get_id()
@@ -247,27 +245,23 @@ brisksrc = files([
     'WindowsOS.c'
 ])
 
-# Determine dependencies based on availability and compiler
-cpp = meson.get_compiler('cpp')
-cc = meson.get_compiler('c')
-
 # Handle C++ standard library based on compiler
 libstdcpp = dependency('', required : false)
 cpp_stdlib_args = []
 if cc.get_id() == 'clang' and host_machine.system() == 'windows'
     # For clang, prefer libc++ if available
-    libstdcpp = cpp.find_library('c++', required : false)
+    libstdcpp = cpp.find_library('c++', required : false, static : true)
     if libstdcpp.found()
         cpp_stdlib_args = ['-stdlib=libc++']
     else
         # Fallback to libstdc++
-        libstdcpp = cpp.find_library('stdc++', required : true)
+        libstdcpp = cpp.find_library('stdc++', required : true, static : true)
     endif
 else
     # For GCC and other compilers, use libstdc++
-    libstdcpp = cpp.find_library('stdc++', required : false)
+    libstdcpp = cpp.find_library('stdc++', required : false, static : true)
     if not libstdcpp.found()
-        libstdcpp = cpp.find_library('c++', required : false)
+        libstdcpp = cpp.find_library('c++', required : false, static : true)
     endif
 endif
 
@@ -280,19 +274,35 @@ endif
 
 # Configure static linking for different compilers
 static_link_args = []
+static_compile_args = []
 if cc.get_id() == 'gcc' and host_machine.system() == 'windows'
-    # Use full static linking to avoid symbol conflicts
-    static_link_args = ['-static']
+    # Use full static linking including libgcc and libstdc++
+    # Explicitly link against static libgcc
+    static_link_args = [
+        '-static', 
+        '-static-libgcc', 
+        '-static-libstdc++',
+        '-Wl,--as-needed'
+    ]
+    static_compile_args = []
+    
+    # Add global C and C++ args for static linking
+    add_global_arguments('-static-libgcc', language : 'c')
+    add_global_link_arguments('-static-libgcc', language : 'c')
+    add_global_arguments('-static-libstdc++', language : 'cpp')
+    add_global_link_arguments('-static-libstdc++', language : 'cpp')
+    
 elif cc.get_id() == 'clang' and host_machine.system() == 'windows'
     # For clang, use static linking with libc++
     static_link_args = ['-static-libgcc', '-static'] + cpp_stdlib_args
+    static_compile_args = ['-static-libgcc']
 endif
 
 briskplayer_exe = executable('briskplayer', brisksrc, briskres, 
     dependencies : deps,
     link_args : static_link_args,
-    c_args : c23_args + c23_feature_defines,
-    cpp_args : cpp_stdlib_args,
+    c_args : c23_args + c23_feature_defines + static_compile_args,
+    cpp_args : cpp_stdlib_args + static_compile_args,
     win_subsystem : 'windows')
 
 # Process po subdirectory for translations

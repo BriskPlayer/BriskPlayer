@@ -423,7 +423,9 @@ BOOL CPG_SetWindowsLocale(const char* languageCode)
              (strcmp(languageCode, "fr") == 0) ? "FR" : "XX");
     
     // Try to set thread locale
-    LCID lcid = LocaleNameToLCID(localeString, 0);
+    wchar_t wLocaleString[32];
+    MultiByteToWideChar(CP_UTF8, 0, localeString, -1, wLocaleString, sizeof(wLocaleString) / sizeof(wchar_t));
+    LCID lcid = LocaleNameToLCID(wLocaleString, 0);
     if (lcid != 0) {
         return SetThreadLocale(lcid);
     }

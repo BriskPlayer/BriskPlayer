@@ -21,6 +21,7 @@
 #include "stdafx.h"
 #include "globals.h"
 #include "CPI_Player_CoDec.h"
+#include "CPI_Player_CoDec_C23.h"
 #include "mad.h"
 #include "CPI_Stream.h"
 
@@ -782,4 +783,21 @@ int CPP_OMMP3_GetCurrentPos_secs(CPs_CoDecModule* pModule)
 	CP_CHECKOBJECT(context);
 	
 	return mad_timer_count(context->timer, MAD_UNITS_SECONDS);
+}
+
+/*
+ * NAME:  create_mpeg_codec()
+ * DESCRIPTION: Create a new MPEG codec module (C23 API)
+ */
+CodecModule* create_mpeg_codec(void)
+{
+	CPs_CoDecModule* pCoDec = (CPs_CoDecModule*)malloc(sizeof(CPs_CoDecModule));
+	if (!pCoDec)
+		return NULL;
+		
+	// Initialize the codec using the existing function
+	CP_InitialiseCodec_MPEG(pCoDec);
+	
+	// Cast to the new CodecModule type
+	return (CodecModule*)pCoDec;
 }
