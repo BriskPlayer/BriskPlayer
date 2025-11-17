@@ -59,18 +59,56 @@ endif
 
 maddep = dependency('mad', static : true, method : 'pkg-config', required : false)
 if not maddep.found()
-    maddep = dependency('mad', static : true, method : 'cmake', required : true)
+    maddep = dependency('mad', static : true, method : 'cmake', required : false)
 endif
 
 flacdep = dependency('flac', static : true, method : 'pkg-config', required : false)
 if not flacdep.found()
-    flacdep = dependency('flac', static : true, method : 'cmake', required : true)
+    flacdep = dependency('flac', static : true, method : 'cmake', required : false)
 endif
 
 # fdk-aac for AAC decoding
 fdkaacDep = dependency('fdk-aac', static : true, method : 'pkg-config', required : false)
 if not fdkaacDep.found()
     fdkaacDep = dependency('FDK-AAC', static : true, method : 'cmake', required : false)
+endif
+
+# FFmpeg libraries for universal audio decoding
+ffmpeg_libavcodec = dependency('libavcodec', static : true, method : 'pkg-config', required : false)
+if not ffmpeg_libavcodec.found()
+    ffmpeg_libavcodec = dependency('libavcodec', static : true, method : 'cmake', required : false)
+endif
+
+ffmpeg_libavformat = dependency('libavformat', static : true, method : 'pkg-config', required : false)
+if not ffmpeg_libavformat.found()
+    ffmpeg_libavformat = dependency('libavformat', static : true, method : 'cmake', required : false)
+endif
+
+ffmpeg_libavutil = dependency('libavutil', static : true, method : 'pkg-config', required : false)
+if not ffmpeg_libavutil.found()
+    ffmpeg_libavutil = dependency('libavutil', static : true, method : 'cmake', required : false)
+endif
+
+ffmpeg_libswresample = dependency('libswresample', static : true, method : 'pkg-config', required : false)
+if not ffmpeg_libswresample.found()
+    ffmpeg_libswresample = dependency('libswresample', static : true, method : 'cmake', required : false)
+endif
+
+# Check if FFmpeg is fully available
+ffmpeg_available = ffmpeg_libavcodec.found() and ffmpeg_libavformat.found() and ffmpeg_libavutil.found() and ffmpeg_libswresample.found()
+prefer_ffmpeg = get_option('prefer_ffmpeg')
+
+if ffmpeg_available
+    message('FFmpeg detected: libavcodec, libavformat, libavutil, libswresample')
+    if prefer_ffmpeg
+        message('FFmpeg preference enabled: will disable native codecs and use FFmpeg for all formats')
+    endif
+else
+    message('FFmpeg not fully available: will use native codec implementations')
+    message('  libavcodec: ' + (ffmpeg_libavcodec.found() ? 'found' : 'NOT FOUND'))
+    message('  libavformat: ' + (ffmpeg_libavformat.found() ? 'found' : 'NOT FOUND'))
+    message('  libavutil: ' + (ffmpeg_libavutil.found() ? 'found' : 'NOT FOUND'))
+    message('  libswresample: ' + (ffmpeg_libswresample.found() ? 'found' : 'NOT FOUND'))
 endif
 
 zlibdep = dependency('zlib', static : true, method : 'pkg-config', required : false)
@@ -94,6 +132,35 @@ faudiodep = dependency('FAudio', required : true, static : true, method : 'pkg-c
 if not faudiodep.found()
     faudiodep = dependency('FAudio', required : true, static : true, method : 'cmake')
 endif
+
+# Determine which native codecs to enable based on FFmpeg availability and user preferences
+flac_option = get_option('flac_codec')
+mpeg_option = get_option('mpeg_codec')
+ogg_option = get_option('ogg_codec')
+aac_option = get_option('aac_codec')
+
+# Logic: If FFmpeg is available AND prefer_ffmpeg is true, disable native codecs by default
+# Users can still force enable with -Dcodec=enabled
+if ffmpeg_available and prefer_ffmpeg
+    # FFmpeg is preferred - only enable native codecs if explicitly requested
+    flac_codec_enabled = flac_option.enabled()
+    mpeg_codec_enabled = mpeg_option.enabled()
+    ogg_codec_enabled = ogg_option.enabled()
+    aac_codec_enabled = aac_option.enabled()
+else
+    # No FFmpeg or not preferred - enable native codecs by default (auto or enabled)
+    flac_codec_enabled = not flac_option.disabled()
+    mpeg_codec_enabled = not mpeg_option.disabled()
+    ogg_codec_enabled = not ogg_option.disabled()
+    aac_codec_enabled = not aac_option.disabled()
+endif
+
+message('Codec configuration:')
+message('  Native FLAC codec: ' + (flac_codec_enabled ? 'enabled' : 'disabled'))
+message('  Native MPEG codec: ' + (mpeg_codec_enabled ? 'enabled' : 'disabled'))
+message('  Native OGG/Vorbis codec: ' + (ogg_codec_enabled ? 'enabled' : 'disabled'))
+message('  Native AAC codec: ' + (aac_codec_enabled ? 'enabled' : 'disabled'))
+message('  FFmpeg codec: ' + (ffmpeg_available ? 'enabled (will be compiled)' : 'disabled (libraries not found)'))
 
 # Internationalization setup with proper i18n module
 nls_option = get_option('nls')
@@ -209,11 +276,7 @@ brisksrc = files([
     'CPI_Keyboard.c',
     'CPI_Player.c',
     'CPI_Player_Callbacks.c',
-    'CPI_Player_CoDec_MPEG.c',
-    'CPI_Player_CoDec_OGG.c',
     'CPI_Player_CoDec_WAV.c',
-    'CPI_Player_CoDec_FLAC.c',
-    'CPI_Player_CoDec_AAC.c',
     'CPI_Player_CoDec_WinAmpPlugin.c',
     'CPI_Player_Engine.c',
     'CPI_Player_FileAssoc.c',
@@ -245,6 +308,28 @@ brisksrc = files([
     'WindowsOS.c'
 ])
 
+# Conditionally add codec source files based on configuration
+if mpeg_codec_enabled
+    brisksrc += files('CPI_Player_CoDec_MPEG.c')
+endif
+
+if ogg_codec_enabled
+    brisksrc += files('CPI_Player_CoDec_OGG.c')
+endif
+
+if flac_codec_enabled
+    brisksrc += files('CPI_Player_CoDec_FLAC.c')
+endif
+
+if aac_codec_enabled
+    brisksrc += files('CPI_Player_CoDec_AAC.c')
+endif
+
+# Always include FFmpeg codec if available
+if ffmpeg_available
+    brisksrc += files('CPI_Player_CoDec_FFmpeg.c')
+endif
+
 # Handle C++ standard library based on compiler
 libstdcpp = dependency('', required : false)
 cpp_stdlib_args = []
@@ -265,7 +350,28 @@ else
     endif
 endif
 
-deps = [zlibdep, oggdep, vorbisdep, vorbisfiledep, maddep, flacdep, taglibdep, winmm, comctl32, wininet, dsound, faudiodep, mfplat, propsys, mfuuid, mfreadwrite, fdkaacDep, libstdcpp]
+deps = [zlibdep, taglibdep, winmm, comctl32, wininet, dsound, faudiodep, mfplat, propsys, mfuuid, mfreadwrite, libstdcpp]
+
+# Add codec-specific dependencies based on enabled codecs
+if ogg_codec_enabled
+    deps += [oggdep, vorbisdep, vorbisfiledep]
+endif
+
+if mpeg_codec_enabled
+    deps += maddep
+endif
+
+if flac_codec_enabled
+    deps += flacdep
+endif
+
+if aac_codec_enabled
+    deps += fdkaacDep
+endif
+
+if ffmpeg_available
+    deps += [ffmpeg_libavcodec, ffmpeg_libavformat, ffmpeg_libavutil, ffmpeg_libswresample]
+endif
 
 # Add gettext dependency if available
 if nls_enabled
@@ -275,6 +381,28 @@ endif
 # Configure static linking for different compilers
 static_link_args = []
 static_compile_args = []
+
+# Add codec-specific preprocessor defines
+if flac_codec_enabled
+    static_compile_args += ['-DHAVE_FLAC_CODEC=1']
+endif
+
+if mpeg_codec_enabled
+    static_compile_args += ['-DHAVE_MPEG_CODEC=1']
+endif
+
+if ogg_codec_enabled
+    static_compile_args += ['-DHAVE_OGG_CODEC=1']
+endif
+
+if aac_codec_enabled
+    static_compile_args += ['-DHAVE_AAC_CODEC=1']
+endif
+
+if ffmpeg_available
+    static_compile_args += ['-DHAVE_FFMPEG_CODEC=1']
+endif
+
 if cc.get_id() == 'gcc' and host_machine.system() == 'windows'
     # Use full static linking including libgcc and libstdc++
     # Explicitly link against static libgcc
@@ -284,7 +412,7 @@ if cc.get_id() == 'gcc' and host_machine.system() == 'windows'
         '-static-libstdc++',
         '-Wl,--as-needed'
     ]
-    static_compile_args = []
+    # Don't clear static_compile_args here - we need the codec defines!
     
     # Add global C and C++ args for static linking
     add_global_arguments('-static-libgcc', language : 'c')

@@ -395,15 +395,21 @@ void CPL_AddSingleFile(CP_HPLAYLIST hPlaylist, const char* pcPath, const char* p
 		
 		if (extension == NULL)
 			return;
+		
+		printf("CPL_AddItem: Checking file extension '%s' against codecs\n", extension);
 			
 		for (i = 0; i <= CP_CODEC_last; i++)
 		{
 			if (CPFA_IsAssociated(&pContext->m_CoDecs[i], extension, &tempcookie))
 			{
+				printf("CPL_AddItem: Extension '%s' is supported by codec %d\n", extension, i);
 				valid = TRUE;
 				break;
 			}
 		}
+		
+		if (!valid)
+			printf("CPL_AddItem: Extension '%s' is not supported by any codec\n", extension);
 		
 		// we could get here and still be valid
 		// it might get here if a stream is of the form http://ipaddr:port with no

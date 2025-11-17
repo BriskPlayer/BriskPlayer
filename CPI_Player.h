@@ -29,11 +29,12 @@ typedef enum CP_CodecType : unsigned char {
 	CP_CODEC_OGG,
 	CP_CODEC_WAV,
 	CP_CODEC_MPEG,
-	CP_CODEC_FLAC,
 	CP_CODEC_AAC,
+	CP_CODEC_FLAC,
+	CP_CODEC_FFMPEG,
 	
 	CP_CODEC_first = CP_CODEC_WINAMPPLUGIN,
-	CP_CODEC_last = CP_CODEC_AAC,
+	CP_CODEC_last = CP_CODEC_FFMPEG,
 	CP_CODEC_default = CP_CODEC_WINAMPPLUGIN
 } CP_CodecType;
 static_assert(CP_CODEC_last < 16, "Codec types should fit in 4 bits for efficient storage");

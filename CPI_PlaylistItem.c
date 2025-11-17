@@ -28,17 +28,23 @@
 #include "CPI_PlaylistItem_Internal.h"
 #include "CPI_TagLib.h"
 #include "CPString.h"
+#ifdef HAVE_OGG_CODEC
 #include "ogg/ogg.h"
 #include "vorbis/codec.h"
 #include "vorbis/vorbisfile.h"
+#endif
 #include "CP_RIFFStructs.h"
 
+#ifdef HAVE_OGG_CODEC
 void CPLI_OGG_SkipOverTab(FILE* pFile);
+#endif
 void CPLI_SetPath(CPs_PlaylistItem* pItem, const char* pcNewPath);
 void CPLI_ReadTag_TagLib(CPs_PlaylistItem* pItem);
 void CPLI_WriteTag_TagLib(CPs_PlaylistItem* pItem);
+#ifdef HAVE_OGG_CODEC
 void CPLI_ReadTag_OGG(CPs_PlaylistItem* pItem);
 void CPLI_CalculateLength_OGG(CPs_PlaylistItem* pItem);
+#endif
 void CPLI_CalculateLength_MP3(CPs_PlaylistItem* pItem);
 void CPLI_CalculateLength_WAV(CPs_PlaylistItem* pItem);
 ////////////////////////////////////////////////////////////////////////////////
@@ -360,12 +366,14 @@ void CPLI_ReadTag(CP_HPLAYLISTITEM hItem)
 	// Use TagLib to read metadata
 	CPLI_ReadTag_TagLib(pItem);
 	
+#ifdef HAVE_OGG_CODEC
 	// Override information with any OGG tags that may be there (if native OGG tags are preferred)
 	if (options.prefer_native_ogg_tags
 			&& stricmp(".ogg", CPLI_GetExtension(hItem)) == 0)
 	{
 		CPLI_ReadTag_OGG(pItem);
 	}
+#endif
 	
 	// Update interface
 	CPL_cb_OnItemUpdated(hItem);
@@ -715,9 +723,12 @@ void CPLI_CalculateLength(CP_HPLAYLISTITEM hItem)
 	
 	pcExtension = CPLI_GetExtension(hItem);
 	
+#ifdef HAVE_OGG_CODEC
 	if (stricmp(pcExtension, ".ogg") == 0)
 		CPLI_CalculateLength_OGG(pItem);
-	else if (stricmp(pcExtension, ".mp3") == 0
+	else
+#endif
+	if (stricmp(pcExtension, ".mp3") == 0
 			 || stricmp(pcExtension, ".mp2") == 0)
 	{
 		CPLI_CalculateLength_MP3(pItem);
@@ -731,6 +742,7 @@ void CPLI_CalculateLength(CP_HPLAYLISTITEM hItem)
 	CPL_cb_OnItemUpdated(hItem);
 }
 
+#ifdef HAVE_OGG_CODEC
 //
 //
 //
@@ -759,6 +771,7 @@ void CPLI_CalculateLength_OGG(CPs_PlaylistItem* pItem)
 	ov_clear(&vorbisfileinfo);
 	fclose(hFile);
 }
+#endif
 
 //
 //
@@ -1261,6 +1274,7 @@ const char* CPLI_GetExtension(const CP_HPLAYLISTITEM hItem)
 	return pcLastDot;
 }
 
+#ifdef HAVE_OGG_CODEC
 //
 //
 //
@@ -1298,7 +1312,9 @@ void CPLI_OGG_DecodeString(char** ppcString, const char* pcNewValue)
 	
 	memcpy(*ppcString, pcNewValue, iStringLength + 1);
 }
+#endif // HAVE_OGG_CODEC (CPLI_OGG_SkipOverTab, CPLI_OGG_DecodeString)
 
+#ifdef HAVE_OGG_CODEC
 //
 //
 //
@@ -1407,6 +1423,7 @@ bottom_loop:
 	
 	fclose(hFile);
 }
+#endif // HAVE_OGG_CODEC
 
 //
 //

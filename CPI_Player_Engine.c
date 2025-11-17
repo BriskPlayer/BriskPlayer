@@ -172,12 +172,38 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 	CP_TRACE0("Cooler Engine Startup");
 		
 	// Initialise CoDecs
+#ifdef HAVE_MPEG_CODEC
 	CP_InitialiseCodec_MPEG(&playercontext.m_CoDecs[CP_CODEC_MPEG]);
+#else
+	// Initialize as empty codec when disabled
+	memset(&playercontext.m_CoDecs[CP_CODEC_MPEG], 0, sizeof(CPs_CoDecModule));
+#endif
 	CP_InitialiseCodec_WAV(&playercontext.m_CoDecs[CP_CODEC_WAV]);
+#ifdef HAVE_OGG_CODEC
 	CP_InitialiseCodec_OGG(&playercontext.m_CoDecs[CP_CODEC_OGG]);
-	CP_InitialiseCodec_FLAC(&playercontext.m_CoDecs[CP_CODEC_FLAC]);
+#else
+	// Initialize as empty codec when disabled
+	memset(&playercontext.m_CoDecs[CP_CODEC_OGG], 0, sizeof(CPs_CoDecModule));
+#endif
+#ifdef HAVE_AAC_CODEC
 	CP_InitialiseCodec_AAC(&playercontext.m_CoDecs[CP_CODEC_AAC]);
+#else
+	// Initialize as empty codec when disabled
+	memset(&playercontext.m_CoDecs[CP_CODEC_AAC], 0, sizeof(CPs_CoDecModule));
+#endif
+#ifdef HAVE_FLAC_CODEC
+	CP_InitialiseCodec_FLAC(&playercontext.m_CoDecs[CP_CODEC_FLAC]);
+#else
+	// Initialize as empty codec when disabled
+	memset(&playercontext.m_CoDecs[CP_CODEC_FLAC], 0, sizeof(CPs_CoDecModule));
+#endif
 	CP_InitialiseCodec_WinAmpPlugin(&playercontext.m_CoDecs[CP_CODEC_WINAMPPLUGIN]);
+#ifdef HAVE_FFMPEG_CODEC
+	CP_InitialiseCodec_FFmpeg(&playercontext.m_CoDecs[CP_CODEC_FFMPEG]);
+#else
+	// Initialize as empty codec when disabled
+	memset(&playercontext.m_CoDecs[CP_CODEC_FFMPEG], 0, sizeof(CPs_CoDecModule));
+#endif
 	
 	// Initialise output module
 	
@@ -681,6 +707,13 @@ CPs_CoDecModule* OpenCoDec(CPs_PlayerContext* pContext, const char* pcFilename)
 			{
 				printf("OpenCoDec: Trying codec %d for extension %s\n", iCoDecIDX, extension);
 				
+				// Check if codec has a valid OpenFile function (codec might be disabled)
+				if (pContext->m_CoDecs[iCoDecIDX].OpenFile == NULL)
+				{
+					printf("OpenCoDec: Codec %d is disabled, skipping\n", iCoDecIDX);
+					continue;
+				}
+				
 				bOpenSucceeded = pContext->m_CoDecs[iCoDecIDX].OpenFile(
 									 &pContext->m_CoDecs[iCoDecIDX],
 									 pcFilename,
@@ -711,13 +744,20 @@ CPs_CoDecModule* OpenCoDec(CPs_PlayerContext* pContext, const char* pcFilename)
 		
 		// For streaming URLs, try codecs in order of likelihood
 		// Most internet streams are MP3, then AAC, then FLAC, then OGG
-		int iFallbackOrder[] = { CP_CODEC_MPEG, CP_CODEC_AAC, CP_CODEC_FLAC, CP_CODEC_OGG, CP_CODEC_WINAMPPLUGIN };
+		int iFallbackOrder[] = { CP_CODEC_MPEG, CP_CODEC_AAC, CP_CODEC_FFMPEG, CP_CODEC_FLAC, CP_CODEC_OGG, CP_CODEC_WINAMPPLUGIN };
 		int iFallbackCount = sizeof(iFallbackOrder) / sizeof(iFallbackOrder[0]);
 		
 		for (int i = 0; i < iFallbackCount && !bOpenSucceeded; i++)
 		{
 			iCoDecIDX = iFallbackOrder[i];
 			printf("OpenCoDec: Trying fallback codec %d for streaming URL\n", iCoDecIDX);
+			
+			// Check if codec has a valid OpenFile function (codec might be disabled)
+			if (pContext->m_CoDecs[iCoDecIDX].OpenFile == NULL)
+			{
+				printf("OpenCoDec: Fallback codec %d is disabled, skipping\n", iCoDecIDX);
+				continue;
+			}
 			
 			bOpenSucceeded = pContext->m_CoDecs[iCoDecIDX].OpenFile(
 								 &pContext->m_CoDecs[iCoDecIDX],
@@ -749,7 +789,11 @@ void CleanupCoDecs(CPs_PlayerContext* pContext)
 	int iCoDecIDX = 0;
 	
 	for (iCoDecIDX = 0; iCoDecIDX <= CP_CODEC_last; iCoDecIDX++)
-		pContext->m_CoDecs[iCoDecIDX].Uninitialise(&pContext->m_CoDecs[iCoDecIDX]);
+	{
+		// Check if codec has a valid Uninitialise function (codec might be disabled)
+		if (pContext->m_CoDecs[iCoDecIDX].Uninitialise != NULL)
+			pContext->m_CoDecs[iCoDecIDX].Uninitialise(&pContext->m_CoDecs[iCoDecIDX]);
+	}
 }
 
 //

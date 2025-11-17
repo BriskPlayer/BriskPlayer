@@ -310,9 +310,19 @@ static inline bool process_audio_block(CodecHandle codec,
 ////////////////////////////////////////////////////////////////////////////////
 // Enhanced Codec Registration System
 
-// Forward declarations for codec factories  
+// Forward declarations for codec factories
+#ifdef HAVE_FLAC_CODEC
 CodecModule* create_flac_codec(void);
+#endif
+#ifdef HAVE_MPEG_CODEC
 CodecModule* create_mpeg_codec(void);
+#endif
+#ifdef HAVE_OGG_CODEC
+CodecModule* create_ogg_codec(void);
+#endif
+#ifdef HAVE_AAC_CODEC
+CodecModule* create_aac_codec(void);
+#endif
 
 // Codec registration structure
 typedef struct {
@@ -325,6 +335,7 @@ typedef struct {
 
 // Global codec registry
 static const CodecRegistration codec_registry[] = {
+#ifdef HAVE_FLAC_CODEC
     {
         CODEC_TYPE_FLAC,
         "FLAC Lossless Audio",
@@ -332,6 +343,8 @@ static const CodecRegistration codec_registry[] = {
         0x01,  // Seeking support
         create_flac_codec
     },
+#endif
+#ifdef HAVE_MPEG_CODEC
     {
         CODEC_TYPE_MPEG,
         "MPEG Audio Layer",
@@ -339,6 +352,25 @@ static const CodecRegistration codec_registry[] = {
         0x03,  // Seeking + VBR support
         create_mpeg_codec
     },
+#endif
+#ifdef HAVE_OGG_CODEC
+    {
+        CODEC_TYPE_OGG,
+        "Ogg Vorbis Audio",
+        {"ogg", "oga", NULL},
+        0x01,  // Seeking support
+        create_ogg_codec
+    },
+#endif
+#ifdef HAVE_AAC_CODEC
+    {
+        CODEC_TYPE_AAC,
+        "AAC Audio",
+        {"aac", "m4a", "mp4", NULL},
+        0x01,  // Seeking support
+        create_aac_codec
+    },
+#endif
     // Sentinel
     {CODEC_TYPE_UNKNOWN, NULL, {NULL}, 0, NULL}
 };
