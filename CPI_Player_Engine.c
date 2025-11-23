@@ -172,38 +172,17 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 	CP_TRACE0("Cooler Engine Startup");
 		
 	// Initialise CoDecs
-#ifdef HAVE_MPEG_CODEC
-	CP_InitialiseCodec_MPEG(&playercontext.m_CoDecs[CP_CODEC_MPEG]);
-#else
-	// Initialize as empty codec when disabled
+	// Native MPEG/OGG/AAC/FLAC codecs removed - using FFmpeg for all modern formats
+	// Initialize disabled codec slots as empty
 	memset(&playercontext.m_CoDecs[CP_CODEC_MPEG], 0, sizeof(CPs_CoDecModule));
-#endif
-	CP_InitialiseCodec_WAV(&playercontext.m_CoDecs[CP_CODEC_WAV]);
-#ifdef HAVE_OGG_CODEC
-	CP_InitialiseCodec_OGG(&playercontext.m_CoDecs[CP_CODEC_OGG]);
-#else
-	// Initialize as empty codec when disabled
 	memset(&playercontext.m_CoDecs[CP_CODEC_OGG], 0, sizeof(CPs_CoDecModule));
-#endif
-#ifdef HAVE_AAC_CODEC
-	CP_InitialiseCodec_AAC(&playercontext.m_CoDecs[CP_CODEC_AAC]);
-#else
-	// Initialize as empty codec when disabled
 	memset(&playercontext.m_CoDecs[CP_CODEC_AAC], 0, sizeof(CPs_CoDecModule));
-#endif
-#ifdef HAVE_FLAC_CODEC
-	CP_InitialiseCodec_FLAC(&playercontext.m_CoDecs[CP_CODEC_FLAC]);
-#else
-	// Initialize as empty codec when disabled
 	memset(&playercontext.m_CoDecs[CP_CODEC_FLAC], 0, sizeof(CPs_CoDecModule));
-#endif
+	
+	// Active codecs: WAV (basic PCM), WinAmp plugins, and FFmpeg (primary)
+	CP_InitialiseCodec_WAV(&playercontext.m_CoDecs[CP_CODEC_WAV]);
 	CP_InitialiseCodec_WinAmpPlugin(&playercontext.m_CoDecs[CP_CODEC_WINAMPPLUGIN]);
-#ifdef HAVE_FFMPEG_CODEC
 	CP_InitialiseCodec_FFmpeg(&playercontext.m_CoDecs[CP_CODEC_FFMPEG]);
-#else
-	// Initialize as empty codec when disabled
-	memset(&playercontext.m_CoDecs[CP_CODEC_FFMPEG], 0, sizeof(CPs_CoDecModule));
-#endif
 	
 	// Initialise output module
 	

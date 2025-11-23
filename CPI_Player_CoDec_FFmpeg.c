@@ -426,7 +426,7 @@ static BOOL ffmpeg_OpenFile(CP_HCODECMODULE hModule, const char* pcFilename,
     
     // Allocate PCM buffer
     context->buffer_size = FFMPEG_BUFFER_SIZE * context->channels;
-    context->pcm_buffer = (int16_t*)malloc(context->buffer_size * sizeof(int16_t));
+    context->pcm_buffer = CALLOC_TYPE(int16_t, context->buffer_size);
     if (!context->pcm_buffer) {
         av_frame_free(&context->frame);
         av_packet_free(&context->packet);
@@ -694,7 +694,7 @@ void CP_InitialiseCodec_FFmpeg(CPs_CoDecModule* codec) {
     if (!codec) return;
     
     // Allocate context
-    FFmpegContext* context = (FFmpegContext*)calloc(1, sizeof(FFmpegContext));
+    FFmpegContext* context = CALLOC_TYPE(FFmpegContext, 1);
     if (!context) return;
     
     // Initialize mutex

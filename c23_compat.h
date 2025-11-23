@@ -77,6 +77,20 @@
 // Safe string operations
 #define SAFE_FREE(ptr) do { if(ptr) { free(ptr); (ptr) = NULL; } } while(0)
 
+// Windows INI file helper macro for writing integer values
+// Creates temporary buffer and converts integer to string in one expression
+#define INT_TO_INI_STRING(value) ({ \
+    static char _ini_buf[32]; \
+    snprintf(_ini_buf, sizeof(_ini_buf), "%d", (int)(value)); \
+    _ini_buf; \
+})
+
+// Simpler version using compound literal (C99+ compatible)
+#define WRITE_INT_TO_INI(section, key, value, filepath) \
+    WritePrivateProfileString((section), (key), \
+        (char[33]){snprintf((char[33]){}, 33, "%d", (int)(value))}, \
+        (filepath))
+
 // C23 decimal floating-point support for improved precision
 // For audio calculations where precision matters
 #if defined(__STDC_IEC_559_DFP__)

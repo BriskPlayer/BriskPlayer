@@ -287,7 +287,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 				{
 					OPENFILENAME fn;
 					char    filefilter[512];
-					sprintf(filefilter, "%s\\0*.ini\\0%s\\0*.*\\0", T(STR_FILTER_SKIN_FILES), T(STR_FILTER_ALL_FILES));
+					snprintf(filefilter, sizeof(filefilter), "%s\\0*.ini\\0%s\\0*.*\\0", T(STR_FILTER_SKIN_FILES), T(STR_FILTER_ALL_FILES));
 					BOOL    returnval;
 					char    initialfilename[MAX_PATH * 100] = "";
 					char    pathbuffie[MAX_PATH];
@@ -525,7 +525,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					CPI_Player__AssociateFileExtensions(globals.m_hPlayer);
 					
 					GetModuleFileName(NULL, pathbuf, MAX_PATH);
-					sprintf(stringval, "%s,%1d", pathbuf, 1);
+					snprintf(stringval, sizeof(stringval), "%s,%1d", pathbuf, 1);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT, CIC_COOLPLAYER_FILETYPE,
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
@@ -554,12 +554,12 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   &lpdwDisposition);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_FILETYPE "\\Shell\\Open\\command",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					sprintf(stringval, "\"%s\" \"%%1\"", pathbuf);
-					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
+							   CIC_COOLPLAYER_FILETYPE "\\Shell\\Open\\command",
+							   0, NULL, REG_OPTION_NON_VOLATILE,
+							   KEY_ALL_ACCESS, NULL, &result,
+							   &lpdwDisposition);
+				snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\"", pathbuf);
+				RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
 								  strlen(stringval) + 1);
 					RegCloseKey(result);
 					

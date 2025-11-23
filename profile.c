@@ -235,7 +235,7 @@ void    options_read(void)
 	options.equalizer =
 		GetPrivateProfileInt("Equalizer", "Active", 0, pathbuf);
 	    
-	for (teller = 1; teller <= 8; teller++)
+	for (teller = 1; teller < ARRAY_SIZE(options.eq_settings); teller++)
 	{
 		char    keyname[100];
 		sprintf(keyname, "Eq%d", teller);
@@ -497,8 +497,8 @@ void    options_write(void)
 	WritePrivateProfileString("Equalizer", "Active",
 							  intbuf,
 							  pathbuf);
-	                          
-	for (teller = 1; teller <= 8; teller++)
+	
+	for (teller = 1; teller < ARRAY_SIZE(options.eq_settings); teller++)
 	{
 		char    keyname[100];
 		sprintf(keyname, "Eq%d", teller);

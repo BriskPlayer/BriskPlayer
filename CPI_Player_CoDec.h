@@ -102,21 +102,8 @@ void CPFA_AssociateWithEXE(CPs_CoDecModule* pCoDec);
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoDec initialisers
-#ifdef HAVE_MPEG_CODEC
-void CP_InitialiseCodec_MPEG(CPs_CoDecModule* pCoDec);
-#endif
+// Native MPEG/OGG/AAC/FLAC codecs have been removed - use FFmpeg instead
 void CP_InitialiseCodec_WAV(CPs_CoDecModule* pCoDec);
-#ifdef HAVE_OGG_CODEC
-void CP_InitialiseCodec_OGG(CPs_CoDecModule* pCoDec);
-#endif
-#ifdef HAVE_AAC_CODEC
-void CP_InitialiseCodec_AAC(CPs_CoDecModule* pCoDec);
-#endif
-#ifdef HAVE_FLAC_CODEC
-void CP_InitialiseCodec_FLAC(CPs_CoDecModule* pCoDec);
-#endif
 void CP_InitialiseCodec_WinAmpPlugin(CPs_CoDecModule* pCoDec);
-#ifdef HAVE_FFMPEG_CODEC
 void CP_InitialiseCodec_FFmpeg(CPs_CoDecModule* pCoDec);
-#endif
 ////////////////////////////////////////////////////////////////////////////////

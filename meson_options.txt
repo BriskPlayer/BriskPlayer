@@ -20,26 +20,6 @@ option('debug_output',
        value : false,
        description : 'Enable debug output and tracing')
 
-option('flac_codec', 
-       type : 'feature', 
-       value : 'auto',
-       description : 'Enable native FLAC decoder (auto: disable if FFmpeg available)')
-
-option('mpeg_codec', 
-       type : 'feature', 
-       value : 'auto',
-       description : 'Enable native MPEG decoder (auto: disable if FFmpeg available)')
-
-option('ogg_codec', 
-       type : 'feature', 
-       value : 'auto',
-       description : 'Enable native OGG/Vorbis decoder (auto: disable if FFmpeg available)')
-
-option('aac_codec', 
-       type : 'feature', 
-       value : 'auto',
-       description : 'Enable native AAC decoder (auto: disable if FFmpeg available)')
-
 option('prefer_ffmpeg', 
        type : 'boolean', 
        value : true,

@@ -309,27 +309,27 @@ static_assert(mmInternal <= 255, "MixerMode should fit in unsigned char");
 BOOL    cmdline_parse_argument(char *token);
 BOOL    main_draw_vu_all(HWND hWnd, WPARAM wParam, LPARAM lParam,
 						 BOOL rememberlastval);
-BOOL    path_is_directory(char *filename);
-BOOL    path_is_relative(const char *path);
-BOOL    path_remove_filespec(LPTSTR path);
+NODISCARD BOOL    path_is_directory(char *filename);
+NODISCARD BOOL    path_is_relative(const char *path);
+NODISCARD BOOL    path_remove_filespec(LPTSTR path);
 BOOL    playlist_skin_draw_side(HDC hdc, HDC winmemdc, BITMAP * bm,
-								RECT * winrect, int type);
-BOOL    playlist_skin_get_ini_value(char *key, char *position,
-									SIZE * rect);
+						RECT * winrect, int type);
+NODISCARD BOOL    playlist_skin_get_ini_value(char *key, char *position,
+								SIZE * rect);
 BOOL    playlist_skin_set_control_bitmap(char *position);
-BOOL    window_set_always_on_top(HWND hWnd, BOOL yes);
+NODISCARD BOOL    window_set_always_on_top(HWND hWnd, BOOL yes);
 BOOL CALLBACK window_search(HWND hWnd, LPARAM lParam);
 char   *str_delete_substr(char *strbuf, char *strtodel);
 char   *str_trim(char *string);
 DWORD   main_get_program_path(HINSTANCE hInst, LPTSTR pszBuffer,
 							  DWORD dwSize);
-HBITMAP systray_rotate_bmp(HBITMAP hBitmap, float radians,
+NODISCARD HBITMAP systray_rotate_bmp(HBITMAP hBitmap, float radians,
 						   COLORREF clrBack);
 HRESULT path_create_link(LPCSTR lpszPathObj, LPSTR lpszPathLink,
-						 LPSTR lpszDesc);
-HRGN    main_bitmap_to_region(HBITMAP hBmp, COLORREF cTransparentColor);
-HRGN    main_bitmap_to_region_1bit(HBITMAP hBmp, COLORREF cTransparentColor);
-HWND    about_create(HWND hWnd);
+					 LPSTR lpszDesc);
+NODISCARD HRGN    main_bitmap_to_region(HBITMAP hBmp, COLORREF cTransparentColor);
+NODISCARD HRGN    main_bitmap_to_region_1bit(HBITMAP hBmp, COLORREF cTransparentColor);
+NODISCARD HWND    about_create(HWND hWnd);
 int     cmdline_parse_files(int argc, char **argv);
 int     cmdline_parse_options(int argc, char **argv, HWND hWnd);
 int     main_add_tooltips(HWND hWnd, BOOL update);
@@ -427,6 +427,9 @@ typedef struct
 	char    preferred_language[8];
 	CPe_QuickFindTerm m_enQuickFindTerm;
 } options_t;
+// C23 static_assert for options structure validation
+static_assert(sizeof(options_t) < 8192, "Options structure too large for efficient INI I/O");
+static_assert(PLAYLIST_last - PLAYLIST_first + 1 == 11, "Playlist column count mismatch");
 
 extern options_t options;
 
@@ -476,6 +479,8 @@ typedef struct
 	CP_HSYSICON m_hSysIcon;
 	CPe_MixerMode m_enMixerMode;
 } globals_t;
+// C23 static_assert for globals structure validation
+static_assert(sizeof(globals_t) < 16384, "Globals structure should remain reasonably sized");
 
 extern globals_t globals;
 
