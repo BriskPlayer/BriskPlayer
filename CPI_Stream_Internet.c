@@ -117,7 +117,7 @@ BOOL ReadStreamData(HINTERNET hURLStream, CPs_BufferFillerContext* pContext, BYT
 		if (dwMetaDataSize > 0)
 		{
 			// Read and discard metadata (or parse it for song info)
-			BYTE* pMetaBuffer = (BYTE*)malloc(dwMetaDataSize);
+			BYTE* pMetaBuffer = CALLOC_TYPE(BYTE, dwMetaDataSize);
 			if (pMetaBuffer)
 			{
 				DWORD dwMetaRead;
@@ -188,8 +188,8 @@ char* DownloadPlaylistContent(const char* pcURL)
 	printf("DownloadPlaylistContent: Successfully opened URL, starting to read content\n");
 	
 	// Read the content in chunks
-	char* pcBuffer = (char*)malloc(dwChunkSize);
-	pcContent = (char*)malloc(1); // Start with minimal allocation
+	char* pcBuffer = CALLOC_TYPE(char, dwChunkSize);
+	pcContent = CALLOC_TYPE(char, 1); // Start with minimal allocation
 	pcContent[0] = '\0';
 	
 	while (InternetReadFile(hURL, pcBuffer, dwChunkSize, &dwBytesRead) && dwBytesRead > 0)
@@ -374,7 +374,7 @@ unsigned int _stdcall EP_FillerThread(void* _pContext)
 		bIsIcyStream = TRUE;
 		// Convert icy:// to http://
 		size_t urlLen = strlen(pContext->m_pcFlexiURL);
-		pcActualURL = (char*)malloc(urlLen + 3); // +3 for "http" vs "icy" difference
+		pcActualURL = CALLOC_TYPE(char, urlLen + 3); // +3 for "http" vs "icy" difference
 		if (pcActualURL)
 		{
 			strcpy_s(pcActualURL, urlLen + 3, "http://");
@@ -599,8 +599,8 @@ CPs_InStream* CP_CreateInStream_Internet(const char* pcFlexiURL, HWND hWndOwner)
 	
 	// Setup stream object
 	{
-		pNewStream = (CPs_InStream*)malloc(sizeof(CPs_InStream));
-		pContext = (CPs_InStream_Internet*)malloc(sizeof(CPs_InStream_Internet));
+		pNewStream = MALLOC_TYPE(CPs_InStream);
+		pContext = MALLOC_TYPE(CPs_InStream_Internet);
 		
 		pNewStream->Uninitialise = CPSINET_Uninitialise;
 		pNewStream->Read = CPSINET_Read;
@@ -618,7 +618,7 @@ CPs_InStream* CP_CreateInStream_Internet(const char* pcFlexiURL, HWND hWndOwner)
 		UINT uiThreadID;
 		
 		// Setup context
-		pBufferFillContext = (CPs_BufferFillerContext*)malloc(sizeof(CPs_BufferFillerContext));
+		pBufferFillContext = MALLOC_TYPE(CPs_BufferFillerContext);
 		pBufferFillContext->m_pCircleBuffer = pContext->m_pCircleBuffer;
 		pBufferFillContext->m_bTerminate = FALSE;
 		STR_AllocSetString(&pBufferFillContext->m_pcFlexiURL, pcActualURL, FALSE); // Use the actual stream URL

@@ -32,7 +32,7 @@ void    playlist_write_default(void)
 {
 	char    exepath[MAX_PATH];
 	main_get_program_path(GetModuleHandle(NULL), exepath, MAX_PATH);
-	strcat(exepath, "default.m3u");
+	strcat_s(exepath, sizeof(exepath), "default.m3u");
 	CPL_ExportPlaylist(globals.m_hPlaylist, exepath);
 }
 
@@ -213,7 +213,7 @@ void    options_read(void)
 		{
 			char    SkinFileString[MAX_PATH];
 			char    skinpath[MAX_PATH];
-			sprintf(SkinFileString, "SkinFile%d", teller - MENU_SKIN_DEFAULT);
+			snprintf(SkinFileString, sizeof(SkinFileString), "SkinFile%d", teller - MENU_SKIN_DEFAULT);
 			GetPrivateProfileString("Skin", SkinFileString, "",
 									skinpath, MAX_PATH, pathbuf);
 			                        
@@ -223,7 +223,7 @@ void    options_read(void)
 				
 				if (options.last_selected_skin_number == teller - MENU_SKIN_DEFAULT)
 				{
-					strcpy((char*)options.main_skin_file, skinpath);
+					strcpy_s((char*)options.main_skin_file, sizeof(options.main_skin_file), skinpath);
 				}
 			}
 		}
@@ -238,7 +238,7 @@ void    options_read(void)
 	for (teller = 1; teller < ARRAY_SIZE(options.eq_settings); teller++)
 	{
 		char    keyname[100];
-		sprintf(keyname, "Eq%d", teller);
+		snprintf(keyname, sizeof(keyname), "Eq%d", teller);
 		options.eq_settings[teller] =
 			GetPrivateProfileInt("Equalizer", keyname, 0, pathbuf);
 	}
@@ -280,24 +280,24 @@ void    options_write(void)
 	int iColIDX;
 	
 	main_get_program_path(NULL, pathbuf, MAX_PATH);
-	strcat(pathbuf, "briskplayer.ini");
+	strcat_s(pathbuf, sizeof(pathbuf), "briskplayer.ini");
 	
 	for (iColIDX = PLAYLIST_first; iColIDX <= PLAYLIST_last; iColIDX++)
 	{
 		char keyname[100];
 		
 		// Write the width
-		sprintf(keyname, "PlaylistCol%d", iColIDX);
+		snprintf(keyname, sizeof(keyname), "PlaylistCol%d", iColIDX);
 		_itoa_s(options.playlist_column_widths[iColIDX], intbuf, sizeof(intbuf), 10);
 		WritePrivateProfileString("WindowPos", keyname, intbuf, pathbuf);
 		
 		// Write the order array
-		sprintf(keyname, "PlaylistSeq%d", iColIDX);
+		snprintf(keyname, sizeof(keyname), "PlaylistSeq%d", iColIDX);
 		_itoa_s(options.playlist_column_seq[iColIDX], intbuf, sizeof(intbuf), 10);
 		WritePrivateProfileString("WindowPos", keyname, intbuf, pathbuf);
 		
 		// Write the visiblity array
-		sprintf(keyname, "PlaylistVis%d", iColIDX);
+		snprintf(keyname, sizeof(keyname), "PlaylistVis%d", iColIDX);
 		WritePrivateProfileString("WindowPos", keyname, options.playlist_column_visible[iColIDX] ? "1" : "0", pathbuf);
 	}
 	
@@ -370,7 +370,7 @@ void    options_write(void)
 					options.last_selected_skin_number = profileteller;
 				}
 				
-				sprintf(SkinFileString, "SkinFile%d", profileteller++);
+				snprintf(SkinFileString, sizeof(SkinFileString), "SkinFile%d", profileteller++);
 				
 				WritePrivateProfileString("Skin", SkinFileString,
 										  (char*)options.main_skin_file, pathbuf);
@@ -379,7 +379,7 @@ void    options_write(void)
 			
 			else
 			{
-				sprintf(SkinFileString, "SkinFile%d", profileteller++);
+				snprintf(SkinFileString, sizeof(SkinFileString), "SkinFile%d", profileteller++);
 				
 				WritePrivateProfileString("Skin", SkinFileString, NULL,
 										  pathbuf);
@@ -501,7 +501,7 @@ void    options_write(void)
 	for (teller = 1; teller < ARRAY_SIZE(options.eq_settings); teller++)
 	{
 		char    keyname[100];
-		sprintf(keyname, "Eq%d", teller);
+		snprintf(keyname, sizeof(keyname), "Eq%d", teller);
 		_itoa_s(options.eq_settings[teller], intbuf, sizeof(intbuf), 10);
 		WritePrivateProfileString("Equalizer", keyname,
 								  intbuf, pathbuf);

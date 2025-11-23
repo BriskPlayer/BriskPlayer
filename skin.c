@@ -231,7 +231,7 @@ main_skin_set_struct_value(int object, int x, int y, int w, int h, int maxw, int
 	Skin.Object[object].y2 = y2;
 	Skin.Object[object].w2 = w2;
 	Skin.Object[object].h2 = h2;
-	strcpy(Skin.Object[object].tooltip, tooltip);
+	strcpy_s(Skin.Object[object].tooltip, sizeof(Skin.Object[object].tooltip), tooltip);
 	
 	return TRUE;
 }
@@ -308,7 +308,7 @@ int     main_skin_open(char *name)
 	}
 	
 	else
-		strcpy(pathbuf, (char*)options.main_skin_file);
+		strcpy_s(pathbuf, sizeof(pathbuf), (char*)options.main_skin_file);
 		
 	memset(&Skin, 0, sizeof(Skin));
 	
@@ -341,7 +341,7 @@ int     main_skin_open(char *name)
 	
 	path_remove_filespec(pathbuf);
 	
-	strcat(pathbuf, Skin.CoolUp);
+	strcat_s(pathbuf, sizeof(pathbuf), Skin.CoolUp);
 	hInstance = GetModuleHandle(NULL);
 	DeleteObject(graphics.bmp_main_up);
 	graphics.bmp_main_up =
@@ -350,13 +350,13 @@ int     main_skin_open(char *name)
 	                        
 	if (!graphics.bmp_main_up)
 	{
-		strcat(errorbuf, pathbuf);
-		strcat(errorbuf, "\n");
+		strcat_s(errorbuf, sizeof(errorbuf), pathbuf);
+		strcat_s(errorbuf, sizeof(errorbuf), "\n");
 	}
 	
 	path_remove_filespec(pathbuf);
 	
-	strcat(pathbuf, Skin.CoolDown);
+	strcat_s(pathbuf, sizeof(pathbuf), Skin.CoolDown);
 	DeleteObject(graphics.bmp_main_down);
 	graphics.bmp_main_down =
 		(HBITMAP) LoadImage(hInstance, pathbuf, IMAGE_BITMAP, 0, 0,
@@ -364,13 +364,13 @@ int     main_skin_open(char *name)
 	                        
 	if (!graphics.bmp_main_down)
 	{
-		strcat(errorbuf, pathbuf);
-		strcat(errorbuf, "\n");
+		strcat_s(errorbuf, sizeof(errorbuf), pathbuf);
+		strcat_s(errorbuf, sizeof(errorbuf), "\n");
 	}
 	
 	path_remove_filespec(pathbuf);
 	
-	strcat(pathbuf, Skin.CoolSwitch);
+	strcat_s(pathbuf, sizeof(pathbuf), Skin.CoolSwitch);
 	DeleteObject(graphics.bmp_main_switch);
 	graphics.bmp_main_switch =
 		(HBITMAP) LoadImage(hInstance, pathbuf, IMAGE_BITMAP, 0, 0,
@@ -378,13 +378,13 @@ int     main_skin_open(char *name)
 	                        
 	if (!graphics.bmp_main_switch)
 	{
-		strcat(errorbuf, pathbuf);
-		strcat(errorbuf, "\n");
+		strcat_s(errorbuf, sizeof(errorbuf), pathbuf);
+		strcat_s(errorbuf, sizeof(errorbuf), "\n");
 	}
 	
 	path_remove_filespec(pathbuf);
 	
-	strcat(pathbuf, Skin.aTimeFont);
+	strcat_s(pathbuf, sizeof(pathbuf), Skin.aTimeFont);
 	DeleteObject(graphics.bmp_main_time_font);
 	graphics.bmp_main_time_font =
 		(HBITMAP) LoadImage(hInstance, pathbuf, IMAGE_BITMAP, 0, 0,
@@ -392,13 +392,13 @@ int     main_skin_open(char *name)
 	                        
 	if (!graphics.bmp_main_time_font)
 	{
-		strcat(errorbuf, pathbuf);
-		strcat(errorbuf, "\n");
+		strcat_s(errorbuf, sizeof(errorbuf), pathbuf);
+		strcat_s(errorbuf, sizeof(errorbuf), "\n");
 	}
 	
 	path_remove_filespec(pathbuf);
 	
-	strcat(pathbuf, Skin.aTrackFont);
+	strcat_s(pathbuf, sizeof(pathbuf), Skin.aTrackFont);
 	DeleteObject(graphics.bmp_main_track_font);
 	graphics.bmp_main_track_font =
 		(HBITMAP) LoadImage(hInstance, pathbuf, IMAGE_BITMAP, 0, 0,
@@ -406,13 +406,13 @@ int     main_skin_open(char *name)
 	                        
 	if (!graphics.bmp_main_track_font)
 	{
-		strcat(errorbuf, pathbuf);
-		strcat(errorbuf, "\n");
+		strcat_s(errorbuf, sizeof(errorbuf), pathbuf);
+		strcat_s(errorbuf, sizeof(errorbuf), "\n");
 	}
 	
 	path_remove_filespec(pathbuf);
 	
-	strcat(pathbuf, Skin.aTextFont);
+	strcat_s(pathbuf, sizeof(pathbuf), Skin.aTextFont);
 	DeleteObject(graphics.bmp_main_title_font);
 	graphics.bmp_main_title_font =
 		(HBITMAP) LoadImage(hInstance, pathbuf, IMAGE_BITMAP, 0, 0,
@@ -420,8 +420,8 @@ int     main_skin_open(char *name)
 	                        
 	if (!graphics.bmp_main_title_font)
 	{
-		strcat(errorbuf, pathbuf);
-		strcat(errorbuf, "\n");
+		strcat_s(errorbuf, sizeof(errorbuf), pathbuf);
+		strcat_s(errorbuf, sizeof(errorbuf), "\n");
 	}
 	
 	if (!graphics.bmp_main_up || !graphics.bmp_main_down
@@ -514,37 +514,31 @@ void    main_skin_check_ini_value(char *textposition,
 			return;
 		}
 		
-		if (stricmp(name, "BmpCoolUp") == 0)
-		{
-			strcpy(Skin.CoolUp, textposition + strlen(name) + 1);
-		}
-		
-		if (stricmp(name, "BmpCoolDown") == 0)
-		{
-			strcpy(Skin.CoolDown, textposition + strlen(name) + 1);
-		}
-		
-		if (stricmp(name, "BmpCoolSwitch") == 0)
-		{
-			strcpy(Skin.CoolSwitch, textposition + strlen(name) + 1);
-		}
-		
-		if (stricmp(name, "BmpTextFont") == 0)
-		{
-			strcpy(Skin.aTextFont, textposition + strlen(name) + 1);
-		}
-		
-		if (stricmp(name, "BmpTimeFont") == 0)
-		{
-			strcpy(Skin.aTimeFont, textposition + strlen(name) + 1);
-		}
-		
-		if (stricmp(name, "BmpTrackFont") == 0)
-		{
-			strcpy(Skin.aTrackFont, textposition + strlen(name) + 1);
-		}
-		
-		if (stricmp(name, "NextSkin") == 0)
+	
+	if (stricmp(name, "BmpCoolUp") == 0)
+	{
+		strcpy_s(Skin.CoolUp, sizeof(Skin.CoolUp), textposition + strlen(name) + 1);
+	}	
+	if (stricmp(name, "BmpCoolDown") == 0)
+	{
+		strcpy_s(Skin.CoolDown, sizeof(Skin.CoolDown), textposition + strlen(name) + 1);
+	}	
+	if (stricmp(name, "BmpCoolSwitch") == 0)
+	{
+		strcpy_s(Skin.CoolSwitch, sizeof(Skin.CoolSwitch), textposition + strlen(name) + 1);
+	}	
+	if (stricmp(name, "BmpTextFont") == 0)
+	{
+		strcpy_s(Skin.aTextFont, sizeof(Skin.aTextFont), textposition + strlen(name) + 1);
+	}	
+	if (stricmp(name, "BmpTimeFont") == 0)
+	{
+		strcpy_s(Skin.aTimeFont, sizeof(Skin.aTimeFont), textposition + strlen(name) + 1);
+	}	
+	if (stricmp(name, "BmpTrackFont") == 0)
+	{
+		strcpy_s(Skin.aTrackFont, sizeof(Skin.aTrackFont), textposition + strlen(name) + 1);
+	}		if (stricmp(name, "NextSkin") == 0)
 		{
 			if (stricmp(textposition + strlen(name) + 1, "default") == 0)
 			{
@@ -559,7 +553,7 @@ void    main_skin_check_ini_value(char *textposition,
 				char    ext[_MAX_EXT];
 				char    dir[_MAX_DIR];
 				char    skinfile2[MAX_PATH];
-				strcpy(skinfile2, (char*)options.main_skin_file);
+				strcpy_s(skinfile2, sizeof(skinfile2), (char*)options.main_skin_file);
 				path_remove_filespec(skinfile2);
 				
 				main_get_program_path(GetModuleHandle(NULL), modpathbuf,
@@ -574,7 +568,7 @@ void    main_skin_check_ini_value(char *textposition,
 				}
 				
 				else
-					strcpy((char*)options.main_skin_file,
+					strcpy_s((char*)options.main_skin_file, sizeof(options.main_skin_file),
 						   textposition + strlen(name) + 1);
 					       
 				if (_access((char*)options.main_skin_file, 0) == -1)

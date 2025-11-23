@@ -77,7 +77,7 @@ CP_HSYSICON CPSYSICON_Create(HWND hWnd)
 		
 		nic.hIcon = CreateIconIndirect(&iconinfo);
 		
-		strcpy(nic.szTip, "CoolerPlayer");
+		strcpy_s(nic.szTip, sizeof(nic.szTip), "CoolerPlayer");
 		Shell_NotifyIcon(NIM_ADD, &nic);
 		
 		if (nic.hIcon)

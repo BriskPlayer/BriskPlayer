@@ -53,7 +53,7 @@ void CPLI_CalculateLength_WAV(CPs_PlaylistItem* pItem);
 //
 CP_HPLAYLISTITEM CPLII_CreateItem(const char* pcPath)
 {
-	CPs_PlaylistItem* pNewItem = (CPs_PlaylistItem*)malloc(sizeof(CPs_PlaylistItem));
+	CPs_PlaylistItem* pNewItem = CALLOC_TYPE(CPs_PlaylistItem, 1);
 	
 	pNewItem->m_pcPath = NULL;
 	CPLI_SetPath(pNewItem, pcPath);
@@ -390,7 +390,7 @@ char* CPLI_ID3v2_DecodeString(const BYTE* pSourceText, const int iTagDataSize)
 	if (pSourceText[0] == '\0')
 	{
 		iStringLength = iTagDataSize - 1;
-		pcDestString = malloc(iStringLength + 1);
+		pcDestString = CALLOC_TYPE(char, iStringLength + 1);
 		memcpy(pcDestString, pSourceText + 1, iStringLength);
 		pcDestString[iStringLength] = 0;
 	}
@@ -429,13 +429,13 @@ void CPLI_DecodeLength(CPs_PlaylistItem* pItem, unsigned int iNewLength)
 	
 	if (iHours > 0)
 	{
-		pItem->m_pcTrackLength_AsText = (char*)malloc(9);
+		pItem->m_pcTrackLength_AsText = CALLOC_TYPE(char, 9);
 		sprintf_s(pItem->m_pcTrackLength_AsText, 9, "%02d:%02d:%02d", iHours, iMins, iSecs);
 	}
 	
 	else
 	{
-		pItem->m_pcTrackLength_AsText = (char*)malloc(6);
+		pItem->m_pcTrackLength_AsText = CALLOC_TYPE(char, 6);
 		sprintf_s(pItem->m_pcTrackLength_AsText, 6, "%02d:%02d", iMins, iSecs);
 	}
 }
@@ -624,7 +624,7 @@ void CPLI_SetTrackNum(CP_HPLAYLISTITEM hItem, const unsigned char iNewValue)
 		if (pItem->m_pcTrackNum_AsText)
 			free(pItem->m_pcTrackNum_AsText);
 			
-		pItem->m_pcTrackNum_AsText = (char*)malloc(CPC_TRACKNUMASTEXTBUFFERSIZE);
+		pItem->m_pcTrackNum_AsText = CALLOC_TYPE(char, CPC_TRACKNUMASTEXTBUFFERSIZE);
 		
 		_itoa_s(pItem->m_cTrackNum, cTempString, sizeof(cTempString), 10);
 		
@@ -661,7 +661,7 @@ void CPLI_SetTrackNum_AsText(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
 	if (pItem->m_pcTrackNum_AsText)
 		free(pItem->m_pcTrackNum_AsText);
 		
-	pItem->m_pcTrackNum_AsText = (char*)malloc(CPC_TRACKNUMASTEXTBUFFERSIZE);
+	pItem->m_pcTrackNum_AsText = CALLOC_TYPE(char, CPC_TRACKNUMASTEXTBUFFERSIZE);
 	strncpy(pItem->m_pcTrackNum_AsText, pcNewValue, CPC_TRACKNUMASTEXTBUFFERSIZE);
 	
 	pItem->m_bID3Tag_SaveRequired = TRUE;
@@ -853,7 +853,7 @@ void CPLI_CalculateLength_WAV(CPs_PlaylistItem* pItem)
 		}
 		
 		// Get the format data
-		pFormat = (PCMWAVEFORMAT*)malloc(chunk.m_dwLength);
+		pFormat = CALLOC_TYPE(PCMWAVEFORMAT, chunk.m_dwLength / sizeof(PCMWAVEFORMAT) + 1);
 		
 		ReadFile(hFile, pFormat, chunk.m_dwLength, &dwBytesRead, NULL);
 		
@@ -1308,7 +1308,7 @@ void CPLI_OGG_DecodeString(char** ppcString, const char* pcNewValue)
 		
 	iStringLength = strlen(pcNewValue);
 	
-	*ppcString = malloc(iStringLength + 1);
+	*ppcString = CALLOC_TYPE(char, iStringLength + 1);
 	
 	memcpy(*ppcString, pcNewValue, iStringLength + 1);
 }
@@ -1350,8 +1350,8 @@ void CPLI_ReadTag_OGG(CPs_PlaylistItem* pItem)
 		
 		for (iCommentIDX = 0; iCommentIDX < pComment->comments; iCommentIDX++)
 		{
-			char* cTag = malloc(pComment->comment_lengths[iCommentIDX]+8);
-			char* cValue = malloc(pComment->comment_lengths[iCommentIDX]+8);
+			char* cTag = CALLOC_TYPE(char, pComment->comment_lengths[iCommentIDX]+8);
+			char* cValue = CALLOC_TYPE(char, pComment->comment_lengths[iCommentIDX]+8);
 
 			// find "=" character to parse tag and value data		
 			{
@@ -1554,7 +1554,7 @@ BOOL CPLI_GrowFile(HANDLE hFile, const DWORD dwStartOffset, const unsigned int i
 	{
 		BYTE* pbExtra;
 		
-		pbExtra = (BYTE*)malloc(iNumBytes);
+		pbExtra = CALLOC_TYPE(BYTE, iNumBytes);
 		memset(pbExtra, 0, iNumBytes);
 		SetFilePointer(hFile, dwFileSize + iNumBytes, NULL, FILE_BEGIN);
 		WriteFile(hFile, pbExtra, iNumBytes, &dwBytesTransferred, NULL);
@@ -1660,7 +1660,7 @@ void CPLI_ReadTag_TagLib(CPs_PlaylistItem* pItem)
 			if (pItem->m_pcTrackNum_AsText)
 				free(pItem->m_pcTrackNum_AsText);
 				
-			pItem->m_pcTrackNum_AsText = (char*)malloc(CPC_TRACKNUMASTEXTBUFFERSIZE);
+			pItem->m_pcTrackNum_AsText = CALLOC_TYPE(char, CPC_TRACKNUMASTEXTBUFFERSIZE);
 			_itoa_s(pItem->m_cTrackNum, cTempString, sizeof(cTempString), 10);
 			strncpy(pItem->m_pcTrackNum_AsText, cTempString, CPC_TRACKNUMASTEXTBUFFERSIZE);
 		}

@@ -87,7 +87,7 @@ char* ExtractStreamURLFromPlaylist(const char* pcPlaylistURL);
 	else if (strstr(pcPlaylistURL, ".m3u8")) pcExt = ".m3u8";
 	
 	// Append proper extension
-	strcat(szTempFile, pcExt);
+	strcat_s(szTempFile, sizeof(szTempFile), pcExt);
 	
 	printf("DownloadPlaylistToTempFile: Temp file: %s\n", szTempFile);
 	

@@ -99,7 +99,7 @@ void CPP_OMFL_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInf
 	// Create a context
 	CPs_OutputContext_File* pContext;
 	CP_ASSERT(pModule->m_pModuleCookie == NULL);
-	pContext = (CPs_OutputContext_File*)malloc(sizeof(CPs_OutputContext_File));
+	pContext = MALLOC_TYPE(CPs_OutputContext_File);
 	pModule->m_pModuleCookie = pContext;
 	CP_TRACE0("File out initialising");
 	

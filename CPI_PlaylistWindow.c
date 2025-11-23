@@ -1080,7 +1080,7 @@ void CPlaylistWindow_WM_COMMAND_IDC_PL_FLOATINGEDIT(WPARAM wParam, LPARAM lParam
 		
 		// Get the text from the control
 		dwTextLen = (DWORD)SendMessage(windows.wnd_playlist_IPEdit, WM_GETTEXTLENGTH, 0L, 0L) + 1;
-		pcEditText = (char*)malloc(dwTextLen * sizeof(char));
+		pcEditText = CALLOC_TYPE(char, dwTextLen);
 		SendMessage(windows.wnd_playlist_IPEdit, WM_GETTEXT, (WPARAM)dwTextLen, (LPARAM)pcEditText);
 		
 		// Update all of the selected items

@@ -25,7 +25,7 @@
 void    path_add_backslash(char *path)
 {
 	if (path[strlen(path) - 1] != '\\')
-		strcat(path, "\\");
+		strcat_s(path, MAX_PATH, "\\");
 }
 
 BOOL    path_is_relative(const char *path)
@@ -42,7 +42,7 @@ BOOL    path_is_relative(const char *path)
 		char    buffer[MAX_PATH];
 		char   *position;
 		
-		strcpy(buffer, dir);
+		strcpy_s(buffer, sizeof(buffer), dir);
 		
 		if (buffer[0] == '\\' && buffer[1] == '\\')
 		{
@@ -84,9 +84,9 @@ void    path_unquote(LPTSTR path)
 	
 	if (path[0] == '\"')
 	{
-		strcpy(pathbuffer, path + 1);
+		strcpy_s(pathbuffer, sizeof(pathbuffer), path + 1);
 		lengte = strlen(pathbuffer);
 		pathbuffer[lengte - 1] = '\0';
-		strcpy(path, pathbuffer);
+		strcpy_s(path, MAX_PATH, pathbuffer);
 	}
 }

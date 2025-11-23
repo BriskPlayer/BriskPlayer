@@ -207,7 +207,7 @@ void Search_SelectItems(void)
 	
 	// Get search term
 	iEditTextLength = (int)SendDlgItemMessage(windows.m_hWndFindDialog, IDC_FND_TEXT, WM_GETTEXTLENGTH, 0L, 0L);
-	pcTerm = (char*)malloc(iEditTextLength + 1);
+	pcTerm = CALLOC_TYPE(char, iEditTextLength + 1);
 	SendDlgItemMessage(windows.m_hWndFindDialog, IDC_FND_TEXT, WM_GETTEXT, (WPARAM)(iEditTextLength + 1), (LPARAM)pcTerm);
 	
 	// Get search filter

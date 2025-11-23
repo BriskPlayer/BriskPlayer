@@ -105,7 +105,7 @@ typedef struct _CPs_NotifyChunk
 //
 CP_HPLAYLIST CPL_CreatePlaylist(void)
 {
-	CPs_Playlist* pNewPlaylist = (CPs_Playlist*)malloc(sizeof(CPs_Playlist));
+	CPs_Playlist* pNewPlaylist = MALLOC_TYPE(CPs_Playlist);
 	pNewPlaylist->m_hFirst = NULL;
 	pNewPlaylist->m_hLast = NULL;
 	pNewPlaylist->m_hCurrent = NULL;
@@ -352,7 +352,7 @@ void CPL_AddSingleFile_pt2(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hNewFile, co
 		// Create title buffer
 		iNumChars = (iLastDotIDX - iLastSlashIDX) + 1;
 		
-		CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName = (char*)malloc(iNumChars + 1);
+		CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName = CALLOC_TYPE(char, iNumChars + 1);
 		
 		memcpy(CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName, pcPath + iLastSlashIDX, iNumChars);
 		
@@ -1154,7 +1154,7 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 			}
 			
 			// Allocate buffer for playlist content
-			pcPlaylistBuffer = (char*)malloc(0x40001);
+			pcPlaylistBuffer = CALLOC_TYPE(char, 0x40001);
 			if (!pcPlaylistBuffer)
 			{
 				printf("CPL_AddFile: Memory allocation failed for PLS URL\n");
@@ -1317,7 +1317,7 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 			}
 			
 			// We set up a 256k buffer to download the playlist.  If it's not enough, we won't bother reading the playlist.
-			pcPlaylistBuffer = (char*)malloc(0x40001);
+			pcPlaylistBuffer = CALLOC_TYPE(char, 0x40001);
 			
 			if (!pcPlaylistBuffer)
 			{
@@ -1402,12 +1402,10 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 				
 				if (dwFileSize < 0x40000)
 				{
-					// The plan is to load the entire file into a memblock and then split it into lines
-					// and scan off the whitepace and add the items to the list
-					pcPlaylistBuffer = (char*)malloc(dwFileSize + 1);
-					ReadFile(hFile, pcPlaylistBuffer, dwFileSize, &dwBytesRead, NULL);
-					
-					// Read in the file line by line
+				// The plan is to load the entire file into a memblock and then split it into lines
+				// and scan off the whitepace and add the items to the list
+				pcPlaylistBuffer = CALLOC_TYPE(char, dwFileSize + 1);
+				ReadFile(hFile, pcPlaylistBuffer, dwFileSize, &dwBytesRead, NULL);					// Read in the file line by line
 					iLastLineStartIDX = 0;
 					
 					for (iCharIDX = 0; iCharIDX < dwFileSize + 1; iCharIDX++)
@@ -1765,7 +1763,7 @@ void CPL_SortList(CP_HPLAYLIST hPlaylist, const CPe_PlayItemSortElement enElemen
 	{
 		CP_HPLAYLISTITEM hCursor;
 		int iItemIDX;
-		pFlatArray = (CPs_PlaylistItem**)malloc(sizeof(CPs_PlaylistItem*) * iNumItems);
+		pFlatArray = CALLOC_TYPE(CPs_PlaylistItem*, iNumItems);
 		
 		iItemIDX = 0;
 		
@@ -1898,7 +1896,7 @@ void SortLList(CPs_FilenameLLItem* pFirst)
 		iNumStrings++;
 		
 	// Allocate string buffer and assign strings to it
-	ppStrings = (char**)malloc(sizeof(char*) * iNumStrings);
+	ppStrings = CALLOC_TYPE(char*, iNumStrings);
 	
 	iStringIDX = 0;
 	
@@ -1992,7 +1990,7 @@ void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char *pDir)
 		if (finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
 			// Add to dirs list
-			CPs_FilenameLLItem* pNewItem = (CPs_FilenameLLItem*)malloc(sizeof(CPs_FilenameLLItem));
+			CPs_FilenameLLItem* pNewItem = MALLOC_TYPE(CPs_FilenameLLItem);
 			pNewItem->m_pNextItem = m_pFirstDir;
 			STR_AllocSetString(&pNewItem->m_pcFilename, pcFullPath, FALSE);
 			m_pFirstDir = pNewItem;
@@ -2001,7 +1999,7 @@ void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char *pDir)
 		else
 		{
 			// Add to files list
-			CPs_FilenameLLItem* pNewItem = (CPs_FilenameLLItem*)malloc(sizeof(CPs_FilenameLLItem));
+			CPs_FilenameLLItem* pNewItem = MALLOC_TYPE(CPs_FilenameLLItem);
 			pNewItem->m_pNextItem = m_pFirstFile;
 			STR_AllocSetString(&pNewItem->m_pcFilename, pcFullPath, FALSE);
 			m_pFirstFile = pNewItem;
@@ -2051,12 +2049,12 @@ void CPL_AddDroppedFiles(CP_HPLAYLIST hPlaylist, HDROP hDrop)
 	
 	// Read all the files into an array of strings
 	iNumFiles = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0);
-	ppFiles = (char**)malloc(iNumFiles * sizeof(char*));
+	ppFiles = CALLOC_TYPE(char*, iNumFiles);
 	
 	for (iFileIDX = 0; iFileIDX < iNumFiles; iFileIDX++)
 	{
 		const int iBufferSize = DragQueryFile(hDrop, iFileIDX, NULL, 0) + 1;
-		ppFiles[iFileIDX] = (char*)malloc(iBufferSize * sizeof(char));
+		ppFiles[iFileIDX] = CALLOC_TYPE(char, iBufferSize);
 		DragQueryFile(hDrop, iFileIDX, ppFiles[iFileIDX], iBufferSize);
 	}
 	
@@ -2492,7 +2490,7 @@ DWORD WINAPI CPI_PlaylistWorkerThreadEP(void* pCookie)
 				
 				if (!pPendingChunk)
 				{
-					pPendingChunk = (CPs_NotifyChunk*)malloc(sizeof(CPs_NotifyChunk));
+					pPendingChunk = MALLOC_TYPE(CPs_NotifyChunk);
 					pPendingChunk->m_iNumberInChunk = 0;
 				}
 				

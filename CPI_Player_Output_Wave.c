@@ -105,7 +105,7 @@ void CPP_OMWV_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInf
 	// Create a context
 	CPs_OutputContext_Wave* pContext;
 	CP_ASSERT(pModule->m_pModuleCookie == NULL);
-	pContext = (CPs_OutputContext_Wave*)malloc(sizeof(CPs_OutputContext_Wave));
+	pContext = MALLOC_TYPE(CPs_OutputContext_Wave);
 	pModule->m_pModuleCookie = pContext;
 	CP_TRACE0("Wave out initialising");
 	

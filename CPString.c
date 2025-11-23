@@ -39,7 +39,7 @@ unsigned int STR_AllocSetString(char** ppcDest, const char* pcSource, const BOOL
 		unsigned int uStringLength;
 		
 		uStringLength = strlen(pcSource) + 1;
-		*ppcDest = (char*)malloc(uStringLength);
+		*ppcDest = CALLOC_TYPE(char, uStringLength);
 		
 		if (!*ppcDest)
 		{
@@ -73,7 +73,7 @@ WCHAR* STR_ConvertToUnicode(const char* pcSource)
 	if (iLength == 0)
 		return NULL;
 		
-	WCHAR* pwcResult = (WCHAR*)malloc(iLength * sizeof(WCHAR));
+	WCHAR* pwcResult = CALLOC_TYPE(WCHAR, iLength);
 	if (!pwcResult)
 		return NULL;
 		
@@ -98,7 +98,7 @@ char* STR_ConvertFromUnicode(const WCHAR* pwcSource)
 	if (iLength == 0)
 		return NULL;
 		
-	char* pcResult = (char*)malloc(iLength);
+	char* pcResult = CALLOC_TYPE(char, iLength);
 	if (!pcResult)
 		return NULL;
 		
@@ -124,7 +124,7 @@ unsigned int STR_AllocSetStringW(WCHAR** ppwcDest, const WCHAR* pwcSource, const
 		unsigned int uStringLength;
 		
 		uStringLength = (wcslen(pwcSource) + 1) * sizeof(WCHAR);
-		*ppwcDest = (WCHAR*)malloc(uStringLength);
+		*ppwcDest = CALLOC_TYPE(WCHAR, wcslen(pwcSource) + 1);
 		
 		if (!*ppwcDest)
 		{

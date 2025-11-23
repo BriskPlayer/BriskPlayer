@@ -498,7 +498,7 @@ void CPSK_ReadSkinCommand_AddVerb(CP_COMPOSITEFILE hComposite, CPs_CommandTarget
 	// Load state image
 	pNext = *ppCommandTarget;
 	
-	*ppCommandTarget = (CPs_CommandTarget*)malloc(sizeof(CPs_CommandTarget));
+	*ppCommandTarget = MALLOC_TYPE(CPs_CommandTarget);
 	(*ppCommandTarget)->m_pStateImage = CPIG_CreateStateImage(CPIG_CreateImage_FromSubFile(hComposite, cFile), iNumStates);
 	(*ppCommandTarget)->m_ptOffset = ptOffset;
 	(*ppCommandTarget)->m_dwAlign = dwAlignFlag;
@@ -537,7 +537,7 @@ void CPSK_ReadSkinCommand_AddIndicator(CP_COMPOSITEFILE hComposite, CPs_Skin* pS
 	
 	// Load state image
 	pNext = pSkin->mpl_pIndicators;
-	pSkin->mpl_pIndicators = (CPs_Indicator*)malloc(sizeof(CPs_Indicator));
+	pSkin->mpl_pIndicators = MALLOC_TYPE(CPs_Indicator);
 	pSkin->mpl_pIndicators->m_pNext = pNext;
 	pSkin->mpl_pIndicators->m_dwAlign = dwAlignFlag;
 	pSkin->mpl_pIndicators->m_rAlign = rOffset;
@@ -591,7 +591,7 @@ void CPSK_ReadSkinLine(CP_COMPOSITEFILE hComposite, CPs_Skin* pSkin, const char*
 CPs_Skin* CPSK_LoadSkin(CP_COMPOSITEFILE hComposite, const char* pcSkinFile, const unsigned int iFileSize)
 {
 	unsigned int iLastLineStartIDX, iCharIDX;
-	CPs_Skin* pNewSkin = (CPs_Skin*)malloc(sizeof(CPs_Skin));
+	CPs_Skin* pNewSkin = CALLOC_TYPE(CPs_Skin, 1);
 	memset(pNewSkin, 0, sizeof(*pNewSkin));
 	
 	// Read in the file line by line

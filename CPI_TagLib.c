@@ -255,7 +255,7 @@ BOOL CPTL_ReadTags(const char* pcFilePath,
     str_value = taglib_tag_title(tag);
     if (str_value && *str_value)
     {
-        *ppcTitle = (char*)malloc(strlen(str_value) + 1);
+        *ppcTitle = CALLOC_TYPE(char, strlen(str_value) + 1);
         if (*ppcTitle)
             strcpy(*ppcTitle, str_value);
     }
@@ -264,7 +264,7 @@ BOOL CPTL_ReadTags(const char* pcFilePath,
     str_value = taglib_tag_artist(tag);
     if (str_value && *str_value)
     {
-        *ppcArtist = (char*)malloc(strlen(str_value) + 1);
+        *ppcArtist = CALLOC_TYPE(char, strlen(str_value) + 1);
         if (*ppcArtist)
             strcpy(*ppcArtist, str_value);
     }
@@ -273,7 +273,7 @@ BOOL CPTL_ReadTags(const char* pcFilePath,
     str_value = taglib_tag_album(tag);
     if (str_value && *str_value)
     {
-        *ppcAlbum = (char*)malloc(strlen(str_value) + 1);
+        *ppcAlbum = CALLOC_TYPE(char, strlen(str_value) + 1);
         if (*ppcAlbum)
             strcpy(*ppcAlbum, str_value);
     }
@@ -282,7 +282,7 @@ BOOL CPTL_ReadTags(const char* pcFilePath,
     unsigned int year = taglib_tag_year(tag);
     if (year > 0)
     {
-        *ppcYear = (char*)malloc(16);
+        *ppcYear = CALLOC_TYPE(char, 16);
         if (*ppcYear)
             sprintf_s(*ppcYear, 16, "%u", year);
     }
@@ -291,7 +291,7 @@ BOOL CPTL_ReadTags(const char* pcFilePath,
     str_value = taglib_tag_comment(tag);
     if (str_value && *str_value)
     {
-        *ppcComment = (char*)malloc(strlen(str_value) + 1);
+        *ppcComment = CALLOC_TYPE(char, strlen(str_value) + 1);
         if (*ppcComment)
             strcpy(*ppcComment, str_value);
     }
@@ -300,7 +300,7 @@ BOOL CPTL_ReadTags(const char* pcFilePath,
     str_value = taglib_tag_genre(tag);
     if (str_value && *str_value)
     {
-        *ppcGenre = (char*)malloc(strlen(str_value) + 1);
+        *ppcGenre = CALLOC_TYPE(char, strlen(str_value) + 1);
         if (*ppcGenre)
             strcpy(*ppcGenre, str_value);
     }
@@ -474,7 +474,7 @@ char* DecodeID3String(const char* pcSource, const int iLength)
     if (!pcSource || iLength <= 0)
         return NULL;
         
-    pcDest = malloc(iLength + 1);
+    pcDest = CALLOC_TYPE(char, iLength + 1);
     if (!pcDest)
         return NULL;
         
