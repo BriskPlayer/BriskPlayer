@@ -617,9 +617,9 @@ void CPlaylistWindow_RenameMenu(const int iItem, const int iSubItem)
 		
 		if (iNumberOfErrors > 0)
 		{
-			MessageBox(IF_GetHWnd(windows.m_hifPlaylist),
-					   "Some files could not be renamed.\n\nThis could be because they are either currently playing or are read-only.",
-					   "Error",
+			MessageBoxW(IF_GetHWnd(windows.m_hifPlaylist),
+					   L"Some files could not be renamed.\n\nThis could be because they are either currently playing or are read-only.",
+					   L"Error",
 					   MB_OK | MB_ICONASTERISK);
 		}
 	}
@@ -645,7 +645,7 @@ void CPlaylistWindow_CreateIPEdit(const int iItem, const int iSubItem)
 	
 	if (CPLI_GetReadWriteState(hClickedItem) != rwsReadWrite)
 	{
-		MessageBox(windows.m_hWndPlaylist, "This file's ID3 tag cannot be updated.  This is because BriskPlayer cannot write to this file.", "Cannot update tag", MB_OK | MB_ICONSTOP);
+		MessageBoxW(windows.m_hWndPlaylist, L"This file's ID3 tag cannot be updated.  This is because BriskPlayer cannot write to this file.", L"Cannot update tag", MB_OK | MB_ICONSTOP);
 		return;
 	}
 	

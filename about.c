@@ -28,7 +28,7 @@ HWND about_create(HWND hWnd)
 	globals.about_double_smiley_jump_speed = 0.1;
 
 	hinst = GetModuleHandle(NULL);
-	DialogBox(hinst, MAKEINTRESOURCE(IDD_ABOUT), NULL, (DLGPROC)about_windowproc);
+	DialogBoxW(hinst, MAKEINTRESOURCEW(IDD_ABOUT), NULL, (DLGPROC)about_windowproc);
 	return hWnd;
 }
 //

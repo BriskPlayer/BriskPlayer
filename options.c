@@ -283,53 +283,63 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			switch (LOWORD(wParam))
 			{
 			
-				case IDC_SKINBUTTON:
+			case IDC_SKINBUTTON:
+			{
+				OPENFILENAMEW fn;  // Unicode version
+				WCHAR filefilterW[512];
+				// Build Unicode filter string
+				char filterTemp[512];
+				snprintf(filterTemp, sizeof(filterTemp), "%s\\0*.ini\\0%s\\0*.*\\0", T(STR_FILTER_SKIN_FILES), T(STR_FILTER_ALL_FILES));
+				MultiByteToWideChar(CP_ACP, 0, filterTemp, -1, filefilterW, 512);
+				
+				BOOL returnval;
+				WCHAR initialfilenameW[MAX_PATH * 100] = L"";
+				
+				// Convert initial directory to Unicode
+				char pathbuffie[MAX_PATH];
+				strcpy(pathbuffie, (char*)options.main_skin_file);
+				path_remove_filespec(pathbuffie);
+				WCHAR* pwcInitialDir = STR_ConvertToUnicode(pathbuffie);
+				
+				fn.lStructSize = sizeof(OPENFILENAMEW);
+				fn.hwndOwner = hwndDlg;
+				fn.hInstance = NULL;
+				fn.lpstrFilter = filefilterW;
+				fn.lpstrCustomFilter = NULL;
+				fn.nMaxCustFilter = 0;
+				fn.nFilterIndex = 0;
+				fn.lpstrFile = initialfilenameW;
+				fn.nMaxFile = MAX_PATH * 100;
+				fn.lpstrFileTitle = NULL;
+				fn.nMaxFileTitle = 0;
+				fn.lpstrInitialDir = pwcInitialDir;
+				fn.lpstrTitle = NULL;
+				fn.Flags =
+					OFN_HIDEREADONLY | OFN_EXPLORER | OFN_FILEMUSTEXIST
+					| OFN_PATHMUSTEXIST | OFN_ENABLESIZING;
+				fn.nFileOffset = 0;
+				fn.nFileExtension = 0;
+				fn.lpstrDefExt = NULL;
+				fn.lCustData = 0;
+				fn.lpfnHook = NULL;
+				fn.lpTemplateName = NULL;
+				returnval = GetOpenFileNameW(&fn);  // Unicode version
+				
+				free(pwcInitialDir);
+				
+				if (returnval != FALSE)
 				{
-					OPENFILENAME fn;
-					char    filefilter[512];
-					snprintf(filefilter, sizeof(filefilter), "%s\\0*.ini\\0%s\\0*.*\\0", T(STR_FILTER_SKIN_FILES), T(STR_FILTER_ALL_FILES));
-					BOOL    returnval;
-					char    initialfilename[MAX_PATH * 100] = "";
-					char    pathbuffie[MAX_PATH];
-					strcpy(pathbuffie, (char*)options.main_skin_file);
-					path_remove_filespec(pathbuffie);
-					fn.lStructSize = sizeof(OPENFILENAME);
-					fn.hwndOwner = hwndDlg;
-					fn.hInstance = NULL;
-					fn.lpstrFilter = filefilter;
-					fn.lpstrCustomFilter = NULL;
-					fn.nMaxCustFilter = 0;
-					fn.nFilterIndex = 0;
-					fn.lpstrFile = initialfilename;
-					fn.nMaxFile = MAX_PATH * 200;
-					fn.lpstrFileTitle = NULL;
-					fn.nMaxFileTitle = 0;
-					fn.lpstrInitialDir = pathbuffie;
-					fn.lpstrTitle = NULL;
-					fn.Flags =
-						OFN_HIDEREADONLY | OFN_EXPLORER | OFN_FILEMUSTEXIST
-						| OFN_PATHMUSTEXIST | OFN_ENABLESIZING;
-					fn.nFileOffset = 0;
-					fn.nFileExtension = 0;
-					fn.lpstrDefExt = NULL;
-					fn.lCustData = 0;
-					fn.lpfnHook = NULL;
-					fn.lpTemplateName = NULL;
-					returnval = GetOpenFileName(&fn);
-					
-					if (returnval != FALSE)
-					{
-						// char    pathbuf[MAX_PATH] = "";
-						SetDlgItemText(hwndDlg, IDC_LOADSKIN, fn.lpstrFile);
-						SendDlgItemMessage(hwndDlg, IDC_PLAYERSKINCHECK,
-										   BM_SETCHECK, BST_CHECKED, 0);
-						globals.m_bOptions_ChangedSkin = TRUE;
-					}
-					
-					break;
+					// Convert selected file back to ANSI for SetDlgItemText
+					char selectedFileA[MAX_PATH];
+					WideCharToMultiByte(CP_ACP, 0, fn.lpstrFile, -1, selectedFileA, MAX_PATH, NULL, NULL);
+					SetDlgItemText(hwndDlg, IDC_LOADSKIN, selectedFileA);
+					SendDlgItemMessage(hwndDlg, IDC_PLAYERSKINCHECK,
+									   BM_SETCHECK, BST_CHECKED, 0);
+					globals.m_bOptions_ChangedSkin = TRUE;
 				}
 				
-				case IDC_FLUSH_SKINLIST:
+				break;
+			}				case IDC_FLUSH_SKINLIST:
 				
 				{
 					int     itemcounter =
@@ -710,11 +720,12 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					RegDeleteKey(HKEY_CLASSES_ROOT, CIC_COOLPLAYER_PLAYLISTFILETYPE "\\Shell\\Enqueue in BriskPlayer\\command");
 					RegDeleteKey(HKEY_CLASSES_ROOT, CIC_COOLPLAYER_PLAYLISTFILETYPE "\\Shell\\Enqueue in BriskPlayer\\");
 					
-					MessageBox(hwndDlg,
-							   T(STR_MSG_FILETYPES_REGISTERED),
-							   T(STR_APP_NAME), MB_ICONINFORMATION);
-					           
-					break;
+				// Convert translated strings to Unicode
+				WCHAR* pwcMsg = STR_ConvertToUnicode(T(STR_MSG_FILETYPES_REGISTERED));
+				WCHAR* pwcTitle = STR_ConvertToUnicode(T(STR_APP_NAME));
+				MessageBoxW(hwndDlg, pwcMsg, pwcTitle, MB_ICONINFORMATION);
+				free(pwcMsg);
+				free(pwcTitle);					break;
 				}
 				
 				case IDC_ADDICONS:
@@ -754,10 +765,13 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 											 MAX_PATH);
 					                         
 					path_create_link(pathname, linkname2, NULL);
-					CoUninitialize();
-					MessageBox(hwndDlg,
-							   T(STR_MSG_ICONS_CREATED),
-							   T(STR_APP_NAME), MB_ICONINFORMATION);
+				CoUninitialize();
+				// Convert translated strings to Unicode
+				WCHAR* pwcMsg = STR_ConvertToUnicode(T(STR_MSG_ICONS_CREATED));
+				WCHAR* pwcTitle = STR_ConvertToUnicode(T(STR_APP_NAME));
+				MessageBoxW(hwndDlg, pwcMsg, pwcTitle, MB_ICONINFORMATION);
+				free(pwcMsg);
+				free(pwcTitle);
 					break;
 				}
 			}

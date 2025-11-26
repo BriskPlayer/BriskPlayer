@@ -56,8 +56,8 @@ char* ExtractStreamURLFromPlaylist(const char* pcPlaylistURL);
 [[nodiscard]] char* DownloadPlaylistToTempFile(const char* pcPlaylistURL)
 {
 	auto pcTempPath = (char*)NULL;
-	auto szTempDir = (char[MAX_PATH]){0};
-	auto szTempFile = (char[MAX_PATH]){0};
+	auto szTempDir = (WCHAR[MAX_PATH]){0};  // Unicode for international paths
+	auto szTempFile = (WCHAR[MAX_PATH]){0}; // Unicode for international paths
 	auto hFile = INVALID_HANDLE_VALUE;
 	auto dwBytesRead = (DWORD)0;
 	auto dwBytesWritten = (DWORD)0;
@@ -66,30 +66,33 @@ char* ExtractStreamURLFromPlaylist(const char* pcPlaylistURL);
 	
 	printf("DownloadPlaylistToTempFile: Downloading %s\n", pcPlaylistURL);
 	
-	// Get temp directory
-	if (GetTempPath(sizeof(szTempDir), szTempDir) == 0)
+	// Get temp directory (Unicode)
+	if (GetTempPathW(MAX_PATH, szTempDir) == 0)
 	{
-		printf("DownloadPlaylistToTempFile: GetTempPath failed\n");
+		printf("DownloadPlaylistToTempFile: GetTempPathW failed\n");
 		return NULL;
 	}
 	
-	// Generate temp filename
-	if (GetTempFileName(szTempDir, "BRP", 0, szTempFile) == 0)
+	// Generate temp filename (Unicode)
+	if (GetTempFileNameW(szTempDir, L"BRP", 0, szTempFile) == 0)
 	{
-		printf("DownloadPlaylistToTempFile: GetTempFileName failed\n");
+		printf("DownloadPlaylistToTempFile: GetTempFileNameW failed\n");
 		return NULL;
 	}
 	
-	// Determine file extension from URL
-	auto pcExt = ".tmp";
-	if (strstr(pcPlaylistURL, ".pls")) pcExt = ".pls";
-	else if (strstr(pcPlaylistURL, ".m3u")) pcExt = ".m3u";
-	else if (strstr(pcPlaylistURL, ".m3u8")) pcExt = ".m3u8";
+	// Determine file extension from URL and append (Unicode)
+	const WCHAR* pwcExt = L".tmp";
+	if (strstr(pcPlaylistURL, ".pls")) pwcExt = L".pls";
+	else if (strstr(pcPlaylistURL, ".m3u")) pwcExt = L".m3u";
+	else if (strstr(pcPlaylistURL, ".m3u8")) pwcExt = L".m3u8";
 	
 	// Append proper extension
-	strcat_s(szTempFile, sizeof(szTempFile), pcExt);
+	wcscat_s(szTempFile, MAX_PATH, pwcExt);
 	
-	printf("DownloadPlaylistToTempFile: Temp file: %s\n", szTempFile);
+	// Convert to ANSI for debug output only
+	char szTempFileAnsi[MAX_PATH];
+	WideCharToMultiByte(CP_ACP, 0, szTempFile, -1, szTempFileAnsi, MAX_PATH, NULL, NULL);
+	printf("DownloadPlaylistToTempFile: Temp file: %s\n", szTempFileAnsi);
 	
 	// Download the playlist
 	auto hInternet = InternetOpen("BriskPlayer/3.0", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0L);
@@ -108,11 +111,11 @@ char* ExtractStreamURLFromPlaylist(const char* pcPlaylistURL);
 		return NULL;
 	}
 	
-	// Create temp file
-	hFile = CreateFile(szTempFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY, NULL);
+	// Create temp file with Unicode filename for international character support
+	hFile = CreateFileW(szTempFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
-		printf("DownloadPlaylistToTempFile: CreateFile failed\n");
+		printf("DownloadPlaylistToTempFile: CreateFileW failed\n");
 		InternetCloseHandle(hURL);
 		InternetCloseHandle(hInternet);
 		return NULL;
@@ -128,7 +131,7 @@ char* ExtractStreamURLFromPlaylist(const char* pcPlaylistURL);
 			CloseHandle(hFile);
 			InternetCloseHandle(hURL);
 			InternetCloseHandle(hInternet);
-			DeleteFile(szTempFile);
+			DeleteFileW(szTempFile);
 			return NULL;
 		}
 		dwTotalBytes += dwBytesRead;
@@ -138,21 +141,21 @@ char* ExtractStreamURLFromPlaylist(const char* pcPlaylistURL);
 	InternetCloseHandle(hURL);
 	InternetCloseHandle(hInternet);
 	
-	printf("DownloadPlaylistToTempFile: Downloaded %lu bytes to %s\n", dwTotalBytes, szTempFile);
+	printf("DownloadPlaylistToTempFile: Downloaded %lu bytes\n", dwTotalBytes);
 	
 	if (dwTotalBytes == 0)
 	{
 		printf("DownloadPlaylistToTempFile: No content downloaded\n");
-		DeleteFile(szTempFile);
+		DeleteFileW(szTempFile);
 		return NULL;
 	}
 	
-	// Return the temp file path
-	pcTempPath = _strdup(szTempFile);
+	// Convert Unicode path to ANSI for return (legacy interface compatibility)
+	pcTempPath = STR_ConvertFromUnicode(szTempFile);
 	if (!pcTempPath)
 	{
-		printf("DownloadPlaylistToTempFile: Failed to allocate memory for path\n");
-		DeleteFile(szTempFile);
+		printf("DownloadPlaylistToTempFile: Failed to convert path\n");
+		DeleteFileW(szTempFile);
 		return NULL;
 	}
 	return pcTempPath;
@@ -295,17 +298,21 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 						
 						pNewCoDec = OpenCoDec(&playercontext, pcActualFilename);
 						
-						// Clean up temp file if we created one
-						if (pcTempPlaylistFile)
-						{
-							// Delete the temporary playlist file from disk
-							DeleteFile(pcTempPlaylistFile);
-							// Free the allocated path string
-							free(pcTempPlaylistFile);
-							pcTempPlaylistFile = NULL;
-						}
-						
-						// If the open failed then request a new stream from the interface
+				// Clean up temp file if we created one
+				if (pcTempPlaylistFile)
+				{
+					// Convert ANSI path back to Unicode for deletion
+					WCHAR* pwcTempFile = STR_ConvertToUnicode(pcTempPlaylistFile);
+					if (pwcTempFile)
+					{
+						// Delete the temporary playlist file from disk
+						DeleteFileW(pwcTempFile);
+						free(pwcTempFile);
+					}
+					// Free the allocated path string
+					free(pcTempPlaylistFile);
+					pcTempPlaylistFile = NULL;
+				}						// If the open failed then request a new stream from the interface
 						
 						if (pNewCoDec == NULL)
 						{

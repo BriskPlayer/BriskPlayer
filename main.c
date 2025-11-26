@@ -1466,7 +1466,7 @@ void    options_create(HWND hWnd)
 
 void    url_create(HWND hWnd)
 {
-	DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_URL), hWnd, (DLGPROC) url_windowproc);  
+	DialogBoxW(GetModuleHandle(NULL), MAKEINTRESOURCEW(IDD_URL), hWnd, (DLGPROC) url_windowproc);  
 }
 
 void    main_menuproc(HWND hWnd, LPPOINT points)
@@ -2315,9 +2315,12 @@ void    cmdline_usage(HWND hWndCoolPlayer)
 							"TEXT"); // pointer to resource type
 	globaldata = LoadResource(NULL, // resource-module handle
 							  resource);
-	                          
-	MessageBox(NULL, (LPCTSTR) LockResource(globaldata),
-			   "BriskPlayer command line options", 0); // text to set
+	
+	// Convert resource text to Unicode
+	char* pcHelpText = (char*)LockResource(globaldata);
+	WCHAR* pwcHelpText = STR_ConvertToUnicode(pcHelpText);
+	MessageBoxW(NULL, pwcHelpText, L"BriskPlayer command line options", 0);
+	free(pwcHelpText);
 	           
 	// only quit if no existing instance
 	if (hWndCoolPlayer == NULL)
@@ -2593,7 +2596,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Ensure that this system is audio capable
 	if (waveOutGetNumDevs() < 1)
 	{
-		MessageBox(GetDesktopWindow(), "No audio devices in this system", CP_COOLPLAYER, MB_ICONSTOP | MB_OK);
+		WCHAR* title = STR_ConvertToUnicode(CP_COOLPLAYER);
+		MessageBoxW(GetDesktopWindow(), L"No audio devices in this system", title, MB_ICONSTOP | MB_OK);
+		free(title);
 		return -1;
 	}
 	
@@ -2698,7 +2703,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		#ifdef _DEBUG
 		OutputDebugStringA("BriskPlayer: FAILED to create playlist - exiting!\n");
 		#endif
-		MessageBox(GetDesktopWindow(), "Failed to create playlist", CP_COOLPLAYER, MB_ICONSTOP | MB_OK);
+		WCHAR* title = STR_ConvertToUnicode(CP_COOLPLAYER);
+		MessageBoxW(GetDesktopWindow(), L"Failed to create playlist", title, MB_ICONSTOP | MB_OK);
+		free(title);
 		return -1;
 	}
 	

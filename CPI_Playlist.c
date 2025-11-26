@@ -993,7 +993,7 @@ void CPL_ExportPlaylist(CP_HPLAYLIST hPlaylist, const char* pcOutputName)
 	
 	if (hOutputFile == INVALID_HANDLE_VALUE)
 	{
-		MessageBox(windows.wnd_main, "Could not open file", "Error", MB_ICONERROR);
+		MessageBoxW(windows.wnd_main, L"Could not open file", L"Error", MB_ICONERROR);
 		return;
 	}
 	
@@ -1979,7 +1979,9 @@ void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char *pDir)
 	// Check that this is a correct path
 	if (cFullPath[0] == '\0' || path_is_directory(cFullPath) == FALSE)
 	{
-		MessageBox(NULL, "Not a valid directory.", cFullPath, MB_ICONERROR);
+		WCHAR* pwcPath = STR_ConvertToUnicode(cFullPath);
+		MessageBoxW(NULL, L"Not a valid directory.", pwcPath, MB_ICONERROR);
+		free(pwcPath);
 		return;
 	}
 	
@@ -1999,7 +2001,9 @@ void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char *pDir)
 	
 	if (hFileFind == INVALID_HANDLE_VALUE)
 	{
-		MessageBox(NULL, "Could not perform scan", cFullPath, MB_ICONERROR);
+		WCHAR* pwcPath = STR_ConvertToUnicode(cFullPath);
+		MessageBoxW(NULL, L"Could not perform scan", pwcPath, MB_ICONERROR);
+		free(pwcPath);
 		return;
 	}
 	

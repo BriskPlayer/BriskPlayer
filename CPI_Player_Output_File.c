@@ -208,23 +208,31 @@ void CPP_OMFL_RefillBuffers(CPs_OutputModule* pModule)
 		
 		while (!pContext->m_hFile)
 		{
-			OPENFILENAME fn;
-			char filefilter[] =
-				"WAV files (*.wav)\0*.wav\0"
-				"All Files (*.*)\0*.*\0";
-			BOOL    returnval;
-			fn.lStructSize = sizeof(OPENFILENAME);
+			OPENFILENAMEW fn;  // Unicode version
+			WCHAR filefilter[] =
+				L"WAV files (*.wav)\0*.wav\0"
+				L"All Files (*.*)\0*.*\0";
+			WCHAR newpathW[MAX_PATH];
+			BOOL returnval;
+			
+			// Convert ANSI path to Unicode for dialog
+			MultiByteToWideChar(CP_ACP, 0, newpath, -1, newpathW, MAX_PATH);
+			
+			// Convert initial directory to Unicode
+			WCHAR* pwcInitialDir = STR_ConvertToUnicode(options.last_used_directory);
+			
+			fn.lStructSize = sizeof(OPENFILENAMEW);
 			fn.hwndOwner = (HWND) GetWindowLongPtr(windows.wnd_main, DWLP_USER);
 			fn.hInstance = NULL;
 			fn.lpstrFilter = filefilter;
 			fn.lpstrCustomFilter = NULL;
 			fn.nMaxCustFilter = 0;
 			fn.nFilterIndex = 0;
-			fn.lpstrFile = newpath;
-			fn.nMaxFile = MAX_PATH * 200;
+			fn.lpstrFile = newpathW;
+			fn.nMaxFile = MAX_PATH;
 			fn.lpstrFileTitle = NULL;
 			fn.nMaxFileTitle = 0;
-			fn.lpstrInitialDir = options.last_used_directory;
+			fn.lpstrInitialDir = pwcInitialDir;
 			fn.lpstrTitle = NULL;
 			fn.Flags = OFN_ENABLESIZING |
 					   OFN_HIDEREADONLY | OFN_EXPLORER;
@@ -234,12 +242,17 @@ void CPP_OMFL_RefillBuffers(CPs_OutputModule* pModule)
 			fn.lCustData = 0;
 			fn.lpfnHook = NULL;
 			fn.lpTemplateName = NULL;
-			returnval = GetSaveFileName(&fn);
+			returnval = GetSaveFileNameW(&fn);  // Unicode version
+			
+			free(pwcInitialDir);
 			
 			if (!returnval)
 				return;
 			
-			errno_t err = fopen_s(&pContext->m_hFile, fn.lpstrFile, "wb");
+			// Convert back to ANSI for fopen_s
+			char selectedPath[MAX_PATH];
+			WideCharToMultiByte(CP_ACP, 0, fn.lpstrFile, -1, selectedPath, MAX_PATH, NULL, NULL);
+			errno_t err = fopen_s(&pContext->m_hFile, selectedPath, "wb");
 			
 			if (err == 0 && pContext->m_hFile)
 				break;
