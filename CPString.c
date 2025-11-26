@@ -18,6 +18,33 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 ////////////////////////////////////////////////////////////////////////////////
+// CPString.c - String Utilities and Unicode/ANSI Conversion
+//
+// UNICODE MIGRATION STRATEGY:
+// ---------------------------
+// BriskPlayer is gradually transitioning from ANSI to Unicode:
+//
+// CURRENT STATE (Mixed):
+//   - Internal processing: Mostly ANSI (char*, CP_ACP code page)
+//   - File I/O: Unicode (WCHAR*, CreateFileW for international filenames)
+//   - UI: Mixed (some ANSI dialogs, some Unicode)
+//
+// CONVERSION FUNCTIONS:
+//   - STR_ConvertToUnicode():   ANSI -> Unicode (for file operations)
+//   - STR_ConvertFromUnicode(): Unicode -> ANSI (for internal processing)
+//   - STR_ConvertToUnicodeAlloc(): Unicode with memory allocation
+//
+// FUTURE DIRECTION:
+//   - Move all string handling to Unicode (WCHAR*)
+//   - Use UTF-8 for external files (playlists, configs)
+//   - Replace CP_ACP with UTF-8 code page (CP_UTF8)
+//   - Use Windows W-suffix APIs exclusively (CreateFileW, etc.)
+//
+// LEGACY CONCERNS:
+//   - Older code uses ANSI lstrcpy/lstrcat (see stdafx.h)
+//   - Many functions still use char* for track names, URLs
+//   - Gradual migration required to avoid breaking existing code
+////////////////////////////////////////////////////////////////////////////////
 
 
 

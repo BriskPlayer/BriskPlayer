@@ -109,7 +109,7 @@ void CPP_OMWAV_Uninitialise(CPs_CoDecModule* pModule)
 {
 	CPs_CoDec_Wave *pContext = (CPs_CoDec_Wave*)pModule->m_pModuleCookie;
 	CP_CHECKOBJECT(pContext);
-	CP_ASSERT(pContext->m_hFile == INVALID_HANDLE_VALUE)
+	CP_ASSERT(pContext->m_hFile == INVALID_HANDLE_VALUE);
 	
 	free(pContext);
 	CPFA_EmptyFileAssociations(pModule);

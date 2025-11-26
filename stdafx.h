@@ -26,6 +26,13 @@
 #ifndef sprintf
 #define sprintf wsprintf
 #endif
+
+// String function macros - legacy compatibility layer
+// NOTE: strcpy/strcat/strncpy are UNSAFE and should be replaced with:
+//   - strcpy_s() instead of strcpy/lstrcpy
+//   - strcat_s() instead of strcat/lstrcat
+//   - Safe buffer size checking in all cases
+// TODO: Gradually migrate to C11/C23 safe string functions (_s variants)
 #define strcpy lstrcpy
 #define strcmp lstrcmp
 #define strcat lstrcat

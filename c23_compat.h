@@ -47,7 +47,32 @@
 #define CALLOC_TYPE(type, count) ((type*)calloc(count, sizeof(type)))
 #define REALLOC_TYPE(ptr, type, count) ((type*)realloc(ptr, (count) * sizeof(type)))
 
+////////////////////////////////////////////////////////////////////////////////
+// Common Constants - Replaces Magic Numbers
+////////////////////////////////////////////////////////////////////////////////
+
+// Buffer sizes for common use cases
+constexpr size_t CPC_SMALL_BUFFER = 256;    // Error messages, short strings
+constexpr size_t CPC_MEDIUM_BUFFER = 512;   // File filters, format strings
+constexpr size_t CPC_LARGE_BUFFER = 1024;   // Status messages, multi-line text
+constexpr size_t CPC_HUGE_BUFFER = 4096;    // Large data buffers, audio chunks
+constexpr size_t CPC_NETWORK_BUFFER = 8192; // Network I/O operations
+
+// Timeout values (milliseconds)
+constexpr DWORD CPC_TIMEOUT_SHORT = 1000;   // 1 second
+constexpr DWORD CPC_TIMEOUT_MEDIUM = 5000;  // 5 seconds
+constexpr DWORD CPC_TIMEOUT_NETWORK = 15000; // 15 seconds
+constexpr DWORD CPC_TIMEOUT_INFINITE = 0xFFFFFFFF; // INFINITE
+
+// Return codes for consistency
+constexpr int CPC_SUCCESS = 0;              // Operation succeeded
+constexpr int CPC_ERROR = -1;               // Generic error
+constexpr int CPC_ERROR_INVALID_PARAM = -2; // Invalid parameter
+constexpr int CPC_ERROR_OUT_OF_MEMORY = -3; // Allocation failed
+
+////////////////////////////////////////////////////////////////////////////////
 // Safe memory allocation wrappers with error handling
+////////////////////////////////////////////////////////////////////////////////
 // These check for allocation failures and log errors
 static inline void* safe_malloc_impl(size_t size, const char* file, int line)
 {

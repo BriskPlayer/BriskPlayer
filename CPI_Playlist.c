@@ -791,10 +791,10 @@ void CPL_PlayItem(CP_HPLAYLIST hPlaylist, const BOOL bStopFirst, const CPe_PlayM
 					hItemToPlay = pPlaylist->m_pTrackStack[0];
 			}
 			
-			break;
-			
-		default:
-			CP_FAIL(UnknownPlayMode);
+		break;
+		
+	default:
+		CP_FAIL("UnknownPlayMode");
 	}
 	
 	CPL_SetActiveItem(hPlaylist, hItemToPlay);
@@ -1773,10 +1773,10 @@ void CPL_SortList(CP_HPLAYLIST hPlaylist, const CPe_PlayItemSortElement enElemen
 				
 			case piseLength:
 				pfnSort = cpl_sort_Length;
-				break;
-				
-			default:
-				CP_FAIL(UnknownSortOrder);
+			break;
+			
+		default:
+			CP_FAIL("UnknownSortOrder");
 		}
 	}
 	

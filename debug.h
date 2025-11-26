@@ -63,15 +63,17 @@ int _CrtDbgReport(
 
 #else
 
-#define CP_CHECKOBJECT(obj_ptr_typed) {  }
-#define CP_ASSERT(expr)     {  }
-#define CP_FAIL(expr)     {  }
-#define CP_TRACE0(f)     {  }
-#define CP_TRACE1(f, e1)    {  }
-#define CP_TRACE2(f, e1, e2)   {  }
-#define CP_TRACE3(f, e1, e2, e3)  {  }
-#define CP_TRACE4(f, e1, e2, e3, e4) {  }
-#define CP_TRACE5(f, e1, e2, e3, e4, e5){  }
+// Release build: no-op macros using do-while(0) idiom for statement safety
+// The (void) casts prevent unused variable warnings
+#define CP_CHECKOBJECT(obj_ptr_typed) do { (void)(obj_ptr_typed); } while(0)
+#define CP_ASSERT(expr)               do { (void)(expr); } while(0)
+#define CP_FAIL(expr)                 do { (void)(expr); } while(0)
+#define CP_TRACE0(f)                  do { (void)(f); } while(0)
+#define CP_TRACE1(f, e1)              do { (void)(f); (void)(e1); } while(0)
+#define CP_TRACE2(f, e1, e2)          do { (void)(f); (void)(e1); (void)(e2); } while(0)
+#define CP_TRACE3(f, e1, e2, e3)      do { (void)(f); (void)(e1); (void)(e2); (void)(e3); } while(0)
+#define CP_TRACE4(f, e1, e2, e3, e4)  do { (void)(f); (void)(e1); (void)(e2); (void)(e3); (void)(e4); } while(0)
+#define CP_TRACE5(f, e1, e2, e3, e4, e5) do { (void)(f); (void)(e1); (void)(e2); (void)(e3); (void)(e4); (void)(e5); } while(0)
 
 #endif
 

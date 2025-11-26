@@ -2818,18 +2818,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				windows.wnd_main = hWnd;
 				windows.m_hWndMain = hWnd;
 				
-				if (options.show_on_taskbar)
-				{
-					SetWindowLong(hWnd, GWL_EXSTYLE,
-								  GetWindowLong(hWnd,
-												GWL_EXSTYLE) &
-								  ~WS_EX_TOOLWINDOW);
-					SetWindowLong(hWnd, GWL_STYLE,
-								  GetWindowLong(hWnd,
-												GWL_STYLE) | WS_SYSMENU);
-				}
-				
-				drawables.dc_main = GetDC(hWnd);
+			if (options.show_on_taskbar)
+			{
+				SetWindowLongPtr(hWnd, GWL_EXSTYLE,
+							  GetWindowLongPtr(hWnd,
+											GWL_EXSTYLE) &
+							  ~WS_EX_TOOLWINDOW);
+				SetWindowLongPtr(hWnd, GWL_STYLE,
+							  GetWindowLongPtr(hWnd,
+											GWL_STYLE) | WS_SYSMENU);
+			}				drawables.dc_main = GetDC(hWnd);
 				
 				drawables.dc_memory =
 					CreateCompatibleDC(drawables.dc_main);

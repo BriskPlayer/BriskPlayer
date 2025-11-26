@@ -31,15 +31,20 @@
 #define _stdcall __stdcall
 #endif
 
+////////////////////////////////////////////////////////////////////////////////
+// Streaming Constants - Network and Buffer Configuration
+////////////////////////////////////////////////////////////////////////////////
 
+// Circular buffer configuration for streaming audio
+#define CIC_STREAMBUFFERSIZE  0x40000  // 262,144 bytes (256KB) - Main stream buffer
+#define CIC_PREBUFFERAMOUNT   0x8000   // 32,768 bytes (32KB) - Pre-buffer before playback
+#define CIC_READCHUNKSIZE     0x1000   // 4,096 bytes (4KB) - Network read chunk size
 
-#define CIC_STREAMBUFFERSIZE  0x40000
-#define CIC_PREBUFFERAMOUNT   0x8000
-#define CIC_READCHUNKSIZE   0x1000
-#define CIC_MAX_METADATA_SIZE 4096  // Maximum allowed metadata block size
-#define CIC_MAX_PLAYLIST_SIZE (10 * 1024 * 1024)  // 10MB max for playlist files
-#define CIC_MAX_LINE_LENGTH 8192  // Maximum line length in playlists
-#define CIC_NETWORK_TIMEOUT_MS 15000  // Consistent 15 second timeout
+// Security and resource limits
+#define CIC_MAX_METADATA_SIZE 4096     // 4KB - Maximum Icecast metadata block size
+#define CIC_MAX_PLAYLIST_SIZE (10 * 1024 * 1024)  // 10MB - Max playlist file size
+#define CIC_MAX_LINE_LENGTH   8192     // 8KB - Maximum line length in playlist files
+#define CIC_NETWORK_TIMEOUT_MS 15000   // 15 seconds - Consistent network timeout
 
 ////////////////////////////////////////////////////////////////////////////////
 //

@@ -407,28 +407,24 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					                       
 					if (options.show_on_taskbar)
 					{
-						SetWindowLong(hWnd, GWL_EXSTYLE,
-									  GetWindowLong(hWnd,
-													GWL_EXSTYLE) &
+						SetWindowLongPtr(hWnd, GWL_EXSTYLE,
+									  GetWindowLongPtr(hWnd,
+												GWL_EXSTYLE) &
 									  ~WS_EX_TOOLWINDOW);
-						SetWindowLong(hWnd, GWL_STYLE,
-									  GetWindowLong(hWnd,
-													GWL_STYLE) | WS_SYSMENU);
-					}
-					
-					else
+						SetWindowLongPtr(hWnd, GWL_STYLE,
+									  GetWindowLongPtr(hWnd,
+												GWL_STYLE) | WS_SYSMENU);
+					}					else
 					{
 						ShowWindow(hWnd, SW_HIDE);
-						SetWindowLong(hWnd, GWL_EXSTYLE,
-									  GetWindowLong(hWnd,
-													GWL_EXSTYLE) |
+						SetWindowLongPtr(hWnd, GWL_EXSTYLE,
+									  GetWindowLongPtr(hWnd,
+												GWL_EXSTYLE) |
 									  WS_EX_TOOLWINDOW);
-						SetWindowLong(hWnd, GWL_STYLE,
-									  GetWindowLong(hWnd,
-													GWL_STYLE) | WS_SYSMENU);
-						ShowWindow(hWnd, SW_SHOW);
-						
-					}
+						SetWindowLongPtr(hWnd, GWL_STYLE,
+									  GetWindowLongPtr(hWnd,
+												GWL_STYLE) | WS_SYSMENU);
+						ShowWindow(hWnd, SW_SHOW);					}
 					
 					options.remember_last_played_track =
 					

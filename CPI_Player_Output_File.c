@@ -214,7 +214,7 @@ void CPP_OMFL_RefillBuffers(CPs_OutputModule* pModule)
 				"All Files (*.*)\0*.*\0";
 			BOOL    returnval;
 			fn.lStructSize = sizeof(OPENFILENAME);
-			fn.hwndOwner = (HWND) GetWindowLong(windows.wnd_main, DWLP_USER);
+			fn.hwndOwner = (HWND) GetWindowLongPtr(windows.wnd_main, DWLP_USER);
 			fn.hInstance = NULL;
 			fn.lpstrFilter = filefilter;
 			fn.lpstrCustomFilter = NULL;
