@@ -36,6 +36,10 @@
 #define CIC_STREAMBUFFERSIZE  0x40000
 #define CIC_PREBUFFERAMOUNT   0x8000
 #define CIC_READCHUNKSIZE   0x1000
+#define CIC_MAX_METADATA_SIZE 4096  // Maximum allowed metadata block size
+#define CIC_MAX_PLAYLIST_SIZE (10 * 1024 * 1024)  // 10MB max for playlist files
+#define CIC_MAX_LINE_LENGTH 8192  // Maximum line length in playlists
+#define CIC_NETWORK_TIMEOUT_MS 15000  // Consistent 15 second timeout
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -112,6 +116,23 @@ BOOL ReadStreamData(HINTERNET hURLStream, CPs_BufferFillerContext* pContext, BYT
 		}
 		
 		DWORD dwMetaDataSize = bMetaLength * 16;
+		
+		// Validate metadata size to prevent memory exhaustion
+		if (dwMetaDataSize > CIC_MAX_METADATA_SIZE)
+		{
+			CP_TRACE0("EP_FillerThread::Metadata block too large");
+			printf("Metadata block size %lu exceeds maximum %d bytes\n", dwMetaDataSize, CIC_MAX_METADATA_SIZE);
+			// Skip the metadata but don't fail the connection
+			BYTE bDummy;
+			for (DWORD i = 0; i < dwMetaDataSize; i++)
+			{
+				if (!InternetReadFile(hURLStream, &bDummy, 1, &dwMetaBytes))
+					return FALSE;
+			}
+			pContext->m_dwAudioBytesRead = 0;
+			return ReadStreamData(hURLStream, pContext, pBuffer, dwRequestedBytes, pdwBytesRead);
+		}
+		
 		CP_TRACE1("EP_FillerThread::Reading metadata block of %lu bytes", dwMetaDataSize);
 		
 		if (dwMetaDataSize > 0)
@@ -170,8 +191,8 @@ char* DownloadPlaylistContent(const char* pcURL)
 		return NULL;
 	}
 	
-	// Set timeouts for playlist downloads
-	DWORD dwTimeout = 10000; // 10 seconds
+	// Set consistent timeouts for playlist downloads
+	DWORD dwTimeout = CIC_NETWORK_TIMEOUT_MS;
 	InternetSetOption(hInternet, INTERNET_OPTION_CONNECT_TIMEOUT, &dwTimeout, sizeof(dwTimeout));
 	InternetSetOption(hInternet, INTERNET_OPTION_RECEIVE_TIMEOUT, &dwTimeout, sizeof(dwTimeout));
 	
@@ -194,6 +215,15 @@ char* DownloadPlaylistContent(const char* pcURL)
 	
 	while (InternetReadFile(hURL, pcBuffer, dwChunkSize, &dwBytesRead) && dwBytesRead > 0)
 	{
+		// Enforce maximum playlist size to prevent memory exhaustion
+		if (dwTotalSize + dwBytesRead > CIC_MAX_PLAYLIST_SIZE)
+		{
+			printf("DownloadPlaylistContent: Playlist too large (exceeds %d bytes)\n", CIC_MAX_PLAYLIST_SIZE);
+			free(pcContent);
+			pcContent = NULL;
+			break;
+		}
+		
 		// Check for integer overflow before realloc
 		if (dwTotalSize > (DWORD)(SIZE_MAX - dwBytesRead - 1))
 		{
@@ -258,6 +288,15 @@ char* ParsePLSPlaylist(const char* pcContent)
 	
 	while (pcLine)
 	{
+		// Validate line length to prevent buffer issues
+		size_t iLineLen = strlen(pcLine);
+		if (iLineLen > CIC_MAX_LINE_LENGTH)
+		{
+			CP_TRACE0("ParsePLSPlaylist: Line too long, skipping");
+			pcLine = strtok_s(NULL, "\r\n", &pcContext);
+			continue;
+		}
+		
 		CP_TRACE1("ParsePLSPlaylist: Processing line: %s", pcLine);
 		
 		// Look for File1=URL, File2=URL, etc.
@@ -308,6 +347,15 @@ char* ParseM3UPlaylist(const char* pcContent)
 	
 	while (pcLine)
 	{
+		// Validate line length
+		size_t iLineLen = strlen(pcLine);
+		if (iLineLen > CIC_MAX_LINE_LENGTH)
+		{
+			CP_TRACE0("ParseM3UPlaylist: Line too long, skipping");
+			pcLine = strtok_s(NULL, "\r\n", &pcContext);
+			continue;
+		}
+		
 		// Skip comments and empty lines
 		while (*pcLine == ' ' || *pcLine == '\t') pcLine++; // Skip leading whitespace
 		
@@ -452,6 +500,7 @@ unsigned int _stdcall EP_FillerThread(void* _pContext)
 	if (hInternet == NULL)
 	{
 		DWORD dwError = GetLastError();
+		(void)dwError; // May be used for debugging
 		if (pcActualURL) free(pcActualURL);
 		if (pcHeaders) free(pcHeaders);
 		pContext->m_pCircleBuffer->SetComplete(pContext->m_pCircleBuffer);
@@ -480,6 +529,7 @@ unsigned int _stdcall EP_FillerThread(void* _pContext)
 	if (hURLStream == NULL)
 	{
 		DWORD dwError = GetLastError();
+		(void)dwError; // May be used for debugging
 		InternetCloseHandle(hInternet);
 		if (pcActualURL) free(pcActualURL);
 		if (pcHeaders) free(pcHeaders);
@@ -762,9 +812,12 @@ BOOL CPSINET_Read(CPs_InStream* pStream, void* pDestBuffer, const size_t iBytesT
 //
 void CPSINET_Seek(CPs_InStream* pStream, const size_t iNewOffset)
 {
+	(void)iNewOffset; // Unused - internet streams cannot seek
 #ifdef _DEBUG
 	CPs_InStream_Internet* pContext = (CPs_InStream_Internet*)pStream->m_pModuleCookie;
 	CP_CHECKOBJECT(pContext);
+#else
+	(void)pStream; // Unused in release builds
 #endif
 }
 
@@ -776,8 +829,10 @@ unsigned int CPSINET_GetLength(CPs_InStream* pStream)
 #ifdef _DEBUG
 	CPs_InStream_Internet* pContext = (CPs_InStream_Internet*)pStream->m_pModuleCookie;
 	CP_CHECKOBJECT(pContext);
+#else
+	(void)pStream; // Unused in release builds
 #endif
-	return 0;
+	return 0xFFFFFFFF;
 }
 
 //

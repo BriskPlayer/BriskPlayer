@@ -27,8 +27,69 @@
 
 
 
+#define CIC_MAX_URL_LENGTH 8192  // Maximum reasonable URL length
+#define CIC_MAX_PATH_LENGTH 32767 // Windows extended path limit
+
 CPs_InStream* CP_CreateInStream_LocalFile(const char* pcFlexiURL, HWND hWndOwner);
 CPs_InStream* CP_CreateInStream_Internet(const char* pcFlexiURL, HWND hWndOwner);
+
+//
+// Validate and sanitize URL/path input
+//
+static BOOL ValidateURLInput(const char* pcFlexiURL, size_t* piLength)
+{
+	if (!pcFlexiURL)
+		return FALSE;
+	
+	size_t iLen = strlen(pcFlexiURL);
+	*piLength = iLen;
+	
+	// Check for empty input
+	if (iLen == 0)
+		return FALSE;
+	
+	// Check for excessively long URLs (potential DoS)
+	if (iLen > CIC_MAX_URL_LENGTH)
+	{
+		CP_TRACE0("URL too long, exceeds maximum allowed length");
+		printf("ValidateURLInput: URL too long: %zu bytes (max %d)\n", iLen, CIC_MAX_URL_LENGTH);
+		return FALSE;
+	}
+	
+	// Check for null bytes in the middle (security issue)
+	for (size_t i = 0; i < iLen; i++)
+	{
+		if (pcFlexiURL[i] == '\0')
+		{
+			CP_TRACE0("URL contains embedded null bytes");
+			return FALSE;
+		}
+	}
+	
+	return TRUE;
+}
+
+//
+// Check for directory traversal attempts in file paths
+//
+static BOOL ContainsDirectoryTraversal(const char* pcPath)
+{
+	// Check for .. sequences
+	if (strstr(pcPath, "..") != NULL)
+		return TRUE;
+	
+	// Check for multiple consecutive slashes (path normalization issue)
+	const char* p = pcPath;
+	while (*p)
+	{
+		if ((*p == '\\' || *p == '/') && (*(p+1) == '\\' || *(p+1) == '/'))
+			return TRUE;
+		p++;
+	}
+	
+	return FALSE;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 //
@@ -36,7 +97,14 @@ CPs_InStream* CP_CreateInStream_Internet(const char* pcFlexiURL, HWND hWndOwner)
 CPs_InStream* CP_CreateInStream(const char* pcFlexiURL, HWND hWndOwner)
 {
 	CPs_InStream* pNewStream = NULL;
-	int iURLLen = strlen(pcFlexiURL);
+	size_t iURLLen;
+	
+	// Validate input before processing
+	if (!ValidateURLInput(pcFlexiURL, &iURLLen))
+	{
+		CP_TRACE0("CP_CreateInStream: Invalid URL input");
+		return NULL;
+	}
 	
 	CP_TRACE1("CP_CreateInStream: Processing URL: %s", pcFlexiURL);
 	printf("CP_CreateInStream: Processing URL: %s\n", pcFlexiURL);
@@ -111,6 +179,13 @@ CPs_InStream* CP_CreateInStream(const char* pcFlexiURL, HWND hWndOwner)
 	}
 	
 	// Try the local file system
+	// Check for directory traversal attempts before opening local files
+	if (ContainsDirectoryTraversal(pcFlexiURL))
+	{
+		CP_TRACE1("CP_CreateInStream: Potential directory traversal detected in path: %s", pcFlexiURL);
+		return NULL;
+	}
+	
 	pNewStream = CP_CreateInStream_LocalFile(pcFlexiURL, hWndOwner);
 	
 	if (pNewStream)

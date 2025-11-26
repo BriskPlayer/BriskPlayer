@@ -371,11 +371,22 @@ void CPL_AddSingleFile_pt2(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hNewFile, co
 		// Create title buffer
 		iNumChars = (iLastDotIDX - iLastSlashIDX) + 1;
 		
-		CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName = CALLOC_TYPE(char, iNumChars + 1);
-		
-		memcpy(CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName, pcPath + iLastSlashIDX, iNumChars);
-		
-		CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName[iNumChars] = '\0';
+		// Validate character count is reasonable
+		if (iNumChars <= 0 || iNumChars > 512)
+		{
+			// Use a safe default name if extraction failed
+			CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName = _strdup("[Unknown]");
+		}
+		else
+		{
+			CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName = CALLOC_TYPE(char, iNumChars + 1);
+			
+			if (CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName)
+			{
+				memcpy(CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName, pcPath + iLastSlashIDX, iNumChars);
+				CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName[iNumChars] = '\0';
+			}
+		}
 	}
 	
 	// Add to track stack
@@ -1144,7 +1155,7 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 		{
 			// Handle PLS URL - download and parse content
 			HINTERNET hInternet, hURLStream;
-			DWORD dwTimeout, dwBytesRead;
+			DWORD dwTimeout;
 			INTERNET_BUFFERS internetbuffer;
 			char *pcPlaylistBuffer;
 			
