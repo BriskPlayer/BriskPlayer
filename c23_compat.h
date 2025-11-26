@@ -10,6 +10,7 @@
 #define C23_FEATURES_H
 
 #include <stddef.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>   // For memset, memcpy
 #include <stdbool.h>  // For bool, true, false
@@ -45,6 +46,109 @@
 #define MALLOC_TYPE(type) ((type*)malloc(sizeof(type)))
 #define CALLOC_TYPE(type, count) ((type*)calloc(count, sizeof(type)))
 #define REALLOC_TYPE(ptr, type, count) ((type*)realloc(ptr, (count) * sizeof(type)))
+
+// Safe memory allocation wrappers with error handling
+// These check for allocation failures and log errors
+static inline void* safe_malloc_impl(size_t size, const char* file, int line)
+{
+	if (size == 0)
+		return NULL;
+	
+	void* ptr = malloc(size);
+	if (!ptr)
+	{
+		// Critical allocation failure - log it
+		char error_msg[256];
+		sprintf_s(error_msg, sizeof(error_msg), 
+		         "FATAL: malloc(%zu) failed at %s:%d\n", size, file, line);
+		OutputDebugStringA(error_msg);
+		fprintf(stderr, "%s", error_msg);
+	}
+	return ptr;
+}
+
+static inline void* safe_calloc_impl(size_t count, size_t size, const char* file, int line)
+{
+	if (count == 0 || size == 0)
+		return NULL;
+	
+	// Check for multiplication overflow
+	if (count > SIZE_MAX / size)
+	{
+		char error_msg[256];
+		sprintf_s(error_msg, sizeof(error_msg),
+		         "FATAL: calloc(%zu, %zu) would overflow at %s:%d\n", count, size, file, line);
+		OutputDebugStringA(error_msg);
+		fprintf(stderr, "%s", error_msg);
+		return NULL;
+	}
+	
+	void* ptr = calloc(count, size);
+	if (!ptr)
+	{
+		char error_msg[256];
+		sprintf_s(error_msg, sizeof(error_msg),
+		         "FATAL: calloc(%zu, %zu) failed at %s:%d\n", count, size, file, line);
+		OutputDebugStringA(error_msg);
+		fprintf(stderr, "%s", error_msg);
+	}
+	return ptr;
+}
+
+static inline void* safe_realloc_impl(void* ptr, size_t size, const char* file, int line)
+{
+	if (size == 0)
+	{
+		free(ptr);
+		return NULL;
+	}
+	
+	void* new_ptr = realloc(ptr, size);
+	if (!new_ptr)
+	{
+		char error_msg[256];
+		sprintf_s(error_msg, sizeof(error_msg),
+		         "FATAL: realloc(%p, %zu) failed at %s:%d\n", ptr, size, file, line);
+		OutputDebugStringA(error_msg);
+		fprintf(stderr, "%s", error_msg);
+		// Original pointer is still valid on failure
+	}
+	return new_ptr;
+}
+
+// Safe allocation macros that track location
+#define SAFE_MALLOC(size) safe_malloc_impl(size, __FILE__, __LINE__)
+#define SAFE_CALLOC(count, size) safe_calloc_impl(count, size, __FILE__, __LINE__)
+#define SAFE_REALLOC(ptr, size) safe_realloc_impl(ptr, size, __FILE__, __LINE__)
+
+// Checked type-safe allocations
+#define SAFE_MALLOC_TYPE(type) ((type*)SAFE_MALLOC(sizeof(type)))
+#define SAFE_CALLOC_TYPE(type, count) ((type*)SAFE_CALLOC(count, sizeof(type)))
+
+// Integer overflow checking helpers
+static inline BOOL check_mul_overflow_u32(DWORD a, DWORD b, DWORD* result)
+{
+	if (a == 0 || b == 0)
+	{
+		*result = 0;
+		return TRUE;
+	}
+	
+	if (a > UINT_MAX / b)
+		return FALSE; // Overflow would occur
+	
+	*result = a * b;
+	return TRUE;
+}
+
+static inline BOOL check_add_overflow_u32(DWORD a, DWORD b, DWORD* result)
+{
+	if (a > UINT_MAX - b)
+		return FALSE; // Overflow would occur
+	
+	*result = a + b;
+	return TRUE;
+}
 
 // Type-safe macros using C23 typeof
 #define TYPEOF_MAX(a, b) ({ \

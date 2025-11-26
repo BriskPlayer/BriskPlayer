@@ -54,6 +54,11 @@ void CPLI_CalculateLength_WAV(CPs_PlaylistItem* pItem);
 CP_HPLAYLISTITEM CPLII_CreateItem(const char* pcPath)
 {
 	CPs_PlaylistItem* pNewItem = CALLOC_TYPE(CPs_PlaylistItem, 1);
+	if (!pNewItem)
+	{
+		CP_TRACE0("Failed to allocate playlist item");
+		return NULL;
+	}
 	
 	pNewItem->m_pcPath = NULL;
 	CPLI_SetPath(pNewItem, pcPath);

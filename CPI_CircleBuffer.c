@@ -119,8 +119,12 @@ CPs_CircleBuffer* CP_CreateCircleBuffer(const unsigned int iBufferSize)
 	
 #else
 	// Legacy implementation for older compilers
-	CPs_CircleBuffer* pNewBuffer = (CPs_CircleBuffer*)malloc(sizeof(CPs_CircleBuffer));
-	if (!pNewBuffer) return NULL;
+	CPs_CircleBuffer* pNewBuffer = (CPs_CircleBuffer*)SAFE_MALLOC(sizeof(CPs_CircleBuffer));
+	if (!pNewBuffer)
+	{
+		CP_TRACE0("Failed to allocate circle buffer");
+		return NULL;
+	}
 	
 	pNewBuffer->Uninitialise = CircleBufferUninitialise;
 	pNewBuffer->Write = CircleBufferWrite;

@@ -56,9 +56,12 @@ CP_HPLAYER CPI_Player__Create(HWND hWndMain)
 	CPs_PlayEngine* pNewPlayEngine;
 	
 	// Thread control object
-	pNewPlayEngine = (CPs_PlayEngine*)malloc(sizeof(CPs_PlayEngine));
+	pNewPlayEngine = (CPs_PlayEngine*)SAFE_MALLOC(sizeof(CPs_PlayEngine));
 	if (!pNewPlayEngine)
+	{
+		CP_TRACE0("Failed to allocate play engine");
 		return NULL;
+	}
 		
 	// Zero-initialize the structure to prevent garbage values
 	memset(pNewPlayEngine, 0, sizeof(CPs_PlayEngine));
@@ -141,8 +144,24 @@ void CPI_Player__ReopenMixer(CP_HPLAYER hPlayer)
 		waveformatex.nChannels = 2;
 		waveformatex.nSamplesPerSec = 44100;
 		waveformatex.wBitsPerSample = 16;
-		waveformatex.nBlockAlign = (waveformatex.nChannels * waveformatex.wBitsPerSample) >> 3;
-		waveformatex.nAvgBytesPerSec = waveformatex.nSamplesPerSec * waveformatex.nBlockAlign;
+		
+		// Calculate block align safely
+		DWORD blockAlign = (waveformatex.nChannels * waveformatex.wBitsPerSample) >> 3;
+		if (blockAlign > USHRT_MAX)
+		{
+			CP_TRACE0("Mixer: Block align overflow");
+			return;
+		}
+		waveformatex.nBlockAlign = (WORD)blockAlign;
+		
+		// Calculate average bytes per second safely
+		DWORD avgBytesPerSec;
+		if (!check_mul_overflow_u32(waveformatex.nSamplesPerSec, waveformatex.nBlockAlign, &avgBytesPerSec))
+		{
+			CP_TRACE0("Mixer: Average bytes per second overflow");
+			return;
+		}
+		waveformatex.nAvgBytesPerSec = avgBytesPerSec;
 		waveformatex.cbSize = 0;
 		waveOutOpen(&hWaveOut,
 					WAVE_MAPPER,

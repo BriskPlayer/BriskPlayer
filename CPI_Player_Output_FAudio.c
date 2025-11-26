@@ -39,7 +39,6 @@
 // Buffer configuration - C23 constexpr for compile-time optimization
 constexpr int CPC_FAUDIO_NUMBEROFBUFFERS = 4;
 constexpr int CPC_FAUDIO_BUFFERSIZE_MS = 40;  // 40ms per buffer for low latency
-constexpr int CPC_FAUDIO_MAX_SAMPLE_RATE = 192000;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Voice callback structure (forward declaration)
@@ -189,18 +188,41 @@ void CPP_OMFA_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInf
 		.cbSize = 0
 	};
 	
-	// Calculate dependent fields
-	pContext->m_WaveFormat.nBlockAlign = (pContext->m_WaveFormat.nChannels * pContext->m_WaveFormat.wBitsPerSample) / 8;
-	pContext->m_WaveFormat.nAvgBytesPerSec = pContext->m_WaveFormat.nSamplesPerSec * pContext->m_WaveFormat.nBlockAlign;
+	// Calculate dependent fields with overflow protection
+	DWORD blockAlign = (pContext->m_WaveFormat.nChannels * pContext->m_WaveFormat.wBitsPerSample) / 8;
+	if (blockAlign > USHRT_MAX)
+	{
+		CP_TRACE0("FAudio: Block align calculation overflow");
+		CPP_OMFA_Uninitialise(pModule);
+		return;
+	}
+	pContext->m_WaveFormat.nBlockAlign = (WORD)blockAlign;
 	
-	// Calculate buffer size (40ms worth of audio data)
-	pContext->m_dwBufferSize = (pContext->m_WaveFormat.nAvgBytesPerSec * CPC_FAUDIO_BUFFERSIZE_MS) / 1000;
+	// Calculate average bytes per second with overflow protection
+	DWORD avgBytesPerSec;
+	if (!check_mul_overflow_u32(pContext->m_WaveFormat.nSamplesPerSec, pContext->m_WaveFormat.nBlockAlign, &avgBytesPerSec))
+	{
+		CP_TRACE0("FAudio: Average bytes per second calculation overflow");
+		CPP_OMFA_Uninitialise(pModule);
+		return;
+	}
+	pContext->m_WaveFormat.nAvgBytesPerSec = avgBytesPerSec;
+	
+	// Calculate buffer size with overflow protection (40ms worth of audio data)
+	DWORD bufferSize;
+	if (!check_mul_overflow_u32(avgBytesPerSec, CPC_FAUDIO_BUFFERSIZE_MS, &bufferSize))
+	{
+		CP_TRACE0("FAudio: Buffer size calculation overflow");
+		CPP_OMFA_Uninitialise(pModule);
+		return;
+	}
+	pContext->m_dwBufferSize = bufferSize / 1000;
 	
 	// Align buffer size to block boundary
 	pContext->m_dwBufferSize = (pContext->m_dwBufferSize / pContext->m_WaveFormat.nBlockAlign) * pContext->m_WaveFormat.nBlockAlign;
 	
-	// Create voice callback
-	pVoiceCallback = (FAudioVoiceCallbackImpl*)malloc(sizeof(FAudioVoiceCallbackImpl));
+	// Create voice callback with safe allocation
+	pVoiceCallback = (FAudioVoiceCallbackImpl*)SAFE_MALLOC(sizeof(FAudioVoiceCallbackImpl));
 	if (!pVoiceCallback)
 	{
 		CPP_OMFA_Uninitialise(pModule);
@@ -470,6 +492,7 @@ void CPP_OMFA_Flush(CPs_OutputModule* pModule)
 
 void CPP_OMFA_OnEQChanged(CPs_OutputModule* pModule)
 {
+	(void)pModule; // Unused: EQ applied during buffer filling
 	// FAudio doesn't need special handling for EQ changes
 	// EQ is applied in real-time during buffer filling
 }

@@ -113,7 +113,13 @@ void CPP_OMDS_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInf
 	
 	CPs_OutputContext_DirectSound* pContext;
 	CP_ASSERT(pModule->m_pModuleCookie == NULL);
-	pContext = (CPs_OutputContext_DirectSound*)malloc(sizeof(CPs_OutputContext_DirectSound));
+	pContext = (CPs_OutputContext_DirectSound*)SAFE_MALLOC(sizeof(CPs_OutputContext_DirectSound));
+	if (!pContext)
+	{
+		CP_TRACE0("Failed to allocate DirectSound context");
+		CP_FAIL("Cannot allocate DirectSound context");
+		return;
+	}
 	pModule->m_pModuleCookie = pContext;
 	CP_TRACE0("DirectSound initialising");
 	
@@ -144,8 +150,28 @@ void CPP_OMDS_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInf
 	pContext->WaveFile.nChannels = pFileInfo->m_bStereo ? 2 : 1;
 	pContext->WaveFile.nSamplesPerSec = pFileInfo->m_iFreq_Hz;
 	pContext->WaveFile.wBitsPerSample = pFileInfo->m_b16bit ? 16 : 8;
-	pContext->WaveFile.nBlockAlign = (pContext->WaveFile.nChannels * pContext->WaveFile.wBitsPerSample) >> 3;
-	pContext->WaveFile.nAvgBytesPerSec = pContext->WaveFile.nSamplesPerSec * pContext->WaveFile.nBlockAlign;
+	
+	// Calculate nBlockAlign with overflow protection
+	DWORD blockAlign = (pContext->WaveFile.nChannels * pContext->WaveFile.wBitsPerSample) >> 3;
+	if (blockAlign > USHRT_MAX)
+	{
+		CP_TRACE0("DirectSound: Block align calculation overflow");
+		CPP_OMDS_Uninitialise(pModule);
+		CP_FAIL("Invalid audio format - block align overflow");
+		return;
+	}
+	pContext->WaveFile.nBlockAlign = (WORD)blockAlign;
+	
+	// Calculate nAvgBytesPerSec with overflow protection
+	DWORD avgBytesPerSec;
+	if (!check_mul_overflow_u32(pContext->WaveFile.nSamplesPerSec, pContext->WaveFile.nBlockAlign, &avgBytesPerSec))
+	{
+		CP_TRACE0("DirectSound: Average bytes per second calculation overflow");
+		CPP_OMDS_Uninitialise(pModule);
+		CP_FAIL("Invalid audio format - data rate overflow");
+		return;
+	}
+	pContext->WaveFile.nAvgBytesPerSec = avgBytesPerSec;
 	pContext->WaveFile.cbSize = 0;
 	
 	// Create sound buffer
@@ -199,8 +225,15 @@ void CPP_OMDS_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInf
 	pContext->m_TimerId = 0;
 	pContext->m_bStreamRunning = FALSE;
 	
-	// Create shadow buffer (for live EQ)
-	pContext->m_pShadowBuffer = (BYTE*)malloc(CPC_OUTPUTBLOCKSIZE);
+	// Create shadow buffer (for live EQ) with error checking
+	pContext->m_pShadowBuffer = (BYTE*)SAFE_MALLOC(CPC_OUTPUTBLOCKSIZE);
+	if (!pContext->m_pShadowBuffer)
+	{
+		CP_TRACE0("Failed to allocate shadow buffer");
+		CPP_OMDS_Uninitialise(pModule);
+		CP_FAIL("Cannot allocate shadow buffer");
+		return;
+	}
 	
 	memset(pContext->m_pShadowBuffer, 0, CPC_OUTPUTBLOCKSIZE);
 	

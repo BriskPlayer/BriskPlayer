@@ -119,8 +119,24 @@ void CPP_OMWV_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInf
 		waveformatex.nChannels = pFileInfo->m_bStereo ? 2 : 1;
 		waveformatex.nSamplesPerSec = pFileInfo->m_iFreq_Hz;
 		waveformatex.wBitsPerSample = pFileInfo->m_b16bit ? 16 : 8;
-		waveformatex.nBlockAlign = (waveformatex.nChannels * waveformatex.wBitsPerSample) >> 3;
-		waveformatex.nAvgBytesPerSec = waveformatex.nSamplesPerSec * waveformatex.nBlockAlign;
+		
+		// Calculate block align with overflow protection
+		DWORD blockAlign = (waveformatex.nChannels * waveformatex.wBitsPerSample) >> 3;
+		if (blockAlign > USHRT_MAX)
+		{
+			CP_TRACE0("Wave Output: Block align calculation overflow");
+			return;
+		}
+		waveformatex.nBlockAlign = (WORD)blockAlign;
+		
+		// Calculate average bytes per second with overflow protection
+		DWORD avgBytesPerSec;
+		if (!check_mul_overflow_u32(waveformatex.nSamplesPerSec, waveformatex.nBlockAlign, &avgBytesPerSec))
+		{
+			CP_TRACE0("Wave Output: Average bytes per second calculation overflow");
+			return;
+		}
+		waveformatex.nAvgBytesPerSec = avgBytesPerSec;
 		waveformatex.cbSize = 0;
 		mmErr = waveOutOpen(&pContext->m_hWaveOut,
 							WAVE_MAPPER,
