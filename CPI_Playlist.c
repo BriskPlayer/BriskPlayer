@@ -149,26 +149,45 @@ void CPL_DestroyPlaylist(CP_HPLAYLIST hPlaylist)
 	if (pPlaylist->m_hCurrent && CPLII_DECODEHANDLE(pPlaylist->m_hCurrent)->m_bDestroyOnDeactivate)
 		CPLII_DestroyItem(pPlaylist->m_hCurrent);
 		
-	// Wait for shutdown to actually happen
-	WaitForSingleObject(pPlaylist->m_hWorkerThread, INFINITE);
+	// Wait for shutdown to actually happen with timeout
+	DWORD dwWaitResult = WaitForSingleObject(pPlaylist->m_hWorkerThread, 5000);
+	if (dwWaitResult == WAIT_TIMEOUT)
+	{
+		CP_TRACE0("Worker thread did not exit gracefully within timeout");
+	}
 	
 	CloseHandle(pPlaylist->m_hWorkerThread);
 	
-	// Remove any read ID3s from our message queue
+	// Remove any read ID3s from our message queue (with safety checks)
 	{
 		MSG msg;
+		int iCleanupCount = 0;
+		const int iMaxCleanup = 1000; // Prevent infinite loop
 		
-		while (PeekMessage(&msg, NULL, CPPLNM_TAGREAD, CPPLNM_TAGREAD, PM_REMOVE))
+		while (PeekMessage(&msg, NULL, CPPLNM_TAGREAD, CPPLNM_TAGREAD, PM_REMOVE) && iCleanupCount < iMaxCleanup)
 		{
 			CPs_NotifyChunk* pChunk = (CPs_NotifyChunk*)msg.wParam;
 			int iChunkItemIDX;
 			
-			// Add all of the items in the chunk
-			
-			for (iChunkItemIDX = 0; iChunkItemIDX < pChunk->m_iNumberInChunk; iChunkItemIDX++)
-				CPLII_DestroyItem(pChunk->m_aryItems[iChunkItemIDX]);
-				
-			free(pChunk);
+			if (pChunk) // Validate pointer before use
+			{
+				// Validate chunk count is reasonable
+				if (pChunk->m_iNumberInChunk > 0 && pChunk->m_iNumberInChunk <= CPC_PLAYLISTWORKER_NOTIFYCHUNKSIZE)
+				{
+					for (iChunkItemIDX = 0; iChunkItemIDX < pChunk->m_iNumberInChunk; iChunkItemIDX++)
+					{
+						if (pChunk->m_aryItems[iChunkItemIDX]) // Validate item pointer
+							CPLII_DestroyItem(pChunk->m_aryItems[iChunkItemIDX]);
+					}
+				}
+				free(pChunk);
+			}
+			iCleanupCount++;
+		}
+		
+		if (iCleanupCount >= iMaxCleanup)
+		{
+			CP_TRACE0("Playlist cleanup: Hit maximum cleanup iteration limit");
 		}
 	}
 	

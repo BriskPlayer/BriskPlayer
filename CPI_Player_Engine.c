@@ -149,6 +149,12 @@ char* ExtractStreamURLFromPlaylist(const char* pcPlaylistURL);
 	
 	// Return the temp file path
 	pcTempPath = _strdup(szTempFile);
+	if (!pcTempPath)
+	{
+		printf("DownloadPlaylistToTempFile: Failed to allocate memory for path\n");
+		DeleteFile(szTempFile);
+		return NULL;
+	}
 	return pcTempPath;
 }
 ////////////////////////////////////////////////////////////////////////////////
@@ -292,10 +298,11 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 						// Clean up temp file if we created one
 						if (pcTempPlaylistFile)
 						{
-							// Note: We don't delete the temp file immediately as the playlist
-							// system might need it. It will be cleaned up when the OS cleans temp files
-							// or we could implement a cleanup mechanism later
+							// Delete the temporary playlist file from disk
+							DeleteFile(pcTempPlaylistFile);
+							// Free the allocated path string
 							free(pcTempPlaylistFile);
+							pcTempPlaylistFile = NULL;
 						}
 						
 						// If the open failed then request a new stream from the interface
@@ -729,6 +736,14 @@ CPs_CoDecModule* OpenCoDec(CPs_PlayerContext* pContext, const char* pcFilename)
 		for (int i = 0; i < iFallbackCount && !bOpenSucceeded; i++)
 		{
 			iCoDecIDX = iFallbackOrder[i];
+			
+			// Validate codec index is within bounds
+			if (iCoDecIDX < CP_CODEC_first || iCoDecIDX > CP_CODEC_last)
+			{
+				printf("OpenCoDec: Invalid codec index %d, skipping\n", iCoDecIDX);
+				continue;
+			}
+			
 			printf("OpenCoDec: Trying fallback codec %d for streaming URL\n", iCoDecIDX);
 			
 			// Check if codec has a valid OpenFile function (codec might be disabled)

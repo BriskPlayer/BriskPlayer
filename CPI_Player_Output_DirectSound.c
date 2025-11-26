@@ -221,17 +221,27 @@ void CPP_OMDS_Uninitialise(CPs_OutputModule* pModule)
 	CP_TRACE0("DirectSound shutting down");
 	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
 	
+	// Stop playback before releasing resources
 	if (pContext->lpDSB)
 	{
+		IDirectSoundBuffer_Stop(pContext->lpDSB);
 		// Destroy the direct sound buffer.
 		IDirectSoundBuffer_Release(pContext->lpDSB);
+		pContext->lpDSB = NULL;
 	}
 	
 	if (pContext->lpDirectSound)
 	{
 		// Destroy the direct sound object.
 		IDirectSound_Release(pContext->lpDirectSound);
+		pContext->lpDirectSound = NULL;
+	}
+	
+	// Close event handle
+	if (pModule->m_evtBlockFree)
+	{
 		CloseHandle(pModule->m_evtBlockFree);
+		pModule->m_evtBlockFree = NULL;
 	}
 	
 	if (pContext->m_TimerId)
@@ -240,12 +250,14 @@ void CPP_OMDS_Uninitialise(CPs_OutputModule* pModule)
 		pContext->m_TimerId = 0;
 	}
 	
-	pContext->lpDirectSound = NULL;
+	// Free shadow buffer with null check
+	if (pContext->m_pShadowBuffer)
+	{
+		free(pContext->m_pShadowBuffer);
+		pContext->m_pShadowBuffer = NULL;
+	}
 	
-	pContext->lpDSB = NULL;
-	free(pContext->m_pShadowBuffer);
 	free(pContext);
-	pContext = NULL;
 	pModule->m_pModuleCookie = NULL;
 }
 

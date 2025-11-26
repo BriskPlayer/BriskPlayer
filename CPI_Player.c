@@ -100,10 +100,15 @@ void CPI_Player__Destroy(CP_HPLAYER hPlayer)
 	if (pPlayEngine->m_hVolumeMixer)
 		mixerClose(pPlayEngine->m_hVolumeMixer);
 		
-	// Wait for shutdown to actually happen
-	WaitForSingleObject(pPlayEngine->m_hThread, 1000);
+	// Wait for shutdown to actually happen (increased timeout for graceful shutdown)
+	DWORD dwWaitResult = WaitForSingleObject(pPlayEngine->m_hThread, 5000);
 	
-	TerminateThread(pPlayEngine->m_hThread, 0);
+	// Only terminate if the thread didn't exit gracefully
+	if (dwWaitResult == WAIT_TIMEOUT)
+	{
+		CP_TRACE0("Player thread did not exit gracefully, forcing termination");
+		TerminateThread(pPlayEngine->m_hThread, 0);
+	}
 	
 	// Cleanup
 	CloseHandle(pPlayEngine->m_hThread);

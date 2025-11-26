@@ -101,7 +101,13 @@ void CPSLOCAL_Uninitialise(CPs_InStream* pStream)
 	CPs_InStream_File* pContext = (CPs_InStream_File*)pStream->m_pModuleCookie;
 	CP_CHECKOBJECT(pContext);
 	
-	CloseHandle(pContext->m_hFile);
+	// Validate handle before closing
+	if (pContext->m_hFile && pContext->m_hFile != INVALID_HANDLE_VALUE)
+	{
+		CloseHandle(pContext->m_hFile);
+		pContext->m_hFile = INVALID_HANDLE_VALUE;
+	}
+	
 	free(pContext);
 	free(pStream);
 }
@@ -130,7 +136,15 @@ void CPSLOCAL_Seek(CPs_InStream* pStream, const size_t iNewOffset)
 	CPs_InStream_File* pContext = (CPs_InStream_File*)pStream->m_pModuleCookie;
 	CP_CHECKOBJECT(pContext);
 	
-	SetFilePointer(pContext->m_hFile, (LONG)iNewOffset, 0, FILE_BEGIN);
+	DWORD dwResult = SetFilePointer(pContext->m_hFile, (LONG)iNewOffset, 0, FILE_BEGIN);
+	if (dwResult == INVALID_SET_FILE_POINTER)
+	{
+		DWORD dwError = GetLastError();
+		if (dwError != NO_ERROR)
+		{
+			CP_TRACE1("SetFilePointer failed with error %lu", dwError);
+		}
+	}
 }
 
 //

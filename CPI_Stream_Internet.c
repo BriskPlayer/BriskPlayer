@@ -194,7 +194,25 @@ char* DownloadPlaylistContent(const char* pcURL)
 	
 	while (InternetReadFile(hURL, pcBuffer, dwChunkSize, &dwBytesRead) && dwBytesRead > 0)
 	{
-		pcContent = (char*)realloc(pcContent, dwTotalSize + dwBytesRead + 1);
+		// Check for integer overflow before realloc
+		if (dwTotalSize > (DWORD)(SIZE_MAX - dwBytesRead - 1))
+		{
+			printf("DownloadPlaylistContent: Content too large, aborting\n");
+			free(pcContent);
+			pcContent = NULL;
+			break;
+		}
+		
+		char* pcNewContent = (char*)realloc(pcContent, dwTotalSize + dwBytesRead + 1);
+		if (!pcNewContent)
+		{
+			printf("DownloadPlaylistContent: Failed to allocate memory\n");
+			free(pcContent);
+			pcContent = NULL;
+			break;
+		}
+		pcContent = pcNewContent;
+		
 		memcpy(pcContent + dwTotalSize, pcBuffer, dwBytesRead);
 		dwTotalSize += dwBytesRead;
 		pcContent[dwTotalSize] = '\0';
@@ -208,7 +226,11 @@ char* DownloadPlaylistContent(const char* pcURL)
 	if (!pcContent || dwTotalSize == 0)
 	{
 		printf("DownloadPlaylistContent: No content downloaded or empty file\n");
-		if (pcContent) free(pcContent);
+		if (pcContent)
+		{
+			free(pcContent);
+			pcContent = NULL;
+		}
 		return NULL;
 	}
 	
@@ -250,8 +272,15 @@ char* ParsePLSPlaylist(const char* pcContent)
 				if (strlen(pcEquals) > 0)
 				{
 					pcStreamURL = _strdup(pcEquals);
-					CP_TRACE1("ParsePLSPlaylist: Found stream URL: %s", pcStreamURL);
-					break; // Use the first URL found
+					if (pcStreamURL)
+					{
+						CP_TRACE1("ParsePLSPlaylist: Found stream URL: %s", pcStreamURL);
+						break; // Use the first URL found
+					}
+					else
+					{
+						CP_TRACE0("ParsePLSPlaylist: Failed to allocate memory for URL");
+					}
 				}
 			}
 		}
@@ -288,8 +317,15 @@ char* ParseM3UPlaylist(const char* pcContent)
 			if (strstr(pcLine, "://") != NULL) // Basic URL validation
 			{
 				pcStreamURL = _strdup(pcLine);
-				CP_TRACE1("ParseM3UPlaylist: Found stream URL: %s", pcStreamURL);
-				break; // Use the first URL found
+				if (pcStreamURL)
+				{
+					CP_TRACE1("ParseM3UPlaylist: Found stream URL: %s", pcStreamURL);
+					break; // Use the first URL found
+				}
+				else
+				{
+					CP_TRACE0("ParseM3UPlaylist: Failed to allocate memory for URL");
+				}
 			}
 		}
 		pcLine = strtok_s(NULL, "\r\n", &pcContext);

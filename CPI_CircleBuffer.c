@@ -191,6 +191,10 @@ void CircleBufferWrite(CPs_CircleBuffer* pCBuffer, const void* _pSourceBuffer, c
 	// Lock for thread-safe write operation
 	if (mtx_lock(&pCBuffer->m_access_mutex) != thrd_success) {
 		atomic_fetch_add(&pCBuffer->m_lock_contentions, 1);
+		CP_TRACE0("CircleBufferWrite: Failed to acquire mutex");
+		// Signal that we attempted to write data even though we failed
+		// This prevents potential deadlocks if a reader is waiting
+		cnd_signal(&pCBuffer->m_data_available);
 		return;
 	}
 #else
