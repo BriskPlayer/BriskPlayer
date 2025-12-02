@@ -53,16 +53,16 @@ char* ExtractStreamURLFromPlaylist(const char* pcPlaylistURL);
 
 // Download playlist to temp file and return temp file path
 //
-[[nodiscard]] char* DownloadPlaylistToTempFile(const char* pcPlaylistURL)
+char* DownloadPlaylistToTempFile(const char* pcPlaylistURL)
 {
-	auto pcTempPath = (char*)NULL;
-	auto szTempDir = (WCHAR[MAX_PATH]){0};  // Unicode for international paths
-	auto szTempFile = (WCHAR[MAX_PATH]){0}; // Unicode for international paths
-	auto hFile = INVALID_HANDLE_VALUE;
-	auto dwBytesRead = (DWORD)0;
-	auto dwBytesWritten = (DWORD)0;
-	const auto dwChunkSize = (DWORD)4096;
-	auto buffer = (BYTE[4096]){0};
+	char* pcTempPath = NULL;
+	WCHAR szTempDir[MAX_PATH] = {0};  // Unicode for international paths
+	WCHAR szTempFile[MAX_PATH] = {0}; // Unicode for international paths
+	HANDLE hFile = INVALID_HANDLE_VALUE;
+	DWORD dwBytesRead = 0;
+	DWORD dwBytesWritten = 0;
+	const DWORD dwChunkSize = 4096;
+	BYTE buffer[4096] = {0};
 	
 	printf("DownloadPlaylistToTempFile: Downloading %s\n", pcPlaylistURL);
 	
@@ -95,14 +95,14 @@ char* ExtractStreamURLFromPlaylist(const char* pcPlaylistURL);
 	printf("DownloadPlaylistToTempFile: Temp file: %s\n", szTempFileAnsi);
 	
 	// Download the playlist
-	auto hInternet = InternetOpen("BriskPlayer/3.0", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0L);
+	HINTERNET hInternet = InternetOpen("BriskPlayer/3.0", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0L);
 	if (!hInternet) 
 	{
 		printf("DownloadPlaylistToTempFile: InternetOpen failed\n");
 		return NULL;
 	}
 	
-	auto hURL = InternetOpenUrl(hInternet, pcPlaylistURL, NULL, 0, 
+	HINTERNET hURL = InternetOpenUrl(hInternet, pcPlaylistURL, NULL, 0, 
 						   INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD, 0);
 	if (!hURL)
 	{
@@ -122,7 +122,7 @@ char* ExtractStreamURLFromPlaylist(const char* pcPlaylistURL);
 	}
 	
 	// Download and write to file
-	auto dwTotalBytes = (DWORD)0;
+	DWORD dwTotalBytes = 0;
 	while (InternetReadFile(hURL, buffer, dwChunkSize, &dwBytesRead) && dwBytesRead > 0)
 	{
 		if (!WriteFile(hFile, buffer, dwBytesRead, &dwBytesWritten, NULL) || dwBytesWritten != dwBytesRead)
@@ -166,9 +166,9 @@ char* ExtractStreamURLFromPlaylist(const char* pcPlaylistURL);
 //
 DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 {
-	auto bTerminateThread = FALSE;
-	auto hr_ComState = CoInitialize(NULL);
-	auto playercontext = (CPs_PlayerContext){0}; // C23 compound literal with zero initialization
+	BOOL bTerminateThread = FALSE;
+	HRESULT hr_ComState = CoInitialize(NULL);
+	CPs_PlayerContext playercontext = {0}; // Zero initialization
 	
 	playercontext.m_pBaseEngineParams = (CPs_PlayEngine*)pCookie;
 	playercontext.m_bOutputActive = FALSE;
@@ -598,10 +598,10 @@ void UpdateProgress(CPs_PlayerContext* pContext)
 		
 		if (pContext->m_iProportion_TrackLength != 0 && iFileLength_Secs != 0)
 		{
-			// Use C23 decimal floating-point for better audio timing precision
-			auto timeRatio = (audio_precision_t)iCurrentTime_Secs / (audio_precision_t)iFileLength_Secs;
-			auto proportionFloat = timeRatio * (audio_precision_t)pContext->m_iProportion_TrackLength;
-			auto iProportionAlongTrack = (int)proportionFloat;
+			// Use decimal floating-point for better audio timing precision
+			audio_precision_t timeRatio = (audio_precision_t)iCurrentTime_Secs / (audio_precision_t)iFileLength_Secs;
+			audio_precision_t proportionFloat = timeRatio * (audio_precision_t)pContext->m_iProportion_TrackLength;
+			int iProportionAlongTrack = (int)proportionFloat;
 			                                  
 			if (iProportionAlongTrack != pContext->m_iLastSentTime_Proportion)
 			{
@@ -639,11 +639,11 @@ void EmptyOutputStream(CPs_PlayerContext* pContext)
 //
 void EnumOutputDevices(CPs_PlayerContext* pContext)
 {
-	// C23: Enumerate output modules with scoped loop variable and typed enum
+	// Enumerate output modules with scoped loop variable and typed enum
 	for (CP_OutputType iOutputModuleIDX = CP_OUTPUT_first; iOutputModuleIDX <= CP_OUTPUT_last; iOutputModuleIDX++)
 	{
-		const auto pOutputModule = pContext->m_OutputModules + iOutputModuleIDX;
-		auto pcDeviceName = (char*)NULL;
+		const CPs_OutputModule* pOutputModule = pContext->m_OutputModules + iOutputModuleIDX;
+		char* pcDeviceName = NULL;
 		
 		// Buffer frees in the called
 		STR_AllocSetString(&pcDeviceName, pOutputModule->m_pcModuleName, FALSE);

@@ -23,8 +23,8 @@
 #define CPI_PLAYER_H
 ////////////////////////////////////////////////////////////////////////////////
 //
-// C23 Enhanced Codec Enumeration with type safety
-typedef enum CP_CodecType : unsigned char {
+// Enhanced Codec Enumeration
+typedef enum CP_CodecType {
 	CP_CODEC_WINAMPPLUGIN = 0,
 	CP_CODEC_OGG,
 	CP_CODEC_WAV,
@@ -39,8 +39,8 @@ typedef enum CP_CodecType : unsigned char {
 } CP_CodecType;
 static_assert(CP_CODEC_last < 16, "Codec types should fit in 4 bits for efficient storage");
 
-// C23 Enhanced Output Module Enumeration
-typedef enum CP_OutputType : unsigned char {
+// Enhanced Output Module Enumeration
+typedef enum CP_OutputType {
 	CP_OUTPUT_WAVE = 0,
 	CP_OUTPUT_FAUDIO,
 	CP_OUTPUT_DIRECTSOUND,

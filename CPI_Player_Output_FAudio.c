@@ -36,9 +36,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-// Buffer configuration - C23 constexpr for compile-time optimization
-constexpr int CPC_FAUDIO_NUMBEROFBUFFERS = 4;
-constexpr int CPC_FAUDIO_BUFFERSIZE_MS = 40;  // 40ms per buffer for low latency
+// Buffer configuration - compile-time constants
+#define CPC_FAUDIO_NUMBEROFBUFFERS 4
+#define CPC_FAUDIO_BUFFERSIZE_MS 40  // 40ms per buffer for low latency
 
 ////////////////////////////////////////////////////////////////////////////////
 // Voice callback structure (forward declaration)
@@ -505,7 +505,7 @@ void CPP_OMFA_SetInternalVolume(CPs_OutputModule* pModule, const int iNewVolume)
 		return;
 		
 	// Convert volume from 0-100 to 0.0-1.0 using decimal precision
-	auto volumePrecise = (audio_precision_t)iNewVolume / AUDIO_DECIMAL(100.0);
+	audio_precision_t volumePrecise = (audio_precision_t)iNewVolume / AUDIO_DECIMAL(100.0);
 	pContext->m_fVolume = (float)volumePrecise;
 	
 	// Apply volume to source voice

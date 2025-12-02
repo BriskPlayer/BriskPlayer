@@ -248,7 +248,7 @@ struct ListStruct
 /////////////////////////////////////////////////////////////////////////////////
 //
 // Player state
-typedef enum _CPe_PlayerState : int
+typedef enum _CPe_PlayerState
 {
 	cppsUndefined = 0,
 	cppsEndOfStream,
@@ -286,7 +286,7 @@ static_assert(sizeof(CPs_EQSettings) <= 16, "EQSettings should remain compact");
 static_assert(ARRAY_SIZE(((CPs_EQSettings*)0)->m_aryBands) == 8, "EQ should have exactly 8 bands");
 
 //
-typedef enum _CPe_QuickFindTerm : unsigned char
+typedef enum _CPe_QuickFindTerm
 {
 	qftUndefined = 0,
 	qftTitle,
@@ -295,7 +295,7 @@ typedef enum _CPe_QuickFindTerm : unsigned char
 } CPe_QuickFindTerm;
 static_assert(qftArtist <= 255, "QuickFindTerm should fit in unsigned char");
 //
-typedef enum _CPe_MixerMode : unsigned char
+typedef enum _CPe_MixerMode
 {
 	mmMasterVolume = 0,
 	mmWaveVolume,

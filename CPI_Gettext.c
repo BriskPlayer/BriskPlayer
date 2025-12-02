@@ -36,12 +36,12 @@ static char g_current_language[16] = "en";
 static char g_locale_directory[MAX_PATH] = "./locale";
 
 // Thread-local storage for translation buffers
-thread_local char* tl_translation_buffer = NULL;
-thread_local size_t tl_buffer_size = 0;
+_Thread_local char* tl_translation_buffer = NULL;
+_Thread_local size_t tl_buffer_size = 0;
 
-// C23 constexpr constants
-constexpr size_t TRANSLATION_BUFFER_SIZE = 1024;
-constexpr size_t MAX_DOMAIN_NAME = 64;
+// Compile-time constants
+#define TRANSLATION_BUFFER_SIZE 1024
+#define MAX_DOMAIN_NAME 64
 
 // Initialize gettext system with C23 features
 BOOL CPG_Initialize(const GetTextConfig* config)
@@ -52,7 +52,7 @@ BOOL CPG_Initialize(const GetTextConfig* config)
     
     // Use designated initializer fallback if config is NULL
     const GetTextConfig defaultConfig = DEFAULT_GETTEXT_CONFIG;
-    auto actualConfig = config ? config : &defaultConfig;
+    const GetTextConfig* actualConfig = config ? config : &defaultConfig;
     
     // Set locale directory
     strncpy(g_locale_directory, actualConfig->directory, sizeof(g_locale_directory) - 1);
@@ -119,8 +119,8 @@ void CPG_SetLanguage(const char* language)
     }
     
     // Copy language code with bounds checking
-    auto langLen = strlen(language);
-    auto copyLen = (langLen < sizeof(g_current_language) - 1) ? langLen : sizeof(g_current_language) - 1;
+    size_t langLen = strlen(language);
+    size_t copyLen = (langLen < sizeof(g_current_language) - 1) ? langLen : sizeof(g_current_language) - 1;
     
     strncpy(g_current_language, language, copyLen);
     g_current_language[copyLen] = '\0';
@@ -189,7 +189,7 @@ const char* CPG_GetTranslationThreadSafe(const char* msgid)
     
 #ifdef ENABLE_NLS
     const char* translated = gettext(msgid);
-    auto transLen = strlen(translated);
+    size_t transLen = strlen(translated);
     
     // Resize buffer if needed
     if (transLen >= tl_buffer_size) {
@@ -205,7 +205,7 @@ const char* CPG_GetTranslationThreadSafe(const char* msgid)
     return tl_translation_buffer;
 #else
     // Copy msgid to thread buffer for consistency
-    auto msgLen = strlen(msgid);
+    size_t msgLen = strlen(msgid);
     if (msgLen >= tl_buffer_size) {
         tl_buffer_size = msgLen + 256;
         char* newBuffer = realloc(tl_translation_buffer, tl_buffer_size);
@@ -382,7 +382,7 @@ const char* CPG_GetSystemLanguage(void)
             if (!separator) separator = strchr(narrowName, '_');
             
             if (separator) {
-                auto langLen = separator - narrowName;
+                size_t langLen = separator - narrowName;
                 if (langLen < sizeof(langCode)) {
                     strncpy(langCode, narrowName, langLen);
                     langCode[langLen] = '\0';

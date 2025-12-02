@@ -1,9 +1,13 @@
 /*
- * C23 Features Header
+ * C17 Compatibility Header
  * Copyright (C) 2025 Zach Bacon
  *
- * This header provides C23 features and compatibility for the BriskPlayer project.
- * Assumes C23 compiler support.
+ * This header provides C17 compatibility features for the BriskPlayer project.
+ * Designed for maximum compiler compatibility including MSVC.
+ * 
+ * NOTE: This file was downgraded from C23 to C17 to maintain MSVC compatibility.
+ * Some advanced features (bit-precise types, C23 attributes, enhanced VLAs) are
+ * disabled or replaced with C17-compatible alternatives.
  */
 
 #ifndef C23_FEATURES_H
@@ -24,23 +28,42 @@
 #endif
 #include <windows.h>  // For BOOL, DWORD, HWND types
 
-// C23 enhanced static_assert (message is optional in C23)
+// C11/C17 alignment compatibility for MSVC
+#ifdef _MSC_VER
+    #define _Alignas(x) __declspec(align(x))
+    #define _Alignof(x) __alignof(x)
+#endif
+
+// C11/C17 static_assert (message is required)
 #define STATIC_ASSERT_MSG(cond, msg) static_assert(cond, msg)
-#define STATIC_ASSERT(cond) static_assert(cond)
+#define STATIC_ASSERT(cond) static_assert(cond, #cond)
 
-// C23 enhanced attributes
-#define NODISCARD [[nodiscard]]
-#define DEPRECATED(msg) [[deprecated(msg)]]
-#define MAYBE_UNUSED [[maybe_unused]]
-#define NORETURN [[noreturn]]
-#define FALLTHROUGH [[fallthrough]]
-#define UNREACHABLE() [[noreturn]] __builtin_unreachable()
+// C17 compatible attributes using compiler-specific extensions
+#if defined(_MSC_VER)
+    #define NODISCARD _Check_return_
+    #define DEPRECATED(msg) __declspec(deprecated(msg))
+    #define MAYBE_UNUSED
+    #define NORETURN __declspec(noreturn)
+    #define FALLTHROUGH
+    #define UNREACHABLE() __assume(0)
+#elif defined(__GNUC__) || defined(__clang__)
+    #define NODISCARD __attribute__((warn_unused_result))
+    #define DEPRECATED(msg) __attribute__((deprecated(msg)))
+    #define MAYBE_UNUSED __attribute__((unused))
+    #define NORETURN __attribute__((noreturn))
+    #define FALLTHROUGH __attribute__((fallthrough))
+    #define UNREACHABLE() __builtin_unreachable()
+#else
+    #define NODISCARD
+    #define DEPRECATED(msg)
+    #define MAYBE_UNUSED
+    #define NORETURN
+    #define FALLTHROUGH
+    #define UNREACHABLE()
+#endif
 
-// C23 binary literals helper for bit patterns
+// Binary literals helper for bit patterns
 #define BIT(n) (1u << (n))
-
-// C23 enhanced enumerations
-#define ENUM_TYPED(name, type) enum name : type
 
 // Type-safe allocation macros using typeof
 #define MALLOC_TYPE(type) ((type*)malloc(sizeof(type)))
@@ -52,23 +75,27 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 // Buffer sizes for common use cases
-constexpr size_t CPC_SMALL_BUFFER = 256;    // Error messages, short strings
-constexpr size_t CPC_MEDIUM_BUFFER = 512;   // File filters, format strings
-constexpr size_t CPC_LARGE_BUFFER = 1024;   // Status messages, multi-line text
-constexpr size_t CPC_HUGE_BUFFER = 4096;    // Large data buffers, audio chunks
-constexpr size_t CPC_NETWORK_BUFFER = 8192; // Network I/O operations
+enum {
+    CPC_SMALL_BUFFER = 256,    // Error messages, short strings
+    CPC_MEDIUM_BUFFER = 512,   // File filters, format strings
+    CPC_LARGE_BUFFER = 1024,   // Status messages, multi-line text
+    CPC_HUGE_BUFFER = 4096,    // Large data buffers, audio chunks
+    CPC_NETWORK_BUFFER = 8192  // Network I/O operations
+};
 
 // Timeout values (milliseconds)
-constexpr DWORD CPC_TIMEOUT_SHORT = 1000;   // 1 second
-constexpr DWORD CPC_TIMEOUT_MEDIUM = 5000;  // 5 seconds
-constexpr DWORD CPC_TIMEOUT_NETWORK = 15000; // 15 seconds
-constexpr DWORD CPC_TIMEOUT_INFINITE = 0xFFFFFFFF; // INFINITE
+#define CPC_TIMEOUT_SHORT 1000        // 1 second
+#define CPC_TIMEOUT_MEDIUM 5000       // 5 seconds
+#define CPC_TIMEOUT_NETWORK 15000     // 15 seconds
+#define CPC_TIMEOUT_INFINITE 0xFFFFFFFF // INFINITE
 
 // Return codes for consistency
-constexpr int CPC_SUCCESS = 0;              // Operation succeeded
-constexpr int CPC_ERROR = -1;               // Generic error
-constexpr int CPC_ERROR_INVALID_PARAM = -2; // Invalid parameter
-constexpr int CPC_ERROR_OUT_OF_MEMORY = -3; // Allocation failed
+enum {
+    CPC_SUCCESS = 0,              // Operation succeeded
+    CPC_ERROR = -1,               // Generic error
+    CPC_ERROR_INVALID_PARAM = -2, // Invalid parameter
+    CPC_ERROR_OUT_OF_MEMORY = -3  // Allocation failed
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Safe memory allocation wrappers with error handling
@@ -175,30 +202,44 @@ static inline BOOL check_add_overflow_u32(DWORD a, DWORD b, DWORD* result)
 	return TRUE;
 }
 
-// Type-safe macros using C23 typeof
-#define TYPEOF_MAX(a, b) ({ \
-    typeof(a) _a = (a); \
-    typeof(b) _b = (b); \
-    _a > _b ? _a : _b; \
-})
+// Type-safe macros - GCC/Clang only (statement expressions not supported in MSVC)
+#if defined(__GNUC__) || defined(__clang__)
+    #define TYPEOF_MAX(a, b) ({ \
+        typeof(a) _a = (a); \
+        typeof(b) _b = (b); \
+        _a > _b ? _a : _b; \
+    })
 
-#define TYPEOF_MIN(a, b) ({ \
-    typeof(a) _a = (a); \
-    typeof(b) _b = (b); \
-    _a < _b ? _a : _b; \
-})
+    #define TYPEOF_MIN(a, b) ({ \
+        typeof(a) _a = (a); \
+        typeof(b) _b = (b); \
+        _a < _b ? _a : _b; \
+    })
 
-#define TYPEOF_SWAP(a, b) do { \
-    typeof(a) temp = (a); \
-    (a) = (b); \
-    (b) = temp; \
-} while(0)
+    #define TYPEOF_SWAP(a, b) do { \
+        typeof(a) temp = (a); \
+        (a) = (b); \
+        (b) = temp; \
+    } while(0)
+#else
+    // MSVC fallback - simple macro without typeof (WARNING: evaluates arguments multiple times)
+    #define TYPEOF_MAX(a, b) (((a) > (b)) ? (a) : (b))
+    #define TYPEOF_MIN(a, b) (((a) < (b)) ? (a) : (b))
+    // TYPEOF_SWAP not available on MSVC without typeof - use a temp variable manually
+    #define TYPEOF_SWAP(a, b) do { /* Not supported on MSVC - use manual swap */ } while(0)
+#endif
 
-// Type-safe container_of macro
-#define CONTAINER_OF(ptr, type, member) ({ \
-    const typeof(((type *)0)->member) *__mptr = (ptr); \
-    (type *)((char *)__mptr - offsetof(type, member)); \
-})
+// Type-safe container_of macro - GCC/Clang only
+#if defined(__GNUC__) || defined(__clang__)
+    #define CONTAINER_OF(ptr, type, member) ({ \
+        const typeof(((type *)0)->member) *__mptr = (ptr); \
+        (type *)((char *)__mptr - offsetof(type, member)); \
+    })
+#else
+    // MSVC: Simple version without type checking
+    #define CONTAINER_OF(ptr, type, member) \
+        ((type *)((char *)(ptr) - offsetof(type, member)))
+#endif
 
 // Utility macros for cleaner code
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
@@ -259,7 +300,8 @@ static inline BOOL check_add_overflow_u32(DWORD a, DWORD b, DWORD* result)
 )
 
 // C23 Variable Length Array (VLA) enhancements for dynamic audio processing
-#if __STDC_VERSION__ >= 202311L
+// Disabled for C17 - C23 features not available
+#if 0
     // C23 VLA improvements - proper type checking and bounds
     #define VLA_BUFFER(type, name, size) \
         type name[size]; \
@@ -391,17 +433,22 @@ typedef struct {
     int priority;
 } audio_event_handler_t;
 
-// Functional composition helpers
-#define COMPOSE_AUDIO_FN(fn1, fn2) \
-    ({ \
-        typeof(fn1) _f1 = (fn1); \
-        typeof(fn2) _f2 = (fn2); \
-        void _composed(void* data, size_t size, void* user) { \
-            _f1(data, size, user); \
-            _f2(data, size, user); \
-        } \
-        _composed; \
-    })
+// Functional composition helpers - GCC/Clang only
+#if defined(__GNUC__) || defined(__clang__)
+    #define COMPOSE_AUDIO_FN(fn1, fn2) \
+        ({ \
+            typeof(fn1) _f1 = (fn1); \
+            typeof(fn2) _f2 = (fn2); \
+            void _composed(void* data, size_t size, void* user) { \
+                _f1(data, size, user); \
+                _f2(data, size, user); \
+            } \
+            _composed; \
+        })
+#else
+    // MSVC: Not supported (requires nested functions and typeof)
+    #define COMPOSE_AUDIO_FN(fn1, fn2) (fn1)
+#endif
 
 // C23 Compound literals for audio configuration
 #define AUDIO_CONFIG(freq, channels, bits) \
@@ -510,7 +557,8 @@ typedef struct {
 
 // C23 Bit-precise integer types for exact audio sample width control
 // These provide exact bit-width control for audio samples
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
+// Disabled for C17 - C23 features not available
+#if 0
     // C23 bit-precise integer types for exact audio sample control
     typedef _BitInt(24) audio_sample_24bit_t;  // Exact 24-bit audio samples
     typedef _BitInt(20) audio_sample_20bit_t;  // Exact 20-bit audio samples  

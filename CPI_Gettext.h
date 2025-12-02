@@ -187,8 +187,8 @@ BOOL CPG_IsLanguageAvailable(const char* languageCode);
     wchar_t* CPG_GetTranslationW(const char* msgid);
 #endif
 
-// Thread-safe translation with C23 thread_local storage
-extern thread_local char* tl_translation_buffer;
+// Thread-safe translation with _Thread_local storage
+extern _Thread_local char* tl_translation_buffer;
 const char* CPG_GetTranslationThreadSafe(const char* msgid);
 
 // Audio-specific translation helpers

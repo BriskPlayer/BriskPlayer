@@ -19,7 +19,7 @@
  */
 
 
-enum Objects : int
+enum Objects
 {
 	PlaySwitch = 0,
 	StopSwitch,
