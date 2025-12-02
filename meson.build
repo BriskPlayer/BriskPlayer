@@ -1,7 +1,7 @@
 project('briskplayer', ['c', 'cpp'],
     version : '3.0.0',
     license : 'GPL-2.0-or-later',
-    default_options : ['warning_level=3', 'c_std=c23', 'cpp_std=c++23'])
+    default_options : ['warning_level=3', 'c_std=c17', 'cpp_std=c++17'])
 
 cc = meson.get_compiler('c')
 cpp = meson.get_compiler('cpp')
