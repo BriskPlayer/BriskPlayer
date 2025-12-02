@@ -153,7 +153,17 @@ typedef struct {
     bool fallback_enabled;
 } GetTextConfig;
 
-// C23 designated initializer for default config
+// Default config - C++ compatible initialization
+#ifdef __cplusplus
+static const GetTextConfig DEFAULT_GETTEXT_CONFIG = {
+    BRISKPLAYER_DOMAIN,  // domain
+    "./locale",          // directory
+    "LC_ALL",            // locale_category
+    true,                // use_utf8
+    true                 // fallback_enabled
+};
+#else
+// C designated initializer
 static const GetTextConfig DEFAULT_GETTEXT_CONFIG = {
     .domain = BRISKPLAYER_DOMAIN,
     .directory = "./locale",
@@ -161,6 +171,7 @@ static const GetTextConfig DEFAULT_GETTEXT_CONFIG = {
     .use_utf8 = true,
     .fallback_enabled = true
 };
+#endif
 
 // Function declarations
 BOOL CPG_Initialize(const GetTextConfig* config);
@@ -187,8 +198,12 @@ BOOL CPG_IsLanguageAvailable(const char* languageCode);
     wchar_t* CPG_GetTranslationW(const char* msgid);
 #endif
 
-// Thread-safe translation with _Thread_local storage
-extern _Thread_local char* tl_translation_buffer;
+// Thread-safe translation with thread_local storage
+#ifdef __cplusplus
+    extern thread_local char* tl_translation_buffer;
+#else
+    extern _Thread_local char* tl_translation_buffer;
+#endif
 const char* CPG_GetTranslationThreadSafe(const char* msgid);
 
 // Audio-specific translation helpers

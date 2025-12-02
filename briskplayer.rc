@@ -1,7 +1,15 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
-#include "globals.h"
+//#include "globals.h"
+
+#define CP_VERSION_MAJOR 3
+#define CP_VERSION_MINOR 0
+#define CP_VERSION_BUILD 0
+#define CP_BUILD_NUMBER 300
+
+#define DO_STRINGIFY(x) #x
+#define STRINGIFY(x) DO_STRINGIFY(x)
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////

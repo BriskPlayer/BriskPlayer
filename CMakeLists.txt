@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
 
+# Note: CXX language is required because TagLib (even tag_c.lib) is a C++ library
+# Your source code is pure C, but we need C++ runtime to link against TagLib
 project(briskplayer VERSION 3.0.0 LANGUAGES C CXX)
 
-# Set C and C++ standards
+# Set C standard
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+# Set C++ standard for TagLib compatibility
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -17,15 +20,32 @@ if(MSVC)
     add_compile_options(/W3 /utf-8)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS WIN32 _WINDOWS)
     
-    # Always use dynamic runtime (/MT for release, /MTd for debug)
+    # Disable vectorized string operations that require newer runtime symbols
+    # This avoids the ___std_find_*_trivial_pos symbols that may not be available
+    add_compile_options(/d2FH4-)
+    
+    # Use static runtime - /MT for Release, /MTd for Debug
+    # Note: vcpkg x86-windows-static uses /MT (Release runtime)
+    # For Debug builds with vcpkg static libs, use x86-windows-static-md or build in Release
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    
+    # If building Debug with x86-windows-static, force release runtime to match vcpkg libs
+    if(VCPKG_TARGET_TRIPLET STREQUAL "x86-windows-static" AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+        message(WARNING "Building Debug with Release runtime (/MT) to match vcpkg x86-windows-static libraries")
+    endif()
+    
+    # NOTE: If you get linker errors about ___std_find_* symbols, your vcpkg libraries
+    # were built with a different toolset (v142 vs v143). To fix:
+    # - Use: cmake -T v142 ... to match vcpkg's v142 toolset
+    # - OR rebuild vcpkg libraries: vcpkg remove taglib:x86-windows-static && vcpkg install taglib:x86-windows-static
 else()
     # GCC/Clang
     add_compile_options(-Wall -Wextra)
     
     # Static linking for MinGW
     if(STATIC_LINK AND MINGW)
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc")
     endif()
 endif()
 
@@ -86,20 +106,16 @@ set(BRISK_RC briskplayer.rc)
 # Find required libraries - expect them to be installed in system paths
 find_package(ZLIB REQUIRED)
 
-# Try to find TagLib (may need TagLib::tag or TagLib::tag_c)
-find_library(TAGLIB_LIBRARY NAMES tag tag_c taglib REQUIRED)
-find_path(TAGLIB_INCLUDE_DIR NAMES tag_c.h taglib/tag_c.h REQUIRED)
+# Find TagLib C interface - note that tag_c depends on tag (C++ library)
+find_library(TAGLIB_C_LIBRARY NAMES tag_c REQUIRED)
+find_library(TAGLIB_LIBRARY NAMES tag REQUIRED)
+find_path(TAGLIB_INCLUDE_DIR NAMES tag_c.h PATH_SUFFIXES taglib REQUIRED)
 
 # FFmpeg components
-find_library(AVCODEC_LIBRARY NAMES avcodec REQUIRED)
-find_library(AVFORMAT_LIBRARY NAMES avformat REQUIRED)
-find_library(AVUTIL_LIBRARY NAMES avutil REQUIRED)
-find_library(SWRESAMPLE_LIBRARY NAMES swresample REQUIRED)
-find_path(AVCODEC_INCLUDE_DIR NAMES libavcodec/avcodec.h REQUIRED)
+find_package(FFMPEG REQUIRED)
 
 # FAudio
-find_library(FAUDIO_LIBRARY NAMES FAudio REQUIRED)
-find_path(FAUDIO_INCLUDE_DIR NAMES FAudio.h REQUIRED)
+find_package(FAudio CONFIG REQUIRED)
 
 # Windows system libraries
 set(WINDOWS_LIBRARIES
@@ -112,6 +128,14 @@ set(WINDOWS_LIBRARIES
     mfuuid
     mfreadwrite
 )
+
+# Add MSVC-specific libraries for C++ runtime symbols
+if(MSVC)
+    list(APPEND WINDOWS_LIBRARIES
+        legacy_stdio_definitions
+        oldnames
+    )
+endif()
 
 # Gettext support (optional)
 if(ENABLE_NLS)
@@ -130,6 +154,7 @@ add_compile_definitions(HAVE_FFMPEG_CODEC=1)
 # Create executable
 if(MSVC)
     add_executable(briskplayer WIN32 ${BRISK_SOURCES} ${BRISK_RC})
+    set_target_properties(briskplayer PROPERTIES LINK_FLAGS "/MANIFEST:NO")
 else()
     # For MinGW, compile resource file separately
     if(MINGW)
@@ -144,8 +169,7 @@ endif()
 target_include_directories(briskplayer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${TAGLIB_INCLUDE_DIR}
-    ${AVCODEC_INCLUDE_DIR}
-    ${FAUDIO_INCLUDE_DIR}
+    ${FFMPEG_INCLUDE_DIRS}
 )
 
 if(Intl_FOUND)
@@ -155,12 +179,10 @@ endif()
 # Link libraries
 target_link_libraries(briskplayer PRIVATE
     ZLIB::ZLIB
+    ${TAGLIB_C_LIBRARY}
     ${TAGLIB_LIBRARY}
-    ${AVCODEC_LIBRARY}
-    ${AVFORMAT_LIBRARY}
-    ${AVUTIL_LIBRARY}
-    ${SWRESAMPLE_LIBRARY}
-    ${FAUDIO_LIBRARY}
+    ${FFMPEG_LIBRARIES}
+    FAudio::FAudio-static
     ${WINDOWS_LIBRARIES}
 )
 
@@ -168,14 +190,8 @@ if(Intl_FOUND)
     target_link_libraries(briskplayer PRIVATE ${Intl_LIBRARIES})
 endif()
 
-# Add C++ standard library for MinGW/GCC
-if(NOT MSVC)
-    target_link_libraries(briskplayer PRIVATE stdc++)
-endif()
-
 # Installation
 install(TARGETS briskplayer RUNTIME DESTINATION bin)
-install(DIRECTORY res/ DESTINATION share/briskplayer TYPE FILE)
 
 # Add translations subdirectory
 if(ENABLE_NLS)

@@ -481,7 +481,7 @@ typedef struct {
         .alignment = (align) \
     }
 
-// C23 Thread-local storage for audio contexts
+// Thread-local storage for audio contexts (C11/C++11 compatible)
 // Per-thread audio processing state to reduce global dependencies
 typedef struct {
     float volume_scale;
@@ -492,7 +492,11 @@ typedef struct {
 } thread_audio_context_t;
 
 // Thread-local audio context - each audio processing thread gets its own
-extern _Thread_local thread_audio_context_t tl_audio_context;
+#ifdef __cplusplus
+    extern thread_local thread_audio_context_t tl_audio_context;
+#else
+    extern _Thread_local thread_audio_context_t tl_audio_context;
+#endif
 
 // Macros for thread-local audio context access
 #define TL_AUDIO_VOLUME() (tl_audio_context.volume_scale)

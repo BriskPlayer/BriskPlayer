@@ -742,7 +742,7 @@ void CP_InitialiseCodec_FFmpeg(CPs_CoDecModule* codec) {
     // Lossless formats
     CPFA_AddFileAssociation(codec, "flac", 0);  // Free Lossless Audio Codec
     CPFA_AddFileAssociation(codec, "fla", 0);   // FLAC alternate extension
-    // CPFA_AddFileAssociation(codec, "ape", 0);   // Monkey's Audio - disabled due to duration detection issues
+    CPFA_AddFileAssociation(codec, "ape", 0);   // Monkey's Audio - disabled due to duration detection issues
     CPFA_AddFileAssociation(codec, "wv", 0);    // WavPack
     CPFA_AddFileAssociation(codec, "tta", 0);   // True Audio
     CPFA_AddFileAssociation(codec, "tak", 0);   // Tom's lossless Audio Kompressor
