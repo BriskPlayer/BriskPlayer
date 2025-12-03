@@ -56,6 +56,7 @@ enum Objects
 	ReducedSize,
 	Lastone
 };
+// Validate enum size immediately after enum declaration
 static_assert(Lastone <= 32, "Objects enum should fit in 32 slots for optimal performance");
 
 typedef struct

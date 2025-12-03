@@ -134,6 +134,7 @@ if(MSVC)
     list(APPEND WINDOWS_LIBRARIES
         legacy_stdio_definitions
         oldnames
+        vcruntime
     )
 endif()
 

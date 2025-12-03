@@ -256,7 +256,9 @@ typedef enum _CPe_PlayerState
 	cppsPlaying,
 	cppsStopped
 } CPe_PlayerState;
+// Validate enum fits in 3 bits
 static_assert(cppsStopped <= 8, "PlayerState should fit in 3 bits");
+
 //
 // File info
 
@@ -268,7 +270,7 @@ typedef struct _CPs_FileInfo
 	BOOL m_bStereo;
 	BOOL m_b16bit;
 } CPs_FileInfo;
-// C23 static_assert for structure validation
+// Validate structure layout and size
 static_assert(sizeof(CPs_FileInfo) <= 32, "FileInfo should remain compact");
 static_assert(offsetof(CPs_FileInfo, m_iFileLength_Secs) == 0, "FileLength should be first for performance");
 

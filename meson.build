@@ -1,9 +1,10 @@
-project('briskplayer', 'c',
+project('briskplayer', ['c', 'cpp'],
     version : '3.0.0',
     license : 'GPL-2.0-or-later',
-    default_options : ['warning_level=3', 'c_std=c17'])
+    default_options : ['warning_level=3', 'c_std=c17', 'cpp_std=c++17'])
 
 cc = meson.get_compiler('c')
+cpp = meson.get_compiler('cpp')
 fs = import('fs')  # Import filesystem module for file existence checks
 i18n = import('i18n')  # Import i18n module for gettext support
 
@@ -26,17 +27,11 @@ foreach feature : c23_features
     endif
 endforeach
 
-# Add C23-specific compiler flags
+# Add additional C compiler flags (c17 standard is already set in default_options)
 c23_args = []
-if cc.get_id() == 'gcc'
-    # GCC C23 support
-    c23_args += ['-std=c23', '-Wno-declaration-after-statement']
-elif cc.get_id() == 'clang'
-    # Clang C23 support  
-    c23_args += ['-std=c23', '-Wno-declaration-after-statement']
-elif cc.get_id() == 'msvc'
-    # MSVC C23 support (when available)
-    c23_args += ['/std:c23']
+if cc.get_id() == 'gcc' or cc.get_id() == 'clang'
+    # Allow declarations after statements for better code organization
+    c23_args += ['-Wno-declaration-after-statement']
 endif
 
 # FFmpeg libraries for universal audio decoding (REQUIRED)
@@ -267,7 +262,27 @@ else
     error('FFmpeg codec is required but FFmpeg libraries not found')
 endif
 
-deps = [zlibdep, taglibdep, winmm, comctl32, wininet, dsound, faudiodep, mfplat, propsys, mfuuid, mfreadwrite]
+# Handle C++ standard library based on compiler
+libstdcpp = dependency('', required : false)
+cpp_stdlib_args = []
+if cc.get_id() == 'clang' and host_machine.system() == 'windows'
+    # For clang, prefer libc++ if available
+    libstdcpp = cpp.find_library('c++', required : false, static : true)
+    if libstdcpp.found()
+        cpp_stdlib_args = ['-stdlib=libc++']
+    else
+        # Fallback to libstdc++
+        libstdcpp = cpp.find_library('stdc++', required : true, static : true)
+    endif
+else
+    # For GCC and other compilers, use libstdc++
+    libstdcpp = cpp.find_library('stdc++', required : false, static : true)
+    if not libstdcpp.found()
+        libstdcpp = cpp.find_library('c++', required : false, static : true)
+    endif
+endif
+
+deps = [zlibdep, taglibdep, winmm, comctl32, wininet, dsound, faudiodep, mfplat, propsys, mfuuid, mfreadwrite, libstdcpp]
 # Add FFmpeg dependencies
 if ffmpeg_available
     deps += [ffmpeg_libavcodec, ffmpeg_libavformat, ffmpeg_libavutil, ffmpeg_libswresample]
@@ -297,6 +312,7 @@ if cc.get_id() == 'gcc' and host_machine.system() == 'windows'
     static_link_args = [
         '-static', 
         '-static-libgcc',
+        '-static-libstdc++',
         '-Wl,--as-needed'
     ]
     # Don't clear static_compile_args here - we need the codec defines!
@@ -304,9 +320,12 @@ if cc.get_id() == 'gcc' and host_machine.system() == 'windows'
     # Add global C args for static linking
     add_global_arguments('-static-libgcc', language : 'c')
     add_global_link_arguments('-static-libgcc', language : 'c')
+    add_global_arguments('-static-libstdc++', language : 'cpp')
+    add_global_link_arguments('-static-libstdc++', language : 'cpp')
     
 elif cc.get_id() == 'clang' and host_machine.system() == 'windows'
     # For clang, use static linking
+    static_link_args = ['-static-libgcc', '-static'] + cpp_stdlib_args
     static_link_args = ['-static-libgcc', '-static']
     static_compile_args = ['-static-libgcc']
 endif
@@ -315,6 +334,7 @@ briskplayer_exe = executable('briskplayer', brisksrc, briskres,
     dependencies : deps,
     link_args : static_link_args,
     c_args : c23_args + c23_feature_defines + static_compile_args,
+    cpp_args : cpp_stdlib_args + static_compile_args,
     win_subsystem : 'windows')
 
 # Process po subdirectory for translations

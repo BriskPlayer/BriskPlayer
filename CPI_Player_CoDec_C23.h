@@ -25,9 +25,9 @@
 #include <math.h>
 #include <stdbool.h>              // For bool, true, false
 
+#include "c23_compat.h"           // Include c23_compat FIRST for static_assert support
 #include "globals.h"              // Include globals for CPs_FileInfo and other types
 #include "CPI_Player_CoDec.h"     // Include core BriskPlayer codec interface after Windows types
-#include "c23_compat.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // C23 Enhanced Audio Format Specifications

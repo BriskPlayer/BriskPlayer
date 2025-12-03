@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <string.h>   // For memset, memcpy
 #include <stdbool.h>  // For bool, true, false
+#include <assert.h>   // For static_assert in C11/C17
 
 // Ensure Windows types are available for compatibility
 #ifndef NOMINMAX
