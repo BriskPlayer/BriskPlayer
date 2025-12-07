@@ -3,6 +3,11 @@
 
 //#define _WIN32_IE 0x600
 
+// Define Windows XP as minimum version for compatibility
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0501
+#endif
+
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>

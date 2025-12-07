@@ -45,7 +45,14 @@ else()
     
     # Static linking for MinGW
     if(STATIC_LINK AND MINGW)
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc")
+        if(CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+            # Clang on Windows uses different flags
+            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+        else()
+            # GCC/MinGW-w64
+            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static")
+        endif()
     endif()
 endif()
 
@@ -186,6 +193,17 @@ target_link_libraries(briskplayer PRIVATE
     FAudio::FAudio-static
     ${WINDOWS_LIBRARIES}
 )
+
+# Add C++ standard library for TagLib (C++ library) - required for __cxxabiv1 symbols
+if(MINGW)
+    if(CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        # Clang uses libc++ or libstdc++ without gcc-specific libraries
+        target_link_libraries(briskplayer PRIVATE c++ c++abi)
+    else()
+        # GCC/MinGW-w64 uses libstdc++ and gcc runtime
+        target_link_libraries(briskplayer PRIVATE stdc++ gcc_s gcc)
+    endif()
+endif()
 
 if(Intl_FOUND)
     target_link_libraries(briskplayer PRIVATE ${Intl_LIBRARIES})

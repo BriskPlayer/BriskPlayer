@@ -366,36 +366,68 @@ BOOL CPG_IsLanguageAvailable(const char* languageCode)
 }
 
 #ifdef _WIN32
-// Get system language on Windows
+// Function pointer types for Vista+ APIs
+typedef int (WINAPI *GetUserDefaultLocaleNameProc)(LPWSTR, int);
+typedef LCID (WINAPI *LocaleNameToLCIDProc)(LPCWSTR, DWORD);
+
+// Cache for dynamically loaded function pointers
+static GetUserDefaultLocaleNameProc g_pGetUserDefaultLocaleName = NULL;
+static LocaleNameToLCIDProc g_pLocaleNameToLCID = NULL;
+static BOOL g_bVistaApisChecked = FALSE;
+
+// Initialize Vista+ API pointers once
+static void CPG_InitVistaApis(void)
+{
+    if (g_bVistaApisChecked) {
+        return;
+    }
+    
+    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+    if (hKernel32) {
+        g_pGetUserDefaultLocaleName = 
+            (GetUserDefaultLocaleNameProc)GetProcAddress(hKernel32, "GetUserDefaultLocaleName");
+        g_pLocaleNameToLCID = 
+            (LocaleNameToLCIDProc)GetProcAddress(hKernel32, "LocaleNameToLCID");
+    }
+    
+    g_bVistaApisChecked = TRUE;
+}
+
+// Get system language on Windows (XP+ compatible)
 const char* CPG_GetSystemLanguage(void)
 {
     static char langCode[8] = {0};
     
-    // Use new Windows API if available (Windows Vista+)
-    wchar_t localeName[LOCALE_NAME_MAX_LENGTH];
-    if (GetUserDefaultLocaleName(localeName, LOCALE_NAME_MAX_LENGTH) > 0) {
-        // Convert to narrow string and extract language part
-        char narrowName[32];
-        if (WideCharToMultiByte(CP_UTF8, 0, localeName, -1, narrowName, sizeof(narrowName), NULL, NULL) > 0) {
-            // Extract just the language part (before '-' or '_')
-            char* separator = strchr(narrowName, '-');
-            if (!separator) separator = strchr(narrowName, '_');
-            
-            if (separator) {
-                size_t langLen = separator - narrowName;
-                if (langLen < sizeof(langCode)) {
-                    strncpy(langCode, narrowName, langLen);
-                    langCode[langLen] = '\0';
+    // Initialize Vista+ API pointers once
+    CPG_InitVistaApis();
+    
+    // Try to use Vista+ API if available
+    if (g_pGetUserDefaultLocaleName) {
+        wchar_t localeName[85]; // LOCALE_NAME_MAX_LENGTH = 85
+        if (g_pGetUserDefaultLocaleName(localeName, 85) > 0) {
+            // Convert to narrow string and extract language part
+            char narrowName[32];
+            if (WideCharToMultiByte(CP_UTF8, 0, localeName, -1, narrowName, sizeof(narrowName), NULL, NULL) > 0) {
+                // Extract just the language part (before '-' or '_')
+                char* separator = strchr(narrowName, '-');
+                if (!separator) separator = strchr(narrowName, '_');
+                
+                if (separator) {
+                    size_t langLen = (size_t)(separator - narrowName);
+                    if (langLen < sizeof(langCode)) {
+                        strncpy(langCode, narrowName, langLen);
+                        langCode[langLen] = '\0';
+                        return langCode;
+                    }
+                } else if ((size_t)strlen(narrowName) < sizeof(langCode)) {
+                    strcpy(langCode, narrowName);
                     return langCode;
                 }
-            } else if (strlen(narrowName) < sizeof(langCode)) {
-                strcpy(langCode, narrowName);
-                return langCode;
             }
         }
     }
     
-    // Fallback to older API
+    // Fallback to XP-compatible API
     LCID lcid = GetUserDefaultLCID();
     char localeInfo[10];
     if (GetLocaleInfoA(lcid, LOCALE_SISO639LANGNAME, localeInfo, sizeof(localeInfo)) > 0) {
@@ -407,12 +439,15 @@ const char* CPG_GetSystemLanguage(void)
     return "en"; // Ultimate fallback
 }
 
-// Set Windows locale
+// Set Windows locale (XP+ compatible)
 BOOL CPG_SetWindowsLocale(const char* languageCode)
 {
     if (!languageCode) {
         return FALSE;
     }
+    
+    // Initialize Vista+ API pointers once
+    CPG_InitVistaApis();
     
     // Create Windows locale string
     char localeString[32];
@@ -422,10 +457,34 @@ BOOL CPG_SetWindowsLocale(const char* languageCode)
              (strcmp(languageCode, "de") == 0) ? "DE" :
              (strcmp(languageCode, "fr") == 0) ? "FR" : "XX");
     
-    // Try to set thread locale
-    wchar_t wLocaleString[32];
-    MultiByteToWideChar(CP_UTF8, 0, localeString, -1, wLocaleString, sizeof(wLocaleString) / sizeof(wchar_t));
-    LCID lcid = LocaleNameToLCID(wLocaleString, 0);
+    // Try to use Vista+ API if available
+    if (g_pLocaleNameToLCID) {
+        wchar_t wLocaleString[32];
+        MultiByteToWideChar(CP_UTF8, 0, localeString, -1, wLocaleString, sizeof(wLocaleString) / sizeof(wchar_t));
+        LCID lcid = g_pLocaleNameToLCID(wLocaleString, 0);
+        if (lcid != 0) {
+            return SetThreadLocale(lcid);
+        }
+    }
+    
+    // XP fallback: Try to map common language codes to LCIDs directly
+    LCID lcid = 0;
+    if (strcmp(languageCode, "en") == 0) lcid = 0x0409; // en-US
+    else if (strcmp(languageCode, "de") == 0) lcid = 0x0407; // de-DE
+    else if (strcmp(languageCode, "fr") == 0) lcid = 0x040C; // fr-FR
+    else if (strcmp(languageCode, "es") == 0) lcid = 0x0C0A; // es-ES
+    else if (strcmp(languageCode, "it") == 0) lcid = 0x0410; // it-IT
+    else if (strcmp(languageCode, "ja") == 0) lcid = 0x0411; // ja-JP
+    else if (strcmp(languageCode, "zh") == 0) lcid = 0x0804; // zh-CN
+    else if (strcmp(languageCode, "ko") == 0) lcid = 0x0412; // ko-KR
+    else if (strcmp(languageCode, "ru") == 0) lcid = 0x0419; // ru-RU
+    else if (strcmp(languageCode, "pt") == 0) lcid = 0x0416; // pt-BR
+    else if (strcmp(languageCode, "nl") == 0) lcid = 0x0413; // nl-NL
+    else if (strcmp(languageCode, "pl") == 0) lcid = 0x0415; // pl-PL
+    else if (strcmp(languageCode, "tr") == 0) lcid = 0x041F; // tr-TR
+    else if (strcmp(languageCode, "sv") == 0) lcid = 0x041D; // sv-SE
+    else if (strcmp(languageCode, "cs") == 0) lcid = 0x0405; // cs-CZ
+    
     if (lcid != 0) {
         return SetThreadLocale(lcid);
     }
