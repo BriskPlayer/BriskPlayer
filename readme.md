@@ -21,6 +21,7 @@
 * id3 support made possible using [taglib](https://taglib.org/)
 * Modernized codebase fork of the [CoolPlayer media player ](https://coolplayer.sourceforge.net/)
 
-Skin was created and is copyright NeoRame and released under the terms GPL  with my own modifications to fit the name of the fork.
+**Skin was created and is copyright [NeoRame](http://www.neorame.de/) and released under the terms GPL  with my own modifications to fit the name of the fork.**
 
 If you like to see your language in briskplayer, then use this [POT](https://github.com/BriskPlayer/BriskPlayer/blob/main/po/briskplayer.pot) File to begin translating!
+
