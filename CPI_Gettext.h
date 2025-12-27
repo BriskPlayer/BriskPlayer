@@ -112,6 +112,7 @@
 #define STR_OPTIONS_MULTIPLE_INSTANCES "Allow multiple instances"
 #define STR_OPTIONS_SHOW_REMAINING_TIME "Show remaining time"
 #define STR_OPTIONS_SHOW_ON_TASKBAR "Show on taskbar"
+#define STR_OPTIONS_STICKY_WINDOWS "Sticky windows"
 #define STR_OPTIONS_REGISTER_FILETYPES "Register file types"
 #define STR_OPTIONS_ADD_START_MENU "Add to start menu"
 #define STR_OPTIONS_READ_ID3_TAG "Read ID3 tags"

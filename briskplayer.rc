@@ -34,12 +34,12 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Bitmap
 //
 
-IDB_MAINDOWN            BITMAP                  "res\\main_down.bmp"
-IDB_MAINBIGFONT         BITMAP                  "res\\main_bigfont.bmp"
-IDB_MAINSMALLFONT       BITMAP                  "res\\main_smallfont.bmp"
-IDB_MAINUP              BITMAP                  "res\\main_up.bmp"
-IDB_SYSICON             BITMAP                  "res\\SysIcon.bmp"
-IDB_SYSICON_MASK        BITMAP                  "res\\SysIcon_Mask.bmp"
+IDB_MAINDOWN            BITMAP                  "res/main_down.bmp"
+IDB_MAINBIGFONT         BITMAP                  "res/main_bigfont.bmp"
+IDB_MAINSMALLFONT       BITMAP                  "res/main_smallfont.bmp"
+IDB_MAINUP              BITMAP                  "res/main_up.bmp"
+IDB_SYSICON             BITMAP                  "res/SysIcon.bmp"
+IDB_SYSICON_MASK        BITMAP                  "res/SysIcon_Mask.bmp"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -50,9 +50,9 @@ IDB_SYSICON_MASK        BITMAP                  "res\\SysIcon_Mask.bmp"
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-APP_ICON                ICON                    "res\\briskplayer.ico"
-IDI_ICON_MP3            ICON                    "res\\mp3.ico"
-IDI_ICON_PLS            ICON                    "res\\pls.ico"
+APP_ICON                ICON                    "res/briskplayer.ico"
+IDI_ICON_MP3            ICON                    "res/mp3.ico"
+IDI_ICON_PLS            ICON                    "res/pls.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -60,10 +60,10 @@ IDI_ICON_PLS            ICON                    "res\\pls.ico"
 // TEXT
 //
 
-IDR_ABOUT1              TEXT                    "res\\about.txt"
-IDR_KEYBOARD            TEXT                    "res\\keyboard.txt"
-IDR_USAGE               TEXT                    "res\\usage.txt"
-IDR_CHANGES             TEXT                    "res\\license.txt"
+IDR_ABOUT1              TEXT                    "res/about.txt"
+IDR_KEYBOARD            TEXT                    "res/keyboard.txt"
+IDR_USAGE               TEXT                    "res/usage.txt"
+IDR_CHANGES             TEXT                    "res/license.txt"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -71,7 +71,7 @@ IDR_CHANGES             TEXT                    "res\\license.txt"
 // SKIN
 //
 
-IDR_DEFAULTSKIN         SKIN                    "res\\Default.CPSkin"
+IDR_DEFAULTSKIN         SKIN                    "res/Default.CPSkin"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -79,7 +79,7 @@ IDR_DEFAULTSKIN         SKIN                    "res\\Default.CPSkin"
 // Manifest
 //
 
-IDR_RT_MANIFEST         RT_MANIFEST             "res\\briskplayer.exe.manifest"
+IDR_RT_MANIFEST         RT_MANIFEST             "res/briskplayer.exe.manifest"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -158,8 +158,9 @@ BEGIN
     CONTROL         "Allow multiple instances",IDC_MULTIPLEINSTANCES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,93,180,10
     CONTROL         "Show remaining time",IDC_REMAINING,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,106,180,10
     CONTROL         "Show on taskbar",IDC_TASKBAR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,119,180,10
-    PUSHBUTTON      "Register Filetypes",IDC_REGFILETYPE,16,135,130,15
-    PUSHBUTTON      "Add to Start Menu",IDC_ADDICONS,16,153,130,15,BS_CENTER
+    CONTROL         "Sticky windows",IDC_STICKYWINDOWS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,132,180,10
+    PUSHBUTTON      "Register Filetypes",IDC_REGFILETYPE,16,145,130,15
+    PUSHBUTTON      "Add to Start Menu",IDC_ADDICONS,16,163,130,15,BS_CENTER
     CONTROL         "Read ID3 Tag (if any)",IDC_READTAG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,210,15,190,10
     CONTROL         "Read ID3 Tag of selected",IDC_READSELTAG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,210,28,190,10
     CONTROL         "Support ID3v2",IDC_SUPPORTID3_V2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,210,41,190,10

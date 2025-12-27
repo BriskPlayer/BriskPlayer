@@ -186,6 +186,9 @@ void    options_read(void)
 	options.scroll_track_title =
 		GetPrivateProfileInt("Misc", "Scrolltitle", 1, pathbuf);
 	    
+	options.sticky_windows =
+		GetPrivateProfileInt("Misc", "StickyWindows", 1, pathbuf);
+	    
 	GetPrivateProfileString("Misc", // points to section name
 							"RememberLastSong", // points to key name
 							"", // points to default string
@@ -464,8 +467,9 @@ void    options_write(void)
 	
 	_itoa_s(options.scroll_track_title, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "Scrolltitle",
-							  intbuf, pathbuf);
-	_itoa_s(options.show_playlist, intbuf, sizeof(intbuf), 10);
+							  intbuf, pathbuf);	_itoa_s(options.sticky_windows, intbuf, sizeof(intbuf), 10);
+	WritePrivateProfileString("Misc", "StickyWindows",
+						  intbuf, pathbuf);	_itoa_s(options.show_playlist, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "ShowPlaylist",
 							  intbuf,
 							  pathbuf);

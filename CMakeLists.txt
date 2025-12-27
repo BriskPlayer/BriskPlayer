@@ -125,16 +125,88 @@ set(BRISK_RC briskplayer.rc)
 # Find required libraries - expect them to be installed in system paths
 find_package(ZLIB REQUIRED)
 
-# Find TagLib C interface - note that tag_c depends on tag (C++ library)
-find_library(TAGLIB_C_LIBRARY NAMES tag_c REQUIRED)
-find_library(TAGLIB_LIBRARY NAMES tag REQUIRED)
-find_path(TAGLIB_INCLUDE_DIR NAMES tag_c.h PATH_SUFFIXES taglib REQUIRED)
+# Find TagLib C interface - try pkg-config first, then fall back to manual detection
+# Note that tag_c depends on tag (C++ library)
+find_package(PkgConfig)
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(TAGLIB taglib_c)
+    if(NOT TAGLIB_FOUND)
+        pkg_check_modules(TAGLIB taglib)
+    endif()
+endif()
 
-# FFmpeg components
-find_package(FFMPEG REQUIRED)
+if(NOT TAGLIB_FOUND)
+    # Fallback to manual detection for vcpkg or other installations
+    find_library(TAGLIB_C_LIBRARY NAMES tag_c)
+    find_library(TAGLIB_LIBRARY NAMES tag)
+    find_path(TAGLIB_INCLUDE_DIR NAMES tag_c.h PATH_SUFFIXES taglib)
+    
+    if(TAGLIB_C_LIBRARY AND TAGLIB_LIBRARY AND TAGLIB_INCLUDE_DIR)
+        set(TAGLIB_FOUND TRUE)
+        set(TAGLIB_LIBRARIES ${TAGLIB_C_LIBRARY} ${TAGLIB_LIBRARY})
+        set(TAGLIB_INCLUDE_DIRS ${TAGLIB_INCLUDE_DIR})
+        message(STATUS "Found TagLib (manual detection): ${TAGLIB_LIBRARIES}")
+    else()
+        message(FATAL_ERROR "TagLib is required but not found. Please install TagLib development libraries.")
+    endif()
+endif()
 
-# FAudio
-find_package(FAudio CONFIG REQUIRED)
+# FFmpeg components - try pkg-config first, then fall back to find_package
+find_package(PkgConfig)
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(FFMPEG libavcodec libavformat libavutil libswresample)
+endif()
+
+if(NOT FFMPEG_FOUND)
+    # Fallback to find_package for vcpkg or other CMake-based installations
+    find_package(FFMPEG QUIET)
+endif()
+
+if(NOT FFMPEG_FOUND)
+    # Last resort: try to find libraries manually
+    find_library(AVCODEC_LIBRARY NAMES avcodec)
+    find_library(AVFORMAT_LIBRARY NAMES avformat)
+    find_library(AVUTIL_LIBRARY NAMES avutil)
+    find_library(SWRESAMPLE_LIBRARY NAMES swresample)
+    find_path(FFMPEG_INCLUDE_DIR NAMES libavcodec/avcodec.h)
+    
+    if(AVCODEC_LIBRARY AND AVFORMAT_LIBRARY AND AVUTIL_LIBRARY AND SWRESAMPLE_LIBRARY AND FFMPEG_INCLUDE_DIR)
+        set(FFMPEG_FOUND TRUE)
+        set(FFMPEG_LIBRARIES ${AVCODEC_LIBRARY} ${AVFORMAT_LIBRARY} ${AVUTIL_LIBRARY} ${SWRESAMPLE_LIBRARY})
+        set(FFMPEG_INCLUDE_DIRS ${FFMPEG_INCLUDE_DIR})
+        message(STATUS "Found FFmpeg (manual detection): ${FFMPEG_LIBRARIES}")
+    else()
+        message(FATAL_ERROR "FFmpeg is required but not found. Please install FFmpeg development libraries.")
+    endif()
+endif()
+
+# FAudio - try pkg-config first, then CONFIG, then manual detection
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(FAUDIO FAudio)
+endif()
+
+if(NOT FAUDIO_FOUND)
+    # Try CMake config file (vcpkg provides this)
+    find_package(FAudio CONFIG QUIET)
+    if(FAudio_FOUND)
+        set(FAUDIO_FOUND TRUE)
+    endif()
+endif()
+
+if(NOT FAUDIO_FOUND)
+    # Manual detection as last resort
+    find_library(FAUDIO_LIBRARY NAMES FAudio)
+    find_path(FAUDIO_INCLUDE_DIR NAMES FAudio.h)
+    
+    if(FAUDIO_LIBRARY AND FAUDIO_INCLUDE_DIR)
+        set(FAUDIO_FOUND TRUE)
+        set(FAUDIO_LIBRARIES ${FAUDIO_LIBRARY})
+        set(FAUDIO_INCLUDE_DIRS ${FAUDIO_INCLUDE_DIR})
+        message(STATUS "Found FAudio (manual detection): ${FAUDIO_LIBRARY}")
+    else()
+        message(FATAL_ERROR "FAudio is required but not found. Please install FAudio development libraries.")
+    endif()
+endif()
 
 # Windows system libraries
 set(WINDOWS_LIBRARIES
@@ -180,8 +252,40 @@ else()
     # For MinGW, compile resource file separately
     if(MINGW)
         enable_language(RC)
-        set(CMAKE_RC_COMPILER windres)
-        set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> -i <SOURCE> -o <OBJECT>")
+        # Try to detect the proper windres for cross-compilation (e.g., MXE)
+        # CMAKE_RC_COMPILER might already be set by CMake
+        if(NOT CMAKE_RC_COMPILER)
+            # Extract the target triplet from the C compiler name
+            get_filename_component(COMPILER_NAME ${CMAKE_C_COMPILER} NAME_WE)
+            if(COMPILER_NAME MATCHES "^(.+)-gcc$")
+                # Compiler is something like i686-w64-mingw32.static-gcc
+                string(REGEX REPLACE "-gcc$" "-windres" RC_COMPILER_NAME ${COMPILER_NAME})
+                find_program(CMAKE_RC_COMPILER NAMES ${RC_COMPILER_NAME} windres)
+            else()
+                find_program(CMAKE_RC_COMPILER NAMES windres)
+            endif()
+        endif()
+        
+        if(NOT CMAKE_RC_COMPILER)
+            message(FATAL_ERROR "Could not find windres resource compiler")
+        endif()
+        
+        message(STATUS "Using resource compiler: ${CMAKE_RC_COMPILER}")
+        # Configure windres for cross-compilation on Unix
+        # The --preprocessor option tells windres to use gcc's preprocessor which handles paths better
+        # We need to use the matching preprocessor for the target architecture
+        get_filename_component(COMPILER_NAME ${CMAKE_C_COMPILER} NAME_WE)
+        if(COMPILER_NAME MATCHES "^(.+)-gcc$")
+            string(REGEX REPLACE "-gcc$" "-cpp" CPP_NAME ${COMPILER_NAME})
+            find_program(TARGET_CPP NAMES ${CPP_NAME} cpp)
+            if(TARGET_CPP)
+                set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> --preprocessor=${TARGET_CPP} --preprocessor-arg=-E --preprocessor-arg=-xc-header --preprocessor-arg=-DRC_INVOKED --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_SOURCE_DIR}/res -O coff -i <SOURCE> -o <OBJECT>")
+            else()
+                set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> --use-temp-file --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_SOURCE_DIR}/res -O coff -i <SOURCE> -o <OBJECT>")
+            endif()
+        else()
+            set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> --use-temp-file --include-dir=${CMAKE_CURRENT_SOURCE_DIR} --include-dir=${CMAKE_CURRENT_SOURCE_DIR}/res -O coff -i <SOURCE> -o <OBJECT>")
+        endif()
     endif()
     add_executable(briskplayer WIN32 ${BRISK_SOURCES} ${BRISK_RC})
     
@@ -194,8 +298,9 @@ endif()
 # Include directories
 target_include_directories(briskplayer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${TAGLIB_INCLUDE_DIR}
+    ${TAGLIB_INCLUDE_DIRS}
     ${FFMPEG_INCLUDE_DIRS}
+    ${FAUDIO_INCLUDE_DIRS}
 )
 
 if(Intl_FOUND)
@@ -205,12 +310,44 @@ endif()
 # Link libraries
 target_link_libraries(briskplayer PRIVATE
     ZLIB::ZLIB
-    ${TAGLIB_C_LIBRARY}
-    ${TAGLIB_LIBRARY}
-    ${FFMPEG_LIBRARIES}
-    FAudio::FAudio-static
     ${WINDOWS_LIBRARIES}
 )
+
+# Link TagLib libraries
+if(TAGLIB_FOUND)
+    if(TAGLIB_LINK_LIBRARIES)
+        # pkg-config provides TAGLIB_LINK_LIBRARIES
+        target_link_libraries(briskplayer PRIVATE ${TAGLIB_LINK_LIBRARIES})
+    else()
+        # Manual detection provides individual library variables
+        target_link_libraries(briskplayer PRIVATE ${TAGLIB_LIBRARIES})
+    endif()
+endif()
+
+# Link FAudio libraries
+if(FAUDIO_FOUND)
+    if(TARGET FAudio::FAudio-static)
+        # CMake CONFIG provides the target
+        target_link_libraries(briskplayer PRIVATE FAudio::FAudio-static)
+    elseif(FAUDIO_LINK_LIBRARIES)
+        # pkg-config provides FAUDIO_LINK_LIBRARIES
+        target_link_libraries(briskplayer PRIVATE ${FAUDIO_LINK_LIBRARIES})
+    else()
+        # Manual detection
+        target_link_libraries(briskplayer PRIVATE ${FAUDIO_LIBRARIES})
+    endif()
+endif()
+
+# Link FFmpeg libraries
+if(FFMPEG_FOUND)
+    if(FFMPEG_LINK_LIBRARIES)
+        # pkg-config provides FFMPEG_LINK_LIBRARIES
+        target_link_libraries(briskplayer PRIVATE ${FFMPEG_LINK_LIBRARIES})
+    else()
+        # Manual or find_package detection
+        target_link_libraries(briskplayer PRIVATE ${FFMPEG_LIBRARIES})
+    endif()
+endif()
 
 # Explicitly link C++ standard library for MinGW-w64 cross-compilation
 # Since we're linking against TagLib (C++ library), we need the C++ runtime

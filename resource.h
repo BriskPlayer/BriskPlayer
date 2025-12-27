@@ -98,6 +98,7 @@
 #define IDC_QFND_ALBUMS                 1059
 #define IDC_QFND_ARTISTS                1060
 #define IDC_RADIO1                      1061
+#define IDC_STICKYWINDOWS               1065
 #define IDC_URL_STATIC                  1062
 #define IDC_URL_ICON                    1063
 #define IDC_URL_DESCRIPTION             1064
@@ -144,7 +145,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        197
 #define _APS_NEXT_COMMAND_VALUE         40040
-#define _APS_NEXT_CONTROL_VALUE         1065
+#define _APS_NEXT_CONTROL_VALUE         1066
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

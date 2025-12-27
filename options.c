@@ -153,6 +153,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			SetDlgItemText(hwndDlg, IDC_MULTIPLEINSTANCES, T(STR_OPTIONS_MULTIPLE_INSTANCES));
 			SetDlgItemText(hwndDlg, IDC_REMAINING, T(STR_OPTIONS_SHOW_REMAINING_TIME));
 			SetDlgItemText(hwndDlg, IDC_TASKBAR, T(STR_OPTIONS_SHOW_ON_TASKBAR));
+			SetDlgItemText(hwndDlg, IDC_STICKYWINDOWS, T(STR_OPTIONS_STICKY_WINDOWS));
 			SetDlgItemText(hwndDlg, IDC_REGFILETYPE, T(STR_OPTIONS_REGISTER_FILETYPES));
 			SetDlgItemText(hwndDlg, IDC_ADDICONS, T(STR_OPTIONS_ADD_START_MENU));
 			SetDlgItemText(hwndDlg, IDC_READTAG, T(STR_OPTIONS_READ_ID3_TAG));
@@ -239,6 +240,9 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			                   
 			SendDlgItemMessage(hwndDlg, IDC_TASKBAR, BM_SETCHECK,
 							   options.show_on_taskbar, 0);
+			                   
+			SendDlgItemMessage(hwndDlg, IDC_STICKYWINDOWS, BM_SETCHECK,
+							   options.sticky_windows, 0);
 			                   
 			SendDlgItemMessage(hwndDlg, IDC_REMEMBERSKIN, UDM_SETRANGE,
 							   0, MAKELONG(50, 1));
@@ -453,6 +457,9 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 						(BOOL)SendDlgItemMessage(hwndDlg, IDC_ONTOP, BM_GETCHECK, 0,
 										   0);
 					window_set_always_on_top(hWnd, options.always_on_top);
+					
+					options.sticky_windows =
+						(BOOL)SendDlgItemMessage(hwndDlg, IDC_STICKYWINDOWS, BM_GETCHECK, 0, 0);
 					
 					GetDlgItemText(hwndDlg, IDC_LOADSKIN,
 								   (char*)options.main_skin_file, MAX_PATH);

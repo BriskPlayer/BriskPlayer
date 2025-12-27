@@ -409,6 +409,7 @@ typedef struct
 	BOOL    scroll_track_title;
 	BOOL    show_on_taskbar;
 	BOOL    shuffle_play;
+	BOOL    sticky_windows;
 	BOOL    use_default_skin;
 	BOOL    use_playlist_skin;
 	char    last_used_directory[MAX_PATH];

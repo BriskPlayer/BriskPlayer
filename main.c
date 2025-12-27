@@ -97,7 +97,8 @@ WindowDockInfo* GetWindowDockInfo(HWND window)
 
 void MoveDockedWindows(HWND movedWindow, int deltaX, int deltaY)
 {
-    if (g_movingDockedWindows) return; // Prevent recursion
+    // Check if sticky windows option is enabled
+    if (!options.sticky_windows || g_movingDockedWindows) return; // Prevent recursion
     
     g_movingDockedWindows = TRUE;
     
@@ -123,7 +124,8 @@ void MoveDockedWindows(HWND movedWindow, int deltaX, int deltaY)
 // Helper function to snap windows together
 void SnapWindow(HWND hWnd, RECT* pMovingRect)
 {
-    if (!pMovingRect) return;
+    // Check if sticky windows option is enabled
+    if (!options.sticky_windows || !pMovingRect) return;
     
     RECT snapRect = *pMovingRect;
     int snapTolerance = SNAP_DISTANCE;
