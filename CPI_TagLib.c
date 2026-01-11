@@ -18,15 +18,49 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 ////////////////////////////////////////////////////////////////////////////////
+//
+// Note: This file is compiled as C++ to use TagLib C++ API for album art extraction
+//
 
 #include "stdafx.h"
+
+// Wrap C includes in extern "C"
+extern "C" {
 #include "CPI_TagLib.h"
 #include "CPI_PlaylistItem.h"
 #include "CPString.h"
+}
+
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
+#include <sys/stat.h>
+
+// For image decoding (GDI+)
+#include <gdiplus.h>
+#ifdef _MSC_VER
+#pragma comment(lib, "gdiplus.lib")
+#endif
+
+// TagLib C and C++ API
 #define TAGLIB_STATIC
 #include <tag_c.h>
+#include <taglib/fileref.h>
+#include <taglib/tpropertymap.h>
+#include <taglib/mpegfile.h>
+#include <taglib/id3v2tag.h>
+#include <taglib/id3v2frame.h>
+#include <taglib/attachedpictureframe.h>
+#include <taglib/flacfile.h>
+#include <taglib/flacpicture.h>
+#include <taglib/mp4file.h>
+#include <taglib/mp4tag.h>
+#include <taglib/mp4coverart.h>
+#include <taglib/vorbisfile.h>
+#include <taglib/xiphcomment.h>
+
+// Wrap all functions in extern "C" for C linkage
+extern "C" {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -196,11 +230,17 @@ const char* glb_pcGenres[CIC_NUMGENRES] =
 void CPTL_Initialize(void)
 {
     // TagLib C interface is automatically initialized
+    
+    // Initialize album art cache
+    CPTL_InitAlbumArtCache();
 }
 
 void CPTL_Cleanup(void)
 {
     // TagLib C interface handles cleanup automatically
+    
+    // Cleanup album art cache
+    CPTL_CleanupAlbumArtCache();
 }
 
 BOOL CPTL_ReadTags(const char* pcFilePath, 
@@ -339,6 +379,8 @@ BOOL CPTL_WriteTags(const char* pcFilePath,
     TagLib_File* file = NULL;
     TagLib_Tag* tag = NULL;
     
+    (void)iLength;  // Unused parameter
+    
     if (!pcFilePath)
         return FALSE;
         
@@ -446,6 +488,836 @@ const char* CPTL_GetGenreString(int iGenreIndex)
     return glb_pcGenres[iGenreIndex];
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Extended Metadata Reading/Writing (C++ TagLib API with C linkage)
+////////////////////////////////////////////////////////////////////////////////
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Read extended metadata fields from file
+BOOL CPTL_ReadExtendedTags(const char* pcFilePath,
+                           char** ppcComposer,
+                           char** ppcAlbumArtist,
+                           char** ppcGrouping,
+                           char** ppcCopyright,
+                           char** ppcLyrics,
+                           unsigned short* piDiscNumber,
+                           unsigned short* piBPM)
+{
+    if (!pcFilePath)
+        return FALSE;
+        
+    // Initialize output parameters
+    if (ppcComposer) *ppcComposer = NULL;
+    if (ppcAlbumArtist) *ppcAlbumArtist = NULL;
+    if (ppcGrouping) *ppcGrouping = NULL;
+    if (ppcCopyright) *ppcCopyright = NULL;
+    if (ppcLyrics) *ppcLyrics = NULL;
+    if (piDiscNumber) *piDiscNumber = 0;
+    if (piBPM) *piBPM = 0;
+    
+    try
+    {
+        // Open file with TagLib
+        TagLib::FileRef fileRef(pcFilePath);
+        if (fileRef.isNull() || !fileRef.tag())
+            return FALSE;
+            
+        TagLib::Tag* tag = fileRef.tag();
+        TagLib::PropertyMap properties = fileRef.file()->properties();
+        
+        // Extract Composer (TCOM in ID3v2, COMPOSER in Vorbis/APE)
+        if (ppcComposer && properties.contains("COMPOSER"))
+        {
+            TagLib::StringList composers = properties["COMPOSER"];
+            if (!composers.isEmpty())
+            {
+                std::string composerStr = composers.front().to8Bit(true);
+                *ppcComposer = _strdup(composerStr.c_str());
+            }
+        }
+        
+        // Extract Album Artist (TPE2 in ID3v2, ALBUMARTIST in Vorbis/APE)
+        if (ppcAlbumArtist && properties.contains("ALBUMARTIST"))
+        {
+            TagLib::StringList albumArtists = properties["ALBUMARTIST"];
+            if (!albumArtists.isEmpty())
+            {
+                std::string albumArtistStr = albumArtists.front().to8Bit(true);
+                *ppcAlbumArtist = _strdup(albumArtistStr.c_str());
+            }
+        }
+        
+        // Extract Grouping/Content Group (TIT1 in ID3v2, GROUPING in Vorbis/APE)
+        if (ppcGrouping && properties.contains("GROUPING"))
+        {
+            TagLib::StringList groupings = properties["GROUPING"];
+            if (!groupings.isEmpty())
+            {
+                std::string groupingStr = groupings.front().to8Bit(true);
+                *ppcGrouping = _strdup(groupingStr.c_str());
+            }
+        }
+        
+        // Extract Copyright (TCOP in ID3v2, COPYRIGHT in Vorbis/APE)
+        if (ppcCopyright && properties.contains("COPYRIGHT"))
+        {
+            TagLib::StringList copyrights = properties["COPYRIGHT"];
+            if (!copyrights.isEmpty())
+            {
+                std::string copyrightStr = copyrights.front().to8Bit(true);
+                *ppcCopyright = _strdup(copyrightStr.c_str());
+            }
+        }
+        
+        // Extract Lyrics (USLT in ID3v2, LYRICS in Vorbis/APE)
+        if (ppcLyrics && properties.contains("LYRICS"))
+        {
+            TagLib::StringList lyrics = properties["LYRICS"];
+            if (!lyrics.isEmpty())
+            {
+                std::string lyricsStr = lyrics.front().to8Bit(true);
+                *ppcLyrics = _strdup(lyricsStr.c_str());
+            }
+        }
+        
+        // Extract Disc Number (TPOS in ID3v2, DISCNUMBER in Vorbis/APE)
+        if (piDiscNumber && properties.contains("DISCNUMBER"))
+        {
+            TagLib::StringList discNumbers = properties["DISCNUMBER"];
+            if (!discNumbers.isEmpty())
+            {
+                std::string discStr = discNumbers.front().to8Bit(true);
+                int discNum = atoi(discStr.c_str());
+                if (discNum > 0 && discNum <= 65535)
+                    *piDiscNumber = (unsigned short)discNum;
+            }
+        }
+        
+        // Extract BPM (TBPM in ID3v2, BPM in Vorbis/APE)
+        if (piBPM && properties.contains("BPM"))
+        {
+            TagLib::StringList bpms = properties["BPM"];
+            if (!bpms.isEmpty())
+            {
+                std::string bpmStr = bpms.front().to8Bit(true);
+                int bpm = atoi(bpmStr.c_str());
+                if (bpm > 0 && bpm <= 65535)
+                    *piBPM = (unsigned short)bpm;
+            }
+        }
+        
+        return TRUE;
+    }
+    catch (...)
+    {
+        // Clean up on error
+        if (ppcComposer && *ppcComposer) { free(*ppcComposer); *ppcComposer = NULL; }
+        if (ppcAlbumArtist && *ppcAlbumArtist) { free(*ppcAlbumArtist); *ppcAlbumArtist = NULL; }
+        if (ppcGrouping && *ppcGrouping) { free(*ppcGrouping); *ppcGrouping = NULL; }
+        if (ppcCopyright && *ppcCopyright) { free(*ppcCopyright); *ppcCopyright = NULL; }
+        if (ppcLyrics && *ppcLyrics) { free(*ppcLyrics); *ppcLyrics = NULL; }
+        return FALSE;
+    }
+}
+
+// Write extended metadata fields to file
+BOOL CPTL_WriteExtendedTags(const char* pcFilePath,
+                            const char* pcComposer,
+                            const char* pcAlbumArtist,
+                            const char* pcGrouping,
+                            const char* pcCopyright,
+                            const char* pcLyrics,
+                            unsigned short iDiscNumber,
+                            unsigned short iBPM)
+{
+    if (!pcFilePath)
+        return FALSE;
+        
+    try
+    {
+        // Open file with TagLib
+        TagLib::FileRef fileRef(pcFilePath);
+        if (fileRef.isNull() || !fileRef.file())
+            return FALSE;
+            
+        TagLib::PropertyMap properties = fileRef.file()->properties();
+        
+        // Set Composer
+        if (pcComposer && *pcComposer)
+        {
+            properties.replace("COMPOSER", TagLib::String(pcComposer, TagLib::String::UTF8));
+        }
+        
+        // Set Album Artist
+        if (pcAlbumArtist && *pcAlbumArtist)
+        {
+            properties.replace("ALBUMARTIST", TagLib::String(pcAlbumArtist, TagLib::String::UTF8));
+        }
+        
+        // Set Grouping
+        if (pcGrouping && *pcGrouping)
+        {
+            properties.replace("GROUPING", TagLib::String(pcGrouping, TagLib::String::UTF8));
+        }
+        
+        // Set Copyright
+        if (pcCopyright && *pcCopyright)
+        {
+            properties.replace("COPYRIGHT", TagLib::String(pcCopyright, TagLib::String::UTF8));
+        }
+        
+        // Set Lyrics
+        if (pcLyrics && *pcLyrics)
+        {
+            properties.replace("LYRICS", TagLib::String(pcLyrics, TagLib::String::UTF8));
+        }
+        
+        // Set Disc Number
+        if (iDiscNumber > 0)
+        {
+            char discStr[16];
+            sprintf(discStr, "%u", iDiscNumber);
+            properties.replace("DISCNUMBER", TagLib::String(discStr, TagLib::String::UTF8));
+        }
+        
+        // Set BPM
+        if (iBPM > 0)
+        {
+            char bpmStr[16];
+            sprintf(bpmStr, "%u", iBPM);
+            properties.replace("BPM", TagLib::String(bpmStr, TagLib::String::UTF8));
+        }
+        
+        // Apply properties and save
+        fileRef.file()->setProperties(properties);
+        return fileRef.save() ? TRUE : FALSE;
+    }
+    catch (...)
+    {
+        return FALSE;
+    }
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+// ReplayGain reading
+BOOL CPTL_ReadReplayGain(const char* pcFilePath,
+                         float* pfTrackGain,
+                         float* pfTrackPeak,
+                         float* pfAlbumGain,
+                         float* pfAlbumPeak)
+{
+    if (!pcFilePath)
+        return FALSE;
+        
+    // Initialize output parameters
+    if (pfTrackGain) *pfTrackGain = 0.0f;
+    if (pfTrackPeak) *pfTrackPeak = 0.0f;
+    if (pfAlbumGain) *pfAlbumGain = 0.0f;
+    if (pfAlbumPeak) *pfAlbumPeak = 0.0f;
+    
+    try
+    {
+        // Open file with TagLib
+        TagLib::FileRef fileRef(pcFilePath);
+        if (fileRef.isNull() || !fileRef.file())
+            return FALSE;
+            
+        TagLib::PropertyMap properties = fileRef.file()->properties();
+        
+        // Read REPLAYGAIN_TRACK_GAIN (in dB, e.g. "-6.23 dB")
+        if (pfTrackGain && properties.contains("REPLAYGAIN_TRACK_GAIN"))
+        {
+            TagLib::StringList gains = properties["REPLAYGAIN_TRACK_GAIN"];
+            if (!gains.isEmpty())
+            {
+                std::string gainStr = gains.front().to8Bit(true);
+                *pfTrackGain = (float)atof(gainStr.c_str());
+            }
+        }
+        
+        // Read REPLAYGAIN_TRACK_PEAK (0.0-1.0)
+        if (pfTrackPeak && properties.contains("REPLAYGAIN_TRACK_PEAK"))
+        {
+            TagLib::StringList peaks = properties["REPLAYGAIN_TRACK_PEAK"];
+            if (!peaks.isEmpty())
+            {
+                std::string peakStr = peaks.front().to8Bit(true);
+                *pfTrackPeak = (float)atof(peakStr.c_str());
+            }
+        }
+        
+        // Read REPLAYGAIN_ALBUM_GAIN (in dB)
+        if (pfAlbumGain && properties.contains("REPLAYGAIN_ALBUM_GAIN"))
+        {
+            TagLib::StringList gains = properties["REPLAYGAIN_ALBUM_GAIN"];
+            if (!gains.isEmpty())
+            {
+                std::string gainStr = gains.front().to8Bit(true);
+                *pfAlbumGain = (float)atof(gainStr.c_str());
+            }
+        }
+        
+        // Read REPLAYGAIN_ALBUM_PEAK (0.0-1.0)
+        if (pfAlbumPeak && properties.contains("REPLAYGAIN_ALBUM_PEAK"))
+        {
+            TagLib::StringList peaks = properties["REPLAYGAIN_ALBUM_PEAK"];
+            if (!peaks.isEmpty())
+            {
+                std::string peakStr = peaks.front().to8Bit(true);
+                *pfAlbumPeak = (float)atof(peakStr.c_str());
+            }
+        }
+        
+        return TRUE;
+    }
+    catch (...)
+    {
+        return FALSE;
+    }
+}
+
+// ReplayGain writing
+BOOL CPTL_WriteReplayGain(const char* pcFilePath,
+                          float fTrackGain,
+                          float fTrackPeak,
+                          float fAlbumGain,
+                          float fAlbumPeak)
+{
+    if (!pcFilePath)
+        return FALSE;
+        
+    try
+    {
+        // Open file with TagLib
+        TagLib::FileRef fileRef(pcFilePath);
+        if (fileRef.isNull() || !fileRef.file())
+            return FALSE;
+            
+        TagLib::PropertyMap properties = fileRef.file()->properties();
+        
+        // Set REPLAYGAIN_TRACK_GAIN (format: "+/-X.XX dB")
+        if (fTrackGain != 0.0f)
+        {
+            char gainStr[32];
+            sprintf(gainStr, "%.2f dB", fTrackGain);
+            properties.replace("REPLAYGAIN_TRACK_GAIN", TagLib::String(gainStr, TagLib::String::UTF8));
+        }
+        
+        // Set REPLAYGAIN_TRACK_PEAK (format: "0.XXXXXX")
+        if (fTrackPeak != 0.0f)
+        {
+            char peakStr[32];
+            sprintf(peakStr, "%.6f", fTrackPeak);
+            properties.replace("REPLAYGAIN_TRACK_PEAK", TagLib::String(peakStr, TagLib::String::UTF8));
+        }
+        
+        // Set REPLAYGAIN_ALBUM_GAIN
+        if (fAlbumGain != 0.0f)
+        {
+            char gainStr[32];
+            sprintf(gainStr, "%.2f dB", fAlbumGain);
+            properties.replace("REPLAYGAIN_ALBUM_GAIN", TagLib::String(gainStr, TagLib::String::UTF8));
+        }
+        
+        // Set REPLAYGAIN_ALBUM_PEAK
+        if (fAlbumPeak != 0.0f)
+        {
+            char peakStr[32];
+            sprintf(peakStr, "%.6f", fAlbumPeak);
+            properties.replace("REPLAYGAIN_ALBUM_PEAK", TagLib::String(peakStr, TagLib::String::UTF8));
+        }
+        
+        // Apply properties and save
+        fileRef.file()->setProperties(properties);
+        return fileRef.save() ? TRUE : FALSE;
+    }
+    catch (...)
+    {
+        return FALSE;
+    }
+}
+
+BOOL CPTL_ReadAudioProperties(const char* pcFilePath,
+                              unsigned int* pBitrate,
+                              unsigned int* pSampleRate,
+                              unsigned short* pBitDepth,
+                              unsigned char* pChannels,
+                              char** ppcCodec,
+                              char** ppcBitrateMode,
+                              unsigned int* pFileSize)
+{
+    if (!pcFilePath || !pBitrate || !pSampleRate || !pBitDepth || 
+        !pChannels || !ppcCodec || !ppcBitrateMode || !pFileSize)
+        return FALSE;
+        
+    // Initialize outputs
+    *pBitrate = 0;
+    *pSampleRate = 0;
+    *pBitDepth = 0;
+    *pChannels = 0;
+    *ppcCodec = NULL;
+    *ppcBitrateMode = NULL;
+    *pFileSize = 0;
+    
+    try
+    {
+        // Open file with TagLib
+        TagLib::FileRef fileRef(pcFilePath);
+        if (fileRef.isNull() || !fileRef.file() || !fileRef.audioProperties())
+            return FALSE;
+            
+        TagLib::AudioProperties* props = fileRef.audioProperties();
+        
+        // Get basic audio properties
+        *pBitrate = props->bitrate();           // in kbps
+        *pSampleRate = props->sampleRate();     // in Hz
+        *pChannels = props->channels();
+        
+        // Determine codec from file type
+        TagLib::File* file = fileRef.file();
+        const char* codecName = "Unknown";
+        const char* bitrateMode = "Unknown";
+        
+        // Check file type and get codec-specific info
+        if (dynamic_cast<TagLib::MPEG::File*>(file))
+        {
+            codecName = "MP3";
+            TagLib::MPEG::File* mpegFile = dynamic_cast<TagLib::MPEG::File*>(file);
+            if (mpegFile && mpegFile->audioProperties())
+            {
+                TagLib::MPEG::Properties* mpegProps = mpegFile->audioProperties();
+                // Note: TagLib doesn't provide direct VBR detection for MP3
+                // We can estimate: if the file has XING/VBRI header, it's VBR
+                bitrateMode = "CBR";  // Default assumption
+                *pBitDepth = 16;  // MP3 internally uses 16-bit samples
+            }
+        }
+        else if (dynamic_cast<TagLib::FLAC::File*>(file))
+        {
+            codecName = "FLAC";
+            bitrateMode = "VBR";  // FLAC is always variable bitrate
+            TagLib::FLAC::File* flacFile = dynamic_cast<TagLib::FLAC::File*>(file);
+            if (flacFile && flacFile->audioProperties())
+            {
+                TagLib::FLAC::Properties* flacProps = flacFile->audioProperties();
+                *pBitDepth = flacProps->bitsPerSample();
+            }
+        }
+        else if (dynamic_cast<TagLib::Ogg::Vorbis::File*>(file))
+        {
+            codecName = "Vorbis";
+            bitrateMode = "VBR";  // Vorbis is variable bitrate
+            *pBitDepth = 16;  // Vorbis decodes to 16-bit float (represented as 16-bit)
+        }
+        else if (dynamic_cast<TagLib::MP4::File*>(file))
+        {
+            codecName = "AAC";
+            bitrateMode = "VBR";  // AAC in MP4 is typically VBR
+            *pBitDepth = 16;  // AAC typically 16-bit
+        }
+        else
+        {
+            // Try to determine from filename extension
+            const char* ext = strrchr(pcFilePath, '.');
+            if (ext)
+            {
+                ext++;  // Skip the dot
+                if (_stricmp(ext, "wav") == 0 || _stricmp(ext, "wave") == 0)
+                {
+                    codecName = "WAV/PCM";
+                    bitrateMode = "CBR";
+                    *pBitDepth = 16;  // Default, actual may vary
+                }
+                else if (_stricmp(ext, "aiff") == 0 || _stricmp(ext, "aif") == 0)
+                {
+                    codecName = "AIFF";
+                    bitrateMode = "CBR";
+                    *pBitDepth = 16;
+                }
+                else if (_stricmp(ext, "ape") == 0)
+                {
+                    codecName = "APE";
+                    bitrateMode = "VBR";
+                    *pBitDepth = 16;
+                }
+                else if (_stricmp(ext, "wv") == 0)
+                {
+                    codecName = "WavPack";
+                    bitrateMode = "VBR";
+                }
+            }
+        }
+        
+        // Allocate and copy codec name
+        *ppcCodec = _strdup(codecName);
+        *ppcBitrateMode = _strdup(bitrateMode);
+        
+        // Get file size
+        struct _stat64 fileStat;
+        if (_stat64(pcFilePath, &fileStat) == 0)
+        {
+            *pFileSize = (unsigned int)fileStat.st_size;
+        }
+        
+        return TRUE;
+    }
+    catch (...)
+    {
+        if (*ppcCodec)
+        {
+            free(*ppcCodec);
+            *ppcCodec = NULL;
+        }
+        if (*ppcBitrateMode)
+        {
+            free(*ppcBitrateMode);
+            *ppcBitrateMode = NULL;
+        }
+        return FALSE;
+    }
+}
+
+BOOL CPTL_ReadMultipleArtists(const char* pcFilePath,
+                              char** ppcArtists,
+                              char** ppcFeaturedArtist,
+                              char** ppcRemixer)
+{
+    if (!pcFilePath || !ppcArtists || !ppcFeaturedArtist || !ppcRemixer)
+        return FALSE;
+        
+    // Initialize outputs
+    *ppcArtists = NULL;
+    *ppcFeaturedArtist = NULL;
+    *ppcRemixer = NULL;
+    
+    try
+    {
+        // Open file with TagLib
+        TagLib::FileRef fileRef(pcFilePath);
+        if (fileRef.isNull() || !fileRef.file())
+            return FALSE;
+            
+        TagLib::PropertyMap properties = fileRef.file()->properties();
+        
+        // Read ARTISTS (multiple artists, semicolon-separated typically)
+        if (properties.contains("ARTISTS"))
+        {
+            TagLib::StringList artists = properties["ARTISTS"];
+            if (!artists.isEmpty())
+            {
+                std::string artistsStr = artists.toString("; ").toCString(true);
+                *ppcArtists = _strdup(artistsStr.c_str());
+            }
+        }
+        
+        // Read featured artist - check multiple possible tags
+        // PERFORMER or INVOLVEDPEOPLE in ID3v2
+        const char* featuredTags[] = {"PERFORMER", "INVOLVEDPEOPLE", "FEATURED", NULL};
+        for (int i = 0; featuredTags[i] != NULL; i++)
+        {
+            if (properties.contains(featuredTags[i]))
+            {
+                TagLib::StringList featured = properties[featuredTags[i]];
+                if (!featured.isEmpty())
+                {
+                    std::string featuredStr = featured.toString("; ").toCString(true);
+                    *ppcFeaturedArtist = _strdup(featuredStr.c_str());
+                    break;
+                }
+            }
+        }
+        
+        // Read remixer - REMIXER or MIXARTIST
+        const char* remixerTags[] = {"REMIXER", "MIXARTIST", "MODIFIEDBY", NULL};
+        for (int i = 0; remixerTags[i] != NULL; i++)
+        {
+            if (properties.contains(remixerTags[i]))
+            {
+                TagLib::StringList remixer = properties[remixerTags[i]];
+                if (!remixer.isEmpty())
+                {
+                    std::string remixerStr = remixer.toString("; ").toCString(true);
+                    *ppcRemixer = _strdup(remixerStr.c_str());
+                    break;
+                }
+            }
+        }
+        
+        return TRUE;
+    }
+    catch (...)
+    {
+        if (*ppcArtists)
+        {
+            free(*ppcArtists);
+            *ppcArtists = NULL;
+        }
+        if (*ppcFeaturedArtist)
+        {
+            free(*ppcFeaturedArtist);
+            *ppcFeaturedArtist = NULL;
+        }
+        if (*ppcRemixer)
+        {
+            free(*ppcRemixer);
+            *ppcRemixer = NULL;
+        }
+        return FALSE;
+    }
+}
+
+BOOL CPTL_WriteMultipleArtists(const char* pcFilePath,
+                               const char* pcArtists,
+                               const char* pcFeaturedArtist,
+                               const char* pcRemixer)
+{
+    if (!pcFilePath)
+        return FALSE;
+        
+    try
+    {
+        // Open file with TagLib
+        TagLib::FileRef fileRef(pcFilePath);
+        if (fileRef.isNull() || !fileRef.file())
+            return FALSE;
+            
+        TagLib::PropertyMap properties = fileRef.file()->properties();
+        
+        // Set ARTISTS tag if provided
+        if (pcArtists && *pcArtists)
+        {
+            properties.replace("ARTISTS", TagLib::String(pcArtists, TagLib::String::UTF8));
+        }
+        
+        // Set PERFORMER tag for featured artist
+        if (pcFeaturedArtist && *pcFeaturedArtist)
+        {
+            properties.replace("PERFORMER", TagLib::String(pcFeaturedArtist, TagLib::String::UTF8));
+        }
+        
+        // Set REMIXER tag
+        if (pcRemixer && *pcRemixer)
+        {
+            properties.replace("REMIXER", TagLib::String(pcRemixer, TagLib::String::UTF8));
+        }
+        
+        // Apply properties and save
+        fileRef.file()->setProperties(properties);
+        return fileRef.save() ? TRUE : FALSE;
+    }
+    catch (...)
+    {
+        return FALSE;
+    }
+}
+
+BOOL CPTL_ReadMusicBrainzIDs(const char* pcFilePath,
+                             char** ppcTrackID,
+                             char** ppcReleaseID,
+                             char** ppcArtistID,
+                             char** ppcAlbumArtistID,
+                             char** ppcReleaseGroupID)
+{
+    if (!pcFilePath || !ppcTrackID || !ppcReleaseID || !ppcArtistID || 
+        !ppcAlbumArtistID || !ppcReleaseGroupID)
+        return FALSE;
+        
+    // Initialize outputs
+    *ppcTrackID = NULL;
+    *ppcReleaseID = NULL;
+    *ppcArtistID = NULL;
+    *ppcAlbumArtistID = NULL;
+    *ppcReleaseGroupID = NULL;
+    
+    try
+    {
+        // Open file with TagLib
+        TagLib::FileRef fileRef(pcFilePath);
+        if (fileRef.isNull() || !fileRef.file())
+            return FALSE;
+            
+        TagLib::PropertyMap properties = fileRef.file()->properties();
+        
+        // Read MusicBrainz Track ID (Recording ID)
+        // Common tags: MUSICBRAINZ_TRACKID, MUSICBRAINZ_RELEASEID
+        const char* trackTags[] = {"MUSICBRAINZ_TRACKID", "MUSICBRAINZ TRACK ID", NULL};
+        for (int i = 0; trackTags[i] != NULL; i++)
+        {
+            if (properties.contains(trackTags[i]))
+            {
+                TagLib::StringList ids = properties[trackTags[i]];
+                if (!ids.isEmpty())
+                {
+                    std::string idStr = ids.front().toCString(true);
+                    *ppcTrackID = _strdup(idStr.c_str());
+                    break;
+                }
+            }
+        }
+        
+        // Read MusicBrainz Release ID (Album ID)
+        const char* releaseTags[] = {"MUSICBRAINZ_ALBUMID", "MUSICBRAINZ ALBUM ID", NULL};
+        for (int i = 0; releaseTags[i] != NULL; i++)
+        {
+            if (properties.contains(releaseTags[i]))
+            {
+                TagLib::StringList ids = properties[releaseTags[i]];
+                if (!ids.isEmpty())
+                {
+                    std::string idStr = ids.front().toCString(true);
+                    *ppcReleaseID = _strdup(idStr.c_str());
+                    break;
+                }
+            }
+        }
+        
+        // Read MusicBrainz Artist ID
+        const char* artistTags[] = {"MUSICBRAINZ_ARTISTID", "MUSICBRAINZ ARTIST ID", NULL};
+        for (int i = 0; artistTags[i] != NULL; i++)
+        {
+            if (properties.contains(artistTags[i]))
+            {
+                TagLib::StringList ids = properties[artistTags[i]];
+                if (!ids.isEmpty())
+                {
+                    std::string idStr = ids.front().toCString(true);
+                    *ppcArtistID = _strdup(idStr.c_str());
+                    break;
+                }
+            }
+        }
+        
+        // Read MusicBrainz Album Artist ID
+        const char* albumArtistTags[] = {"MUSICBRAINZ_ALBUMARTISTID", "MUSICBRAINZ ALBUM ARTIST ID", NULL};
+        for (int i = 0; albumArtistTags[i] != NULL; i++)
+        {
+            if (properties.contains(albumArtistTags[i]))
+            {
+                TagLib::StringList ids = properties[albumArtistTags[i]];
+                if (!ids.isEmpty())
+                {
+                    std::string idStr = ids.front().toCString(true);
+                    *ppcAlbumArtistID = _strdup(idStr.c_str());
+                    break;
+                }
+            }
+        }
+        
+        // Read MusicBrainz Release Group ID
+        const char* releaseGroupTags[] = {"MUSICBRAINZ_RELEASEGROUPID", "MUSICBRAINZ RELEASE GROUP ID", NULL};
+        for (int i = 0; releaseGroupTags[i] != NULL; i++)
+        {
+            if (properties.contains(releaseGroupTags[i]))
+            {
+                TagLib::StringList ids = properties[releaseGroupTags[i]];
+                if (!ids.isEmpty())
+                {
+                    std::string idStr = ids.front().toCString(true);
+                    *ppcReleaseGroupID = _strdup(idStr.c_str());
+                    break;
+                }
+            }
+        }
+        
+        return TRUE;
+    }
+    catch (...)
+    {
+        // Clean up on error
+        if (*ppcTrackID)
+        {
+            free(*ppcTrackID);
+            *ppcTrackID = NULL;
+        }
+        if (*ppcReleaseID)
+        {
+            free(*ppcReleaseID);
+            *ppcReleaseID = NULL;
+        }
+        if (*ppcArtistID)
+        {
+            free(*ppcArtistID);
+            *ppcArtistID = NULL;
+        }
+        if (*ppcAlbumArtistID)
+        {
+            free(*ppcAlbumArtistID);
+            *ppcAlbumArtistID = NULL;
+        }
+        if (*ppcReleaseGroupID)
+        {
+            free(*ppcReleaseGroupID);
+            *ppcReleaseGroupID = NULL;
+        }
+        return FALSE;
+    }
+}
+
+BOOL CPTL_WriteMusicBrainzIDs(const char* pcFilePath,
+                              const char* pcTrackID,
+                              const char* pcReleaseID,
+                              const char* pcArtistID,
+                              const char* pcAlbumArtistID,
+                              const char* pcReleaseGroupID)
+{
+    if (!pcFilePath)
+        return FALSE;
+        
+    try
+    {
+        // Open file with TagLib
+        TagLib::FileRef fileRef(pcFilePath);
+        if (fileRef.isNull() || !fileRef.file())
+            return FALSE;
+            
+        TagLib::PropertyMap properties = fileRef.file()->properties();
+        
+        // Set MusicBrainz Track ID if provided
+        if (pcTrackID && *pcTrackID)
+        {
+            properties.replace("MUSICBRAINZ_TRACKID", TagLib::String(pcTrackID, TagLib::String::UTF8));
+        }
+        
+        // Set MusicBrainz Release ID if provided
+        if (pcReleaseID && *pcReleaseID)
+        {
+            properties.replace("MUSICBRAINZ_ALBUMID", TagLib::String(pcReleaseID, TagLib::String::UTF8));
+        }
+        
+        // Set MusicBrainz Artist ID if provided
+        if (pcArtistID && *pcArtistID)
+        {
+            properties.replace("MUSICBRAINZ_ARTISTID", TagLib::String(pcArtistID, TagLib::String::UTF8));
+        }
+        
+        // Set MusicBrainz Album Artist ID if provided
+        if (pcAlbumArtistID && *pcAlbumArtistID)
+        {
+            properties.replace("MUSICBRAINZ_ALBUMARTISTID", TagLib::String(pcAlbumArtistID, TagLib::String::UTF8));
+        }
+        
+        // Set MusicBrainz Release Group ID if provided
+        if (pcReleaseGroupID && *pcReleaseGroupID)
+        {
+            properties.replace("MUSICBRAINZ_RELEASEGROUPID", TagLib::String(pcReleaseGroupID, TagLib::String::UTF8));
+        }
+        
+        // Apply properties and save
+        fileRef.file()->setProperties(properties);
+        return fileRef.save() ? TRUE : FALSE;
+    }
+    catch (...)
+    {
+        return FALSE;
+    }
+}
+
 unsigned int CPTL_SkipID3v2Tag(const void* pBuffer, unsigned int iBufferSize)
 {
     const unsigned char* pBytes = (const unsigned char*)pBuffer;
@@ -499,3 +1371,708 @@ char* DecodeID3String(const char* pcSource, const int iLength)
     
     return pcDest;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Album Art / Cover Art Implementation
+//
+////////////////////////////////////////////////////////////////////////////////
+
+// Album art cache entry
+typedef struct _CPs_AlbumArtCacheEntry
+{
+    char* m_pcFilePath;
+    HBITMAP m_hBitmap;
+    unsigned int m_iWidth;
+    unsigned int m_iHeight;
+    time_t m_tLastAccess;
+    unsigned int m_iMemoryUsed;
+    struct _CPs_AlbumArtCacheEntry* m_pNext;
+} CPs_AlbumArtCacheEntry;
+
+// Global cache
+static CPs_AlbumArtCacheEntry* g_pAlbumArtCache = NULL;
+static int g_iCacheEntryCount = 0;
+static unsigned int g_iTotalCacheMemory = 0;
+static ULONG_PTR g_gdiplusToken = 0;
+
+// Initialize GDI+ and album art cache
+void CPTL_InitAlbumArtCache(void)
+{
+    Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+    Gdiplus::GdiplusStartup(&g_gdiplusToken, &gdiplusStartupInput, NULL);
+    
+    g_pAlbumArtCache = NULL;
+    g_iCacheEntryCount = 0;
+    g_iTotalCacheMemory = 0;
+}
+
+// Cleanup album art cache
+void CPTL_CleanupAlbumArtCache(void)
+{
+    CPTL_ClearAlbumArtCache();
+    
+    if (g_gdiplusToken)
+    {
+        Gdiplus::GdiplusShutdown(g_gdiplusToken);
+        g_gdiplusToken = 0;
+    }
+}
+
+// Clear all cache entries
+void CPTL_ClearAlbumArtCache(void)
+{
+    CPs_AlbumArtCacheEntry* pCurrent = g_pAlbumArtCache;
+    CPs_AlbumArtCacheEntry* pNext;
+    
+    while (pCurrent)
+    {
+        pNext = pCurrent->m_pNext;
+        
+        if (pCurrent->m_pcFilePath)
+            free(pCurrent->m_pcFilePath);
+        if (pCurrent->m_hBitmap)
+            DeleteObject(pCurrent->m_hBitmap);
+            
+        free(pCurrent);
+        pCurrent = pNext;
+    }
+    
+    g_pAlbumArtCache = NULL;
+    g_iCacheEntryCount = 0;
+    g_iTotalCacheMemory = 0;
+}
+
+// Remove specific entry from cache
+void CPTL_RemoveFromAlbumArtCache(const char* pcFilePath)
+{
+    CPs_AlbumArtCacheEntry* pCurrent = g_pAlbumArtCache;
+    CPs_AlbumArtCacheEntry* pPrev = NULL;
+    
+    if (!pcFilePath)
+        return;
+        
+    while (pCurrent)
+    {
+        if (pCurrent->m_pcFilePath && stricmp(pCurrent->m_pcFilePath, pcFilePath) == 0)
+        {
+            // Remove from list
+            if (pPrev)
+                pPrev->m_pNext = pCurrent->m_pNext;
+            else
+                g_pAlbumArtCache = pCurrent->m_pNext;
+                
+            // Free resources
+            g_iTotalCacheMemory -= pCurrent->m_iMemoryUsed;
+            g_iCacheEntryCount--;
+            
+            if (pCurrent->m_pcFilePath)
+                free(pCurrent->m_pcFilePath);
+            if (pCurrent->m_hBitmap)
+                DeleteObject(pCurrent->m_hBitmap);
+            free(pCurrent);
+            return;
+        }
+        
+        pPrev = pCurrent;
+        pCurrent = pCurrent->m_pNext;
+    }
+}
+
+// Evict least recently used entry
+static void CPTL_EvictLRU(void)
+{
+    CPs_AlbumArtCacheEntry* pCurrent = g_pAlbumArtCache;
+    CPs_AlbumArtCacheEntry* pOldest = NULL;
+    CPs_AlbumArtCacheEntry* pOldestPrev = NULL;
+    CPs_AlbumArtCacheEntry* pPrev = NULL;
+    time_t tOldest = 0;
+    
+    // Find oldest entry
+    while (pCurrent)
+    {
+        if (!pOldest || pCurrent->m_tLastAccess < tOldest)
+        {
+            tOldest = pCurrent->m_tLastAccess;
+            pOldest = pCurrent;
+            pOldestPrev = pPrev;
+        }
+        pPrev = pCurrent;
+        pCurrent = pCurrent->m_pNext;
+    }
+    
+    if (pOldest)
+    {
+        // Remove from list
+        if (pOldestPrev)
+            pOldestPrev->m_pNext = pOldest->m_pNext;
+        else
+            g_pAlbumArtCache = pOldest->m_pNext;
+            
+        // Free resources
+        g_iTotalCacheMemory -= pOldest->m_iMemoryUsed;
+        g_iCacheEntryCount--;
+        
+        if (pOldest->m_pcFilePath)
+            free(pOldest->m_pcFilePath);
+        if (pOldest->m_hBitmap)
+            DeleteObject(pOldest->m_hBitmap);
+        free(pOldest);
+    }
+}
+
+// Helper function to extract album art from ID3v2 tags (MP3)
+static BOOL CPTL_ExtractID3v2Art(const char* pcFilePath, CPs_AlbumArt* pAlbumArt)
+{
+    TagLib::MPEG::File file(pcFilePath);
+    
+    if (!file.isValid() || !file.ID3v2Tag())
+        return FALSE;
+        
+    TagLib::ID3v2::Tag *tag = file.ID3v2Tag();
+    TagLib::ID3v2::FrameList frameList = tag->frameList("APIC");
+    
+    if (frameList.isEmpty())
+        return FALSE;
+        
+    // Get first picture frame
+    TagLib::ID3v2::AttachedPictureFrame *frame = 
+        static_cast<TagLib::ID3v2::AttachedPictureFrame*>(frameList.front());
+        
+    if (!frame)
+        return FALSE;
+        
+    TagLib::ByteVector pictureData = frame->picture();
+    
+    if (pictureData.isEmpty())
+        return FALSE;
+        
+    // Allocate and copy image data
+    pAlbumArt->m_iImageSize = pictureData.size();
+    pAlbumArt->m_pImageData = (BYTE*)malloc(pAlbumArt->m_iImageSize);
+    
+    if (!pAlbumArt->m_pImageData)
+        return FALSE;
+        
+    memcpy(pAlbumArt->m_pImageData, pictureData.data(), pAlbumArt->m_iImageSize);
+    
+    // Set MIME type
+    TagLib::String mimeType = frame->mimeType();
+    if (!mimeType.isEmpty())
+    {
+        std::string mimeStr = mimeType.to8Bit(true);
+        pAlbumArt->m_pcMimeType = _strdup(mimeStr.c_str());
+    }
+    else
+    {
+        // Try to detect from data
+        if (pAlbumArt->m_iImageSize >= 2)
+        {
+            if (pAlbumArt->m_pImageData[0] == 0xFF && pAlbumArt->m_pImageData[1] == 0xD8)
+                pAlbumArt->m_pcMimeType = _strdup("image/jpeg");
+            else if (pAlbumArt->m_iImageSize >= 8 && 
+                     memcmp(pAlbumArt->m_pImageData, "\x89PNG\r\n\x1a\n", 8) == 0)
+                pAlbumArt->m_pcMimeType = _strdup("image/png");
+        }
+    }
+    
+    return TRUE;
+}
+
+// Helper function to extract album art from FLAC files
+static BOOL CPTL_ExtractFLACArt(const char* pcFilePath, CPs_AlbumArt* pAlbumArt)
+{
+    TagLib::FLAC::File file(pcFilePath);
+    
+    if (!file.isValid())
+        return FALSE;
+        
+    TagLib::List<TagLib::FLAC::Picture*> picList = file.pictureList();
+    
+    if (picList.isEmpty())
+        return FALSE;
+        
+    // Get first picture
+    TagLib::FLAC::Picture *picture = picList.front();
+    
+    if (!picture)
+        return FALSE;
+        
+    TagLib::ByteVector pictureData = picture->data();
+    
+    if (pictureData.isEmpty())
+        return FALSE;
+        
+    // Allocate and copy image data
+    pAlbumArt->m_iImageSize = pictureData.size();
+    pAlbumArt->m_pImageData = (BYTE*)malloc(pAlbumArt->m_iImageSize);
+    
+    if (!pAlbumArt->m_pImageData)
+        return FALSE;
+        
+    memcpy(pAlbumArt->m_pImageData, pictureData.data(), pAlbumArt->m_iImageSize);
+    
+    // Set MIME type
+    TagLib::String mimeType = picture->mimeType();
+    if (!mimeType.isEmpty())
+    {
+        std::string mimeStr = mimeType.to8Bit(true);
+        pAlbumArt->m_pcMimeType = _strdup(mimeStr.c_str());
+    }
+    
+    return TRUE;
+}
+
+// Helper function to extract album art from MP4/M4A files
+static BOOL CPTL_ExtractMP4Art(const char* pcFilePath, CPs_AlbumArt* pAlbumArt)
+{
+    TagLib::MP4::File file(pcFilePath);
+    
+    if (!file.isValid() || !file.tag())
+        return FALSE;
+        
+    TagLib::MP4::Tag *tag = file.tag();
+    
+    if (!tag->contains("covr"))
+        return FALSE;
+        
+    TagLib::MP4::CoverArtList coverList = tag->item("covr").toCoverArtList();
+    
+    if (coverList.isEmpty())
+        return FALSE;
+        
+    // Get first cover art
+    TagLib::MP4::CoverArt cover = coverList.front();
+    TagLib::ByteVector pictureData = cover.data();
+    
+    if (pictureData.isEmpty())
+        return FALSE;
+        
+    // Allocate and copy image data
+    pAlbumArt->m_iImageSize = pictureData.size();
+    pAlbumArt->m_pImageData = (BYTE*)malloc(pAlbumArt->m_iImageSize);
+    
+    if (!pAlbumArt->m_pImageData)
+        return FALSE;
+        
+    memcpy(pAlbumArt->m_pImageData, pictureData.data(), pAlbumArt->m_iImageSize);
+    
+    // Set MIME type based on format
+    switch (cover.format())
+    {
+        case TagLib::MP4::CoverArt::JPEG:
+            pAlbumArt->m_pcMimeType = _strdup("image/jpeg");
+            break;
+        case TagLib::MP4::CoverArt::PNG:
+            pAlbumArt->m_pcMimeType = _strdup("image/png");
+            break;
+        default:
+            pAlbumArt->m_pcMimeType = _strdup("image/jpeg");
+            break;
+    }
+    
+    return TRUE;
+}
+
+// Helper function to extract album art from OGG files (via METADATA_BLOCK_PICTURE)
+static BOOL CPTL_ExtractOGGArt(const char* pcFilePath, CPs_AlbumArt* pAlbumArt)
+{
+    TagLib::Ogg::Vorbis::File file(pcFilePath);
+    
+    if (!file.isValid() || !file.tag())
+        return FALSE;
+        
+    TagLib::Ogg::XiphComment *tag = file.tag();
+    
+    // Try to get METADATA_BLOCK_PICTURE
+    TagLib::List<TagLib::FLAC::Picture*> picList = tag->pictureList();
+    
+    if (picList.isEmpty())
+        return FALSE;
+        
+    // Get first picture
+    TagLib::FLAC::Picture *picture = picList.front();
+    
+    if (!picture)
+        return FALSE;
+        
+    TagLib::ByteVector pictureData = picture->data();
+    
+    if (pictureData.isEmpty())
+        return FALSE;
+        
+    // Allocate and copy image data
+    pAlbumArt->m_iImageSize = pictureData.size();
+    pAlbumArt->m_pImageData = (BYTE*)malloc(pAlbumArt->m_iImageSize);
+    
+    if (!pAlbumArt->m_pImageData)
+        return FALSE;
+        
+    memcpy(pAlbumArt->m_pImageData, pictureData.data(), pAlbumArt->m_iImageSize);
+    
+    // Set MIME type
+    TagLib::String mimeType = picture->mimeType();
+    if (!mimeType.isEmpty())
+    {
+        std::string mimeStr = mimeType.to8Bit(true);
+        pAlbumArt->m_pcMimeType = _strdup(mimeStr.c_str());
+    }
+    
+    return TRUE;
+}
+
+// Read album art from file using TagLib C++ API
+BOOL CPTL_ReadAlbumArt(const char* pcFilePath, CPs_AlbumArt* pAlbumArt)
+{
+    const char* pcExt;
+    BOOL bResult = FALSE;
+    
+    if (!pcFilePath || !pAlbumArt)
+        return FALSE;
+        
+    memset(pAlbumArt, 0, sizeof(CPs_AlbumArt));
+    
+    // Get file extension to determine format
+    pcExt = strrchr(pcFilePath, '.');
+    if (!pcExt)
+        return FALSE;
+        
+    pcExt++; // Skip the dot
+    
+    try
+    {
+        // Try format-specific extraction based on extension
+        if (_stricmp(pcExt, "mp3") == 0)
+        {
+            bResult = CPTL_ExtractID3v2Art(pcFilePath, pAlbumArt);
+        }
+        else if (_stricmp(pcExt, "flac") == 0)
+        {
+            bResult = CPTL_ExtractFLACArt(pcFilePath, pAlbumArt);
+        }
+        else if (_stricmp(pcExt, "m4a") == 0 || _stricmp(pcExt, "m4p") == 0 || 
+                 _stricmp(pcExt, "mp4") == 0 || _stricmp(pcExt, "m4b") == 0)
+        {
+            bResult = CPTL_ExtractMP4Art(pcFilePath, pAlbumArt);
+        }
+        else if (_stricmp(pcExt, "ogg") == 0 || _stricmp(pcExt, "oga") == 0)
+        {
+            bResult = CPTL_ExtractOGGArt(pcFilePath, pAlbumArt);
+        }
+        else
+        {
+            // Try ID3v2 as a fallback (some files may have wrong extensions)
+            bResult = CPTL_ExtractID3v2Art(pcFilePath, pAlbumArt);
+        }
+    }
+    catch (...)
+    {
+        // TagLib threw an exception
+        CPTL_FreeAlbumArt(pAlbumArt);
+        return FALSE;
+    }
+    
+    return bResult;
+}
+
+// Free album art structure
+void CPTL_FreeAlbumArt(CPs_AlbumArt* pAlbumArt)
+{
+    if (!pAlbumArt)
+        return;
+        
+    if (pAlbumArt->m_pImageData)
+        free(pAlbumArt->m_pImageData);
+    if (pAlbumArt->m_pcMimeType)
+        free(pAlbumArt->m_pcMimeType);
+        
+    memset(pAlbumArt, 0, sizeof(CPs_AlbumArt));
+}
+
+// Write album art to file
+BOOL CPTL_WriteAlbumArt(const char* pcFilePath, 
+                        const BYTE* pImageData, 
+                        unsigned int iImageSize, 
+                        const char* pcMimeType)
+{
+    const char* pcExt;
+    BOOL bResult = FALSE;
+    
+    if (!pcFilePath || !pImageData || iImageSize == 0)
+        return FALSE;
+        
+    // Get file extension
+    pcExt = strrchr(pcFilePath, '.');
+    if (!pcExt)
+        return FALSE;
+        
+    pcExt++; // Skip the dot
+    
+    try
+    {
+        if (_stricmp(pcExt, "mp3") == 0)
+        {
+            TagLib::MPEG::File file(pcFilePath);
+            
+            if (!file.isValid())
+                return FALSE;
+                
+            // Ensure ID3v2 tag exists
+            if (!file.ID3v2Tag())
+                file.ID3v2Tag(true);
+                
+            TagLib::ID3v2::Tag *tag = file.ID3v2Tag();
+            
+            // Remove existing APIC frames
+            tag->removeFrames("APIC");
+            
+            // Create new picture frame
+            TagLib::ID3v2::AttachedPictureFrame *frame = 
+                new TagLib::ID3v2::AttachedPictureFrame();
+                
+            frame->setMimeType(pcMimeType ? pcMimeType : "image/jpeg");
+            frame->setPicture(TagLib::ByteVector((const char*)pImageData, iImageSize));
+            frame->setType(TagLib::ID3v2::AttachedPictureFrame::FrontCover);
+            
+            tag->addFrame(frame);
+            bResult = file.save();
+        }
+        else if (_stricmp(pcExt, "flac") == 0)
+        {
+            TagLib::FLAC::File file(pcFilePath);
+            
+            if (!file.isValid())
+                return FALSE;
+                
+            // Remove existing pictures
+            file.removePictures();
+            
+            // Create new picture
+            TagLib::FLAC::Picture *picture = new TagLib::FLAC::Picture();
+            picture->setMimeType(pcMimeType ? pcMimeType : "image/jpeg");
+            picture->setData(TagLib::ByteVector((const char*)pImageData, iImageSize));
+            picture->setType(TagLib::FLAC::Picture::FrontCover);
+            
+            file.addPicture(picture);
+            bResult = file.save();
+        }
+        else if (_stricmp(pcExt, "m4a") == 0 || _stricmp(pcExt, "m4p") == 0 || 
+                 _stricmp(pcExt, "mp4") == 0 || _stricmp(pcExt, "m4b") == 0)
+        {
+            TagLib::MP4::File file(pcFilePath);
+            
+            if (!file.isValid() || !file.tag())
+                return FALSE;
+                
+            TagLib::MP4::Tag *tag = file.tag();
+            
+            // Determine format from MIME type
+            TagLib::MP4::CoverArt::Format format = TagLib::MP4::CoverArt::JPEG;
+            if (pcMimeType && strstr(pcMimeType, "png"))
+                format = TagLib::MP4::CoverArt::PNG;
+                
+            // Create cover art
+            TagLib::MP4::CoverArt cover(format, 
+                TagLib::ByteVector((const char*)pImageData, iImageSize));
+                
+            TagLib::MP4::CoverArtList coverList;
+            coverList.append(cover);
+            
+            tag->setItem("covr", coverList);
+            bResult = file.save();
+        }
+        else if (_stricmp(pcExt, "ogg") == 0 || _stricmp(pcExt, "oga") == 0)
+        {
+            TagLib::Ogg::Vorbis::File file(pcFilePath);
+            
+            if (!file.isValid() || !file.tag())
+                return FALSE;
+                
+            TagLib::Ogg::XiphComment *tag = file.tag();
+            
+            // Remove existing pictures
+            tag->removeAllPictures();
+            
+            // Create new picture
+            TagLib::FLAC::Picture *picture = new TagLib::FLAC::Picture();
+            picture->setMimeType(pcMimeType ? pcMimeType : "image/jpeg");
+            picture->setData(TagLib::ByteVector((const char*)pImageData, iImageSize));
+            picture->setType(TagLib::FLAC::Picture::FrontCover);
+            
+            tag->addPicture(picture);
+            bResult = file.save();
+        }
+    }
+    catch (...)
+    {
+        return FALSE;
+    }
+    
+    return bResult;
+}
+
+// Check if file has album art
+BOOL CPTL_HasAlbumArt(const char* pcFilePath)
+{
+    CPs_AlbumArt art;
+    BOOL bResult = CPTL_ReadAlbumArt(pcFilePath, &art);
+    if (bResult)
+        CPTL_FreeAlbumArt(&art);
+    return bResult;
+}
+
+// Convert image data to HBITMAP using GDI+
+HBITMAP CPTL_CreateBitmapFromImageData(const BYTE* pImageData, 
+                                       unsigned int iImageSize,
+                                       unsigned int iMaxWidth,
+                                       unsigned int iMaxHeight,
+                                       unsigned int* piActualWidth,
+                                       unsigned int* piActualHeight)
+{
+    if (!pImageData || iImageSize == 0)
+        return NULL;
+        
+    // Create stream from memory
+    HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, iImageSize);
+    if (!hMem)
+        return NULL;
+        
+    void* pMem = GlobalLock(hMem);
+    if (!pMem)
+    {
+        GlobalFree(hMem);
+        return NULL;
+    }
+    
+    memcpy(pMem, pImageData, iImageSize);
+    GlobalUnlock(hMem);
+    
+    IStream* pStream = NULL;
+    if (CreateStreamOnHGlobal(hMem, TRUE, &pStream) != S_OK)
+    {
+        GlobalFree(hMem);
+        return NULL;
+    }
+    
+    // Load image from stream
+    Gdiplus::Bitmap* pBitmap = Gdiplus::Bitmap::FromStream(pStream);
+    pStream->Release();
+    
+    if (!pBitmap || pBitmap->GetLastStatus() != Gdiplus::Ok)
+    {
+        if (pBitmap)
+            delete pBitmap;
+        return NULL;
+    }
+    
+    // Get image dimensions
+    unsigned int iWidth = pBitmap->GetWidth();
+    unsigned int iHeight = pBitmap->GetHeight();
+    
+    // Calculate scaling if needed
+    if (iMaxWidth > 0 && iMaxHeight > 0 && (iWidth > iMaxWidth || iHeight > iMaxHeight))
+    {
+        float fScale = std::min((float)iMaxWidth / iWidth, (float)iMaxHeight / iHeight);
+        iWidth = (unsigned int)(iWidth * fScale);
+        iHeight = (unsigned int)(iHeight * fScale);
+    }
+    
+    // Return actual dimensions
+    if (piActualWidth)
+        *piActualWidth = iWidth;
+    if (piActualHeight)
+        *piActualHeight = iHeight;
+    
+    // Convert to HBITMAP
+    HBITMAP hBitmap = NULL;
+    pBitmap->GetHBITMAP(Gdiplus::Color(255, 255, 255), &hBitmap);
+    
+    delete pBitmap;
+    return hBitmap;
+}
+
+// Get album art from cache or load
+HBITMAP CPTL_GetAlbumArtBitmap(const char* pcFilePath,
+                                unsigned int iMaxWidth,
+                                unsigned int iMaxHeight,
+                                unsigned int* piActualWidth,
+                                unsigned int* piActualHeight)
+{
+    CPs_AlbumArtCacheEntry* pCurrent;
+    CPs_AlbumArt art;
+    HBITMAP hBitmap;
+    unsigned int iWidth, iHeight;
+    
+    if (!pcFilePath)
+        return NULL;
+        
+    // Search cache
+    pCurrent = g_pAlbumArtCache;
+    while (pCurrent)
+    {
+        if (pCurrent->m_pcFilePath && stricmp(pCurrent->m_pcFilePath, pcFilePath) == 0)
+        {
+            // Found in cache - update access time
+            pCurrent->m_tLastAccess = time(NULL);
+            
+            if (piActualWidth)
+                *piActualWidth = pCurrent->m_iWidth;
+            if (piActualHeight)
+                *piActualHeight = pCurrent->m_iHeight;
+                
+            return pCurrent->m_hBitmap;
+        }
+        pCurrent = pCurrent->m_pNext;
+    }
+    
+    // Not in cache - load from file
+    if (!CPTL_ReadAlbumArt(pcFilePath, &art))
+        return NULL;
+        
+    // Convert to bitmap
+    hBitmap = CPTL_CreateBitmapFromImageData(art.m_pImageData, art.m_iImageSize,
+                                              iMaxWidth, iMaxHeight,
+                                              &iWidth, &iHeight);
+    CPTL_FreeAlbumArt(&art);
+    
+    if (!hBitmap)
+        return NULL;
+        
+    // Add to cache
+    // Check if we need to evict entries
+    unsigned int iMemoryUsed = iWidth * iHeight * 4; // Assume 32-bit color
+    
+    while (g_iCacheEntryCount >= CPC_ALBUMART_CACHE_SIZE ||
+           g_iTotalCacheMemory + iMemoryUsed > CPC_ALBUMART_MAX_MEMORY_MB * 1024 * 1024)
+    {
+        CPTL_EvictLRU();
+        if (g_iCacheEntryCount == 0)
+            break;
+    }
+    
+    // Create new cache entry
+    CPs_AlbumArtCacheEntry* pNew = (CPs_AlbumArtCacheEntry*)malloc(sizeof(CPs_AlbumArtCacheEntry));
+    if (pNew)
+    {
+        pNew->m_pcFilePath = _strdup(pcFilePath);
+        pNew->m_hBitmap = hBitmap;
+        pNew->m_iWidth = iWidth;
+        pNew->m_iHeight = iHeight;
+        pNew->m_tLastAccess = time(NULL);
+        pNew->m_iMemoryUsed = iMemoryUsed;
+        pNew->m_pNext = g_pAlbumArtCache;
+        
+        g_pAlbumArtCache = pNew;
+        g_iCacheEntryCount++;
+        g_iTotalCacheMemory += iMemoryUsed;
+    }
+    
+    if (piActualWidth)
+        *piActualWidth = iWidth;
+    if (piActualHeight)
+        *piActualHeight = iHeight;
+        
+    return hBitmap;
+}
+
+} // extern "C"

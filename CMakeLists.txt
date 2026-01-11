@@ -77,6 +77,7 @@ set(BRISK_SOURCES
     CPI_CircleBuffer.c
     CPI_Equaliser_Basic.c
     CPI_TagLib.c
+    CPI_AlbumArtTooltip.c
     CPI_Image.c
     CPI_Indicators.c
     CPI_Interface.c
@@ -108,6 +109,7 @@ set(BRISK_SOURCES
     CPI_Verbs.c
     CPSK_Skin.c
     DLG_Find.c
+    DLG_Properties.c
     globals.c
     main.c
     options.c
@@ -247,6 +249,11 @@ add_compile_definitions(HAVE_FFMPEG_CODEC=1)
 # Create executable
 if(MSVC)
     add_executable(briskplayer WIN32 ${BRISK_SOURCES} ${BRISK_RC})
+    
+    # Compile CPI_TagLib.c as C++ since it uses TagLib C++ API for album art
+    set_source_files_properties(CPI_TagLib.c PROPERTIES LANGUAGE CXX)
+    set_source_files_properties(CPI_AlbumArtTooltip.c PROPERTIES LANGUAGE CXX)
+    
     set_target_properties(briskplayer PROPERTIES LINK_FLAGS "/MANIFEST:NO")
 else()
     # For MinGW, compile resource file separately
@@ -289,6 +296,10 @@ else()
     endif()
     add_executable(briskplayer WIN32 ${BRISK_SOURCES} ${BRISK_RC})
     
+    # Compile CPI_TagLib.c as C++ since it uses TagLib C++ API for album art
+    set_source_files_properties(CPI_TagLib.c PROPERTIES LANGUAGE CXX)
+    set_source_files_properties(CPI_AlbumArtTooltip.c PROPERTIES LANGUAGE CXX)
+    
     # Use C++ linker for MinGW since we link against C++ libraries (TagLib)
     if(MINGW)
         set_target_properties(briskplayer PROPERTIES LINKER_LANGUAGE CXX)
@@ -310,7 +321,6 @@ endif()
 # Link libraries
 target_link_libraries(briskplayer PRIVATE
     ZLIB::ZLIB
-    ${WINDOWS_LIBRARIES}
 )
 
 # Link TagLib libraries
@@ -348,6 +358,12 @@ if(FFMPEG_FOUND)
         target_link_libraries(briskplayer PRIVATE ${FFMPEG_LIBRARIES})
     endif()
 endif()
+
+# Link Windows system libraries (after FAudio/FFmpeg which need them)
+target_link_libraries(briskplayer PRIVATE
+    ${WINDOWS_LIBRARIES}
+    gdiplus  # For album art decoding
+)
 
 # Explicitly link C++ standard library for MinGW-w64 cross-compilation
 # Since we're linking against TagLib (C++ library), we need the C++ runtime

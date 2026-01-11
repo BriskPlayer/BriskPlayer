@@ -69,6 +69,42 @@ typedef struct _CPs_PlaylistItem
 	char* m_pcTrackLength_AsText;
 	unsigned int m_iTrackLength;
 	
+	// Extended metadata fields
+	char* m_pcComposer;
+	char* m_pcAlbumArtist;
+	char* m_pcGrouping;
+	char* m_pcCopyright;
+	char* m_pcLyrics;
+	unsigned short m_iDiscNumber;
+	unsigned short m_iBPM;
+	
+	// ReplayGain fields
+	float m_fReplayGain_Track_Gain;  // in dB
+	float m_fReplayGain_Track_Peak;  // 0.0-1.0
+	float m_fReplayGain_Album_Gain;  // in dB
+	float m_fReplayGain_Album_Peak;  // 0.0-1.0
+	
+	// Audio properties
+	unsigned int m_iBitrate;         // in kbps
+	unsigned int m_iSampleRate;      // in Hz (44100, 48000, etc.)
+	unsigned short m_iBitDepth;      // 16, 24, 32, etc.
+	unsigned char m_cChannels;       // 1=mono, 2=stereo, 6=5.1, etc.
+	char* m_pcCodec;                 // "MP3", "FLAC", "Vorbis", etc.
+	char* m_pcBitrateMode;           // "CBR", "VBR", "ABR"
+	unsigned int m_iFileSize;        // in bytes
+	
+	// Multiple artists support
+	char* m_pcArtists;               // All artists (may include features)
+	char* m_pcFeaturedArtist;        // Featured artist(s)
+	char* m_pcRemixer;               // Remixer/producer
+	
+	// MusicBrainz IDs (UUIDs for database integration)
+	char* m_pcMusicBrainz_TrackID;        // Recording ID
+	char* m_pcMusicBrainz_ReleaseID;      // Release/Album ID
+	char* m_pcMusicBrainz_ArtistID;       // Artist ID
+	char* m_pcMusicBrainz_AlbumArtistID;  // Album Artist ID
+	char* m_pcMusicBrainz_ReleaseGroupID; // Release Group ID
+	
 	int m_iCookie;
 	
 	CP_HPLAYLISTITEM m_hNext;

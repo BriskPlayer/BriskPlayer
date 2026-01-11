@@ -209,7 +209,6 @@ brisksrc = files([
     'CompositeFile.c',
     'CPI_CircleBuffer.c',
     'CPI_Equaliser_Basic.c',
-    'CPI_TagLib.c',
     'CPI_Image.c',
     'CPI_Indicators.c',
     'CPI_Interface.c',
@@ -330,7 +329,7 @@ elif cc.get_id() == 'clang' and host_machine.system() == 'windows'
     static_compile_args = ['-static-libgcc']
 endif
 
-briskplayer_exe = executable('briskplayer', brisksrc, briskres, 
+briskplayer_exe = executable('briskplayer', all_sources, briskres, 
     dependencies : deps,
     link_args : static_link_args,
     c_args : c23_args + c23_feature_defines + static_compile_args,

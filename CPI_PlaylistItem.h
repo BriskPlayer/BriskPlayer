@@ -19,6 +19,9 @@
  */
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifndef _CPI_PLAYLISTITEM_H_
+#define _CPI_PLAYLISTITEM_H_
+
 #include "stdafx.h"
 #include "globals.h"
 
@@ -54,6 +57,10 @@ typedef enum _CPe_FilenameFormat
 
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CIC_INVALIDPLAYLISTCOOKIE					0xFFFFFFFF
 #define CIC_INVALIDGENRE							((unsigned char)0xFF)
 #define CIC_INVALIDTRACKNUM							((unsigned char)0xFF)
@@ -79,6 +86,37 @@ const char* CPLI_GetTrackNum_AsText(const CP_HPLAYLISTITEM hItem);
 const char* CPLI_GetComment(const CP_HPLAYLISTITEM hItem);
 int CPLI_GetTrackLength(const CP_HPLAYLISTITEM hItem);
 const char* CPLI_GetTrackLength_AsText(const CP_HPLAYLISTITEM hItem);
+// Extended metadata accessors
+const char* CPLI_GetComposer(const CP_HPLAYLISTITEM hItem);
+const char* CPLI_GetAlbumArtist(const CP_HPLAYLISTITEM hItem);
+const char* CPLI_GetGrouping(const CP_HPLAYLISTITEM hItem);
+const char* CPLI_GetCopyright(const CP_HPLAYLISTITEM hItem);
+const char* CPLI_GetLyrics(const CP_HPLAYLISTITEM hItem);
+unsigned short CPLI_GetDiscNumber(const CP_HPLAYLISTITEM hItem);
+unsigned short CPLI_GetBPM(const CP_HPLAYLISTITEM hItem);
+// ReplayGain accessors
+float CPLI_GetReplayGain_Track_Gain(const CP_HPLAYLISTITEM hItem);
+float CPLI_GetReplayGain_Track_Peak(const CP_HPLAYLISTITEM hItem);
+float CPLI_GetReplayGain_Album_Gain(const CP_HPLAYLISTITEM hItem);
+float CPLI_GetReplayGain_Album_Peak(const CP_HPLAYLISTITEM hItem);
+// Audio properties accessors
+unsigned int CPLI_GetBitrate(const CP_HPLAYLISTITEM hItem);
+unsigned int CPLI_GetSampleRate(const CP_HPLAYLISTITEM hItem);
+unsigned short CPLI_GetBitDepth(const CP_HPLAYLISTITEM hItem);
+unsigned char CPLI_GetChannels(const CP_HPLAYLISTITEM hItem);
+const char* CPLI_GetCodec(const CP_HPLAYLISTITEM hItem);
+const char* CPLI_GetBitrateMode(const CP_HPLAYLISTITEM hItem);
+unsigned int CPLI_GetFileSize(const CP_HPLAYLISTITEM hItem);
+// Multiple artists accessors
+const char* CPLI_GetArtists(const CP_HPLAYLISTITEM hItem);
+const char* CPLI_GetFeaturedArtist(const CP_HPLAYLISTITEM hItem);
+const char* CPLI_GetRemixer(const CP_HPLAYLISTITEM hItem);
+// MusicBrainz ID accessors
+const char* CPLI_GetMusicBrainz_TrackID(const CP_HPLAYLISTITEM hItem);
+const char* CPLI_GetMusicBrainz_ReleaseID(const CP_HPLAYLISTITEM hItem);
+const char* CPLI_GetMusicBrainz_ArtistID(const CP_HPLAYLISTITEM hItem);
+const char* CPLI_GetMusicBrainz_AlbumArtistID(const CP_HPLAYLISTITEM hItem);
+const char* CPLI_GetMusicBrainz_ReleaseGroupID(const CP_HPLAYLISTITEM hItem);
 //
 // Update functions
 void CPLI_SetTrackStackPos(CP_HPLAYLISTITEM hItem, const int iNewPos);
@@ -91,6 +129,37 @@ void CPLI_SetTrackNum(CP_HPLAYLISTITEM hItem, const unsigned char iNewValue);
 void CPLI_SetTrackNum_AsText(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
 void CPLI_SetComment(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
 void CPLI_CalculateLength(CP_HPLAYLISTITEM hItem);
+// Extended metadata mutators
+void CPLI_SetComposer(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
+void CPLI_SetAlbumArtist(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
+void CPLI_SetGrouping(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
+void CPLI_SetCopyright(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
+void CPLI_SetLyrics(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
+void CPLI_SetDiscNumber(CP_HPLAYLISTITEM hItem, const unsigned short iNewValue);
+void CPLI_SetBPM(CP_HPLAYLISTITEM hItem, const unsigned short iNewValue);
+// ReplayGain mutators
+void CPLI_SetReplayGain_Track_Gain(CP_HPLAYLISTITEM hItem, const float fNewValue);
+void CPLI_SetReplayGain_Track_Peak(CP_HPLAYLISTITEM hItem, const float fNewValue);
+void CPLI_SetReplayGain_Album_Gain(CP_HPLAYLISTITEM hItem, const float fNewValue);
+void CPLI_SetReplayGain_Album_Peak(CP_HPLAYLISTITEM hItem, const float fNewValue);
+// Audio properties mutators (usually set during tag reading, rarely modified manually)
+void CPLI_SetBitrate(CP_HPLAYLISTITEM hItem, const unsigned int iNewValue);
+void CPLI_SetSampleRate(CP_HPLAYLISTITEM hItem, const unsigned int iNewValue);
+void CPLI_SetBitDepth(CP_HPLAYLISTITEM hItem, const unsigned short iNewValue);
+void CPLI_SetChannels(CP_HPLAYLISTITEM hItem, const unsigned char cNewValue);
+void CPLI_SetCodec(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
+void CPLI_SetBitrateMode(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
+void CPLI_SetFileSize(CP_HPLAYLISTITEM hItem, const unsigned int iNewValue);
+// Multiple artists mutators
+void CPLI_SetArtists(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
+void CPLI_SetFeaturedArtist(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
+void CPLI_SetRemixer(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
+// MusicBrainz ID mutators
+void CPLI_SetMusicBrainz_TrackID(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
+void CPLI_SetMusicBrainz_ReleaseID(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
+void CPLI_SetMusicBrainz_ArtistID(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
+void CPLI_SetMusicBrainz_AlbumArtistID(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
+void CPLI_SetMusicBrainz_ReleaseGroupID(CP_HPLAYLISTITEM hItem, const char* pcNewValue);
 BOOL CPLI_RenameTrack(CP_HPLAYLISTITEM hItem, const CPe_FilenameFormat enFormat);
 //
 // For use by the playlist window
@@ -105,4 +174,11 @@ CP_HPLAYLISTITEM CPLI_Prev(const CP_HPLAYLISTITEM hItem);
 BOOL CPLI_IsTagDirty(CP_HPLAYLISTITEM hItem);
 void CPLI_ReadTag(CP_HPLAYLISTITEM hItem);
 void CPLI_WriteTag(CP_HPLAYLISTITEM hItem);
+
+#ifdef __cplusplus
+}
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
+
+#endif /* _CPI_PLAYLISTITEM_H_ */

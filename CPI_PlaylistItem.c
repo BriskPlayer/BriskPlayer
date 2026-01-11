@@ -79,6 +79,42 @@ CP_HPLAYLISTITEM CPLII_CreateItem(const char* pcPath)
 	pNewItem->m_iTrackLength = 0;
 	pNewItem->m_pcTrackLength_AsText = NULL;
 	
+	// Initialize extended metadata fields
+	pNewItem->m_pcComposer = NULL;
+	pNewItem->m_pcAlbumArtist = NULL;
+	pNewItem->m_pcGrouping = NULL;
+	pNewItem->m_pcCopyright = NULL;
+	pNewItem->m_pcLyrics = NULL;
+	pNewItem->m_iDiscNumber = 0;
+	pNewItem->m_iBPM = 0;
+	
+	// Initialize ReplayGain fields (0.0 = not set)
+	pNewItem->m_fReplayGain_Track_Gain = 0.0f;
+	pNewItem->m_fReplayGain_Track_Peak = 0.0f;
+	pNewItem->m_fReplayGain_Album_Gain = 0.0f;
+	pNewItem->m_fReplayGain_Album_Peak = 0.0f;
+	
+	// Initialize audio properties
+	pNewItem->m_iBitrate = 0;
+	pNewItem->m_iSampleRate = 0;
+	pNewItem->m_iBitDepth = 0;
+	pNewItem->m_cChannels = 0;
+	pNewItem->m_pcCodec = NULL;
+	pNewItem->m_pcBitrateMode = NULL;
+	pNewItem->m_iFileSize = 0;
+	
+	// Initialize multiple artists fields
+	pNewItem->m_pcArtists = NULL;
+	pNewItem->m_pcFeaturedArtist = NULL;
+	pNewItem->m_pcRemixer = NULL;
+	
+	// Initialize MusicBrainz IDs
+	pNewItem->m_pcMusicBrainz_TrackID = NULL;
+	pNewItem->m_pcMusicBrainz_ReleaseID = NULL;
+	pNewItem->m_pcMusicBrainz_ArtistID = NULL;
+	pNewItem->m_pcMusicBrainz_AlbumArtistID = NULL;
+	pNewItem->m_pcMusicBrainz_ReleaseGroupID = NULL;
+	
 	pNewItem->m_iCookie = -1;
 	
 	pNewItem->m_hNext = NULL;
@@ -126,6 +162,100 @@ void CPLII_RemoveTagInfo(CPs_PlaylistItem* pItem)
 	{
 		free(pItem->m_pcTrackNum_AsText);
 		pItem->m_pcTrackNum_AsText = NULL;
+	}
+	
+	// Clean up extended metadata fields
+	if (pItem->m_pcComposer)
+	{
+		free(pItem->m_pcComposer);
+		pItem->m_pcComposer = NULL;
+	}
+	
+	if (pItem->m_pcAlbumArtist)
+	{
+		free(pItem->m_pcAlbumArtist);
+		pItem->m_pcAlbumArtist = NULL;
+	}
+	
+	if (pItem->m_pcGrouping)
+	{
+		free(pItem->m_pcGrouping);
+		pItem->m_pcGrouping = NULL;
+	}
+	
+	if (pItem->m_pcCopyright)
+	{
+		free(pItem->m_pcCopyright);
+		pItem->m_pcCopyright = NULL;
+	}
+	
+	if (pItem->m_pcLyrics)
+	{
+		free(pItem->m_pcLyrics);
+		pItem->m_pcLyrics = NULL;
+	}
+	
+	// Clean up audio properties string fields
+	if (pItem->m_pcCodec)
+	{
+		free(pItem->m_pcCodec);
+		pItem->m_pcCodec = NULL;
+	}
+	
+	if (pItem->m_pcBitrateMode)
+	{
+		free(pItem->m_pcBitrateMode);
+		pItem->m_pcBitrateMode = NULL;
+	}
+	
+	// Clean up multiple artists fields
+	if (pItem->m_pcArtists)
+	{
+		free(pItem->m_pcArtists);
+		pItem->m_pcArtists = NULL;
+	}
+	
+	if (pItem->m_pcFeaturedArtist)
+	{
+		free(pItem->m_pcFeaturedArtist);
+		pItem->m_pcFeaturedArtist = NULL;
+	}
+	
+	if (pItem->m_pcRemixer)
+	{
+		free(pItem->m_pcRemixer);
+		pItem->m_pcRemixer = NULL;
+	}
+	
+	// Clean up MusicBrainz IDs
+	if (pItem->m_pcMusicBrainz_TrackID)
+	{
+		free(pItem->m_pcMusicBrainz_TrackID);
+		pItem->m_pcMusicBrainz_TrackID = NULL;
+	}
+	
+	if (pItem->m_pcMusicBrainz_ReleaseID)
+	{
+		free(pItem->m_pcMusicBrainz_ReleaseID);
+		pItem->m_pcMusicBrainz_ReleaseID = NULL;
+	}
+	
+	if (pItem->m_pcMusicBrainz_ArtistID)
+	{
+		free(pItem->m_pcMusicBrainz_ArtistID);
+		pItem->m_pcMusicBrainz_ArtistID = NULL;
+	}
+	
+	if (pItem->m_pcMusicBrainz_AlbumArtistID)
+	{
+		free(pItem->m_pcMusicBrainz_AlbumArtistID);
+		pItem->m_pcMusicBrainz_AlbumArtistID = NULL;
+	}
+	
+	if (pItem->m_pcMusicBrainz_ReleaseGroupID)
+	{
+		free(pItem->m_pcMusicBrainz_ReleaseGroupID);
+		pItem->m_pcMusicBrainz_ReleaseGroupID = NULL;
 	}
 	
 	if (pItem->m_pcTrackLength_AsText)
@@ -683,6 +813,438 @@ void CPLI_SetComment(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
 	CP_CHECKOBJECT(pItem);
 	
 	STR_AllocSetString(&pItem->m_pcComment, pcNewValue, TRUE);
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+//
+// Extended metadata accessors
+//
+const char* CPLI_GetComposer(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_pcComposer;
+}
+
+const char* CPLI_GetAlbumArtist(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_pcAlbumArtist;
+}
+
+const char* CPLI_GetGrouping(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_pcGrouping;
+}
+
+const char* CPLI_GetCopyright(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_pcCopyright;
+}
+
+const char* CPLI_GetLyrics(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_pcLyrics;
+}
+
+unsigned short CPLI_GetDiscNumber(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_iDiscNumber;
+}
+
+unsigned short CPLI_GetBPM(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_iBPM;
+}
+
+//
+// Extended metadata mutators
+//
+void CPLI_SetComposer(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	STR_AllocSetString(&pItem->m_pcComposer, pcNewValue, TRUE);
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+void CPLI_SetAlbumArtist(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	STR_AllocSetString(&pItem->m_pcAlbumArtist, pcNewValue, TRUE);
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+void CPLI_SetGrouping(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	STR_AllocSetString(&pItem->m_pcGrouping, pcNewValue, TRUE);
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+void CPLI_SetCopyright(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	STR_AllocSetString(&pItem->m_pcCopyright, pcNewValue, TRUE);
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+void CPLI_SetLyrics(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	STR_AllocSetString(&pItem->m_pcLyrics, pcNewValue, TRUE);
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+void CPLI_SetDiscNumber(CP_HPLAYLISTITEM hItem, const unsigned short iNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	pItem->m_iDiscNumber = iNewValue;
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+void CPLI_SetBPM(CP_HPLAYLISTITEM hItem, const unsigned short iNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	pItem->m_iBPM = iNewValue;
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+//
+// ReplayGain accessors
+//
+float CPLI_GetReplayGain_Track_Gain(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_fReplayGain_Track_Gain;
+}
+
+float CPLI_GetReplayGain_Track_Peak(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_fReplayGain_Track_Peak;
+}
+
+float CPLI_GetReplayGain_Album_Gain(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_fReplayGain_Album_Gain;
+}
+
+float CPLI_GetReplayGain_Album_Peak(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_fReplayGain_Album_Peak;
+}
+
+//
+// ReplayGain mutators
+//
+void CPLI_SetReplayGain_Track_Gain(CP_HPLAYLISTITEM hItem, const float fNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	pItem->m_fReplayGain_Track_Gain = fNewValue;
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+void CPLI_SetReplayGain_Track_Peak(CP_HPLAYLISTITEM hItem, const float fNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	pItem->m_fReplayGain_Track_Peak = fNewValue;
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+void CPLI_SetReplayGain_Album_Gain(CP_HPLAYLISTITEM hItem, const float fNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	pItem->m_fReplayGain_Album_Gain = fNewValue;
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+void CPLI_SetReplayGain_Album_Peak(CP_HPLAYLISTITEM hItem, const float fNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	pItem->m_fReplayGain_Album_Peak = fNewValue;
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+//
+// Audio Properties Accessors
+//
+unsigned int CPLI_GetBitrate(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_iBitrate;
+}
+
+unsigned int CPLI_GetSampleRate(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_iSampleRate;
+}
+
+unsigned short CPLI_GetBitDepth(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_iBitDepth;
+}
+
+unsigned char CPLI_GetChannels(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_cChannels;
+}
+
+const char* CPLI_GetCodec(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_pcCodec;
+}
+
+const char* CPLI_GetBitrateMode(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_pcBitrateMode;
+}
+
+unsigned int CPLI_GetFileSize(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_iFileSize;
+}
+
+//
+// Multiple Artists Accessors
+//
+const char* CPLI_GetArtists(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_pcArtists;
+}
+
+const char* CPLI_GetFeaturedArtist(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_pcFeaturedArtist;
+}
+
+const char* CPLI_GetRemixer(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_pcRemixer;
+}
+
+//
+// MusicBrainz ID Accessors
+//
+const char* CPLI_GetMusicBrainz_TrackID(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_pcMusicBrainz_TrackID;
+}
+
+const char* CPLI_GetMusicBrainz_ReleaseID(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_pcMusicBrainz_ReleaseID;
+}
+
+const char* CPLI_GetMusicBrainz_ArtistID(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_pcMusicBrainz_ArtistID;
+}
+
+const char* CPLI_GetMusicBrainz_AlbumArtistID(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_pcMusicBrainz_AlbumArtistID;
+}
+
+const char* CPLI_GetMusicBrainz_ReleaseGroupID(const CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_pcMusicBrainz_ReleaseGroupID;
+}
+
+//
+// Audio Properties Mutators
+//
+void CPLI_SetBitrate(CP_HPLAYLISTITEM hItem, const unsigned int iNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	pItem->m_iBitrate = iNewValue;
+}
+
+void CPLI_SetSampleRate(CP_HPLAYLISTITEM hItem, const unsigned int iNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	pItem->m_iSampleRate = iNewValue;
+}
+
+void CPLI_SetBitDepth(CP_HPLAYLISTITEM hItem, const unsigned short iNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	pItem->m_iBitDepth = iNewValue;
+}
+
+void CPLI_SetChannels(CP_HPLAYLISTITEM hItem, const unsigned char cNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	pItem->m_cChannels = cNewValue;
+}
+
+void CPLI_SetCodec(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	STR_AllocSetString(&pItem->m_pcCodec, pcNewValue, TRUE);
+}
+
+void CPLI_SetBitrateMode(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	STR_AllocSetString(&pItem->m_pcBitrateMode, pcNewValue, TRUE);
+}
+
+void CPLI_SetFileSize(CP_HPLAYLISTITEM hItem, const unsigned int iNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	pItem->m_iFileSize = iNewValue;
+}
+
+//
+// Multiple Artists Mutators
+//
+void CPLI_SetArtists(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	STR_AllocSetString(&pItem->m_pcArtists, pcNewValue, TRUE);
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+void CPLI_SetFeaturedArtist(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	STR_AllocSetString(&pItem->m_pcFeaturedArtist, pcNewValue, TRUE);
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+void CPLI_SetRemixer(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	STR_AllocSetString(&pItem->m_pcRemixer, pcNewValue, TRUE);
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+//
+// MusicBrainz ID Mutators
+//
+void CPLI_SetMusicBrainz_TrackID(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	STR_AllocSetString(&pItem->m_pcMusicBrainz_TrackID, pcNewValue, TRUE);
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+void CPLI_SetMusicBrainz_ReleaseID(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	STR_AllocSetString(&pItem->m_pcMusicBrainz_ReleaseID, pcNewValue, TRUE);
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+void CPLI_SetMusicBrainz_ArtistID(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	STR_AllocSetString(&pItem->m_pcMusicBrainz_ArtistID, pcNewValue, TRUE);
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+void CPLI_SetMusicBrainz_AlbumArtistID(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	STR_AllocSetString(&pItem->m_pcMusicBrainz_AlbumArtistID, pcNewValue, TRUE);
+	pItem->m_bID3Tag_SaveRequired = TRUE;
+	CPL_cb_OnItemUpdated(hItem);
+}
+
+void CPLI_SetMusicBrainz_ReleaseGroupID(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	STR_AllocSetString(&pItem->m_pcMusicBrainz_ReleaseGroupID, pcNewValue, TRUE);
 	pItem->m_bID3Tag_SaveRequired = TRUE;
 	CPL_cb_OnItemUpdated(hItem);
 }
@@ -1619,6 +2181,42 @@ void CPLI_ReadTag_TagLib(CPs_PlaylistItem* pItem)
 	unsigned int iLength = 0;
 	int iTagType = 0;
 	
+	// Extended metadata
+	char* pcComposer = NULL;
+	char* pcAlbumArtist = NULL;
+	char* pcGrouping = NULL;
+	char* pcCopyright = NULL;
+	char* pcLyrics = NULL;
+	unsigned short iDiscNumber = 0;
+	unsigned short iBPM = 0;
+	
+	// ReplayGain
+	float fTrackGain = 0.0f;
+	float fTrackPeak = 0.0f;
+	float fAlbumGain = 0.0f;
+	float fAlbumPeak = 0.0f;
+	
+	// Audio properties
+	unsigned int iBitrate = 0;
+	unsigned int iSampleRate = 0;
+	unsigned short iBitDepth = 0;
+	unsigned char cChannels = 0;
+	char* pcCodec = NULL;
+	char* pcBitrateMode = NULL;
+	unsigned int iFileSize = 0;
+	
+	// Multiple artists
+	char* pcArtists = NULL;
+	char* pcFeaturedArtist = NULL;
+	char* pcRemixer = NULL;
+	
+	// MusicBrainz IDs
+	char* pcMB_TrackID = NULL;
+	char* pcMB_ReleaseID = NULL;
+	char* pcMB_ArtistID = NULL;
+	char* pcMB_AlbumArtistID = NULL;
+	char* pcMB_ReleaseGroupID = NULL;
+	
 	if (!pItem || !pItem->m_pcPath)
 	{
 		CPLII_RemoveTagInfo(pItem);
@@ -1626,20 +2224,103 @@ void CPLI_ReadTag_TagLib(CPs_PlaylistItem* pItem)
 		return;
 	}
 
-	// Try to read tags using TagLib
+	// Try to read basic tags using TagLib
 	BOOL bSuccess = CPTL_ReadTags(pItem->m_pcPath,
 								  &pcTitle, &pcArtist, &pcAlbum,
 								  &pcYear, &pcComment, &pcGenre,
 								  &iTrackNum, &iLength, &iTagType);
 
+	// Also read extended metadata
+	BOOL bExtendedSuccess = CPTL_ReadExtendedTags(pItem->m_pcPath,
+	                                              &pcComposer, &pcAlbumArtist,
+	                                              &pcGrouping, &pcCopyright,
+	                                              &pcLyrics, &iDiscNumber, &iBPM);
+	
+	// Also read ReplayGain data
+	BOOL bReplayGainSuccess = CPTL_ReadReplayGain(pItem->m_pcPath,
+	                                              &fTrackGain, &fTrackPeak,
+	                                              &fAlbumGain, &fAlbumPeak);
+	
+	// Also read audio properties
+	BOOL bAudioPropsSuccess = CPTL_ReadAudioProperties(pItem->m_pcPath,
+	                                                   &iBitrate, &iSampleRate,
+	                                                   &iBitDepth, &cChannels,
+	                                                   &pcCodec, &pcBitrateMode,
+	                                                   &iFileSize);
+	
+	// Also read multiple artists metadata
+	BOOL bMultiArtistsSuccess = CPTL_ReadMultipleArtists(pItem->m_pcPath,
+	                                                     &pcArtists,
+	                                                     &pcFeaturedArtist,
+	                                                     &pcRemixer);
+	
+	// Also read MusicBrainz IDs
+	BOOL bMusicBrainzSuccess = CPTL_ReadMusicBrainzIDs(pItem->m_pcPath,
+	                                                   &pcMB_TrackID,
+	                                                   &pcMB_ReleaseID,
+	                                                   &pcMB_ArtistID,
+	                                                   &pcMB_AlbumArtistID,
+	                                                   &pcMB_ReleaseGroupID);
+
 	if (bSuccess)
 	{
-		// Set the tag information
+		// Set the basic tag information
 		STR_AllocSetString(&pItem->m_pcArtist, pcArtist, FALSE);
 		STR_AllocSetString(&pItem->m_pcAlbum, pcAlbum, FALSE);
 		STR_AllocSetString(&pItem->m_pcTrackName, pcTitle, FALSE);
 		STR_AllocSetString(&pItem->m_pcComment, pcComment, FALSE);
 		STR_AllocSetString(&pItem->m_pcYear, pcYear, FALSE);
+		
+		// Set extended metadata if available
+		if (bExtendedSuccess)
+		{
+			STR_AllocSetString(&pItem->m_pcComposer, pcComposer, FALSE);
+			STR_AllocSetString(&pItem->m_pcAlbumArtist, pcAlbumArtist, FALSE);
+			STR_AllocSetString(&pItem->m_pcGrouping, pcGrouping, FALSE);
+			STR_AllocSetString(&pItem->m_pcCopyright, pcCopyright, FALSE);
+			STR_AllocSetString(&pItem->m_pcLyrics, pcLyrics, FALSE);
+			pItem->m_iDiscNumber = iDiscNumber;
+			pItem->m_iBPM = iBPM;
+		}
+		
+		// Set ReplayGain if available
+		if (bReplayGainSuccess)
+		{
+			pItem->m_fReplayGain_Track_Gain = fTrackGain;
+			pItem->m_fReplayGain_Track_Peak = fTrackPeak;
+			pItem->m_fReplayGain_Album_Gain = fAlbumGain;
+			pItem->m_fReplayGain_Album_Peak = fAlbumPeak;
+		}
+		
+		// Set audio properties if available
+		if (bAudioPropsSuccess)
+		{
+			pItem->m_iBitrate = iBitrate;
+			pItem->m_iSampleRate = iSampleRate;
+			pItem->m_iBitDepth = iBitDepth;
+			pItem->m_cChannels = cChannels;
+			STR_AllocSetString(&pItem->m_pcCodec, pcCodec, FALSE);
+			STR_AllocSetString(&pItem->m_pcBitrateMode, pcBitrateMode, FALSE);
+			pItem->m_iFileSize = iFileSize;
+		}
+		
+		// Set multiple artists if available
+		if (bMultiArtistsSuccess)
+		{
+			STR_AllocSetString(&pItem->m_pcArtists, pcArtists, FALSE);
+			STR_AllocSetString(&pItem->m_pcFeaturedArtist, pcFeaturedArtist, FALSE);
+			STR_AllocSetString(&pItem->m_pcRemixer, pcRemixer, FALSE);
+		}
+		
+		// Set MusicBrainz IDs if available
+		if (bMusicBrainzSuccess)
+		{
+			STR_AllocSetString(&pItem->m_pcMusicBrainz_TrackID, pcMB_TrackID, FALSE);
+			STR_AllocSetString(&pItem->m_pcMusicBrainz_ReleaseID, pcMB_ReleaseID, FALSE);
+			STR_AllocSetString(&pItem->m_pcMusicBrainz_ArtistID, pcMB_ArtistID, FALSE);
+			STR_AllocSetString(&pItem->m_pcMusicBrainz_AlbumArtistID, pcMB_AlbumArtistID, FALSE);
+			STR_AllocSetString(&pItem->m_pcMusicBrainz_ReleaseGroupID, pcMB_ReleaseGroupID, FALSE);
+		}
 		
 		// Handle genre - convert string to genre index
 		if (pcGenre)
@@ -1720,7 +2401,7 @@ void CPLI_WriteTag_TagLib(CPs_PlaylistItem* pItem)
 	if (pItem->m_cGenre < CIC_NUMGENRES)
 		pcGenre = CPTL_GetGenreString(pItem->m_cGenre);
 
-	// Write tags using TagLib
+	// Write basic tags using TagLib
 	CPTL_WriteTags(pItem->m_pcPath,
 				   pItem->m_pcTrackName,
 				   pItem->m_pcArtist,
@@ -1730,6 +2411,23 @@ void CPLI_WriteTag_TagLib(CPs_PlaylistItem* pItem)
 				   pcGenre,
 				   pItem->m_cTrackNum,
 				   0); // length is not typically written to tags
+	
+	// Write extended metadata using TagLib
+	CPTL_WriteExtendedTags(pItem->m_pcPath,
+	                       pItem->m_pcComposer,
+	                       pItem->m_pcAlbumArtist,
+	                       pItem->m_pcGrouping,
+	                       pItem->m_pcCopyright,
+	                       pItem->m_pcLyrics,
+	                       pItem->m_iDiscNumber,
+	                       pItem->m_iBPM);
+	
+	// Write ReplayGain data
+	CPTL_WriteReplayGain(pItem->m_pcPath,
+	                     pItem->m_fReplayGain_Track_Gain,
+	                     pItem->m_fReplayGain_Track_Peak,
+	                     pItem->m_fReplayGain_Album_Gain,
+	                     pItem->m_fReplayGain_Album_Peak);
 }
 
 //

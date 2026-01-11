@@ -28,8 +28,12 @@
 #include "CPI_TagLib.h"
 #include "CPI_Playlist.h"
 #include "CPI_PlaylistItem.h"
+#include "DLG_Properties.h"
+#include "resource.h"
+#include <shellapi.h>
 #include "CPI_PlaylistWindow.h"
 #include "CPI_Indicators.h"
+#include "CPI_AlbumArtTooltip.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -115,6 +119,9 @@ void CPlaylistWindow_Create(void)
 	glb_PLW_State.m_pFloatActiveCommandTarget = NULL;
 	glb_PLW_State.m_bMouseEventSet = FALSE;
 	
+	// Initialize album art tooltip system
+	CPAAT_Initialize();
+	
 	// Create user interface window
 	windows.m_hifPlaylist = IF_Create("BriskPlayer Playlist", &options.playlist_window_pos, CPC_INTERFACE_STYLE_RESIZING);
 	IF_sethandler_onCreate(windows.m_hifPlaylist, CPlaylistWindow_CB_onCreate);
@@ -140,6 +147,9 @@ void CPlaylistWindow_Create(void)
 //
 void CPlaylistWindow_Destroy(void)
 {
+	// Cleanup album art tooltip system
+	CPAAT_Cleanup();
+	
 	// Cleanup windows
 	IF_CloseWindow(windows.m_hifPlaylist);
 	globals.m_hPlaylistViewControl = NULL;
@@ -1309,7 +1319,95 @@ void LVCB_ColHeaderClick(CP_HLISTVIEW _hListData, const int iColIDX)
 //
 void LVCB_ItemRightClick(CP_HLISTVIEW _hListData, const int iItemIDX, const int iColumnIDX, const CP_HPLAYLISTITEM hItem)
 {
-	IF_PostAppMessage(windows.m_hifPlaylist, CPPLM_CREATEINPLACE, (WPARAM)iItemIDX, (LPARAM)iColumnIDX);
+	HMENU hMenu;
+	POINT ptCursor;
+	UINT uiResult;
+	const char* pcMusicBrainzID;
+	
+	// Get cursor position
+	GetCursorPos(&ptCursor);
+	
+	// Create context menu
+	hMenu = CreatePopupMenu();
+	if (!hMenu)
+		return;
+	
+	// Add menu items
+	AppendMenuA(hMenu, MF_STRING, IDM_PLAYLIST_PROPERTIES, "Properties...");
+	
+	// Check if item has MusicBrainz IDs
+	pcMusicBrainzID = CPLI_GetMusicBrainz_TrackID(hItem);
+	if (!pcMusicBrainzID)
+		pcMusicBrainzID = CPLI_GetMusicBrainz_ReleaseID(hItem);
+	if (!pcMusicBrainzID)
+		pcMusicBrainzID = CPLI_GetMusicBrainz_ArtistID(hItem);
+		
+	if (pcMusicBrainzID)
+		AppendMenuA(hMenu, MF_STRING, IDM_PLAYLIST_VIEW_MUSICBRAINZ, "View on MusicBrainz.org");
+	else
+		AppendMenuA(hMenu, MF_STRING | MF_GRAYED, IDM_PLAYLIST_VIEW_MUSICBRAINZ, "View on MusicBrainz.org");
+		
+	AppendMenuA(hMenu, MF_SEPARATOR, 0, NULL);
+	AppendMenuA(hMenu, MF_STRING, IDM_PLAYLIST_REFRESH_TAG, "Refresh Tag");
+	AppendMenuA(hMenu, MF_STRING, IDM_PLAYLIST_REMOVE, "Remove from Playlist");
+	
+	// Show menu and get result
+	uiResult = TrackPopupMenu(hMenu,
+	                         TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON,
+	                         ptCursor.x, ptCursor.y,
+	                         0,
+	                         CLV_GetHWND(globals.m_hPlaylistViewControl),
+	                         NULL);
+	                         
+	DestroyMenu(hMenu);
+	
+	// Handle menu selection
+	switch (uiResult)
+	{
+		case IDM_PLAYLIST_PROPERTIES:
+			CPDlgProperties_Show(windows.m_hWndPlaylist, hItem);
+			break;
+			
+		case IDM_PLAYLIST_VIEW_MUSICBRAINZ:
+		{
+			const char* pcTrackID = CPLI_GetMusicBrainz_TrackID(hItem);
+			const char* pcReleaseID = CPLI_GetMusicBrainz_ReleaseID(hItem);
+			const char* pcArtistID = CPLI_GetMusicBrainz_ArtistID(hItem);
+			char url[512];
+			
+			// Open the most specific MusicBrainz page available
+			if (pcTrackID)
+			{
+				sprintf(url, "https://musicbrainz.org/recording/%s", pcTrackID);
+				ShellExecuteA(windows.m_hWndPlaylist, "open", url, NULL, NULL, SW_SHOWNORMAL);
+			}
+			else if (pcReleaseID)
+			{
+				sprintf(url, "https://musicbrainz.org/release/%s", pcReleaseID);
+				ShellExecuteA(windows.m_hWndPlaylist, "open", url, NULL, NULL, SW_SHOWNORMAL);
+			}
+			else if (pcArtistID)
+			{
+				sprintf(url, "https://musicbrainz.org/artist/%s", pcArtistID);
+				ShellExecuteA(windows.m_hWndPlaylist, "open", url, NULL, NULL, SW_SHOWNORMAL);
+			}
+			break;
+		}
+		
+		case IDM_PLAYLIST_REFRESH_TAG:
+			CPLI_ReadTag(hItem);
+			break;
+			
+		case IDM_PLAYLIST_REMOVE:
+		{
+			// Check if there are any selected items
+			if (CLV_GetNextSelectedItem(globals.m_hPlaylistViewControl, CPC_INVALIDITEM) != CPC_INVALIDITEM)
+			{
+				CPlaylistWindow_ClearSelectedItems();
+			}
+			break;
+		}
+	}
 }
 
 //

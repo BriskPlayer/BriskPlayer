@@ -24,6 +24,7 @@
 #include "stdafx.h"
 #include "globals.h"
 #include "resource.h"
+#include "CPI_AlbumArtTooltip.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -127,6 +128,10 @@ typedef struct _CIs_ListViewData
 	POINT m_ptMouseDown_OnHitItem;
 	DWORD m_dwMouseDown_Keys;
 	
+	// Album art tooltip tracking
+	int m_iTooltipHoverItem;
+	DWORD m_dwTooltipHoverStartTime;
+	
 	// Callback handlers
 	wp_DrawBackgroundRect m_hndlr_DrawBackgroundRect;
 	wp_HeaderChanged m_hndlr_HeaderChanged;
@@ -196,6 +201,10 @@ CP_HLISTVIEW CLV_Create(HWND hWndParent, const int iX, const int iY, const int i
 	pListData->m_bScrollBarVisible_Horiz = FALSE;
 	pListData->m_iFocusItem = CPC_INVALIDITEM;
 	pListData->m_iKeyboardAnchor = CPC_INVALIDITEM;
+	
+	// Album art tooltip tracking
+	pListData->m_iTooltipHoverItem = CPC_INVALIDITEM;
+	pListData->m_dwTooltipHoverStartTime = 0;
 	
 	// Handlers
 	pListData->m_hndlr_DrawBackgroundRect = NULL;
@@ -1182,6 +1191,56 @@ void CLV_Handle_WM_MOUSEMOVE(CIs_ListViewData* pListData, const POINTS _ptCursor
 	// Init
 	ptCursor.x = _ptCursor.x;
 	ptCursor.y = _ptCursor.y;
+	
+	// Track item hover for album art tooltip
+	if (PtInRect(&pListData->m_rList, ptCursor))
+	{
+		int iItemIDX = CLV_YOffsetToItem(pListData, ptCursor.y);
+		
+		// Validate item index
+		if (iItemIDX >= 0 && iItemIDX < pListData->m_iNumItems)
+		{
+			if (iItemIDX != pListData->m_iTooltipHoverItem)
+			{
+				// Mouse moved to different item
+				pListData->m_iTooltipHoverItem = iItemIDX;
+				
+				// Get item data and convert coords to screen space
+				const void* pvItemData = CLV_GetItemData((CP_HLISTVIEW)pListData, iItemIDX);
+				if (pvItemData)
+				{
+					POINT ptScreen = ptCursor;
+					ClientToScreen(pListData->m_hWnd, &ptScreen);
+					CPAAT_TrackItemHover((CP_HPLAYLISTITEM)pvItemData, &ptScreen);
+				}
+				else
+				{
+					CPAAT_CancelHover();
+					CPAAT_Hide();
+				}
+			}
+		}
+		else
+		{
+			// Invalid item index - mouse over empty area
+			if (pListData->m_iTooltipHoverItem != CPC_INVALIDITEM)
+			{
+				pListData->m_iTooltipHoverItem = CPC_INVALIDITEM;
+				CPAAT_CancelHover();
+				CPAAT_Hide();
+			}
+		}
+	}
+	else
+	{
+		// Mouse not over list area
+		if (pListData->m_iTooltipHoverItem != CPC_INVALIDITEM)
+		{
+			pListData->m_iTooltipHoverItem = CPC_INVALIDITEM;
+			CPAAT_CancelHover();
+			CPAAT_Hide();
+		}
+	}
 	
 	if (pListData->m_enWindowMode == wmQuiescent)
 	{
@@ -2200,6 +2259,8 @@ void CLV_Handle_WM_RBUTTONDOWN(CIs_ListViewData* pListData, const POINTS _ptCurs
 //
 void CLV_Handle_WM_LBUTTONUP(CIs_ListViewData* pListData, const POINTS _ptCursor)
 {
+	(void)_ptCursor;  // Unused parameter
+	
 	if (pListData->m_enWindowMode != wmQuiescent)
 		ReleaseCapture();
 		

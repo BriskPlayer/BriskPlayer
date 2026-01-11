@@ -139,13 +139,47 @@
 #define ID_FIND                         40036
 #define MENU_ADDFILE                    40039
 
+// Playlist context menu IDs
+#define IDM_PLAYLIST_PROPERTIES         40040
+#define IDM_PLAYLIST_VIEW_MUSICBRAINZ   40041
+#define IDM_PLAYLIST_REMOVE             40042
+#define IDM_PLAYLIST_REFRESH_TAG        40043
+
+// Properties dialog controls
+#define IDD_PROPERTIES                  159
+#define IDC_PROP_FILENAME               1067
+#define IDC_PROP_ARTIST                 1068
+#define IDC_PROP_ALBUM                  1069
+#define IDC_PROP_TITLE                  1070
+#define IDC_PROP_YEAR                   1071
+#define IDC_PROP_GENRE                  1072
+#define IDC_PROP_COMMENT                1073
+#define IDC_PROP_TRACK                  1074
+#define IDC_PROP_COMPOSER               1075
+#define IDC_PROP_ALBUMARTIST            1076
+#define IDC_PROP_GROUPING               1077
+#define IDC_PROP_BPM                    1078
+#define IDC_PROP_DISCNUMBER             1079
+#define IDC_PROP_BITRATE                1080
+#define IDC_PROP_SAMPLERATE             1081
+#define IDC_PROP_BITDEPTH               1082
+#define IDC_PROP_CHANNELS               1083
+#define IDC_PROP_CODEC                  1084
+#define IDC_PROP_FILESIZE               1085
+#define IDC_PROP_REPLAYGAIN_TRACK       1086
+#define IDC_PROP_REPLAYGAIN_ALBUM       1087
+#define IDC_PROP_MUSICBRAINZ_TRACKID    1088
+#define IDC_PROP_MUSICBRAINZ_RELEASEID  1089
+#define IDC_PROP_MUSICBRAINZ_ARTISTID   1090
+#define IDC_PROP_UPDATE_MUSICBRAINZ     1091
+
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        197
-#define _APS_NEXT_COMMAND_VALUE         40040
-#define _APS_NEXT_CONTROL_VALUE         1066
+#define _APS_NEXT_RESOURCE_VALUE        200
+#define _APS_NEXT_COMMAND_VALUE         40044
+#define _APS_NEXT_CONTROL_VALUE         1092
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -196,6 +196,7 @@ typedef struct
 	HWND    m_hWndPlaylist;
 	CP_HINTERFACE m_hifMain;
 	CP_HINTERFACE m_hifPlaylist;
+	HWND    wnd_albumart_tooltip;  // Custom tooltip for album art display
 } windows_t;
 
 extern windows_t windows;
