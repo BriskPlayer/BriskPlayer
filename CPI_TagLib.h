@@ -57,7 +57,89 @@ extern const char* glb_pcGenres[];
 void CPTL_Initialize(void);
 void CPTL_Cleanup(void);
 
-// Read tag information from file
+////////////////////////////////////////////////////////////////////////////////
+//
+// Consolidated metadata structure - holds all metadata in one struct
+// This allows reading all metadata with a single file open for efficiency
+//
+////////////////////////////////////////////////////////////////////////////////
+
+typedef struct _CPs_AllMetadata
+{
+    // Basic tags
+    char* m_pcTitle;
+    char* m_pcArtist;
+    char* m_pcAlbum;
+    char* m_pcYear;
+    char* m_pcComment;
+    char* m_pcGenre;
+    unsigned int m_iTrackNum;
+    unsigned int m_iLength;
+    int m_iTagType;
+    
+    // Extended metadata
+    char* m_pcComposer;
+    char* m_pcAlbumArtist;
+    char* m_pcGrouping;
+    char* m_pcCopyright;
+    char* m_pcLyrics;
+    unsigned short m_iDiscNumber;
+    unsigned short m_iBPM;
+    
+    // ReplayGain
+    float m_fTrackGain;
+    float m_fTrackPeak;
+    float m_fAlbumGain;
+    float m_fAlbumPeak;
+    
+    // Audio properties
+    unsigned int m_iBitrate;
+    unsigned int m_iSampleRate;
+    unsigned short m_iBitDepth;
+    unsigned char m_cChannels;
+    char* m_pcCodec;
+    char* m_pcBitrateMode;
+    unsigned int m_iFileSize;
+    
+    // Multiple artists
+    char* m_pcArtists;
+    char* m_pcFeaturedArtist;
+    char* m_pcRemixer;
+    
+    // MusicBrainz IDs
+    char* m_pcMB_TrackID;
+    char* m_pcMB_ReleaseID;
+    char* m_pcMB_ArtistID;
+    char* m_pcMB_AlbumArtistID;
+    char* m_pcMB_ReleaseGroupID;
+    
+    // Flags indicating which sections were read successfully
+    BOOL m_bHasBasicTags;
+    BOOL m_bHasExtendedTags;
+    BOOL m_bHasReplayGain;
+    BOOL m_bHasAudioProperties;
+    BOOL m_bHasMultipleArtists;
+    BOOL m_bHasMusicBrainzIDs;
+} CPs_AllMetadata;
+
+// Initialize metadata structure (zeros all fields)
+void CPTL_InitMetadata(CPs_AllMetadata* pMetadata);
+
+// Free all allocated strings in metadata structure
+void CPTL_FreeMetadata(CPs_AllMetadata* pMetadata);
+
+// Read ALL metadata in a single file open - most efficient for bulk loading
+BOOL CPTL_ReadAllMetadata(const char* pcFilePath, CPs_AllMetadata* pMetadata);
+
+// Read BASIC metadata only (title, artist, album, etc.) - faster for initial playlist load
+// Extended metadata can be loaded later with CPTL_ReadExtendedMetadataOnly
+BOOL CPTL_ReadBasicMetadataOnly(const char* pcFilePath, CPs_AllMetadata* pMetadata);
+
+// Read EXTENDED metadata only (composer, lyrics, replaygain, musicbrainz, etc.)
+// Use after CPTL_ReadBasicMetadataOnly for lazy loading
+BOOL CPTL_ReadExtendedMetadataOnly(const char* pcFilePath, CPs_AllMetadata* pMetadata);
+
+// Read tag information from file (legacy - opens file separately)
 BOOL CPTL_ReadTags(const char* pcFilePath, 
                    char** ppcTitle, 
                    char** ppcArtist, 

@@ -174,6 +174,10 @@ CP_HPLAYLISTITEM CPLI_Prev(const CP_HPLAYLISTITEM hItem);
 BOOL CPLI_IsTagDirty(CP_HPLAYLISTITEM hItem);
 void CPLI_ReadTag(CP_HPLAYLISTITEM hItem);
 void CPLI_WriteTag(CP_HPLAYLISTITEM hItem);
+// Lazy loading: Load extended metadata on demand (composer, lyrics, replaygain, etc.)
+void CPLI_EnsureExtendedMetadataLoaded(CP_HPLAYLISTITEM hItem);
+// Check if extended metadata has been loaded
+BOOL CPLI_IsExtendedMetadataLoaded(CP_HPLAYLISTITEM hItem);
 
 #ifdef __cplusplus
 }

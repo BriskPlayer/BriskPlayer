@@ -43,6 +43,68 @@
     #include <stdlib.h>
 #endif
 
+// SIMD optimizations for memory operations
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
+    #include <intrin.h>
+    #define HAVE_SIMD_MEMCPY 1
+#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
+    #include <emmintrin.h>  // SSE2
+    #define HAVE_SIMD_MEMCPY 1
+#else
+    #define HAVE_SIMD_MEMCPY 0
+#endif
+
+// Optimized memory copy for audio buffers
+// Uses SSE2 streaming stores for large aligned transfers
+static void CircleBufferMemcpy(void* dest, const void* src, size_t size)
+{
+#if HAVE_SIMD_MEMCPY
+    // For small copies or unaligned data, use standard memcpy
+    if (size < 128 || 
+        ((uintptr_t)dest & 15) != 0 || 
+        ((uintptr_t)src & 15) != 0)
+    {
+        memcpy(dest, src, size);
+        return;
+    }
+    
+    // Use SSE2 non-temporal stores for large aligned copies
+    // This bypasses the cache, which is better for audio streaming
+    // where we write once and read once
+    const __m128i* pSrc = (const __m128i*)src;
+    __m128i* pDest = (__m128i*)dest;
+    size_t simd_count = size / 64;  // 4x16 bytes per iteration
+    size_t remainder = size % 64;
+    
+    for (size_t i = 0; i < simd_count; i++)
+    {
+        __m128i v0 = _mm_load_si128(pSrc);
+        __m128i v1 = _mm_load_si128(pSrc + 1);
+        __m128i v2 = _mm_load_si128(pSrc + 2);
+        __m128i v3 = _mm_load_si128(pSrc + 3);
+        
+        _mm_stream_si128(pDest, v0);
+        _mm_stream_si128(pDest + 1, v1);
+        _mm_stream_si128(pDest + 2, v2);
+        _mm_stream_si128(pDest + 3, v3);
+        
+        pSrc += 4;
+        pDest += 4;
+    }
+    
+    // Memory fence to ensure all stores are visible
+    _mm_sfence();
+    
+    // Handle remainder with standard memcpy
+    if (remainder > 0)
+    {
+        memcpy(pDest, pSrc, remainder);
+    }
+#else
+    memcpy(dest, src, size);
+#endif
+}
+
 #define CIC_WAITTIMEOUT  3000
 #define CIC_TIMEOUT_NS   (CIC_WAITTIMEOUT * 1000000LL)  // Convert to nanoseconds for C23
 void CircleBufferUninitialise(CPs_CircleBuffer* pCBuffer);
@@ -218,8 +280,8 @@ void CircleBufferWrite(CPs_CircleBuffer* pCBuffer, const void* _pSourceBuffer, c
 		if (chunk_size > iBytesToWrite)
 			chunk_size = iBytesToWrite;
 			
-		// Copy the data
-		memcpy(pCBuffer->m_pBuffer + write_cursor, pReadCursor, chunk_size);
+		// Copy the data using optimized SIMD memcpy
+		CircleBufferMemcpy(pCBuffer->m_pBuffer + write_cursor, pReadCursor, chunk_size);
 		pReadCursor += chunk_size;
 		iBytesToWrite -= chunk_size;
 		
@@ -231,7 +293,7 @@ void CircleBufferWrite(CPs_CircleBuffer* pCBuffer, const void* _pSourceBuffer, c
 	
 	// Fill the start part of the buffer with any data that may be left
 	if (iBytesToWrite > 0) {
-		memcpy(pCBuffer->m_pBuffer + write_cursor, pReadCursor, iBytesToWrite);
+		CircleBufferMemcpy(pCBuffer->m_pBuffer + write_cursor, pReadCursor, iBytesToWrite);
 		write_cursor += iBytesToWrite;
 		CP_ASSERT(write_cursor < pCBuffer->m_iBufferSize);
 	}
@@ -245,15 +307,15 @@ void CircleBufferWrite(CPs_CircleBuffer* pCBuffer, const void* _pSourceBuffer, c
 	mtx_unlock(&pCBuffer->m_access_mutex);
 	
 #else
-	// Legacy implementation
+	// Legacy implementation with optimized memcpy
 	// We *know* there is enough space in the buffer for this entire stream
 	if (pCBuffer->m_iWriteCursor >= pCBuffer->m_iReadCursor) {
 		unsigned int iChunkSize = pCBuffer->m_iBufferSize - pCBuffer->m_iWriteCursor;
 		
 		if (iChunkSize > iBytesToWrite)
-			iChunkSize = iBytesToWrite;
+			iChunkSize = (unsigned int)iBytesToWrite;
 			
-		memcpy(pCBuffer->m_pBuffer + pCBuffer->m_iWriteCursor, pReadCursor, iChunkSize);
+		CircleBufferMemcpy(pCBuffer->m_pBuffer + pCBuffer->m_iWriteCursor, pReadCursor, iChunkSize);
 		pReadCursor += iChunkSize;
 		iBytesToWrite -= iChunkSize;
 		
@@ -263,8 +325,8 @@ void CircleBufferWrite(CPs_CircleBuffer* pCBuffer, const void* _pSourceBuffer, c
 	}
 	
 	if (iBytesToWrite) {
-		memcpy(pCBuffer->m_pBuffer + pCBuffer->m_iWriteCursor, pReadCursor, iBytesToWrite);
-		pCBuffer->m_iWriteCursor += iBytesToWrite;
+		CircleBufferMemcpy(pCBuffer->m_pBuffer + pCBuffer->m_iWriteCursor, pReadCursor, iBytesToWrite);
+		pCBuffer->m_iWriteCursor += (unsigned int)iBytesToWrite;
 		CP_ASSERT(pCBuffer->m_iWriteCursor < pCBuffer->m_iBufferSize);
 	}
 	

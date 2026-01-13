@@ -139,7 +139,27 @@ void CPI_Player_cb_OnPlayerState(CP_HPLAYER hPlayer, const CPe_PlayerState enPla
 		
 		break;
 		
-		case cppsPlaying:	// FALLTHROUGH
+		case cppsPlaying:
+		{
+			globals.m_enPlayerState = enPlayerState;
+			main_draw_controls_all(windows.wnd_main);
+			
+			// Prefetch next track's extended metadata for smoother transitions
+			// This is done synchronously but is fast due to lazy loading optimization
+			CP_HPLAYLISTITEM hCurrent = CPL_GetActiveItem(globals.m_hPlaylist);
+			if (hCurrent)
+			{
+				CP_HPLAYLISTITEM hNext = CPLI_Next(hCurrent);
+				if (hNext && !CPLI_IsExtendedMetadataLoaded(hNext))
+				{
+					// Prefetch extended metadata for next track
+					// This prevents stutter when switching to next track
+					CPLI_EnsureExtendedMetadataLoaded(hNext);
+				}
+			}
+		}
+		break;
+		
 		case cppsPaused:
 			globals.m_enPlayerState = enPlayerState;
 			main_draw_controls_all(windows.wnd_main);

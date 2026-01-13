@@ -272,6 +272,558 @@ void CPTL_Cleanup(void)
     CPTL_CleanupAlbumArtCache();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//
+// Consolidated metadata functions
+//
+////////////////////////////////////////////////////////////////////////////////
+
+void CPTL_InitMetadata(CPs_AllMetadata* pMetadata)
+{
+    if (!pMetadata) return;
+    memset(pMetadata, 0, sizeof(CPs_AllMetadata));
+}
+
+void CPTL_FreeMetadata(CPs_AllMetadata* pMetadata)
+{
+    if (!pMetadata) return;
+    
+    // Free basic tags
+    if (pMetadata->m_pcTitle) { free(pMetadata->m_pcTitle); pMetadata->m_pcTitle = NULL; }
+    if (pMetadata->m_pcArtist) { free(pMetadata->m_pcArtist); pMetadata->m_pcArtist = NULL; }
+    if (pMetadata->m_pcAlbum) { free(pMetadata->m_pcAlbum); pMetadata->m_pcAlbum = NULL; }
+    if (pMetadata->m_pcYear) { free(pMetadata->m_pcYear); pMetadata->m_pcYear = NULL; }
+    if (pMetadata->m_pcComment) { free(pMetadata->m_pcComment); pMetadata->m_pcComment = NULL; }
+    if (pMetadata->m_pcGenre) { free(pMetadata->m_pcGenre); pMetadata->m_pcGenre = NULL; }
+    
+    // Free extended metadata
+    if (pMetadata->m_pcComposer) { free(pMetadata->m_pcComposer); pMetadata->m_pcComposer = NULL; }
+    if (pMetadata->m_pcAlbumArtist) { free(pMetadata->m_pcAlbumArtist); pMetadata->m_pcAlbumArtist = NULL; }
+    if (pMetadata->m_pcGrouping) { free(pMetadata->m_pcGrouping); pMetadata->m_pcGrouping = NULL; }
+    if (pMetadata->m_pcCopyright) { free(pMetadata->m_pcCopyright); pMetadata->m_pcCopyright = NULL; }
+    if (pMetadata->m_pcLyrics) { free(pMetadata->m_pcLyrics); pMetadata->m_pcLyrics = NULL; }
+    
+    // Free audio properties
+    if (pMetadata->m_pcCodec) { free(pMetadata->m_pcCodec); pMetadata->m_pcCodec = NULL; }
+    if (pMetadata->m_pcBitrateMode) { free(pMetadata->m_pcBitrateMode); pMetadata->m_pcBitrateMode = NULL; }
+    
+    // Free multiple artists
+    if (pMetadata->m_pcArtists) { free(pMetadata->m_pcArtists); pMetadata->m_pcArtists = NULL; }
+    if (pMetadata->m_pcFeaturedArtist) { free(pMetadata->m_pcFeaturedArtist); pMetadata->m_pcFeaturedArtist = NULL; }
+    if (pMetadata->m_pcRemixer) { free(pMetadata->m_pcRemixer); pMetadata->m_pcRemixer = NULL; }
+    
+    // Free MusicBrainz IDs
+    if (pMetadata->m_pcMB_TrackID) { free(pMetadata->m_pcMB_TrackID); pMetadata->m_pcMB_TrackID = NULL; }
+    if (pMetadata->m_pcMB_ReleaseID) { free(pMetadata->m_pcMB_ReleaseID); pMetadata->m_pcMB_ReleaseID = NULL; }
+    if (pMetadata->m_pcMB_ArtistID) { free(pMetadata->m_pcMB_ArtistID); pMetadata->m_pcMB_ArtistID = NULL; }
+    if (pMetadata->m_pcMB_AlbumArtistID) { free(pMetadata->m_pcMB_AlbumArtistID); pMetadata->m_pcMB_AlbumArtistID = NULL; }
+    if (pMetadata->m_pcMB_ReleaseGroupID) { free(pMetadata->m_pcMB_ReleaseGroupID); pMetadata->m_pcMB_ReleaseGroupID = NULL; }
+}
+
+// Helper to safely duplicate a TagLib string
+static char* CPTL_DupTagString(const TagLib::String& str)
+{
+    if (str.isEmpty()) return NULL;
+    std::string utf8 = str.to8Bit(true);
+    return utf8.empty() ? NULL : _strdup(utf8.c_str());
+}
+
+// Helper to get first value from property map
+static char* CPTL_GetProperty(const TagLib::PropertyMap& props, const char* key)
+{
+    if (!props.contains(key)) return NULL;
+    const TagLib::StringList& list = props[key];
+    if (list.isEmpty()) return NULL;
+    return CPTL_DupTagString(list.front());
+}
+
+// Helper to get first value from multiple possible keys
+static char* CPTL_GetPropertyMultiKey(const TagLib::PropertyMap& props, const char* const* keys)
+{
+    for (int i = 0; keys[i] != NULL; i++)
+    {
+        char* val = CPTL_GetProperty(props, keys[i]);
+        if (val) return val;
+    }
+    return NULL;
+}
+
+// Read ALL metadata in a single file open
+BOOL CPTL_ReadAllMetadata(const char* pcFilePath, CPs_AllMetadata* pMetadata)
+{
+    if (!pcFilePath || !pMetadata)
+        return FALSE;
+    
+    CPTL_InitMetadata(pMetadata);
+    
+    try
+    {
+        // Single file open - this is the key optimization
+        TagLib::FileRef fileRef(pcFilePath);
+        if (fileRef.isNull())
+            return FALSE;
+        
+        TagLib::File* file = fileRef.file();
+        if (!file)
+            return FALSE;
+        
+        TagLib::Tag* tag = fileRef.tag();
+        TagLib::PropertyMap properties = file->properties();
+        
+        //
+        // === Basic Tags ===
+        //
+        if (tag)
+        {
+            pMetadata->m_pcTitle = CPTL_DupTagString(tag->title());
+            pMetadata->m_pcArtist = CPTL_DupTagString(tag->artist());
+            pMetadata->m_pcAlbum = CPTL_DupTagString(tag->album());
+            pMetadata->m_pcComment = CPTL_DupTagString(tag->comment());
+            pMetadata->m_pcGenre = CPTL_DupTagString(tag->genre());
+            
+            unsigned int year = tag->year();
+            if (year > 0)
+            {
+                char yearBuf[16];
+                sprintf_s(yearBuf, sizeof(yearBuf), "%u", year);
+                pMetadata->m_pcYear = _strdup(yearBuf);
+            }
+            
+            pMetadata->m_iTrackNum = tag->track();
+            
+            // Determine tag type
+            if (pMetadata->m_pcTitle || pMetadata->m_pcArtist || pMetadata->m_pcAlbum ||
+                pMetadata->m_pcYear || pMetadata->m_pcComment || pMetadata->m_pcGenre ||
+                pMetadata->m_iTrackNum > 0)
+            {
+                pMetadata->m_iTagType = 2; // ttID3v2 (generic "has tags")
+            }
+            
+            pMetadata->m_bHasBasicTags = TRUE;
+        }
+        
+        //
+        // === Audio Properties ===
+        //
+        TagLib::AudioProperties* props = fileRef.audioProperties();
+        if (props)
+        {
+            pMetadata->m_iLength = props->lengthInSeconds();
+            pMetadata->m_iBitrate = props->bitrate();
+            pMetadata->m_iSampleRate = props->sampleRate();
+            pMetadata->m_cChannels = (unsigned char)props->channels();
+            
+            // Determine codec and bitrate mode from file type
+            const char* codecName = "Unknown";
+            const char* bitrateMode = "Unknown";
+            
+            if (dynamic_cast<TagLib::MPEG::File*>(file))
+            {
+                codecName = "MP3";
+                bitrateMode = "CBR";
+                pMetadata->m_iBitDepth = 16;
+                
+                TagLib::MPEG::File* mpegFile = dynamic_cast<TagLib::MPEG::File*>(file);
+                (void)mpegFile; // May be used for VBR detection later
+            }
+            else if (dynamic_cast<TagLib::FLAC::File*>(file))
+            {
+                codecName = "FLAC";
+                bitrateMode = "VBR";
+                TagLib::FLAC::File* flacFile = dynamic_cast<TagLib::FLAC::File*>(file);
+                if (flacFile && flacFile->audioProperties())
+                {
+                    pMetadata->m_iBitDepth = flacFile->audioProperties()->bitsPerSample();
+                }
+            }
+            else if (dynamic_cast<TagLib::Ogg::Vorbis::File*>(file))
+            {
+                codecName = "Vorbis";
+                bitrateMode = "VBR";
+                pMetadata->m_iBitDepth = 16;
+            }
+            else if (dynamic_cast<TagLib::MP4::File*>(file))
+            {
+                codecName = "AAC";
+                bitrateMode = "VBR";
+                pMetadata->m_iBitDepth = 16;
+            }
+            else
+            {
+                // Determine from extension
+                const char* ext = strrchr(pcFilePath, '.');
+                if (ext)
+                {
+                    ext++;
+                    if (_stricmp(ext, "wav") == 0 || _stricmp(ext, "wave") == 0)
+                    {
+                        codecName = "WAV/PCM";
+                        bitrateMode = "CBR";
+                        pMetadata->m_iBitDepth = 16;
+                    }
+                    else if (_stricmp(ext, "aiff") == 0 || _stricmp(ext, "aif") == 0)
+                    {
+                        codecName = "AIFF";
+                        bitrateMode = "CBR";
+                        pMetadata->m_iBitDepth = 16;
+                    }
+                }
+            }
+            
+            pMetadata->m_pcCodec = _strdup(codecName);
+            pMetadata->m_pcBitrateMode = _strdup(bitrateMode);
+            pMetadata->m_bHasAudioProperties = TRUE;
+        }
+        
+        // Get file size
+        struct _stat64 fileStat;
+        if (_stat64(pcFilePath, &fileStat) == 0)
+        {
+            pMetadata->m_iFileSize = (unsigned int)fileStat.st_size;
+        }
+        
+        //
+        // === Extended Metadata (from PropertyMap) ===
+        //
+        pMetadata->m_pcComposer = CPTL_GetProperty(properties, "COMPOSER");
+        pMetadata->m_pcAlbumArtist = CPTL_GetProperty(properties, "ALBUMARTIST");
+        pMetadata->m_pcGrouping = CPTL_GetProperty(properties, "GROUPING");
+        pMetadata->m_pcCopyright = CPTL_GetProperty(properties, "COPYRIGHT");
+        pMetadata->m_pcLyrics = CPTL_GetProperty(properties, "LYRICS");
+        
+        // Disc Number
+        if (properties.contains("DISCNUMBER"))
+        {
+            std::string discStr = properties["DISCNUMBER"].front().to8Bit(true);
+            int discNum = atoi(discStr.c_str());
+            if (discNum > 0 && discNum <= 65535)
+                pMetadata->m_iDiscNumber = (unsigned short)discNum;
+        }
+        
+        // BPM
+        if (properties.contains("BPM"))
+        {
+            std::string bpmStr = properties["BPM"].front().to8Bit(true);
+            int bpm = atoi(bpmStr.c_str());
+            if (bpm > 0 && bpm <= 65535)
+                pMetadata->m_iBPM = (unsigned short)bpm;
+        }
+        
+        if (pMetadata->m_pcComposer || pMetadata->m_pcAlbumArtist || pMetadata->m_pcGrouping ||
+            pMetadata->m_pcCopyright || pMetadata->m_pcLyrics || pMetadata->m_iDiscNumber > 0 ||
+            pMetadata->m_iBPM > 0)
+        {
+            pMetadata->m_bHasExtendedTags = TRUE;
+        }
+        
+        //
+        // === ReplayGain ===
+        //
+        if (properties.contains("REPLAYGAIN_TRACK_GAIN"))
+        {
+            std::string gainStr = properties["REPLAYGAIN_TRACK_GAIN"].front().to8Bit(true);
+            pMetadata->m_fTrackGain = (float)atof(gainStr.c_str());
+            pMetadata->m_bHasReplayGain = TRUE;
+        }
+        if (properties.contains("REPLAYGAIN_TRACK_PEAK"))
+        {
+            std::string peakStr = properties["REPLAYGAIN_TRACK_PEAK"].front().to8Bit(true);
+            pMetadata->m_fTrackPeak = (float)atof(peakStr.c_str());
+            pMetadata->m_bHasReplayGain = TRUE;
+        }
+        if (properties.contains("REPLAYGAIN_ALBUM_GAIN"))
+        {
+            std::string gainStr = properties["REPLAYGAIN_ALBUM_GAIN"].front().to8Bit(true);
+            pMetadata->m_fAlbumGain = (float)atof(gainStr.c_str());
+            pMetadata->m_bHasReplayGain = TRUE;
+        }
+        if (properties.contains("REPLAYGAIN_ALBUM_PEAK"))
+        {
+            std::string peakStr = properties["REPLAYGAIN_ALBUM_PEAK"].front().to8Bit(true);
+            pMetadata->m_fAlbumPeak = (float)atof(peakStr.c_str());
+            pMetadata->m_bHasReplayGain = TRUE;
+        }
+        
+        //
+        // === Multiple Artists ===
+        //
+        if (properties.contains("ARTISTS"))
+        {
+            std::string artistsStr = properties["ARTISTS"].toString("; ").toCString(true);
+            pMetadata->m_pcArtists = _strdup(artistsStr.c_str());
+            pMetadata->m_bHasMultipleArtists = TRUE;
+        }
+        
+        static const char* featuredTags[] = {"PERFORMER", "INVOLVEDPEOPLE", "FEATURED", NULL};
+        pMetadata->m_pcFeaturedArtist = CPTL_GetPropertyMultiKey(properties, featuredTags);
+        if (pMetadata->m_pcFeaturedArtist) pMetadata->m_bHasMultipleArtists = TRUE;
+        
+        static const char* remixerTags[] = {"REMIXER", "MIXARTIST", "MODIFIEDBY", NULL};
+        pMetadata->m_pcRemixer = CPTL_GetPropertyMultiKey(properties, remixerTags);
+        if (pMetadata->m_pcRemixer) pMetadata->m_bHasMultipleArtists = TRUE;
+        
+        //
+        // === MusicBrainz IDs ===
+        //
+        static const char* trackTags[] = {"MUSICBRAINZ_TRACKID", "MUSICBRAINZ TRACK ID", NULL};
+        pMetadata->m_pcMB_TrackID = CPTL_GetPropertyMultiKey(properties, trackTags);
+        
+        static const char* releaseTags[] = {"MUSICBRAINZ_ALBUMID", "MUSICBRAINZ ALBUM ID", NULL};
+        pMetadata->m_pcMB_ReleaseID = CPTL_GetPropertyMultiKey(properties, releaseTags);
+        
+        static const char* artistTags[] = {"MUSICBRAINZ_ARTISTID", "MUSICBRAINZ ARTIST ID", NULL};
+        pMetadata->m_pcMB_ArtistID = CPTL_GetPropertyMultiKey(properties, artistTags);
+        
+        static const char* albumArtistTags[] = {"MUSICBRAINZ_ALBUMARTISTID", "MUSICBRAINZ ALBUM ARTIST ID", NULL};
+        pMetadata->m_pcMB_AlbumArtistID = CPTL_GetPropertyMultiKey(properties, albumArtistTags);
+        
+        static const char* releaseGroupTags[] = {"MUSICBRAINZ_RELEASEGROUPID", "MUSICBRAINZ RELEASE GROUP ID", NULL};
+        pMetadata->m_pcMB_ReleaseGroupID = CPTL_GetPropertyMultiKey(properties, releaseGroupTags);
+        
+        if (pMetadata->m_pcMB_TrackID || pMetadata->m_pcMB_ReleaseID || pMetadata->m_pcMB_ArtistID ||
+            pMetadata->m_pcMB_AlbumArtistID || pMetadata->m_pcMB_ReleaseGroupID)
+        {
+            pMetadata->m_bHasMusicBrainzIDs = TRUE;
+        }
+        
+        return TRUE;
+    }
+    catch (...)
+    {
+        CPTL_FreeMetadata(pMetadata);
+        return FALSE;
+    }
+}
+
+// Read BASIC metadata only - for fast initial playlist loading
+// Only reads: title, artist, album, year, comment, genre, track#, length, audio properties
+BOOL CPTL_ReadBasicMetadataOnly(const char* pcFilePath, CPs_AllMetadata* pMetadata)
+{
+    if (!pcFilePath || !pMetadata)
+        return FALSE;
+    
+    CPTL_InitMetadata(pMetadata);
+    
+    try
+    {
+        TagLib::FileRef fileRef(pcFilePath);
+        if (fileRef.isNull())
+            return FALSE;
+        
+        TagLib::File* file = fileRef.file();
+        if (!file)
+            return FALSE;
+        
+        TagLib::Tag* tag = fileRef.tag();
+        
+        // Basic Tags
+        if (tag)
+        {
+            pMetadata->m_pcTitle = CPTL_DupTagString(tag->title());
+            pMetadata->m_pcArtist = CPTL_DupTagString(tag->artist());
+            pMetadata->m_pcAlbum = CPTL_DupTagString(tag->album());
+            pMetadata->m_pcComment = CPTL_DupTagString(tag->comment());
+            pMetadata->m_pcGenre = CPTL_DupTagString(tag->genre());
+            
+            unsigned int year = tag->year();
+            if (year > 0)
+            {
+                char yearBuf[16];
+                sprintf_s(yearBuf, sizeof(yearBuf), "%u", year);
+                pMetadata->m_pcYear = _strdup(yearBuf);
+            }
+            
+            pMetadata->m_iTrackNum = tag->track();
+            
+            if (pMetadata->m_pcTitle || pMetadata->m_pcArtist || pMetadata->m_pcAlbum ||
+                pMetadata->m_pcYear || pMetadata->m_pcComment || pMetadata->m_pcGenre ||
+                pMetadata->m_iTrackNum > 0)
+            {
+                pMetadata->m_iTagType = 2;
+            }
+            
+            pMetadata->m_bHasBasicTags = TRUE;
+        }
+        
+        // Audio Properties (essential for display)
+        TagLib::AudioProperties* props = fileRef.audioProperties();
+        if (props)
+        {
+            pMetadata->m_iLength = props->lengthInSeconds();
+            pMetadata->m_iBitrate = props->bitrate();
+            pMetadata->m_iSampleRate = props->sampleRate();
+            pMetadata->m_cChannels = (unsigned char)props->channels();
+            
+            // Codec detection (minimal)
+            const char* codecName = "Unknown";
+            if (dynamic_cast<TagLib::MPEG::File*>(file)) codecName = "MP3";
+            else if (dynamic_cast<TagLib::FLAC::File*>(file)) codecName = "FLAC";
+            else if (dynamic_cast<TagLib::Ogg::Vorbis::File*>(file)) codecName = "Vorbis";
+            else if (dynamic_cast<TagLib::MP4::File*>(file)) codecName = "AAC";
+            
+            pMetadata->m_pcCodec = _strdup(codecName);
+            pMetadata->m_bHasAudioProperties = TRUE;
+        }
+        
+        // File size
+        struct _stat64 fileStat;
+        if (_stat64(pcFilePath, &fileStat) == 0)
+        {
+            pMetadata->m_iFileSize = (unsigned int)fileStat.st_size;
+        }
+        
+        return TRUE;
+    }
+    catch (...)
+    {
+        CPTL_FreeMetadata(pMetadata);
+        return FALSE;
+    }
+}
+
+// Read EXTENDED metadata only - for lazy loading when user views details
+// Reads: composer, album artist, grouping, copyright, lyrics, disc#, BPM, 
+//        ReplayGain, multiple artists, MusicBrainz IDs, detailed audio props
+BOOL CPTL_ReadExtendedMetadataOnly(const char* pcFilePath, CPs_AllMetadata* pMetadata)
+{
+    if (!pcFilePath || !pMetadata)
+        return FALSE;
+    
+    try
+    {
+        TagLib::FileRef fileRef(pcFilePath);
+        if (fileRef.isNull())
+            return FALSE;
+        
+        TagLib::File* file = fileRef.file();
+        if (!file)
+            return FALSE;
+        
+        TagLib::PropertyMap properties = file->properties();
+        
+        // Extended Metadata
+        pMetadata->m_pcComposer = CPTL_GetProperty(properties, "COMPOSER");
+        pMetadata->m_pcAlbumArtist = CPTL_GetProperty(properties, "ALBUMARTIST");
+        pMetadata->m_pcGrouping = CPTL_GetProperty(properties, "GROUPING");
+        pMetadata->m_pcCopyright = CPTL_GetProperty(properties, "COPYRIGHT");
+        pMetadata->m_pcLyrics = CPTL_GetProperty(properties, "LYRICS");
+        
+        if (properties.contains("DISCNUMBER"))
+        {
+            std::string discStr = properties["DISCNUMBER"].front().to8Bit(true);
+            int discNum = atoi(discStr.c_str());
+            if (discNum > 0 && discNum <= 65535)
+                pMetadata->m_iDiscNumber = (unsigned short)discNum;
+        }
+        
+        if (properties.contains("BPM"))
+        {
+            std::string bpmStr = properties["BPM"].front().to8Bit(true);
+            int bpm = atoi(bpmStr.c_str());
+            if (bpm > 0 && bpm <= 65535)
+                pMetadata->m_iBPM = (unsigned short)bpm;
+        }
+        
+        if (pMetadata->m_pcComposer || pMetadata->m_pcAlbumArtist || pMetadata->m_pcGrouping ||
+            pMetadata->m_pcCopyright || pMetadata->m_pcLyrics || pMetadata->m_iDiscNumber > 0 ||
+            pMetadata->m_iBPM > 0)
+        {
+            pMetadata->m_bHasExtendedTags = TRUE;
+        }
+        
+        // ReplayGain
+        if (properties.contains("REPLAYGAIN_TRACK_GAIN"))
+        {
+            std::string gainStr = properties["REPLAYGAIN_TRACK_GAIN"].front().to8Bit(true);
+            pMetadata->m_fTrackGain = (float)atof(gainStr.c_str());
+            pMetadata->m_bHasReplayGain = TRUE;
+        }
+        if (properties.contains("REPLAYGAIN_TRACK_PEAK"))
+        {
+            std::string peakStr = properties["REPLAYGAIN_TRACK_PEAK"].front().to8Bit(true);
+            pMetadata->m_fTrackPeak = (float)atof(peakStr.c_str());
+            pMetadata->m_bHasReplayGain = TRUE;
+        }
+        if (properties.contains("REPLAYGAIN_ALBUM_GAIN"))
+        {
+            std::string gainStr = properties["REPLAYGAIN_ALBUM_GAIN"].front().to8Bit(true);
+            pMetadata->m_fAlbumGain = (float)atof(gainStr.c_str());
+            pMetadata->m_bHasReplayGain = TRUE;
+        }
+        if (properties.contains("REPLAYGAIN_ALBUM_PEAK"))
+        {
+            std::string peakStr = properties["REPLAYGAIN_ALBUM_PEAK"].front().to8Bit(true);
+            pMetadata->m_fAlbumPeak = (float)atof(peakStr.c_str());
+            pMetadata->m_bHasReplayGain = TRUE;
+        }
+        
+        // Multiple Artists
+        if (properties.contains("ARTISTS"))
+        {
+            std::string artistsStr = properties["ARTISTS"].toString("; ").toCString(true);
+            pMetadata->m_pcArtists = _strdup(artistsStr.c_str());
+            pMetadata->m_bHasMultipleArtists = TRUE;
+        }
+        
+        static const char* featuredTags[] = {"PERFORMER", "INVOLVEDPEOPLE", "FEATURED", NULL};
+        pMetadata->m_pcFeaturedArtist = CPTL_GetPropertyMultiKey(properties, featuredTags);
+        if (pMetadata->m_pcFeaturedArtist) pMetadata->m_bHasMultipleArtists = TRUE;
+        
+        static const char* remixerTags[] = {"REMIXER", "MIXARTIST", "MODIFIEDBY", NULL};
+        pMetadata->m_pcRemixer = CPTL_GetPropertyMultiKey(properties, remixerTags);
+        if (pMetadata->m_pcRemixer) pMetadata->m_bHasMultipleArtists = TRUE;
+        
+        // MusicBrainz IDs
+        static const char* trackTags[] = {"MUSICBRAINZ_TRACKID", "MUSICBRAINZ TRACK ID", NULL};
+        pMetadata->m_pcMB_TrackID = CPTL_GetPropertyMultiKey(properties, trackTags);
+        
+        static const char* releaseTags[] = {"MUSICBRAINZ_ALBUMID", "MUSICBRAINZ ALBUM ID", NULL};
+        pMetadata->m_pcMB_ReleaseID = CPTL_GetPropertyMultiKey(properties, releaseTags);
+        
+        static const char* artistTags[] = {"MUSICBRAINZ_ARTISTID", "MUSICBRAINZ ARTIST ID", NULL};
+        pMetadata->m_pcMB_ArtistID = CPTL_GetPropertyMultiKey(properties, artistTags);
+        
+        static const char* albumArtistTags[] = {"MUSICBRAINZ_ALBUMARTISTID", "MUSICBRAINZ ALBUM ARTIST ID", NULL};
+        pMetadata->m_pcMB_AlbumArtistID = CPTL_GetPropertyMultiKey(properties, albumArtistTags);
+        
+        static const char* releaseGroupTags[] = {"MUSICBRAINZ_RELEASEGROUPID", "MUSICBRAINZ RELEASE GROUP ID", NULL};
+        pMetadata->m_pcMB_ReleaseGroupID = CPTL_GetPropertyMultiKey(properties, releaseGroupTags);
+        
+        if (pMetadata->m_pcMB_TrackID || pMetadata->m_pcMB_ReleaseID || pMetadata->m_pcMB_ArtistID ||
+            pMetadata->m_pcMB_AlbumArtistID || pMetadata->m_pcMB_ReleaseGroupID)
+        {
+            pMetadata->m_bHasMusicBrainzIDs = TRUE;
+        }
+        
+        // Extended audio properties (bit depth, bitrate mode)
+        if (dynamic_cast<TagLib::FLAC::File*>(file))
+        {
+            TagLib::FLAC::File* flacFile = dynamic_cast<TagLib::FLAC::File*>(file);
+            if (flacFile && flacFile->audioProperties())
+            {
+                pMetadata->m_iBitDepth = flacFile->audioProperties()->bitsPerSample();
+                pMetadata->m_pcBitrateMode = _strdup("VBR");
+            }
+        }
+        else if (dynamic_cast<TagLib::MPEG::File*>(file))
+        {
+            pMetadata->m_iBitDepth = 16;
+            pMetadata->m_pcBitrateMode = _strdup("CBR");
+        }
+        else
+        {
+            pMetadata->m_iBitDepth = 16;
+            pMetadata->m_pcBitrateMode = _strdup("Unknown");
+        }
+        
+        return TRUE;
+    }
+    catch (...)
+    {
+        return FALSE;
+    }
+}
+
 BOOL CPTL_ReadTags(const char* pcFilePath, 
                    char** ppcTitle, 
                    char** ppcArtist, 
@@ -493,17 +1045,81 @@ BOOL CPTL_CanWriteToFile(const char* pcFilePath)
     return TRUE;
 }
 
-int CPTL_GetGenreIndex(const char* pcGenre)
+////////////////////////////////////////////////////////////////////////////////
+// Genre lookup hash table for O(1) performance
+////////////////////////////////////////////////////////////////////////////////
+
+#define GENRE_HASH_BUCKETS 256
+
+typedef struct _CPs_GenreHashEntry
+{
+    const char* m_pcGenre;
+    int m_iIndex;
+    struct _CPs_GenreHashEntry* m_pNext;
+} CPs_GenreHashEntry;
+
+static CPs_GenreHashEntry* g_pGenreHashTable[GENRE_HASH_BUCKETS] = {0};
+static CPs_GenreHashEntry g_GenreEntries[CIC_NUMGENRES];
+static BOOL g_bGenreHashInitialized = FALSE;
+
+// Case-insensitive hash for genre names
+static unsigned int CPTL_HashGenre(const char* pcGenre)
+{
+    unsigned int hash = 5381;
+    int c;
+    while ((c = (unsigned char)*pcGenre++) != 0)
+    {
+        if (c >= 'A' && c <= 'Z') c += 32;
+        hash = ((hash << 5) + hash) + c;
+    }
+    return hash % GENRE_HASH_BUCKETS;
+}
+
+// Initialize genre hash table (called lazily on first use)
+static void CPTL_InitGenreHash(void)
 {
     int i;
+    unsigned int hash;
+    
+    if (g_bGenreHashInitialized)
+        return;
+    
+    memset(g_pGenreHashTable, 0, sizeof(g_pGenreHashTable));
+    
+    for (i = 0; i < CIC_NUMGENRES; i++)
+    {
+        g_GenreEntries[i].m_pcGenre = glb_pcGenres[i];
+        g_GenreEntries[i].m_iIndex = i;
+        
+        hash = CPTL_HashGenre(glb_pcGenres[i]);
+        g_GenreEntries[i].m_pNext = g_pGenreHashTable[hash];
+        g_pGenreHashTable[hash] = &g_GenreEntries[i];
+    }
+    
+    g_bGenreHashInitialized = TRUE;
+}
+
+int CPTL_GetGenreIndex(const char* pcGenre)
+{
+    unsigned int hash;
+    CPs_GenreHashEntry* pEntry;
     
     if (!pcGenre)
         return -1;
-        
-    for (i = 0; i < CIC_NUMGENRES; i++)
+    
+    // Initialize hash table on first use
+    if (!g_bGenreHashInitialized)
+        CPTL_InitGenreHash();
+    
+    // O(1) hash table lookup
+    hash = CPTL_HashGenre(pcGenre);
+    pEntry = g_pGenreHashTable[hash];
+    
+    while (pEntry)
     {
-        if (stricmp(pcGenre, glb_pcGenres[i]) == 0)
-            return i;
+        if (stricmp(pcGenre, pEntry->m_pcGenre) == 0)
+            return pEntry->m_iIndex;
+        pEntry = pEntry->m_pNext;
     }
     
     return -1; // Not found
@@ -1416,18 +2032,93 @@ typedef struct _CPs_AlbumArtCacheEntry
     unsigned int m_iHeight;
     time_t m_tLastAccess;
     unsigned int m_iMemoryUsed;
-    struct _CPs_AlbumArtCacheEntry* m_pNext;
+    struct _CPs_AlbumArtCacheEntry* m_pNext;       // Next in hash bucket
+    struct _CPs_AlbumArtCacheEntry* m_pLRUNext;    // LRU linked list
+    struct _CPs_AlbumArtCacheEntry* m_pLRUPrev;    // LRU linked list
 } CPs_AlbumArtCacheEntry;
 
-// Global cache
-static CPs_AlbumArtCacheEntry* g_pAlbumArtCache = NULL;
+// Hash table for O(1) cache lookup
+#define ALBUMART_HASH_BUCKETS 64
+
+static CPs_AlbumArtCacheEntry* g_pAlbumArtHashTable[ALBUMART_HASH_BUCKETS] = {0};
+static CPs_AlbumArtCacheEntry* g_pLRUHead = NULL;  // Most recently used
+static CPs_AlbumArtCacheEntry* g_pLRUTail = NULL;  // Least recently used
 static int g_iCacheEntryCount = 0;
 static unsigned int g_iTotalCacheMemory = 0;
 
-// Initialize album art cache (WIC is initialized per-thread as needed)
+// Simple hash function for file paths (case-insensitive)
+static unsigned int CPTL_HashFilePath(const char* pcFilePath)
+{
+    unsigned int hash = 5381;
+    int c;
+    while ((c = (unsigned char)*pcFilePath++) != 0)
+    {
+        // Case-insensitive hash
+        if (c >= 'A' && c <= 'Z') c += 32;
+        hash = ((hash << 5) + hash) + c;
+    }
+    return hash % ALBUMART_HASH_BUCKETS;
+}
+
+// Move entry to front of LRU list (most recently used)
+static void CPTL_MoveToLRUFront(CPs_AlbumArtCacheEntry* pEntry)
+{
+    if (!pEntry || pEntry == g_pLRUHead)
+        return;
+    
+    // Remove from current position
+    if (pEntry->m_pLRUPrev)
+        pEntry->m_pLRUPrev->m_pLRUNext = pEntry->m_pLRUNext;
+    if (pEntry->m_pLRUNext)
+        pEntry->m_pLRUNext->m_pLRUPrev = pEntry->m_pLRUPrev;
+    
+    // Update tail if needed
+    if (pEntry == g_pLRUTail)
+        g_pLRUTail = pEntry->m_pLRUPrev;
+    
+    // Insert at front
+    pEntry->m_pLRUPrev = NULL;
+    pEntry->m_pLRUNext = g_pLRUHead;
+    if (g_pLRUHead)
+        g_pLRUHead->m_pLRUPrev = pEntry;
+    g_pLRUHead = pEntry;
+    
+    if (!g_pLRUTail)
+        g_pLRUTail = pEntry;
+}
+
+// Add entry to LRU list (at front)
+static void CPTL_AddToLRU(CPs_AlbumArtCacheEntry* pEntry)
+{
+    pEntry->m_pLRUPrev = NULL;
+    pEntry->m_pLRUNext = g_pLRUHead;
+    if (g_pLRUHead)
+        g_pLRUHead->m_pLRUPrev = pEntry;
+    g_pLRUHead = pEntry;
+    if (!g_pLRUTail)
+        g_pLRUTail = pEntry;
+}
+
+// Remove entry from LRU list
+static void CPTL_RemoveFromLRU(CPs_AlbumArtCacheEntry* pEntry)
+{
+    if (pEntry->m_pLRUPrev)
+        pEntry->m_pLRUPrev->m_pLRUNext = pEntry->m_pLRUNext;
+    else
+        g_pLRUHead = pEntry->m_pLRUNext;
+    
+    if (pEntry->m_pLRUNext)
+        pEntry->m_pLRUNext->m_pLRUPrev = pEntry->m_pLRUPrev;
+    else
+        g_pLRUTail = pEntry->m_pLRUPrev;
+}
+
+// Initialize album art cache
 void CPTL_InitAlbumArtCache(void)
 {
-    g_pAlbumArtCache = NULL;
+    memset(g_pAlbumArtHashTable, 0, sizeof(g_pAlbumArtHashTable));
+    g_pLRUHead = NULL;
+    g_pLRUTail = NULL;
     g_iCacheEntryCount = 0;
     g_iTotalCacheMemory = 0;
 }
@@ -1441,12 +2132,12 @@ void CPTL_CleanupAlbumArtCache(void)
 // Clear all cache entries
 void CPTL_ClearAlbumArtCache(void)
 {
-    CPs_AlbumArtCacheEntry* pCurrent = g_pAlbumArtCache;
+    CPs_AlbumArtCacheEntry* pCurrent = g_pLRUHead;
     CPs_AlbumArtCacheEntry* pNext;
     
     while (pCurrent)
     {
-        pNext = pCurrent->m_pNext;
+        pNext = pCurrent->m_pLRUNext;
         
         if (pCurrent->m_pcFilePath)
             free(pCurrent->m_pcFilePath);
@@ -1457,30 +2148,52 @@ void CPTL_ClearAlbumArtCache(void)
         pCurrent = pNext;
     }
     
-    g_pAlbumArtCache = NULL;
+    memset(g_pAlbumArtHashTable, 0, sizeof(g_pAlbumArtHashTable));
+    g_pLRUHead = NULL;
+    g_pLRUTail = NULL;
     g_iCacheEntryCount = 0;
     g_iTotalCacheMemory = 0;
+}
+
+// Find entry in hash table - O(1) average case
+static CPs_AlbumArtCacheEntry* CPTL_FindInCache(const char* pcFilePath, unsigned int* pHash)
+{
+    unsigned int hash = CPTL_HashFilePath(pcFilePath);
+    if (pHash) *pHash = hash;
+    
+    CPs_AlbumArtCacheEntry* pEntry = g_pAlbumArtHashTable[hash];
+    while (pEntry)
+    {
+        if (pEntry->m_pcFilePath && stricmp(pEntry->m_pcFilePath, pcFilePath) == 0)
+            return pEntry;
+        pEntry = pEntry->m_pNext;
+    }
+    return NULL;
 }
 
 // Remove specific entry from cache
 void CPTL_RemoveFromAlbumArtCache(const char* pcFilePath)
 {
-    CPs_AlbumArtCacheEntry* pCurrent = g_pAlbumArtCache;
-    CPs_AlbumArtCacheEntry* pPrev = NULL;
-    
     if (!pcFilePath)
         return;
-        
+    
+    unsigned int hash = CPTL_HashFilePath(pcFilePath);
+    CPs_AlbumArtCacheEntry* pCurrent = g_pAlbumArtHashTable[hash];
+    CPs_AlbumArtCacheEntry* pPrev = NULL;
+    
     while (pCurrent)
     {
         if (pCurrent->m_pcFilePath && stricmp(pCurrent->m_pcFilePath, pcFilePath) == 0)
         {
-            // Remove from list
+            // Remove from hash bucket
             if (pPrev)
                 pPrev->m_pNext = pCurrent->m_pNext;
             else
-                g_pAlbumArtCache = pCurrent->m_pNext;
-                
+                g_pAlbumArtHashTable[hash] = pCurrent->m_pNext;
+            
+            // Remove from LRU list
+            CPTL_RemoveFromLRU(pCurrent);
+            
             // Free resources
             g_iTotalCacheMemory -= pCurrent->m_iMemoryUsed;
             g_iCacheEntryCount--;
@@ -1498,46 +2211,44 @@ void CPTL_RemoveFromAlbumArtCache(const char* pcFilePath)
     }
 }
 
-// Evict least recently used entry
+// Evict least recently used entry - O(1) with LRU tail pointer
 static void CPTL_EvictLRU(void)
 {
-    CPs_AlbumArtCacheEntry* pCurrent = g_pAlbumArtCache;
-    CPs_AlbumArtCacheEntry* pOldest = NULL;
-    CPs_AlbumArtCacheEntry* pOldestPrev = NULL;
-    CPs_AlbumArtCacheEntry* pPrev = NULL;
-    time_t tOldest = 0;
+    CPs_AlbumArtCacheEntry* pOldest = g_pLRUTail;
+    if (!pOldest)
+        return;
     
-    // Find oldest entry
+    // Remove from hash bucket
+    unsigned int hash = CPTL_HashFilePath(pOldest->m_pcFilePath);
+    CPs_AlbumArtCacheEntry* pCurrent = g_pAlbumArtHashTable[hash];
+    CPs_AlbumArtCacheEntry* pPrev = NULL;
+    
     while (pCurrent)
     {
-        if (!pOldest || pCurrent->m_tLastAccess < tOldest)
+        if (pCurrent == pOldest)
         {
-            tOldest = pCurrent->m_tLastAccess;
-            pOldest = pCurrent;
-            pOldestPrev = pPrev;
+            if (pPrev)
+                pPrev->m_pNext = pCurrent->m_pNext;
+            else
+                g_pAlbumArtHashTable[hash] = pCurrent->m_pNext;
+            break;
         }
         pPrev = pCurrent;
         pCurrent = pCurrent->m_pNext;
     }
     
-    if (pOldest)
-    {
-        // Remove from list
-        if (pOldestPrev)
-            pOldestPrev->m_pNext = pOldest->m_pNext;
-        else
-            g_pAlbumArtCache = pOldest->m_pNext;
-            
-        // Free resources
-        g_iTotalCacheMemory -= pOldest->m_iMemoryUsed;
-        g_iCacheEntryCount--;
-        
-        if (pOldest->m_pcFilePath)
-            free(pOldest->m_pcFilePath);
-        if (pOldest->m_hBitmap)
-            DeleteObject(pOldest->m_hBitmap);
-        free(pOldest);
-    }
+    // Remove from LRU list
+    CPTL_RemoveFromLRU(pOldest);
+    
+    // Free resources
+    g_iTotalCacheMemory -= pOldest->m_iMemoryUsed;
+    g_iCacheEntryCount--;
+    
+    if (pOldest->m_pcFilePath)
+        free(pOldest->m_pcFilePath);
+    if (pOldest->m_hBitmap)
+        DeleteObject(pOldest->m_hBitmap);
+    free(pOldest);
 }
 
 // Helper function to extract album art from ID3v2 tags (MP3)
@@ -2118,38 +2829,36 @@ HBITMAP CPTL_LoadAlbumArtBitmap(const char* pcFilePath,
     
     return hBitmap;
 }
-// Get album art from cache or load
+// Get album art from cache or load - O(1) cache lookup via hash table
 HBITMAP CPTL_GetAlbumArtBitmap(const char* pcFilePath,
                                 unsigned int iMaxWidth,
                                 unsigned int iMaxHeight,
                                 unsigned int* piActualWidth,
                                 unsigned int* piActualHeight)
 {
-    CPs_AlbumArtCacheEntry* pCurrent;
+    CPs_AlbumArtCacheEntry* pEntry;
     CPs_AlbumArt art;
     HBITMAP hBitmap;
     unsigned int iWidth, iHeight;
+    unsigned int hash;
     
     if (!pcFilePath)
         return NULL;
         
-    // Search cache
-    pCurrent = g_pAlbumArtCache;
-    while (pCurrent)
+    // O(1) hash table lookup
+    pEntry = CPTL_FindInCache(pcFilePath, &hash);
+    if (pEntry)
     {
-        if (pCurrent->m_pcFilePath && stricmp(pCurrent->m_pcFilePath, pcFilePath) == 0)
-        {
-            // Found in cache - update access time
-            pCurrent->m_tLastAccess = time(NULL);
+        // Found in cache - move to front of LRU (most recently used)
+        CPTL_MoveToLRUFront(pEntry);
+        pEntry->m_tLastAccess = time(NULL);
+        
+        if (piActualWidth)
+            *piActualWidth = pEntry->m_iWidth;
+        if (piActualHeight)
+            *piActualHeight = pEntry->m_iHeight;
             
-            if (piActualWidth)
-                *piActualWidth = pCurrent->m_iWidth;
-            if (piActualHeight)
-                *piActualHeight = pCurrent->m_iHeight;
-                
-            return pCurrent->m_hBitmap;
-        }
-        pCurrent = pCurrent->m_pNext;
+        return pEntry->m_hBitmap;
     }
     
     // Not in cache - load from file
@@ -2181,15 +2890,21 @@ HBITMAP CPTL_GetAlbumArtBitmap(const char* pcFilePath,
     CPs_AlbumArtCacheEntry* pNew = (CPs_AlbumArtCacheEntry*)malloc(sizeof(CPs_AlbumArtCacheEntry));
     if (pNew)
     {
+        memset(pNew, 0, sizeof(CPs_AlbumArtCacheEntry));
         pNew->m_pcFilePath = _strdup(pcFilePath);
         pNew->m_hBitmap = hBitmap;
         pNew->m_iWidth = iWidth;
         pNew->m_iHeight = iHeight;
         pNew->m_tLastAccess = time(NULL);
         pNew->m_iMemoryUsed = iMemoryUsed;
-        pNew->m_pNext = g_pAlbumArtCache;
         
-        g_pAlbumArtCache = pNew;
+        // Add to hash table bucket
+        pNew->m_pNext = g_pAlbumArtHashTable[hash];
+        g_pAlbumArtHashTable[hash] = pNew;
+        
+        // Add to LRU list (front = most recently used)
+        CPTL_AddToLRU(pNew);
+        
         g_iCacheEntryCount++;
         g_iTotalCacheMemory += iMemoryUsed;
     }

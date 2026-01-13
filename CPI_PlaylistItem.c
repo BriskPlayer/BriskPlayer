@@ -68,6 +68,7 @@ CP_HPLAYLISTITEM CPLII_CreateItem(const char* pcPath)
 	pNewItem->m_enTagType = ttUnread;
 	pNewItem->m_bID3Tag_SaveRequired = FALSE;
 	pNewItem->m_bDestroyOnDeactivate = FALSE;
+	pNewItem->m_bExtendedMetadataLoaded = FALSE;
 	pNewItem->m_pcArtist = NULL;
 	pNewItem->m_pcAlbum = NULL;
 	pNewItem->m_pcTrackName = NULL;
@@ -270,6 +271,7 @@ void CPLII_RemoveTagInfo(CPs_PlaylistItem* pItem)
 	pItem->m_cTrackNum = CIC_INVALIDTRACKNUM;
 	pItem->m_enTagType = ttUnread;
 	pItem->m_bID3Tag_SaveRequired = FALSE;
+	pItem->m_bExtendedMetadataLoaded = FALSE;
 }
 
 //
@@ -629,6 +631,88 @@ void CPLI_WriteTag(CP_HPLAYLISTITEM hItem)
 
 	// Use TagLib for all metadata writing
 	CPLI_WriteTag_TagLib(pItem);
+}
+
+//
+// Lazy loading of extended metadata
+//
+BOOL CPLI_IsExtendedMetadataLoaded(CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CP_CHECKOBJECT(pItem);
+	return pItem->m_bExtendedMetadataLoaded;
+}
+
+void CPLI_EnsureExtendedMetadataLoaded(CP_HPLAYLISTITEM hItem)
+{
+	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;
+	CPs_AllMetadata metadata;
+	
+	CP_CHECKOBJECT(pItem);
+	
+	// Already loaded - nothing to do
+	if (pItem->m_bExtendedMetadataLoaded)
+		return;
+	
+	// Must have basic tags read first
+	if (pItem->m_enTagType == ttUnread)
+	{
+		CPLI_ReadTag(hItem);
+		return; // ReadTag now loads everything
+	}
+	
+	// Load extended metadata only
+	CPTL_InitMetadata(&metadata);
+	if (CPTL_ReadExtendedMetadataOnly(pItem->m_pcPath, &metadata))
+	{
+		// Extended metadata
+		if (metadata.m_bHasExtendedTags)
+		{
+			STR_AllocSetString(&pItem->m_pcComposer, metadata.m_pcComposer, FALSE);
+			STR_AllocSetString(&pItem->m_pcAlbumArtist, metadata.m_pcAlbumArtist, FALSE);
+			STR_AllocSetString(&pItem->m_pcGrouping, metadata.m_pcGrouping, FALSE);
+			STR_AllocSetString(&pItem->m_pcCopyright, metadata.m_pcCopyright, FALSE);
+			STR_AllocSetString(&pItem->m_pcLyrics, metadata.m_pcLyrics, FALSE);
+			pItem->m_iDiscNumber = metadata.m_iDiscNumber;
+			pItem->m_iBPM = metadata.m_iBPM;
+		}
+		
+		// ReplayGain
+		if (metadata.m_bHasReplayGain)
+		{
+			pItem->m_fReplayGain_Track_Gain = metadata.m_fTrackGain;
+			pItem->m_fReplayGain_Track_Peak = metadata.m_fTrackPeak;
+			pItem->m_fReplayGain_Album_Gain = metadata.m_fAlbumGain;
+			pItem->m_fReplayGain_Album_Peak = metadata.m_fAlbumPeak;
+		}
+		
+		// Extended audio properties
+		if (metadata.m_iBitDepth > 0)
+			pItem->m_iBitDepth = metadata.m_iBitDepth;
+		if (metadata.m_pcBitrateMode)
+			STR_AllocSetString(&pItem->m_pcBitrateMode, metadata.m_pcBitrateMode, FALSE);
+		
+		// Multiple artists
+		if (metadata.m_bHasMultipleArtists)
+		{
+			STR_AllocSetString(&pItem->m_pcArtists, metadata.m_pcArtists, FALSE);
+			STR_AllocSetString(&pItem->m_pcFeaturedArtist, metadata.m_pcFeaturedArtist, FALSE);
+			STR_AllocSetString(&pItem->m_pcRemixer, metadata.m_pcRemixer, FALSE);
+		}
+		
+		// MusicBrainz IDs
+		if (metadata.m_bHasMusicBrainzIDs)
+		{
+			STR_AllocSetString(&pItem->m_pcMusicBrainz_TrackID, metadata.m_pcMB_TrackID, FALSE);
+			STR_AllocSetString(&pItem->m_pcMusicBrainz_ReleaseID, metadata.m_pcMB_ReleaseID, FALSE);
+			STR_AllocSetString(&pItem->m_pcMusicBrainz_ArtistID, metadata.m_pcMB_ArtistID, FALSE);
+			STR_AllocSetString(&pItem->m_pcMusicBrainz_AlbumArtistID, metadata.m_pcMB_AlbumArtistID, FALSE);
+			STR_AllocSetString(&pItem->m_pcMusicBrainz_ReleaseGroupID, metadata.m_pcMB_ReleaseGroupID, FALSE);
+		}
+	}
+	
+	CPTL_FreeMetadata(&metadata);
+	pItem->m_bExtendedMetadataLoaded = TRUE;
 }
 
 //
@@ -2171,51 +2255,7 @@ BOOL CPLI_GrowFile(HANDLE hFile, const DWORD dwStartOffset, const unsigned int i
 //
 void CPLI_ReadTag_TagLib(CPs_PlaylistItem* pItem)
 {
-	char* pcTitle = NULL;
-	char* pcArtist = NULL;
-	char* pcAlbum = NULL;
-	char* pcYear = NULL;
-	char* pcComment = NULL;
-	char* pcGenre = NULL;
-	unsigned int iTrackNum = 0;
-	unsigned int iLength = 0;
-	int iTagType = 0;
-	
-	// Extended metadata
-	char* pcComposer = NULL;
-	char* pcAlbumArtist = NULL;
-	char* pcGrouping = NULL;
-	char* pcCopyright = NULL;
-	char* pcLyrics = NULL;
-	unsigned short iDiscNumber = 0;
-	unsigned short iBPM = 0;
-	
-	// ReplayGain
-	float fTrackGain = 0.0f;
-	float fTrackPeak = 0.0f;
-	float fAlbumGain = 0.0f;
-	float fAlbumPeak = 0.0f;
-	
-	// Audio properties
-	unsigned int iBitrate = 0;
-	unsigned int iSampleRate = 0;
-	unsigned short iBitDepth = 0;
-	unsigned char cChannels = 0;
-	char* pcCodec = NULL;
-	char* pcBitrateMode = NULL;
-	unsigned int iFileSize = 0;
-	
-	// Multiple artists
-	char* pcArtists = NULL;
-	char* pcFeaturedArtist = NULL;
-	char* pcRemixer = NULL;
-	
-	// MusicBrainz IDs
-	char* pcMB_TrackID = NULL;
-	char* pcMB_ReleaseID = NULL;
-	char* pcMB_ArtistID = NULL;
-	char* pcMB_AlbumArtistID = NULL;
-	char* pcMB_ReleaseGroupID = NULL;
+	CPs_AllMetadata metadata;
 	
 	if (!pItem || !pItem->m_pcPath)
 	{
@@ -2224,108 +2264,73 @@ void CPLI_ReadTag_TagLib(CPs_PlaylistItem* pItem)
 		return;
 	}
 
-	// Try to read basic tags using TagLib
-	BOOL bSuccess = CPTL_ReadTags(pItem->m_pcPath,
-								  &pcTitle, &pcArtist, &pcAlbum,
-								  &pcYear, &pcComment, &pcGenre,
-								  &iTrackNum, &iLength, &iTagType);
+	// Use consolidated metadata reading - single file open for all metadata
+	BOOL bSuccess = CPTL_ReadAllMetadata(pItem->m_pcPath, &metadata);
 
-	// Also read extended metadata
-	BOOL bExtendedSuccess = CPTL_ReadExtendedTags(pItem->m_pcPath,
-	                                              &pcComposer, &pcAlbumArtist,
-	                                              &pcGrouping, &pcCopyright,
-	                                              &pcLyrics, &iDiscNumber, &iBPM);
-	
-	// Also read ReplayGain data
-	BOOL bReplayGainSuccess = CPTL_ReadReplayGain(pItem->m_pcPath,
-	                                              &fTrackGain, &fTrackPeak,
-	                                              &fAlbumGain, &fAlbumPeak);
-	
-	// Also read audio properties
-	BOOL bAudioPropsSuccess = CPTL_ReadAudioProperties(pItem->m_pcPath,
-	                                                   &iBitrate, &iSampleRate,
-	                                                   &iBitDepth, &cChannels,
-	                                                   &pcCodec, &pcBitrateMode,
-	                                                   &iFileSize);
-	
-	// Also read multiple artists metadata
-	BOOL bMultiArtistsSuccess = CPTL_ReadMultipleArtists(pItem->m_pcPath,
-	                                                     &pcArtists,
-	                                                     &pcFeaturedArtist,
-	                                                     &pcRemixer);
-	
-	// Also read MusicBrainz IDs
-	BOOL bMusicBrainzSuccess = CPTL_ReadMusicBrainzIDs(pItem->m_pcPath,
-	                                                   &pcMB_TrackID,
-	                                                   &pcMB_ReleaseID,
-	                                                   &pcMB_ArtistID,
-	                                                   &pcMB_AlbumArtistID,
-	                                                   &pcMB_ReleaseGroupID);
-
-	if (bSuccess)
+	if (bSuccess && metadata.m_bHasBasicTags)
 	{
 		// Set the basic tag information
-		STR_AllocSetString(&pItem->m_pcArtist, pcArtist, FALSE);
-		STR_AllocSetString(&pItem->m_pcAlbum, pcAlbum, FALSE);
-		STR_AllocSetString(&pItem->m_pcTrackName, pcTitle, FALSE);
-		STR_AllocSetString(&pItem->m_pcComment, pcComment, FALSE);
-		STR_AllocSetString(&pItem->m_pcYear, pcYear, FALSE);
+		STR_AllocSetString(&pItem->m_pcArtist, metadata.m_pcArtist, FALSE);
+		STR_AllocSetString(&pItem->m_pcAlbum, metadata.m_pcAlbum, FALSE);
+		STR_AllocSetString(&pItem->m_pcTrackName, metadata.m_pcTitle, FALSE);
+		STR_AllocSetString(&pItem->m_pcComment, metadata.m_pcComment, FALSE);
+		STR_AllocSetString(&pItem->m_pcYear, metadata.m_pcYear, FALSE);
 		
 		// Set extended metadata if available
-		if (bExtendedSuccess)
+		if (metadata.m_bHasExtendedTags)
 		{
-			STR_AllocSetString(&pItem->m_pcComposer, pcComposer, FALSE);
-			STR_AllocSetString(&pItem->m_pcAlbumArtist, pcAlbumArtist, FALSE);
-			STR_AllocSetString(&pItem->m_pcGrouping, pcGrouping, FALSE);
-			STR_AllocSetString(&pItem->m_pcCopyright, pcCopyright, FALSE);
-			STR_AllocSetString(&pItem->m_pcLyrics, pcLyrics, FALSE);
-			pItem->m_iDiscNumber = iDiscNumber;
-			pItem->m_iBPM = iBPM;
+			STR_AllocSetString(&pItem->m_pcComposer, metadata.m_pcComposer, FALSE);
+			STR_AllocSetString(&pItem->m_pcAlbumArtist, metadata.m_pcAlbumArtist, FALSE);
+			STR_AllocSetString(&pItem->m_pcGrouping, metadata.m_pcGrouping, FALSE);
+			STR_AllocSetString(&pItem->m_pcCopyright, metadata.m_pcCopyright, FALSE);
+			STR_AllocSetString(&pItem->m_pcLyrics, metadata.m_pcLyrics, FALSE);
+			pItem->m_iDiscNumber = metadata.m_iDiscNumber;
+			pItem->m_iBPM = metadata.m_iBPM;
 		}
 		
 		// Set ReplayGain if available
-		if (bReplayGainSuccess)
+		if (metadata.m_bHasReplayGain)
 		{
-			pItem->m_fReplayGain_Track_Gain = fTrackGain;
-			pItem->m_fReplayGain_Track_Peak = fTrackPeak;
-			pItem->m_fReplayGain_Album_Gain = fAlbumGain;
-			pItem->m_fReplayGain_Album_Peak = fAlbumPeak;
+			pItem->m_fReplayGain_Track_Gain = metadata.m_fTrackGain;
+			pItem->m_fReplayGain_Track_Peak = metadata.m_fTrackPeak;
+			pItem->m_fReplayGain_Album_Gain = metadata.m_fAlbumGain;
+			pItem->m_fReplayGain_Album_Peak = metadata.m_fAlbumPeak;
 		}
 		
 		// Set audio properties if available
-		if (bAudioPropsSuccess)
+		if (metadata.m_bHasAudioProperties)
 		{
-			pItem->m_iBitrate = iBitrate;
-			pItem->m_iSampleRate = iSampleRate;
-			pItem->m_iBitDepth = iBitDepth;
-			pItem->m_cChannels = cChannels;
-			STR_AllocSetString(&pItem->m_pcCodec, pcCodec, FALSE);
-			STR_AllocSetString(&pItem->m_pcBitrateMode, pcBitrateMode, FALSE);
-			pItem->m_iFileSize = iFileSize;
+			pItem->m_iBitrate = metadata.m_iBitrate;
+			pItem->m_iSampleRate = metadata.m_iSampleRate;
+			pItem->m_iBitDepth = metadata.m_iBitDepth;
+			pItem->m_cChannels = metadata.m_cChannels;
+			STR_AllocSetString(&pItem->m_pcCodec, metadata.m_pcCodec, FALSE);
+			STR_AllocSetString(&pItem->m_pcBitrateMode, metadata.m_pcBitrateMode, FALSE);
+			pItem->m_iFileSize = metadata.m_iFileSize;
 		}
 		
 		// Set multiple artists if available
-		if (bMultiArtistsSuccess)
+		if (metadata.m_bHasMultipleArtists)
 		{
-			STR_AllocSetString(&pItem->m_pcArtists, pcArtists, FALSE);
-			STR_AllocSetString(&pItem->m_pcFeaturedArtist, pcFeaturedArtist, FALSE);
-			STR_AllocSetString(&pItem->m_pcRemixer, pcRemixer, FALSE);
+			STR_AllocSetString(&pItem->m_pcArtists, metadata.m_pcArtists, FALSE);
+			STR_AllocSetString(&pItem->m_pcFeaturedArtist, metadata.m_pcFeaturedArtist, FALSE);
+			STR_AllocSetString(&pItem->m_pcRemixer, metadata.m_pcRemixer, FALSE);
 		}
 		
 		// Set MusicBrainz IDs if available
-		if (bMusicBrainzSuccess)
+		if (metadata.m_bHasMusicBrainzIDs)
 		{
-			STR_AllocSetString(&pItem->m_pcMusicBrainz_TrackID, pcMB_TrackID, FALSE);
-			STR_AllocSetString(&pItem->m_pcMusicBrainz_ReleaseID, pcMB_ReleaseID, FALSE);
-			STR_AllocSetString(&pItem->m_pcMusicBrainz_ArtistID, pcMB_ArtistID, FALSE);
-			STR_AllocSetString(&pItem->m_pcMusicBrainz_AlbumArtistID, pcMB_AlbumArtistID, FALSE);
-			STR_AllocSetString(&pItem->m_pcMusicBrainz_ReleaseGroupID, pcMB_ReleaseGroupID, FALSE);
+			STR_AllocSetString(&pItem->m_pcMusicBrainz_TrackID, metadata.m_pcMB_TrackID, FALSE);
+			STR_AllocSetString(&pItem->m_pcMusicBrainz_ReleaseID, metadata.m_pcMB_ReleaseID, FALSE);
+			STR_AllocSetString(&pItem->m_pcMusicBrainz_ArtistID, metadata.m_pcMB_ArtistID, FALSE);
+			STR_AllocSetString(&pItem->m_pcMusicBrainz_AlbumArtistID, metadata.m_pcMB_AlbumArtistID, FALSE);
+			STR_AllocSetString(&pItem->m_pcMusicBrainz_ReleaseGroupID, metadata.m_pcMB_ReleaseGroupID, FALSE);
 		}
 		
 		// Handle genre - convert string to genre index
-		if (pcGenre)
+		if (metadata.m_pcGenre)
 		{
-			int iGenreIndex = CPTL_GetGenreIndex(pcGenre);
+			int iGenreIndex = CPTL_GetGenreIndex(metadata.m_pcGenre);
 			if (iGenreIndex >= 0 && iGenreIndex < 256)
 				pItem->m_cGenre = (unsigned char)iGenreIndex;
 			else
@@ -2337,10 +2342,10 @@ void CPLI_ReadTag_TagLib(CPs_PlaylistItem* pItem)
 		}
 		
 		// Handle track number - convert to unsigned char and generate text
-		if (iTrackNum > 0 && iTrackNum <= 255)
+		if (metadata.m_iTrackNum > 0 && metadata.m_iTrackNum <= 255)
 		{
 			char cTempString[33];
-			pItem->m_cTrackNum = (unsigned char)iTrackNum;
+			pItem->m_cTrackNum = (unsigned char)metadata.m_iTrackNum;
 			
 			// Generate track number text
 			if (pItem->m_pcTrackNum_AsText)
@@ -2361,32 +2366,32 @@ void CPLI_ReadTag_TagLib(CPs_PlaylistItem* pItem)
 		}
 		
 		// Handle track length - convert and format duration
-		if (iLength > 0)
+		if (metadata.m_iLength > 0)
 		{
-			CPLI_DecodeLength(pItem, iLength);
+			CPLI_DecodeLength(pItem, metadata.m_iLength);
 		}
 		
 		// Set tag type
-		if (iTagType == 2)
+		if (metadata.m_iTagType == 2)
 			pItem->m_enTagType = ttID3v2;
-		else if (iTagType == 1)
+		else if (metadata.m_iTagType == 1)
 			pItem->m_enTagType = ttID3v1;
 		else
 			pItem->m_enTagType = ttNone;
 		
-		// Clean up allocated strings from TagLib
-		if (pcTitle) free(pcTitle);
-		if (pcArtist) free(pcArtist);
-		if (pcAlbum) free(pcAlbum);
-		if (pcYear) free(pcYear);
-		if (pcComment) free(pcComment);
-		if (pcGenre) free(pcGenre);
+		// Mark extended metadata as loaded since we read everything
+		pItem->m_bExtendedMetadataLoaded = TRUE;
+		
+		// Free metadata structure (this frees all allocated strings)
+		CPTL_FreeMetadata(&metadata);
 	}
 	else
 	{
 		// No tags found
+		CPTL_FreeMetadata(&metadata);
 		CPLII_RemoveTagInfo(pItem);
 		pItem->m_enTagType = ttNone;
+		pItem->m_bExtendedMetadataLoaded = FALSE;
 	}
 }
 

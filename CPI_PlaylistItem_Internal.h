@@ -55,6 +55,7 @@ typedef struct _CPs_PlaylistItem
 	BOOL m_bID3Tag_SaveRequired;
 	CPe_TagType m_enTagType;
 	BOOL m_bDestroyOnDeactivate;
+	BOOL m_bExtendedMetadataLoaded;  // TRUE if extended metadata has been lazy-loaded
 	
 	char m_cTrackStackPos_AsText[16];
 	int m_iTrackStackPos;
