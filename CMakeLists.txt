@@ -13,8 +13,24 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Options
 option(ENABLE_NLS "Enable internationalization support" ON)
-option(STATIC_LINK "Link statically" ON)
+option(BUILD_STATIC "Build with static linking (all libraries linked statically)" ON)
 option(BUILD_TESTS "Build unit tests" OFF)
+
+# For backwards compatibility
+if(DEFINED STATIC_LINK AND NOT DEFINED BUILD_STATIC)
+    set(BUILD_STATIC ${STATIC_LINK})
+endif()
+
+# Configure static linking preferences
+if(BUILD_STATIC)
+    # Prefer static libraries when using find_library
+    set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib ${CMAKE_FIND_LIBRARY_SUFFIXES})
+    
+    # Set BLA_STATIC for BLAS/LAPACK if needed
+    set(BLA_STATIC ON)
+    
+    message(STATUS "Static build enabled - preferring static libraries")
+endif()
 
 # Platform-specific settings
 if(MSVC)
@@ -55,7 +71,7 @@ else()
     add_compile_options(-Wall -Wextra)
     
     # Static linking for MinGW
-    if(STATIC_LINK AND MINGW)
+    if(BUILD_STATIC AND MINGW)
         if(CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
             # Clang on Windows uses different flags
             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
@@ -347,8 +363,14 @@ endif()
 
 # Link FAudio libraries
 if(FAUDIO_FOUND)
-    if(TARGET FAudio::FAudio-static)
-        # CMake CONFIG provides the target
+    if(BUILD_STATIC AND TARGET FAudio::FAudio-static)
+        # Prefer static library when BUILD_STATIC is enabled
+        target_link_libraries(briskplayer PRIVATE FAudio::FAudio-static)
+    elseif(TARGET FAudio::FAudio)
+        # Fall back to shared library target
+        target_link_libraries(briskplayer PRIVATE FAudio::FAudio)
+    elseif(TARGET FAudio::FAudio-static)
+        # CMake CONFIG provides the static target
         target_link_libraries(briskplayer PRIVATE FAudio::FAudio-static)
     elseif(FAUDIO_LINK_LIBRARIES)
         # pkg-config provides FAUDIO_LINK_LIBRARIES

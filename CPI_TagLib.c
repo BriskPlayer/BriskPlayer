@@ -1995,19 +1995,23 @@ HBITMAP CPTL_CreateBitmapFromImageData(const BYTE* pImageData,
     // Get image dimensions
     pFrame->GetSize(&iWidth, &iHeight);
     
-    // Calculate scaling
+    // Calculate scaling to fit within max dimensions while preserving aspect ratio
     iScaledWidth = iWidth;
     iScaledHeight = iHeight;
     
-    if (iMaxWidth > 0 && iMaxHeight > 0 && (iWidth > iMaxWidth || iHeight > iMaxHeight))
+    if (iMaxWidth > 0 && iMaxHeight > 0 && iWidth > 0 && iHeight > 0)
     {
-        float fScale = (float)iMaxWidth / iWidth;
+        // Scale to fit within max dimensions (both up and down)
+        float fScaleW = (float)iMaxWidth / iWidth;
         float fScaleH = (float)iMaxHeight / iHeight;
-        if (fScaleH < fScale)
-            fScale = fScaleH;
+        float fScale = (fScaleW < fScaleH) ? fScaleW : fScaleH;
         
         iScaledWidth = (UINT)(iWidth * fScale);
         iScaledHeight = (UINT)(iHeight * fScale);
+        
+        // Ensure minimum size of 1
+        if (iScaledWidth < 1) iScaledWidth = 1;
+        if (iScaledHeight < 1) iScaledHeight = 1;
     }
     
     if (piActualWidth)
@@ -2088,6 +2092,32 @@ cleanup:
     return hBitmap;
 }
 
+// Load album art at specific target size (bypasses cache, caller must free HBITMAP)
+// This scales the image to fit within the target dimensions while preserving aspect ratio
+HBITMAP CPTL_LoadAlbumArtBitmap(const char* pcFilePath,
+                                unsigned int iTargetWidth,
+                                unsigned int iTargetHeight,
+                                unsigned int* piActualWidth,
+                                unsigned int* piActualHeight)
+{
+    CPs_AlbumArt art;
+    HBITMAP hBitmap;
+    
+    if (!pcFilePath || iTargetWidth == 0 || iTargetHeight == 0)
+        return NULL;
+    
+    // Load raw album art from file
+    if (!CPTL_ReadAlbumArt(pcFilePath, &art))
+        return NULL;
+    
+    // Create bitmap at target size
+    hBitmap = CPTL_CreateBitmapFromImageData(art.m_pImageData, art.m_iImageSize,
+                                              iTargetWidth, iTargetHeight,
+                                              piActualWidth, piActualHeight);
+    CPTL_FreeAlbumArt(&art);
+    
+    return hBitmap;
+}
 // Get album art from cache or load
 HBITMAP CPTL_GetAlbumArtBitmap(const char* pcFilePath,
                                 unsigned int iMaxWidth,

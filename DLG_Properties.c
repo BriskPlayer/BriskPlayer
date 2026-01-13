@@ -245,9 +245,19 @@ void Properties_OnInit(HWND hWnd, CP_HPLAYLISTITEM hItem)
 		if (pData)
 		{
 			unsigned int iWidth = 0, iHeight = 0;
+			HWND hArtCtrl = GetDlgItem(hWnd, IDC_PROP_ALBUMART);
+			RECT rcArt;
+			int targetSize = 200;  // Default size
 			
-			// Get album art bitmap (max 128x128)
-			pData->m_hAlbumArt = CPTL_GetAlbumArtBitmap(pValue, 128, 128, &iWidth, &iHeight);
+			// Get actual control size to fit album art properly
+			if (hArtCtrl && GetClientRect(hArtCtrl, &rcArt))
+			{
+				targetSize = min(rcArt.right - rcArt.left, rcArt.bottom - rcArt.top);
+				if (targetSize < 128) targetSize = 128;  // Minimum size
+			}
+			
+			// Load album art at target size (bypass cache to get correct size)
+			pData->m_hAlbumArt = CPTL_LoadAlbumArtBitmap(pValue, targetSize, targetSize, &iWidth, &iHeight);
 			
 			if (pData->m_hAlbumArt)
 			{

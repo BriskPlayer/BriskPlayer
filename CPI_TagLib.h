@@ -228,6 +228,13 @@ HBITMAP CPTL_GetAlbumArtBitmap(const char* pcFilePath,
                                 unsigned int* piActualWidth,
                                 unsigned int* piActualHeight);
 
+// Load album art at specific size (bypasses cache, caller must free HBITMAP)
+HBITMAP CPTL_LoadAlbumArtBitmap(const char* pcFilePath,
+                                unsigned int iTargetWidth,
+                                unsigned int iTargetHeight,
+                                unsigned int* piActualWidth,
+                                unsigned int* piActualHeight);
+
 // Clear album art cache
 void CPTL_ClearAlbumArtCache(void);
 
