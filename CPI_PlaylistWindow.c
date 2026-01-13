@@ -33,6 +33,7 @@
 #include <shellapi.h>
 #include "CPI_PlaylistWindow.h"
 #include "CPI_Indicators.h"
+#include "CPI_Gettext.h"
 #include "CPI_AlbumArtTooltip.h"
 
 
@@ -634,9 +635,9 @@ void CPlaylistWindow_RenameMenu(const int iItem, const int iSubItem)
 		
 		if (iNumberOfErrors > 0)
 		{
-			MessageBoxW(IF_GetHWnd(windows.m_hifPlaylist),
-					   L"Some files could not be renamed.\n\nThis could be because they are either currently playing or are read-only.",
-					   L"Error",
+			MessageBoxA(IF_GetHWnd(windows.m_hifPlaylist),
+					   T(STR_ERR_RENAME_FAILED),
+					   T(STR_ERR_ERROR),
 					   MB_OK | MB_ICONASTERISK);
 		}
 	}
@@ -662,7 +663,7 @@ void CPlaylistWindow_CreateIPEdit(const int iItem, const int iSubItem)
 	
 	if (CPLI_GetReadWriteState(hClickedItem) != rwsReadWrite)
 	{
-		MessageBoxW(windows.m_hWndPlaylist, L"This file's ID3 tag cannot be updated.  This is because BriskPlayer cannot write to this file.", L"Cannot update tag", MB_OK | MB_ICONSTOP);
+		MessageBoxA(windows.m_hWndPlaylist, T(STR_ERR_CANNOT_UPDATE_TAG), T(STR_ERR_CANNOT_UPDATE_TAG_TITLE), MB_OK | MB_ICONSTOP);
 		return;
 	}
 	

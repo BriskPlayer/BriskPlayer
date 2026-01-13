@@ -23,6 +23,7 @@
 #include "globals.h"
 #include "CompositeFile.h"
 #include "resource.h"
+#include "CPI_Gettext.h"
 
 // Forward declarations for CPSK functions
 void CPSK_DestroySkin(CPs_Skin* pSkin);
@@ -301,8 +302,8 @@ int     main_skin_open(char *name)
 	
 	if (*options.main_skin_file == 0)
 	{
-		MessageBoxW(GetForegroundWindow(), L"No Skin file selected!",
-				   L"Error", MB_ICONERROR);
+		MessageBoxA(GetForegroundWindow(), T(STR_ERR_NO_SKIN_SELECTED),
+				   T(STR_ERR_ERROR), MB_ICONERROR);
 		options.use_default_skin = TRUE;
 		return FALSE;
 	}
@@ -323,9 +324,9 @@ int     main_skin_open(char *name)
 	                                    
 	if (returnval == 0)
 	{
-		WCHAR textbufW[MAX_PATH + 50];
-		swprintf_s(textbufW, MAX_PATH + 50, L"Not a valid BriskPlayer Skin file: %hs", pathbuf);
-		MessageBoxW(GetForegroundWindow(), textbufW, L"error", MB_ICONERROR);
+		char textbuf[MAX_PATH + 100];
+		snprintf(textbuf, sizeof(textbuf), "%s: %s", T(STR_ERR_INVALID_SKIN), pathbuf);
+		MessageBoxA(GetForegroundWindow(), textbuf, T(STR_ERR_ERROR), MB_ICONERROR);
 		options.use_default_skin = TRUE;
 		return FALSE;
 	}
@@ -428,10 +429,10 @@ int     main_skin_open(char *name)
 			|| !graphics.bmp_main_switch || !graphics.bmp_main_time_font
 			|| !graphics.bmp_main_title_font || !graphics.bmp_main_track_font)
 	{
-		WCHAR errorstringW[5000];
+		char errorstring[5000];
 		
-		swprintf_s(errorstringW, 5000, L"Can't load bitmaps!\n%hs", errorbuf);
-		MessageBoxW(GetForegroundWindow(), errorstringW, L"error",
+		snprintf(errorstring, sizeof(errorstring), "%s\n%s", T(STR_ERR_CANT_LOAD_BITMAPS), errorbuf);
+		MessageBoxA(GetForegroundWindow(), errorstring, T(STR_ERR_ERROR),
 				   MB_ICONERROR);
 		options.use_default_skin = TRUE;
 		return FALSE;

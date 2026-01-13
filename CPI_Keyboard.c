@@ -23,6 +23,7 @@
 
 #include "stdafx.h"
 #include "globals.h"
+#include "CP_SafeGlobals.h"
 #include "resource.h"
 #include "CPI_Player.h"
 #include "CPI_Playlist.h"
@@ -193,7 +194,7 @@ void CP_HandleKeyPress_Player(HWND hWnd, const int iVKey, const BOOL bAlt, const
 			
 			main_draw_vu_from_value(windows.wnd_main, VolumeSlider, globals.m_iVolume);
 			
-			CPI_Player__SetVolume(globals.m_hPlayer, globals.m_iVolume);
+			SAFE_PLAYER_CALL1(CPI_Player__SetVolume, globals.m_iVolume);
 			
 			break;
 			
@@ -211,7 +212,7 @@ void CP_HandleKeyPress_Player(HWND hWnd, const int iVKey, const BOOL bAlt, const
 			
 			main_draw_vu_from_value(windows.wnd_main, VolumeSlider, globals.m_iVolume);
 			
-			CPI_Player__SetVolume(globals.m_hPlayer, globals.m_iVolume);
+			SAFE_PLAYER_CALL1(CPI_Player__SetVolume, globals.m_iVolume);
 			
 			break;
 			

@@ -22,6 +22,7 @@
 
 #include "stdafx.h"
 #include "globals.h"
+#include "CP_SafeGlobals.h"
 #include "WindowsOS.h"
 #include "CPI_Player.h"
 #include "CPI_Playlist.h"
@@ -214,8 +215,8 @@ void    main_reset_window(HWND hWnd)
 				 SWP_NOMOVE | SWP_NOZORDER // window-positioning flags
 				);
 	SetWindowRgn(hWnd, winregion, TRUE);
-	CPI_Player__SetPositionRange(globals.m_hPlayer,
-								 Skin.Object[PositionSlider].maxw ? Skin.Object[PositionSlider].h : Skin.Object[PositionSlider].w);
+	SAFE_PLAYER_CALL1(CPI_Player__SetPositionRange,
+					   Skin.Object[PositionSlider].maxw ? Skin.Object[PositionSlider].h : Skin.Object[PositionSlider].w);
 	RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
 }
 
@@ -374,7 +375,7 @@ void main_update_title_text(void)
 	HDC SongtitleDc;
 	RECT rect;
 	
-	hItem_Current = CPL_GetActiveItem(globals.m_hPlaylist);
+	hItem_Current = SAFE_GET_ACTIVE_ITEM();
 	
 	if (hItem_Current)
 		pcText = CPLI_GetTrackName(hItem_Current);
@@ -527,7 +528,7 @@ void    main_draw_frequency(HWND hWnd)
 
 void    main_set_eq(void)
 {
-	CPI_Player__SetEQ(globals.m_hPlayer, options.equalizer, options.eq_settings);
+	SAFE_PLAYER_CALL2(CPI_Player__SetEQ, options.equalizer, options.eq_settings);
 }
 
 void    main_draw_time(HWND hWnd)
@@ -543,7 +544,7 @@ void    main_draw_time(HWND hWnd)
 	int     tracknr = 0;//globals.main_int_playlist_track_number;
 	CP_HPLAYLISTITEM hCursor;
 	
-	for (hCursor = CPL_GetActiveItem(globals.m_hPlaylist); hCursor; hCursor = CPLI_Prev(hCursor))
+	for (hCursor = SAFE_GET_ACTIVE_ITEM(); hCursor; hCursor = CPLI_Prev(hCursor))
 		tracknr++;
 		
 	if (left)
@@ -611,7 +612,7 @@ void    main_draw_tracknr(HWND hWnd)
 	int     tracknr = 0;//globals.main_int_playlist_track_number;
 	CP_HPLAYLISTITEM hCursor;
 	
-	for (hCursor = CPL_GetActiveItem(globals.m_hPlaylist); hCursor; hCursor = CPLI_Prev(hCursor))
+	for (hCursor = SAFE_GET_ACTIVE_ITEM(); hCursor; hCursor = CPLI_Prev(hCursor))
 		tracknr++;
 		
 	if (left)
@@ -698,7 +699,7 @@ int     playlist_open_file(BOOL clearlist)
 		WCHAR    path_buffer2[_MAX_PATH];
 		
 		if (clearlist)
-			CPL_Empty(globals.m_hPlaylist);
+			SAFE_PLAYLIST_CALL(CPL_Empty);
 			
 		wcscpy(path_buffer, fn.lpstrFile);
 		
@@ -738,8 +739,8 @@ int     playlist_open_file(BOOL clearlist)
 			char* pcFullPath = STR_ConvertFromUnicode(path_buffer2);
 			if (pcFullPath)
 			{
-				CPL_SyncLoadNextFile(globals.m_hPlaylist);
-				CPL_AddFile(globals.m_hPlaylist, pcFullPath);
+				SAFE_PLAYLIST_CALL(CPL_SyncLoadNextFile);
+				SAFE_PLAYLIST_CALL1(CPL_AddFile, pcFullPath);
 				free(pcFullPath);
 			}
 			
@@ -1026,7 +1027,7 @@ BOOL    main_draw_vu_all(HWND hWnd, WPARAM wParam, LPARAM lParam,
 					if (globals.m_iVolume < 0) globals.m_iVolume = 0;
 					
 					//    CP_TRACE1("level=%d",globals.m_iVolume);
-					CPI_Player__SetVolume(globals.m_hPlayer, globals.m_iVolume);
+					SAFE_PLAYER_CALL1(CPI_Player__SetVolume, globals.m_iVolume);
 					
 					waarde = globals.m_iVolume;
 					
@@ -1045,13 +1046,13 @@ BOOL    main_draw_vu_all(HWND hWnd, WPARAM wParam, LPARAM lParam,
 						if (Skin.Object[teller].maxw == 0)
 						{
 							globals.main_int_track_position = cursorpos.x - Skin.Object[teller].x;
-							CPI_Player__Seek(globals.m_hPlayer, globals.main_int_track_position, Skin.Object[teller].w);
+							SAFE_PLAYER_CALL2(CPI_Player__Seek, globals.main_int_track_position, Skin.Object[teller].w);
 						}
 						
 						else
 						{
 							globals.main_int_track_position = ((Skin.Object[teller].y + Skin.Object[teller].h) - cursorpos.y);
-							CPI_Player__Seek(globals.m_hPlayer, globals.main_int_track_position, Skin.Object[teller].h);
+							SAFE_PLAYER_CALL2(CPI_Player__Seek, globals.main_int_track_position, Skin.Object[teller].h);
 						}
 						
 						waarde = globals.main_int_track_position;
@@ -1356,7 +1357,7 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			else if (wParam == CPC_TIMERID_INTERTRACKDELAY)
 			{
 				KillTimer(hWnd, CPC_TIMERID_INTERTRACKDELAY);
-				CPL_PlayItem(globals.m_hPlaylist, FALSE, pmNextItem);
+				SAFE_PLAYLIST_CALL2(CPL_PlayItem, FALSE, pmNextItem);
 			}
 			
 			else if (wParam == CPC_TIMERID_ROTATINGSMILY)
@@ -1383,7 +1384,7 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				
 			main_draw_vu_from_value(hWnd, VolumeSlider, globals.m_iVolume);
 			
-			CPI_Player__SetVolume(globals.m_hPlayer, globals.m_iVolume);
+			SAFE_PLAYER_CALL1(CPI_Player__SetVolume, globals.m_iVolume);
 			
 			return 0;
 		}
@@ -1410,7 +1411,7 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (globals.playlist_bool_addsong == FALSE
 					&& wegotsome == TRUE)
 			{
-				CPL_PlayItem(globals.m_hPlaylist, TRUE, pmCurrentItem);
+				SAFE_PLAYLIST_CALL2(CPL_PlayItem, TRUE, pmCurrentItem);
 			}
 			
 			main_draw_controls_all(hWnd);
@@ -1799,8 +1800,10 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			
 			options_write();
 			
-			CPL_DestroyPlaylist(globals.m_hPlaylist);
-			CPI_Player__Destroy(globals.m_hPlayer);
+			if (globals.m_hPlaylist)
+				CPL_DestroyPlaylist(globals.m_hPlaylist);
+			if (globals.m_hPlayer)
+				CPI_Player__Destroy(globals.m_hPlayer);
 			
 			CPIC_FreeIndicators();
 			
@@ -1835,18 +1838,18 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			HDROP hDrop = (HDROP)wParam;
 			
 			// Replace the current list by default - append if CTRL is down
-			CPL_SyncLoadNextFile(globals.m_hPlaylist);
+			SAFE_PLAYLIST_CALL(CPL_SyncLoadNextFile);
 			
 			if (bCtrlIsDown == FALSE)
 			{
-				CPL_Empty(globals.m_hPlaylist);
+				SAFE_PLAYLIST_CALL(CPL_Empty);
 				globals.m_enPlayerState = cppsStopped;
-				CPL_AddDroppedFiles(globals.m_hPlaylist, hDrop);
-				CPL_PlayItem(globals.m_hPlaylist, TRUE, pmCurrentItem);
+				SAFE_PLAYLIST_CALL1(CPL_AddDroppedFiles, hDrop);
+				SAFE_PLAYLIST_CALL2(CPL_PlayItem, TRUE, pmCurrentItem);
 			}
 			
 			else
-				CPL_AddDroppedFiles(globals.m_hPlaylist, hDrop);
+				SAFE_PLAYLIST_CALL1(CPL_AddDroppedFiles, hDrop);
 		}
 		break;
 		
@@ -2045,9 +2048,7 @@ void    cmdline_usage(HWND hWndCoolPlayer)
 	
 	// Convert resource text to Unicode
 	char* pcHelpText = (char*)LockResource(globaldata);
-	WCHAR* pwcHelpText = STR_ConvertToUnicode(pcHelpText);
-	MessageBoxW(NULL, pwcHelpText, L"BriskPlayer command line options", 0);
-	free(pwcHelpText);
+	MessageBoxA(NULL, pcHelpText, T(STR_CMDLINE_HELP_TITLE), 0);
 	           
 	// only quit if no existing instance
 	if (hWndCoolPlayer == NULL)
@@ -2245,16 +2246,16 @@ BOOL cmdline_parse_argument(char *token)
 		if (globals.playlist_bool_addsong == FALSE
 				&& globals.cmdline_bool_clear_playlist_first == TRUE)
 		{
-			CPL_Empty(globals.m_hPlaylist);
+			SAFE_PLAYLIST_CALL(CPL_Empty);
 			globals.cmdline_bool_clear_playlist_first = FALSE;
 		}
 		
-		CPL_SyncLoadNextFile(globals.m_hPlaylist);
+		SAFE_PLAYLIST_CALL(CPL_SyncLoadNextFile);
 		
 		if (path_is_directory(expath) == TRUE)
-			CPL_AddDirectory_Recurse(globals.m_hPlaylist, expath);
+			SAFE_PLAYLIST_CALL1(CPL_AddDirectory_Recurse, expath);
 		else
-			CPL_AddFile(globals.m_hPlaylist, expath);
+			SAFE_PLAYLIST_CALL1(CPL_AddFile, expath);
 			
 		return TRUE;
 	}
@@ -2323,9 +2324,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Ensure that this system is audio capable
 	if (waveOutGetNumDevs() < 1)
 	{
-		WCHAR* title = STR_ConvertToUnicode(CP_BRISKPLAYER);
-		MessageBoxW(GetDesktopWindow(), L"No audio devices in this system", title, MB_ICONSTOP | MB_OK);
-		free(title);
+		MessageBoxA(GetDesktopWindow(), T(STR_ERR_NO_AUDIO_DEVICES), CP_BRISKPLAYER, MB_ICONSTOP | MB_OK);
 		return -1;
 	}
 	
@@ -2430,9 +2429,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		#ifdef _DEBUG
 		OutputDebugStringA("BriskPlayer: FAILED to create playlist - exiting!\n");
 		#endif
-		WCHAR* title = STR_ConvertToUnicode(CP_BRISKPLAYER);
-		MessageBoxW(GetDesktopWindow(), L"Failed to create playlist", title, MB_ICONSTOP | MB_OK);
-		free(title);
+		MessageBoxA(GetDesktopWindow(), T(STR_ERR_FAILED_CREATE_PLAYLIST), CP_BRISKPLAYER, MB_ICONSTOP | MB_OK);
 		return -1;
 	}
 	
@@ -2569,7 +2566,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				
 				// Create player instance
 				globals.m_hPlayer = CPI_Player__Create(hWnd);
-				globals.m_iVolume = CPI_Player__GetVolume(globals.m_hPlayer);
+				globals.m_iVolume = SAFE_GET_VOLUME();
 				
 				winregion =
 					main_bitmap_to_region(graphics.bmp_main_up, Skin.transparentcolor);
@@ -2578,8 +2575,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				ShowWindow(hWnd, globals.main_int_show_minimized);
 				globals.m_hSysIcon = CPSYSICON_Create(hWnd);
 				
-				CPI_Player__SetPositionRange(globals.m_hPlayer,
-											 Skin.Object[PositionSlider].maxw ? Skin.Object[PositionSlider].h : Skin.Object[PositionSlider].w);
+				SAFE_PLAYER_CALL1(CPI_Player__SetPositionRange,
+								   Skin.Object[PositionSlider].maxw ? Skin.Object[PositionSlider].h : Skin.Object[PositionSlider].w);
 				IF_ProcessInit();
 				
 				// Create the playlist window
@@ -2604,7 +2601,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 							return -1;
 						}
 						
-						CP_HPLAYLISTITEM firstItem = CPL_GetFirstItem(globals.m_hPlaylist);
+						CP_HPLAYLISTITEM firstItem = SAFE_GET_FIRST_ITEM();
 						
 						if ((firstItem
 								&& globals.playlist_bool_addsong == TRUE
@@ -2616,24 +2613,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 							main_get_program_path(GetModuleHandle(NULL), pcPlaylistFilename, MAX_PATH);
 							strcat(pcPlaylistFilename, "default.m3u");
 							
-							CPL_SyncLoadNextFile(globals.m_hPlaylist);
+							SAFE_PLAYLIST_CALL(CPL_SyncLoadNextFile);
 							
-							CPL_SetAutoActivateInitial(globals.m_hPlaylist, TRUE);
-							CPL_AddFile(globals.m_hPlaylist, pcPlaylistFilename);
-							CPL_SetAutoActivateInitial(globals.m_hPlaylist, FALSE);
+							SAFE_PLAYLIST_CALL1(CPL_SetAutoActivateInitial, TRUE);
+							SAFE_PLAYLIST_CALL1(CPL_AddFile, pcPlaylistFilename);
+							SAFE_PLAYLIST_CALL1(CPL_SetAutoActivateInitial, FALSE);
 						}
 						
 						else if (*options.initial_file)
 						{
-							CPL_SyncLoadNextFile(globals.m_hPlaylist);
-							CPL_AddSingleFile(globals.m_hPlaylist, options.initial_file, NULL);
+							SAFE_PLAYLIST_CALL(CPL_SyncLoadNextFile);
+							SAFE_PLAYLIST_CALL2(CPL_AddSingleFile, options.initial_file, NULL);
 						}
 					}
 					
 					// Start playing
 					
 					if (wegotsome || options.auto_play_when_started)
-						CPL_PlayItem(globals.m_hPlaylist, TRUE, pmCurrentItem);
+						SAFE_PLAYLIST_CALL2(CPL_PlayItem, TRUE, pmCurrentItem);
 				}
 				
 				windows.wnd_tooltip =
@@ -2649,19 +2646,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					if (msg.message == CPPLNM_TAGREAD)
 					{
-						CPL_HandleAsyncNotify(globals.m_hPlaylist, msg.wParam, msg.lParam);
+						SAFE_PLAYLIST_CALL2(CPL_HandleAsyncNotify, msg.wParam, msg.lParam);
 						continue;
 					}
 					
 					if (msg.message == CPPLNM_SYNCSHUFFLE)
 					{
-						CPL_Stack_Shuffle(globals.m_hPlaylist, TRUE);
+						SAFE_PLAYLIST_CALL1(CPL_Stack_Shuffle, TRUE);
 						continue;
 					}
 					
 					if (msg.message == CPPLNM_SYNCSETACTIVE)
 					{
-						CPL_SetActiveItem(globals.m_hPlaylist, (CP_HPLAYLISTITEM)msg.wParam);
+						SAFE_PLAYLIST_CALL1(CPL_SetActiveItem, (CP_HPLAYLISTITEM)msg.wParam);
 						continue;
 					}
 					

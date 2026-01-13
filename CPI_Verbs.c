@@ -23,6 +23,7 @@
 
 #include "stdafx.h"
 #include "globals.h"
+#include "CP_SafeGlobals.h"
 #include "resource.h"
 #include "CPI_Playlist.h"
 #include "CPI_PlaylistWindow.h"
@@ -235,9 +236,9 @@ void CPVERB_Play(const CPe_VerbAction enAction, void* _pParam)
 	if (enAction == vaDoVerb)
 	{
 		if (globals.m_enPlayerState == cppsPaused)
-			CPI_Player__Play(globals.m_hPlayer);
+			SAFE_PLAYER_CALL(CPI_Player__Play);
 		else
-			CPL_PlayItem(globals.m_hPlaylist, TRUE, pmCurrentItem);
+			SAFE_PLAYLIST_CALL2(CPL_PlayItem, TRUE, pmCurrentItem);
 	}
 	
 	else if (enAction == vaQueryName)
@@ -256,7 +257,7 @@ void CPVERB_Stop(const CPe_VerbAction enAction, void* _pParam)
 {
 	if (enAction == vaDoVerb)
 	{
-		CPI_Player__Stop(globals.m_hPlayer);
+		SAFE_PLAYER_CALL(CPI_Player__Stop);
 		globals.main_bool_wavwrite_dir_already_known = FALSE;
 	}
 	
@@ -277,9 +278,9 @@ void CPVERB_Pause(const CPe_VerbAction enAction, void* _pParam)
 	if (enAction == vaDoVerb)
 	{
 		if (globals.m_enPlayerState == cppsPaused)
-			CPI_Player__Play(globals.m_hPlayer);
+			SAFE_PLAYER_CALL(CPI_Player__Play);
 		else
-			CPI_Player__Pause(globals.m_hPlayer);
+			SAFE_PLAYER_CALL(CPI_Player__Pause);
 	}
 	
 	else if (enAction == vaQueryName)
@@ -297,7 +298,7 @@ void CPVERB_Pause(const CPe_VerbAction enAction, void* _pParam)
 void CPVERB_NextTrack(const CPe_VerbAction enAction, void* _pParam)
 {
 	if (enAction == vaDoVerb)
-		CPL_PlayItem(globals.m_hPlaylist, TRUE, pmNextItem);
+		SAFE_PLAYLIST_CALL2(CPL_PlayItem, TRUE, pmNextItem);
 	else if (enAction == vaQueryName)
 	{
 		CPs_VerbQueryName* pParam = (CPs_VerbQueryName*)_pParam;
@@ -313,7 +314,7 @@ void CPVERB_NextTrack(const CPe_VerbAction enAction, void* _pParam)
 void CPVERB_PrevTrack(const CPe_VerbAction enAction, void* _pParam)
 {
 	if (enAction == vaDoVerb)
-		CPL_PlayItem(globals.m_hPlaylist, TRUE, pmPrevItem);
+		SAFE_PLAYLIST_CALL2(CPL_PlayItem, TRUE, pmPrevItem);
 	else if (enAction == vaQueryName)
 	{
 		CPs_VerbQueryName* pParam = (CPs_VerbQueryName*)_pParam;
@@ -338,9 +339,9 @@ void CPVERB_SkipForwards(const CPe_VerbAction enAction, void* _pParam)
 				globals.main_int_track_position = Skin.Object[PositionSlider].w;
 				
 			if (Skin.Object[PositionSlider].maxw == 1)
-				CPI_Player__Seek(globals.m_hPlayer, globals.main_int_track_position, Skin.Object[PositionSlider].h);
+				SAFE_PLAYER_CALL2(CPI_Player__Seek, globals.main_int_track_position, Skin.Object[PositionSlider].h);
 			else
-				CPI_Player__Seek(globals.m_hPlayer, globals.main_int_track_position, Skin.Object[PositionSlider].w);
+				SAFE_PLAYER_CALL2(CPI_Player__Seek, globals.main_int_track_position, Skin.Object[PositionSlider].w);
 		}
 	}
 	
@@ -368,9 +369,9 @@ void CPVERB_SkipBackwards(const CPe_VerbAction enAction, void* _pParam)
 				globals.main_int_track_position = 0;
 				
 			if (Skin.Object[PositionSlider].maxw == 1)
-				CPI_Player__Seek(globals.m_hPlayer, globals.main_int_track_position, Skin.Object[PositionSlider].h);
+				SAFE_PLAYER_CALL2(CPI_Player__Seek, globals.main_int_track_position, Skin.Object[PositionSlider].h);
 			else
-				CPI_Player__Seek(globals.m_hPlayer, globals.main_int_track_position, Skin.Object[PositionSlider].w);
+				SAFE_PLAYER_CALL2(CPI_Player__Seek, globals.main_int_track_position, Skin.Object[PositionSlider].w);
 		}
 	}
 	
@@ -397,7 +398,7 @@ void CPVERB_VolumeUp(const CPe_VerbAction enAction, void* _pParam)
 			
 		main_draw_vu_from_value(windows.wnd_main, VolumeSlider, globals.m_iVolume);
 		
-		CPI_Player__SetVolume(globals.m_hPlayer, globals.m_iVolume);
+		SAFE_PLAYER_CALL1(CPI_Player__SetVolume, globals.m_iVolume);
 	}
 	
 	else if (enAction == vaQueryName)
@@ -423,7 +424,7 @@ void CPVERB_VolumeDown(const CPe_VerbAction enAction, void* _pParam)
 			
 		main_draw_vu_from_value(windows.wnd_main, VolumeSlider, globals.m_iVolume);
 		
-		CPI_Player__SetVolume(globals.m_hPlayer, globals.m_iVolume);
+		SAFE_PLAYER_CALL1(CPI_Player__SetVolume, globals.m_iVolume);
 	}
 	
 	else if (enAction == vaQueryName)
@@ -443,7 +444,7 @@ void CPVERB_OpenFile(const CPe_VerbAction enAction, void* _pParam)
 	if (enAction == vaDoVerb)
 	{
 		if (playlist_open_file(TRUE))
-			CPL_PlayItem(globals.m_hPlaylist, TRUE, pmCurrentItem);
+			SAFE_PLAYLIST_CALL2(CPL_PlayItem, TRUE, pmCurrentItem);
 	}
 	
 	else if (enAction == vaQueryName)
@@ -531,7 +532,7 @@ void CPVERB_PlaylistShuffle(const CPe_VerbAction enAction, void* _pParam)
 {
 	if (enAction == vaDoVerb)
 	{
-		CPL_Stack_Shuffle(globals.m_hPlaylist, TRUE);
+		SAFE_PLAYLIST_CALL1(CPL_Stack_Shuffle, TRUE);
 	}
 	
 	else if (enAction == vaQueryName)
@@ -603,12 +604,12 @@ void CPVERB_AddDirectory(const CPe_VerbAction enAction, void* _pParam)
 			
 		SHGetPathFromIDList(itemlist, (char*)globals.main_text_last_browsed_dir);
 		
-		CPL_SyncLoadNextFile(globals.m_hPlaylist);
+		SAFE_PLAYLIST_CALL(CPL_SyncLoadNextFile);
 		
-		CPL_AddDirectory_Recurse(globals.m_hPlaylist, (const char*)globals.main_text_last_browsed_dir);
+		SAFE_PLAYLIST_CALL1(CPL_AddDirectory_Recurse, (const char*)globals.main_text_last_browsed_dir);
 		
 		if (options.shuffle_play)
-			CPL_Stack_Shuffle(globals.m_hPlaylist, TRUE);
+			SAFE_PLAYLIST_CALL1(CPL_Stack_Shuffle, TRUE);
 	}
 	
 	else if (enAction == vaQueryName)
@@ -626,7 +627,10 @@ void CPVERB_AddDirectory(const CPe_VerbAction enAction, void* _pParam)
 void CPVERB_PlaylistMinimise(const CPe_VerbAction enAction, void* _pParam)
 {
 	if (enAction == vaDoVerb)
-		ShowWindow(IF_GetHWnd(windows.m_hifPlaylist), SW_MINIMIZE);
+	{
+		if (SAFE_HAS_PLAYLIST_IF())
+			ShowWindow(IF_GetHWnd(windows.m_hifPlaylist), SW_MINIMIZE);
+	}
 	else if (enAction == vaQueryName)
 	{
 		CPs_VerbQueryName* pParam = (CPs_VerbQueryName*)_pParam;
@@ -643,10 +647,13 @@ void CPVERB_PlaylistMaximise(const CPe_VerbAction enAction, void* _pParam)
 {
 	if (enAction == vaDoVerb)
 	{
-		if (IsZoomed(IF_GetHWnd(windows.m_hifPlaylist)))
-			ShowWindow(IF_GetHWnd(windows.m_hifPlaylist), SW_RESTORE);
-		else
-			ShowWindow(IF_GetHWnd(windows.m_hifPlaylist), SW_MAXIMIZE);
+		if (SAFE_HAS_PLAYLIST_IF())
+		{
+			if (IsZoomed(IF_GetHWnd(windows.m_hifPlaylist)))
+				ShowWindow(IF_GetHWnd(windows.m_hifPlaylist), SW_RESTORE);
+			else
+				ShowWindow(IF_GetHWnd(windows.m_hifPlaylist), SW_MAXIMIZE);
+		}
 	}
 	
 	else if (enAction == vaQueryName)

@@ -20,6 +20,7 @@
 
 #include "stdafx.h"
 #include "globals.h"
+#include "CP_SafeGlobals.h"
 #include "CPI_Player.h"
 #include "CPI_Playlist.h"
 #include "CPI_Translation.h"
@@ -89,10 +90,10 @@ url_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 				{
 					char urlbuf[MAX_PATH];
 					GetDlgItemText(hwndDlg, IDC_URL, urlbuf, MAX_PATH);
-					CPL_Empty(globals.m_hPlaylist);
-					CPL_SyncLoadNextFile(globals.m_hPlaylist);
-					CPL_AddFile(globals.m_hPlaylist, urlbuf);
-					CPL_PlayItem(globals.m_hPlaylist, TRUE, pmCurrentItem);
+					SAFE_PLAYLIST_CALL(CPL_Empty);
+					SAFE_PLAYLIST_CALL(CPL_SyncLoadNextFile);
+					SAFE_PLAYLIST_CALL1(CPL_AddFile, urlbuf);
+					SAFE_PLAYLIST_CALL2(CPL_PlayItem, TRUE, pmCurrentItem);
 				}
 				
 				EndDialog(hwndDlg, TRUE);
@@ -253,7 +254,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			else
 				SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_SETCURSEL, 2, 0);
 				
-			CPI_Player__EnumOutputDevices(globals.m_hPlayer);
+			SAFE_PLAYER_CALL(CPI_Player__EnumOutputDevices);
 			
 			globals.m_bOptions_ChangedSkin = FALSE;
 			
@@ -460,7 +461,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					if (options.decoder_output_mode != index)
 					{
 						options.decoder_output_mode = index;
-						CPI_Player__OnOutputDeviceChange(globals.m_hPlayer);
+						SAFE_PLAYER_CALL(CPI_Player__OnOutputDeviceChange);
 					}
 					
 					// Mixer control
@@ -481,14 +482,14 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 						{
 							// Change mixer
 							globals.m_enMixerMode = enNewMixerMode;
-							CPI_Player__ReopenMixer(globals.m_hPlayer);
+							SAFE_PLAYER_CALL(CPI_Player__ReopenMixer);
 							
 							// Setup UI
 							
 							if (enNewMixerMode == mmInternal)
 								globals.m_iVolume = 100;
 							else
-								globals.m_iVolume = CPI_Player__GetVolume(globals.m_hPlayer);
+								globals.m_iVolume = SAFE_GET_VOLUME();
 								
 							main_draw_vu_from_value(windows.wnd_main, VolumeSlider, globals.m_iVolume);
 						}
@@ -496,7 +497,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					
 					
 					if (!duplicatesalreadyremoved && options.allow_file_once_in_playlist)
-						CPL_RemoveDuplicates(globals.m_hPlaylist);
+						SAFE_PLAYLIST_CALL(CPL_RemoveDuplicates);
 						
 					EndDialog(hwndDlg, 1);
 					
@@ -513,7 +514,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					char    pathbuf[MAX_PATH];
 					char    stringval[MAX_PATH + 3];
 					
-					CPI_Player__AssociateFileExtensions(globals.m_hPlayer);
+					SAFE_PLAYER_CALL(CPI_Player__AssociateFileExtensions);
 					
 					GetModuleFileName(NULL, pathbuf, MAX_PATH);
 					snprintf(stringval, sizeof(stringval), "%s,%1d", pathbuf, 1);

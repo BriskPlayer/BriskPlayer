@@ -29,6 +29,7 @@
 #include "CPI_Player.h"
 #include "CPI_Player_Engine.h"
 #include "CPString.h"
+#include "CPI_Gettext.h"
 
 #define CPC_TRACKSTACK_BUFFER_QUANTISATION 32
 typedef int (__cdecl *wp_SortFN)(const void *elem1, const void *elem2);
@@ -995,7 +996,7 @@ void CPL_ExportPlaylist(CP_HPLAYLIST hPlaylist, const char* pcOutputName)
 	
 	if (hOutputFile == INVALID_HANDLE_VALUE)
 	{
-		MessageBoxW(windows.wnd_main, L"Could not open file", L"Error", MB_ICONERROR);
+		MessageBoxA(windows.wnd_main, T(STR_ERR_COULD_NOT_OPEN_FILE), T(STR_ERR_ERROR), MB_ICONERROR);
 		return;
 	}
 	
@@ -1981,9 +1982,7 @@ void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char *pDir)
 	// Check that this is a correct path
 	if (cFullPath[0] == '\0' || path_is_directory(cFullPath) == FALSE)
 	{
-		WCHAR* pwcPath = STR_ConvertToUnicode(cFullPath);
-		MessageBoxW(NULL, L"Not a valid directory.", pwcPath, MB_ICONERROR);
-		free(pwcPath);
+		MessageBoxA(NULL, T(STR_ERR_NOT_VALID_DIRECTORY), cFullPath, MB_ICONERROR);
 		return;
 	}
 	
@@ -2003,9 +2002,7 @@ void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char *pDir)
 	
 	if (hFileFind == INVALID_HANDLE_VALUE)
 	{
-		WCHAR* pwcPath = STR_ConvertToUnicode(cFullPath);
-		MessageBoxW(NULL, L"Could not perform scan", pwcPath, MB_ICONERROR);
-		free(pwcPath);
+		MessageBoxA(NULL, T(STR_ERR_COULD_NOT_SCAN), cFullPath, MB_ICONERROR);
 		return;
 	}
 	

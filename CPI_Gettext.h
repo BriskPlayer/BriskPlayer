@@ -179,6 +179,39 @@
 #define STR_MSG_FILETYPES_REGISTERED "File types registered successfully"
 #define STR_MSG_ICONS_CREATED "Icons created successfully"
 
+// Error messages
+#define STR_ERR_NO_SKIN_SELECTED "No Skin file selected!"
+#define STR_ERR_INVALID_SKIN "Not a valid BriskPlayer Skin file"
+#define STR_ERR_CANT_LOAD_BITMAPS "Can't load bitmaps!"
+#define STR_ERR_NO_AUDIO_DEVICES "No audio devices in this system"
+#define STR_ERR_FAILED_CREATE_PLAYLIST "Failed to create playlist"
+#define STR_ERR_COULD_NOT_OPEN_FILE "Could not open file"
+#define STR_ERR_NOT_VALID_DIRECTORY "Not a valid directory."
+#define STR_ERR_COULD_NOT_SCAN "Could not perform scan"
+#define STR_ERR_CANNOT_UPDATE_TAG "This file's ID3 tag cannot be updated. This is because BriskPlayer cannot write to this file."
+#define STR_ERR_CANNOT_UPDATE_TAG_TITLE "Cannot update tag"
+#define STR_ERR_NO_ITEMS_SELECTED "No items are selected in the playlist"
+#define STR_ERR_ERROR "Error"
+#define STR_ERR_RENAME_FAILED "Some files could not be renamed.\n\nThis could be because they are either currently playing or are read-only."
+
+// File filter strings for file dialogs
+#define STR_FILTER_ALL_SUPPORTED "All Supported files"
+#define STR_FILTER_AAC_FILES "AAC audio files"
+#define STR_FILTER_MPEG_FILES "MPEG audio files"
+#define STR_FILTER_VORBIS_FILES "Vorbis files"
+#define STR_FILTER_FLAC_FILES "FLAC files"
+#define STR_FILTER_PLAYLIST_FILES "Playlist files"
+#define STR_FILTER_WAV_FILES "WAV files"
+
+// Browse dialog strings
+#define STR_BROWSE_CHOOSE_DIR "Choose a directory to add"
+
+// Language menu
+#define STR_LANG_ENGLISH_FALLBACK "English (Fallback)"
+
+// Command line help
+#define STR_CMDLINE_HELP_TITLE "BriskPlayer command line options"
+
 // Enhanced gettext initialization with C23 features
 typedef struct {
     const char* domain;

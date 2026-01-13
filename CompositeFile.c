@@ -24,6 +24,7 @@
 #include "stdafx.h"
 #include "globals.h"
 #include "CompositeFile.h"
+#include "CPString.h"
 #include <zlib.h>
 
 
@@ -120,14 +121,21 @@ CP_COMPOSITEFILE CF_Create_FromFile(const char* pcPath)
 	HANDLE hFile;
 	DWORD dwFileSize;
 	
+	// Convert to Unicode for better filename support
+	WCHAR* pwcPath = STR_ConvertToUnicode(pcPath);
+	if (!pwcPath)
+		return NULL;
+	
 	// Try to open file
-	hFile = CreateFile(pcPath,
+	hFile = CreateFileW(pwcPath,
 					   GENERIC_READ,
 					   FILE_SHARE_READ,
 					   NULL,
 					   OPEN_EXISTING,
 					   FILE_ATTRIBUTE_NORMAL,
 					   NULL);
+	
+	free(pwcPath);
 	                   
 	if (hFile == INVALID_HANDLE_VALUE)
 		return NULL;
