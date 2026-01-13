@@ -23,7 +23,6 @@
 #include "CPI_TagLib.h"
 #include "globals.h"
 #include <windowsx.h>
-#include <algorithm>  // for std::max
 
 ////////////////////////////////////////////////////////////////////////////////
 // Tooltip State
@@ -128,11 +127,8 @@ void CPAAT_Cleanup(void)
 		g_Tooltip.m_uiHoverTimer = 0;
 	}
 	
-	if (g_Tooltip.m_hArtwork)
-	{
-		DeleteObject(g_Tooltip.m_hArtwork);
-		g_Tooltip.m_hArtwork = NULL;
-	}
+	// Don't delete m_hArtwork - it's owned by the album art cache
+	g_Tooltip.m_hArtwork = NULL;
 	
 	if (g_Tooltip.m_hWnd)
 	{
@@ -175,7 +171,7 @@ void CPAAT_UpdateContent(CP_HPLAYLISTITEM hItem)
 	
 	if (!hItem)
 		return;
-		
+	
 	g_Tooltip.m_hCurrentItem = hItem;
 	
 	// Get item information
@@ -305,21 +301,12 @@ void CPAAT_UpdateContent(CP_HPLAYLISTITEM hItem)
 		}
 	}
 	
-	// Load album art
-	if (g_Tooltip.m_hArtwork)
-	{
-		DeleteObject(g_Tooltip.m_hArtwork);
-		g_Tooltip.m_hArtwork = NULL;
-	}
+	// Load album art from cache (don't delete old one - it's cache-owned)
+	g_Tooltip.m_hArtwork = NULL;
 	
 	if (pcPath)
 	{
-		g_Tooltip.m_hArtwork = CPTL_GetAlbumArtBitmap(
-			pcPath, 
-			CPAAT_ARTWORK_SIZE, 
-			CPAAT_ARTWORK_SIZE,
-			&iWidth, 
-			&iHeight);
+		g_Tooltip.m_hArtwork = CPTL_GetAlbumArtBitmap(pcPath, CPAAT_ARTWORK_SIZE, CPAAT_ARTWORK_SIZE, &iWidth, &iHeight);
 	}
 	
 	// Calculate window size
@@ -330,19 +317,8 @@ void CPAAT_CalculateSize(void)
 {
 	HDC hDC;
 	SIZE szText;
-	int iArtWidth = 0;
-	int iArtHeight = 0;
 	int iContentWidth = 0;
 	int iContentHeight = 0;
-	
-	// Get artwork dimensions if available
-	if (g_Tooltip.m_hArtwork)
-	{
-		BITMAP bm;
-		GetObject(g_Tooltip.m_hArtwork, sizeof(bm), &bm);
-		iArtWidth = bm.bmWidth;
-		iArtHeight = bm.bmHeight;
-	}
 	
 	// Calculate text dimensions
 	hDC = GetDC(NULL);
@@ -351,15 +327,27 @@ void CPAAT_CalculateSize(void)
 		HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 		HFONT hOldFont = (HFONT)SelectObject(hDC, hFont);
 		
-		// Get max text width
+		// Create bold font for title measurement
+		LOGFONT lf;
+		GetObject(hFont, sizeof(lf), &lf);
+		lf.lfWeight = FW_BOLD;
+		HFONT hBoldFont = CreateFontIndirect(&lf);
+		
+		// Get max text width - measure title with bold font
+		SelectObject(hDC, hBoldFont);
 		GetTextExtentPoint32(hDC, g_Tooltip.m_cTitle, (int)strlen(g_Tooltip.m_cTitle), &szText);
 		iContentWidth = szText.cx;
+		SelectObject(hDC, hFont);
 		
 		GetTextExtentPoint32(hDC, g_Tooltip.m_cArtist, (int)strlen(g_Tooltip.m_cArtist), &szText);
 		if (szText.cx > iContentWidth)
 			iContentWidth = szText.cx;
 			
 		GetTextExtentPoint32(hDC, g_Tooltip.m_cAlbum, (int)strlen(g_Tooltip.m_cAlbum), &szText);
+		if (szText.cx > iContentWidth)
+			iContentWidth = szText.cx;
+		
+		GetTextExtentPoint32(hDC, g_Tooltip.m_cInfo, (int)strlen(g_Tooltip.m_cInfo), &szText);
 		if (szText.cx > iContentWidth)
 			iContentWidth = szText.cx;
 		
@@ -376,6 +364,7 @@ void CPAAT_CalculateSize(void)
 			iContentWidth = szText.cx;
 		
 		// Calculate height (up to 7 lines of text with spacing)
+		// First line (title) is 20px, rest are 18px each
 		int iLineCount = 4;  // Title, Artist, Album, Info
 		if (g_Tooltip.m_cTechnical1[0])
 			iLineCount++;
@@ -384,10 +373,11 @@ void CPAAT_CalculateSize(void)
 		if (g_Tooltip.m_cArtists[0])
 			iLineCount++;
 		
-		GetTextExtentPoint32(hDC, "Ay", 2, &szText);
-		iContentHeight = szText.cy * iLineCount + (iLineCount - 1) * 2;  // Lines + spacing
+		// First line is 20px, rest are 18px each
+		iContentHeight = 20 + (iLineCount - 1) * 18;
 		
 		SelectObject(hDC, hOldFont);
+		DeleteObject(hBoldFont);
 		ReleaseDC(NULL, hDC);
 	}
 	
@@ -398,11 +388,9 @@ void CPAAT_CalculateSize(void)
 	// Calculate total window size
 	if (g_Tooltip.m_hArtwork)
 	{
-		// Artwork + text side by side
-		g_Tooltip.m_iWidth = CPAAT_PADDING + iArtWidth + CPAAT_PADDING + 
-		                      iContentWidth + CPAAT_PADDING;
-		g_Tooltip.m_iHeight = CPAAT_PADDING + std::max(iArtHeight, iContentHeight) + 
-		                       CPAAT_PADDING;
+		// With album art
+		g_Tooltip.m_iWidth = CPAAT_PADDING + CPAAT_ARTWORK_SIZE + CPAAT_PADDING + iContentWidth + CPAAT_PADDING;
+		g_Tooltip.m_iHeight = CPAAT_PADDING + (CPAAT_ARTWORK_SIZE > iContentHeight ? CPAAT_ARTWORK_SIZE : iContentHeight) + CPAAT_PADDING;
 	}
 	else
 	{
@@ -466,21 +454,23 @@ void CPAAT_ShowForItem(CP_HPLAYLISTITEM hItem, const POINT* pScreenPos)
 {
 	if (!g_Tooltip.m_hWnd || !hItem)
 		return;
-		
-	// Update content
+	
+	// Always hide first for clean state
+	ShowWindow(g_Tooltip.m_hWnd, SW_HIDE);
+	g_Tooltip.m_bVisible = FALSE;
+	
+	// Update content (loads album art)
 	CPAAT_UpdateContent(hItem);
 	
 	// Position window
 	CPAAT_PositionWindow(pScreenPos);
 	
-	// Show with fade-in
+	// Show window
 	g_Tooltip.m_bVisible = TRUE;
 	g_Tooltip.m_cAlpha = 255;
 	SetLayeredWindowAttributes(g_Tooltip.m_hWnd, 0, g_Tooltip.m_cAlpha, LWA_ALPHA);
 	ShowWindow(g_Tooltip.m_hWnd, SW_SHOWNOACTIVATE);
-	
-	// Force redraw
-	InvalidateRect(g_Tooltip.m_hWnd, NULL, TRUE);
+	UpdateWindow(g_Tooltip.m_hWnd);
 }
 
 void CPAAT_Hide(void)
@@ -491,13 +481,12 @@ void CPAAT_Hide(void)
 	g_Tooltip.m_bVisible = FALSE;
 	ShowWindow(g_Tooltip.m_hWnd, SW_HIDE);
 	
-	if (g_Tooltip.m_hArtwork)
-	{
-		DeleteObject(g_Tooltip.m_hArtwork);
-		g_Tooltip.m_hArtwork = NULL;
-	}
+	// Don't delete m_hArtwork - it's owned by the album art cache
+	// Just clear our reference
+	g_Tooltip.m_hArtwork = NULL;
 	
 	g_Tooltip.m_hCurrentItem = NULL;
+	g_Tooltip.m_hHoverItem = NULL;
 }
 
 void CPAAT_UpdatePosition(const POINT* pScreenPos)
@@ -609,20 +598,28 @@ LRESULT CALLBACK CPAAT_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 				iX = CPAAT_PADDING;
 				iY = CPAAT_PADDING;
 				
-				// Draw artwork if available
+				// Draw album art if available
 				if (g_Tooltip.m_hArtwork)
 				{
 					HDC hMemDC = CreateCompatibleDC(hDC);
-					HBITMAP hOldBM = (HBITMAP)SelectObject(hMemDC, g_Tooltip.m_hArtwork);
-					BITMAP bm;
+					if (hMemDC)
+					{
+						BITMAP bm;
+						HBITMAP hOldBmp = (HBITMAP)SelectObject(hMemDC, g_Tooltip.m_hArtwork);
+						GetObject(g_Tooltip.m_hArtwork, sizeof(bm), &bm);
+						
+						// Use StretchBlt for better display
+						SetStretchBltMode(hDC, HALFTONE);
+						SetBrushOrgEx(hDC, 0, 0, NULL);
+						StretchBlt(hDC, iX, iY, CPAAT_ARTWORK_SIZE, CPAAT_ARTWORK_SIZE,
+						          hMemDC, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
+						
+						SelectObject(hMemDC, hOldBmp);
+						DeleteDC(hMemDC);
+					}
 					
-					GetObject(g_Tooltip.m_hArtwork, sizeof(bm), &bm);
-					BitBlt(hDC, iX, iY, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-					
-					SelectObject(hMemDC, hOldBM);
-					DeleteDC(hMemDC);
-					
-					iX += bm.bmWidth + CPAAT_PADDING;
+					// Adjust text position
+					iX += CPAAT_ARTWORK_SIZE + CPAAT_PADDING;
 				}
 				
 				// Draw text
@@ -636,14 +633,17 @@ LRESULT CALLBACK CPAAT_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 				lf.lfWeight = FW_BOLD;
 				HFONT hBoldFont = CreateFontIndirect(&lf);
 				SelectObject(hDC, hBoldFont);
+				SetTextColor(hDC, RGB(0, 0, 0));  // Black for title
 				
 				TextOut(hDC, iX, iY, g_Tooltip.m_cTitle, (int)strlen(g_Tooltip.m_cTitle));
 				iY += 20;
 				
 				// Normal font for rest
 				SelectObject(hDC, hFont);
+				SetTextColor(hDC, RGB(0, 0, 0));  // Black for artist
 				TextOut(hDC, iX, iY, g_Tooltip.m_cArtist, (int)strlen(g_Tooltip.m_cArtist));
 				iY += 18;
+				SetTextColor(hDC, RGB(0, 0, 0));  // Black for album
 				TextOut(hDC, iX, iY, g_Tooltip.m_cAlbum, (int)strlen(g_Tooltip.m_cAlbum));
 				iY += 18;
 				

@@ -25,18 +25,52 @@
 #include <locale.h>
 
 #ifdef ENABLE_NLS
-    #include <libintl.h>
-    
-    // C23 enhanced gettext macros with UTF-8 support
-    #define _(String) gettext(String)
-    #define N_(String) String
-    #define P_(Singular, Plural, N) ngettext(Singular, Plural, N)
-    #define D_(Domain, String) dgettext(Domain, String)
-    #define DC_(Domain, String, Category) dcgettext(Domain, String, Category)
-    
-    // Context-aware translation (new in gettext 0.15+)
-    #define C_(Context, String) pgettext(Context, String)
-    #define CP_(Context, Singular, Plural, N) npgettext(Context, Singular, Plural, N)
+    #ifdef __cplusplus
+        // For C++: Declare libintl functions and disable format-arg warnings
+        extern "C" {
+            extern char* libintl_gettext(const char*);
+            extern char* libintl_dgettext(const char*, const char*);
+            extern char* libintl_dcgettext(const char*, const char*, int);
+            extern char* libintl_ngettext(const char*, const char*, unsigned long);
+            extern char* libintl_dngettext(const char*, const char*, const char*, unsigned long);
+            extern char* libintl_dcngettext(const char*, const char*, const char*, unsigned long, int);
+            extern char* libintl_textdomain(const char*);
+            extern char* libintl_bindtextdomain(const char*, const char*);
+            extern char* libintl_bind_textdomain_codeset(const char*, const char*);
+        }
+        
+        // Disable the problematic diagnostic for macro definitions
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wattributes"
+        
+        // Use the libintl_ functions directly
+        #define _(String) libintl_gettext(String)
+        #define N_(String) String
+        #define P_(Singular, Plural, N) libintl_ngettext(Singular, Plural, N)
+        #define D_(Domain, String) libintl_dgettext(Domain, String)
+        #define DC_(Domain, String, Category) libintl_dcgettext(Domain, String, Category)
+        #define C_(Context, String) libintl_gettext(String)
+        #define CP_(Context, Singular, Plural, N) libintl_ngettext(Singular, Plural, N)
+        
+        #pragma GCC diagnostic pop
+        
+        // Also define these for direct use in C++ files
+        #define textdomain libintl_textdomain
+        #define bindtextdomain libintl_bindtextdomain
+        #define bind_textdomain_codeset libintl_bind_textdomain_codeset
+    #else
+        // For C: include libintl.h normally
+        #include <libintl.h>
+        
+        // Standard C macros
+        #define _(String) gettext(String)
+        #define N_(String) String
+        #define P_(Singular, Plural, N) ngettext(Singular, Plural, N)
+        #define D_(Domain, String) dgettext(Domain, String)
+        #define DC_(Domain, String, Category) dcgettext(Domain, String, Category)
+        #define C_(Context, String) gettext(String)
+        #define CP_(Context, Singular, Plural, N) ngettext(Singular, Plural, N)
+    #endif
     
 #else
     // Fallback macros when NLS is disabled

@@ -22,6 +22,11 @@
 // Note: This file is compiled as C++ to use TagLib C++ API for album art extraction
 //
 
+// Disable NLS for this file to avoid conflicts with TagLib templates
+#ifdef ENABLE_NLS
+#undef ENABLE_NLS
+#endif
+
 #include "stdafx.h"
 
 // Wrap C includes in extern "C"
@@ -31,16 +36,40 @@ extern "C" {
 #include "CPString.h"
 }
 
+// Undefine ALL gettext macros to prevent conflicts with TagLib
+#ifdef _
+#undef _
+#endif
+#ifdef N_
+#undef N_
+#endif
+#ifdef P_
+#undef P_
+#endif
+#ifdef D_
+#undef D_
+#endif
+#ifdef DC_
+#undef DC_
+#endif
+#ifdef C_
+#undef C_
+#endif
+#ifdef CP_
+#undef CP_
+#endif
+#ifdef T
+#undef T
+#endif
+
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
 #include <sys/stat.h>
 
-// For image decoding (GDI+)
-#include <gdiplus.h>
-#ifdef _MSC_VER
-#pragma comment(lib, "gdiplus.lib")
-#endif
+// For image decoding (WIC - Windows Imaging Component)
+#include <wincodec.h>
+#include <objbase.h>
 
 // TagLib C and C++ API
 #define TAGLIB_STATIC
@@ -1394,14 +1423,10 @@ typedef struct _CPs_AlbumArtCacheEntry
 static CPs_AlbumArtCacheEntry* g_pAlbumArtCache = NULL;
 static int g_iCacheEntryCount = 0;
 static unsigned int g_iTotalCacheMemory = 0;
-static ULONG_PTR g_gdiplusToken = 0;
 
-// Initialize GDI+ and album art cache
+// Initialize album art cache (WIC is initialized per-thread as needed)
 void CPTL_InitAlbumArtCache(void)
 {
-    Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-    Gdiplus::GdiplusStartup(&g_gdiplusToken, &gdiplusStartupInput, NULL);
-    
     g_pAlbumArtCache = NULL;
     g_iCacheEntryCount = 0;
     g_iTotalCacheMemory = 0;
@@ -1411,12 +1436,6 @@ void CPTL_InitAlbumArtCache(void)
 void CPTL_CleanupAlbumArtCache(void)
 {
     CPTL_ClearAlbumArtCache();
-    
-    if (g_gdiplusToken)
-    {
-        Gdiplus::GdiplusShutdown(g_gdiplusToken);
-        g_gdiplusToken = 0;
-    }
 }
 
 // Clear all cache entries
@@ -1931,63 +1950,141 @@ HBITMAP CPTL_CreateBitmapFromImageData(const BYTE* pImageData,
 {
     if (!pImageData || iImageSize == 0)
         return NULL;
-        
-    // Create stream from memory
-    HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, iImageSize);
-    if (!hMem)
-        return NULL;
-        
-    void* pMem = GlobalLock(hMem);
-    if (!pMem)
-    {
-        GlobalFree(hMem);
-        return NULL;
-    }
     
-    memcpy(pMem, pImageData, iImageSize);
-    GlobalUnlock(hMem);
+    HBITMAP hBitmap = NULL;
+    IWICImagingFactory* pFactory = NULL;
+    IWICStream* pStream = NULL;
+    IWICBitmapDecoder* pDecoder = NULL;
+    IWICBitmapFrameDecode* pFrame = NULL;
+    IWICFormatConverter* pConverter = NULL;
+    UINT iWidth = 0, iHeight = 0;
+    UINT iScaledWidth = 0, iScaledHeight = 0;
+    void* pBits = NULL;
+    HDC hScreenDC = NULL;
     
-    IStream* pStream = NULL;
-    if (CreateStreamOnHGlobal(hMem, TRUE, &pStream) != S_OK)
-    {
-        GlobalFree(hMem);
-        return NULL;
-    }
+    // Initialize COM for this thread if needed
+    CoInitialize(NULL);
     
-    // Load image from stream
-    Gdiplus::Bitmap* pBitmap = Gdiplus::Bitmap::FromStream(pStream);
-    pStream->Release();
+    // Create WIC factory
+    HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+                                   IID_IWICImagingFactory, (void**)&pFactory);
+    if (FAILED(hr) || !pFactory)
+        goto cleanup;
     
-    if (!pBitmap || pBitmap->GetLastStatus() != Gdiplus::Ok)
-    {
-        if (pBitmap)
-            delete pBitmap;
-        return NULL;
-    }
+    // Create stream
+    hr = pFactory->CreateStream(&pStream);
+    if (FAILED(hr) || !pStream)
+        goto cleanup;
+    
+    // Initialize stream with memory
+    hr = pStream->InitializeFromMemory((BYTE*)pImageData, iImageSize);
+    if (FAILED(hr))
+        goto cleanup;
+    
+    // Create decoder
+    hr = pFactory->CreateDecoderFromStream((IStream*)pStream, NULL,
+                                            WICDecodeMetadataCacheOnDemand, &pDecoder);
+    if (FAILED(hr) || !pDecoder)
+        goto cleanup;
+    
+    // Get first frame
+    hr = pDecoder->GetFrame(0, &pFrame);
+    if (FAILED(hr) || !pFrame)
+        goto cleanup;
     
     // Get image dimensions
-    unsigned int iWidth = pBitmap->GetWidth();
-    unsigned int iHeight = pBitmap->GetHeight();
+    pFrame->GetSize(&iWidth, &iHeight);
     
-    // Calculate scaling if needed
+    // Calculate scaling
+    iScaledWidth = iWidth;
+    iScaledHeight = iHeight;
+    
     if (iMaxWidth > 0 && iMaxHeight > 0 && (iWidth > iMaxWidth || iHeight > iMaxHeight))
     {
-        float fScale = std::min((float)iMaxWidth / iWidth, (float)iMaxHeight / iHeight);
-        iWidth = (unsigned int)(iWidth * fScale);
-        iHeight = (unsigned int)(iHeight * fScale);
+        float fScale = (float)iMaxWidth / iWidth;
+        float fScaleH = (float)iMaxHeight / iHeight;
+        if (fScaleH < fScale)
+            fScale = fScaleH;
+        
+        iScaledWidth = (UINT)(iWidth * fScale);
+        iScaledHeight = (UINT)(iHeight * fScale);
     }
     
-    // Return actual dimensions
     if (piActualWidth)
-        *piActualWidth = iWidth;
+        *piActualWidth = iScaledWidth;
     if (piActualHeight)
-        *piActualHeight = iHeight;
+        *piActualHeight = iScaledHeight;
     
-    // Convert to HBITMAP
-    HBITMAP hBitmap = NULL;
-    pBitmap->GetHBITMAP(Gdiplus::Color(255, 255, 255), &hBitmap);
+    // Create format converter to convert to 32bpp BGRA
+    hr = pFactory->CreateFormatConverter(&pConverter);
+    if (FAILED(hr) || !pConverter)
+        goto cleanup;
     
-    delete pBitmap;
+    hr = pConverter->Initialize((IWICBitmapSource*)pFrame,
+                                 GUID_WICPixelFormat32bppBGRA,
+                                 WICBitmapDitherTypeNone, NULL, 0.0,
+                                 WICBitmapPaletteTypeCustom);
+    if (FAILED(hr))
+        goto cleanup;
+    
+    // Create bitmap
+    {
+        BITMAPINFO bmi;
+        ZeroMemory(&bmi, sizeof(BITMAPINFO));
+        bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bmi.bmiHeader.biWidth = iScaledWidth;
+        bmi.bmiHeader.biHeight = -(LONG)iScaledHeight;  // Top-down
+        bmi.bmiHeader.biPlanes = 1;
+        bmi.bmiHeader.biBitCount = 32;
+        bmi.bmiHeader.biCompression = BI_RGB;
+        
+        hScreenDC = GetDC(NULL);
+        hBitmap = CreateDIBSection(hScreenDC, &bmi, DIB_RGB_COLORS, &pBits, NULL, 0);
+        ReleaseDC(NULL, hScreenDC);
+        hScreenDC = NULL;
+        
+        if (hBitmap && pBits)
+        {
+            // Need to scale if dimensions changed
+            if (iScaledWidth != iWidth || iScaledHeight != iHeight)
+            {
+                IWICBitmapScaler* pScaler = NULL;
+                hr = pFactory->CreateBitmapScaler(&pScaler);
+                if (SUCCEEDED(hr) && pScaler)
+                {
+                    hr = pScaler->Initialize((IWICBitmapSource*)pConverter,
+                                              iScaledWidth, iScaledHeight,
+                                              WICBitmapInterpolationModeFant);
+                    if (SUCCEEDED(hr))
+                    {
+                        // Copy pixels
+                        pScaler->CopyPixels(NULL, iScaledWidth * 4,
+                                            iScaledWidth * iScaledHeight * 4, (BYTE*)pBits);
+                    }
+                    pScaler->Release();
+                }
+            }
+            else
+            {
+                // Copy pixels directly
+                pConverter->CopyPixels(NULL, iScaledWidth * 4,
+                                       iScaledWidth * iScaledHeight * 4, (BYTE*)pBits);
+            }
+        }
+    }
+    
+cleanup:
+    if (pConverter)
+        pConverter->Release();
+    if (pFrame)
+        pFrame->Release();
+    if (pDecoder)
+        pDecoder->Release();
+    if (pStream)
+        pStream->Release();
+    if (pFactory)
+        pFactory->Release();
+    
     return hBitmap;
 }
 

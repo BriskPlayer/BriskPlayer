@@ -8,6 +8,7 @@
 #include "globals.h"
 #include "resource.h"
 #include "CPI_PlaylistItem.h"
+#include "CPI_TagLib.h"
 #include "CPString.h"
 #include <stdio.h>
 #include <shellapi.h>
@@ -15,6 +16,7 @@
 typedef struct _CPDlgProperties_Data
 {
 	CP_HPLAYLISTITEM m_hItem;
+	HBITMAP m_hAlbumArt;
 } CPDlgProperties_Data;
 
 //
@@ -37,6 +39,7 @@ void CPDlgProperties_Show(HWND hWndParent, CP_HPLAYLISTITEM hItem)
 	// Allocate dialog data
 	pData = (CPDlgProperties_Data*)malloc(sizeof(CPDlgProperties_Data));
 	pData->m_hItem = hItem;
+	pData->m_hAlbumArt = NULL;
 	
 	// Show dialog
 	DialogBoxParamW(GetModuleHandle(NULL), 
@@ -46,6 +49,8 @@ void CPDlgProperties_Show(HWND hWndParent, CP_HPLAYLISTITEM hItem)
 	               (LPARAM)pData);
 	
 	// Cleanup
+	if (pData->m_hAlbumArt)
+		DeleteObject(pData->m_hAlbumArt);
 	free(pData);
 }
 
@@ -229,6 +234,27 @@ void Properties_OnInit(HWND hWnd, CP_HPLAYLISTITEM hItem)
 	pValue = CPLI_GetMusicBrainz_ArtistID(hItem);
 	if (pValue)
 		SetDlgItemTextA(hWnd, IDC_PROP_MUSICBRAINZ_ARTISTID, pValue);
+	
+	// Load and display album art
+	pValue = CPLI_GetPath(hItem);
+	if (pValue)
+	{
+		CPDlgProperties_Data* pData = (CPDlgProperties_Data*)GetWindowLongPtr(hWnd, DWLP_USER);
+		if (pData)
+		{
+			unsigned int iWidth = 0, iHeight = 0;
+			
+			// Get album art bitmap (max 128x128)
+			pData->m_hAlbumArt = CPTL_GetAlbumArtBitmap(pValue, 128, 128, &iWidth, &iHeight);
+			
+			if (pData->m_hAlbumArt)
+			{
+				// Set the bitmap to the static control
+				SendDlgItemMessage(hWnd, IDC_PROP_ALBUMART, STM_SETIMAGE, 
+				                   IMAGE_BITMAP, (LPARAM)pData->m_hAlbumArt);
+			}
+		}
+	}
 }
 
 //

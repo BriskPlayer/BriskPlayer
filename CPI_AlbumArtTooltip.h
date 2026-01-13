@@ -33,7 +33,7 @@
 // Configuration
 #define CPAAT_ARTWORK_SIZE      128     // Max artwork size (width/height)
 #define CPAAT_PADDING           8       // Padding around content
-#define CPAAT_TEXT_WIDTH        200     // Width of text area
+#define CPAAT_TEXT_WIDTH        350     // Max width of text area
 #define CPAAT_HOVER_DELAY_MS    500     // Delay before showing tooltip
 #define CPAAT_FADE_DURATION_MS  150     // Fade in/out duration
 

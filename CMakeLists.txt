@@ -251,7 +251,10 @@ if(MSVC)
     add_executable(briskplayer WIN32 ${BRISK_SOURCES} ${BRISK_RC})
     
     # Compile CPI_TagLib.c as C++ since it uses TagLib C++ API for album art
-    set_source_files_properties(CPI_TagLib.c PROPERTIES LANGUAGE CXX)
+    # Disable NLS for this file to avoid conflicts with TagLib templates
+    set_source_files_properties(CPI_TagLib.c PROPERTIES 
+        LANGUAGE CXX
+        COMPILE_FLAGS "/UENABLE_NLS")
     set_source_files_properties(CPI_AlbumArtTooltip.c PROPERTIES LANGUAGE CXX)
     
     set_target_properties(briskplayer PROPERTIES LINK_FLAGS "/MANIFEST:NO")
@@ -297,7 +300,10 @@ else()
     add_executable(briskplayer WIN32 ${BRISK_SOURCES} ${BRISK_RC})
     
     # Compile CPI_TagLib.c as C++ since it uses TagLib C++ API for album art
-    set_source_files_properties(CPI_TagLib.c PROPERTIES LANGUAGE CXX)
+    # Disable NLS for this file to avoid conflicts with TagLib templates
+    set_source_files_properties(CPI_TagLib.c PROPERTIES 
+        LANGUAGE CXX
+        COMPILE_FLAGS "-Wno-error=template-body -UENABLE_NLS")
     set_source_files_properties(CPI_AlbumArtTooltip.c PROPERTIES LANGUAGE CXX)
     
     # Use C++ linker for MinGW since we link against C++ libraries (TagLib)
@@ -377,14 +383,22 @@ if(CMAKE_CXX_COMPILER MATCHES "mingw" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     
     # For Windows XP compatibility, link winpthread before libstdc++
     # This provides XP-compatible implementations of threading primitives
+    # Check for both cross-compilation path and native MSYS2 path
     set(WINPTHREAD_LIB "${COMPILER_ROOT}/i686-w64-mingw32/lib/libwinpthread.a")
+    if(NOT EXISTS "${WINPTHREAD_LIB}")
+        set(WINPTHREAD_LIB "${COMPILER_ROOT}/lib/libwinpthread.a")
+    endif()
     if(EXISTS "${WINPTHREAD_LIB}")
         target_link_libraries(briskplayer PRIVATE "${WINPTHREAD_LIB}")
         message(STATUS "✓ Linked winpthread for XP compatibility: ${WINPTHREAD_LIB}")
     endif()
     
     # Link the static C++ standard library using full path
+    # Check for both cross-compilation path and native MSYS2 path
     set(STDCXX_LIB "${COMPILER_ROOT}/i686-w64-mingw32/lib/libstdc++.a")
+    if(NOT EXISTS "${STDCXX_LIB}")
+        set(STDCXX_LIB "${COMPILER_ROOT}/lib/libstdc++.a")
+    endif()
     if(EXISTS "${STDCXX_LIB}")
         target_link_libraries(briskplayer PRIVATE "${STDCXX_LIB}")
         message(STATUS "✓ Linked C++ standard library: ${STDCXX_LIB}")

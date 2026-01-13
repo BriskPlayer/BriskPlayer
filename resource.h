@@ -172,6 +172,7 @@
 #define IDC_PROP_MUSICBRAINZ_RELEASEID  1089
 #define IDC_PROP_MUSICBRAINZ_ARTISTID   1090
 #define IDC_PROP_UPDATE_MUSICBRAINZ     1091
+#define IDC_PROP_ALBUMART               1092
 
 // Next default values for new objects
 // 
