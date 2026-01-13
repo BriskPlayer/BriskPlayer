@@ -87,7 +87,12 @@ void CPI_Player_Equaliser_Initialise_Basic(CPs_EqualiserModule* pModule)
 	pModule->ApplyEQToBlock_Inplace = CPP_EBSC_ApplyEQToBlock_Inplace;
 	
 	// Create a context
-	pContext = (CPs_EqualiserContext_Basic*)malloc(sizeof(CPs_EqualiserContext_Basic));
+	pContext = (CPs_EqualiserContext_Basic*)SAFE_MALLOC(sizeof(CPs_EqualiserContext_Basic));
+	if (!pContext)
+	{
+		pModule->m_pModuleCookie = NULL;
+		return;
+	}
 	pModule->m_pModuleCookie = pContext;
 	
 	// Setup defaults

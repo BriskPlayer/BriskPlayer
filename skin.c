@@ -339,7 +339,7 @@ int     main_skin_open(char *name)
 		textposition = textposition + strlen(textposition) + 1;
 	}
 	
-	path_remove_filespec(pathbuf);
+	(void)path_remove_filespec(pathbuf);
 	
 	strcat_s(pathbuf, sizeof(pathbuf), Skin.CoolUp);
 	hInstance = GetModuleHandle(NULL);
@@ -354,7 +354,7 @@ int     main_skin_open(char *name)
 		strcat_s(errorbuf, sizeof(errorbuf), "\n");
 	}
 	
-	path_remove_filespec(pathbuf);
+	(void)path_remove_filespec(pathbuf);
 	
 	strcat_s(pathbuf, sizeof(pathbuf), Skin.CoolDown);
 	DeleteObject(graphics.bmp_main_down);
@@ -368,7 +368,7 @@ int     main_skin_open(char *name)
 		strcat_s(errorbuf, sizeof(errorbuf), "\n");
 	}
 	
-	path_remove_filespec(pathbuf);
+	(void)path_remove_filespec(pathbuf);
 	
 	strcat_s(pathbuf, sizeof(pathbuf), Skin.CoolSwitch);
 	DeleteObject(graphics.bmp_main_switch);
@@ -382,7 +382,7 @@ int     main_skin_open(char *name)
 		strcat_s(errorbuf, sizeof(errorbuf), "\n");
 	}
 	
-	path_remove_filespec(pathbuf);
+	(void)path_remove_filespec(pathbuf);
 	
 	strcat_s(pathbuf, sizeof(pathbuf), Skin.aTimeFont);
 	DeleteObject(graphics.bmp_main_time_font);
@@ -396,7 +396,7 @@ int     main_skin_open(char *name)
 		strcat_s(errorbuf, sizeof(errorbuf), "\n");
 	}
 	
-	path_remove_filespec(pathbuf);
+	(void)path_remove_filespec(pathbuf);
 	
 	strcat_s(pathbuf, sizeof(pathbuf), Skin.aTrackFont);
 	DeleteObject(graphics.bmp_main_track_font);
@@ -410,7 +410,7 @@ int     main_skin_open(char *name)
 		strcat_s(errorbuf, sizeof(errorbuf), "\n");
 	}
 	
-	path_remove_filespec(pathbuf);
+	(void)path_remove_filespec(pathbuf);
 	
 	strcat_s(pathbuf, sizeof(pathbuf), Skin.aTextFont);
 	DeleteObject(graphics.bmp_main_title_font);
@@ -495,7 +495,7 @@ void    main_skin_check_ini_value(char *textposition,
 			if (path_is_relative(textposition + strlen(name) + 1))
 			{
 				strcpy(pathbuf, (char*)options.main_skin_file);
-				path_remove_filespec(pathbuf);
+				(void)path_remove_filespec(pathbuf);
 				strcat(pathbuf, textposition + strlen(name) + 1);
 			}
 			
@@ -554,7 +554,7 @@ void    main_skin_check_ini_value(char *textposition,
 				char    dir[_MAX_DIR];
 				char    skinfile2[MAX_PATH];
 				strcpy_s(skinfile2, sizeof(skinfile2), (char*)options.main_skin_file);
-				path_remove_filespec(skinfile2);
+				(void)path_remove_filespec(skinfile2);
 				
 				main_get_program_path(GetModuleHandle(NULL), modpathbuf,
 									  MAX_PATH);

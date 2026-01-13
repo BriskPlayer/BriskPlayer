@@ -18,24 +18,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-//
-// Rotating sysicon code
-//
-////////////////////////////////////////////////////////////////////////////////
-
-
+#ifndef ROTATING_ICON_H
+#define ROTATING_ICON_H
 
 ////////////////////////////////////////////////////////////////////////////////
 //
+// Rotating sysicon code with modern notification support
+//
+////////////////////////////////////////////////////////////////////////////////
+
+#include <windows.h>
+
+// Note: CP_HSYSICON is defined in globals.h as void*
+// Forward declare the struct for internal use only
+struct _CPs_SysIcon;
+
+// Create/destroy systray icon
 CP_HSYSICON CPSYSICON_Create(HWND hWnd);
 void CPSYSICON_Destroy(CP_HSYSICON hSysIconData);
+
+// Update icon animation
 void CPSYSICON_AdvanceFrame(CP_HSYSICON hSysIconData);
+
+// Update tooltip text
 void CPSYSICON_SetTipText(CP_HSYSICON hSysIconData, const char* pcNewTipText);
-//
-////////////////////////////////////////////////////////////////////////////////
+
+// Show balloon notification (modern toast-style on Windows 10+)
+// dwInfoFlags: NIIF_INFO, NIIF_WARNING, NIIF_ERROR, or NIIF_NONE
+void CPSYSICON_ShowBalloon(CP_HSYSICON hSysIconData, 
+                           const char* pcTitle, 
+                           const char* pcMessage,
+                           DWORD dwInfoFlags);
+
+#endif // ROTATING_ICON_H

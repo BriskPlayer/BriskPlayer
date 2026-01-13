@@ -16,6 +16,11 @@
 #include <limits.h>
 #include "debug.h"
 #include "c23_compat.h"
+#include "safe_string.h"  // Safe string functions (cp_strcpy_s, cp_strcat_s, etc.)
+#include "CP_Constants.h" // Centralized magic number constants
+#include "CP_Cleanup.h"   // Resource cleanup helper macros
+#include "CP_Result.h"    // Standardized error codes
+#include "CP_Unicode.h"   // Unicode handling utilities
 #include <process.h>
 #include <wininet.h>
 // #include <search.h>
@@ -33,11 +38,12 @@
 #endif
 
 // String function macros - legacy compatibility layer
-// NOTE: strcpy/strcat/strncpy are UNSAFE and should be replaced with:
-//   - strcpy_s() instead of strcpy/lstrcpy
-//   - strcat_s() instead of strcat/lstrcat
-//   - Safe buffer size checking in all cases
-// TODO: Gradually migrate to C11/C23 safe string functions (_s variants)
+// NOTE: These macros map to Windows lstr* functions for compatibility.
+// For new code, prefer the safe string functions from safe_string.h:
+//   - cp_strcpy_s(dest, dest_size, src) instead of strcpy/lstrcpy
+//   - cp_strcat_s(dest, dest_size, src) instead of strcat/lstrcat
+//   - cp_snprintf(dest, dest_size, ...) instead of sprintf
+//   - CP_STRCPY(dest, src) macro for fixed-size buffers
 #define strcpy lstrcpy
 #define strcmp lstrcmp
 #define strcat lstrcat
@@ -56,24 +62,6 @@ char* __cdecl strstr(const char*, const char*);
 // int __cdecl _stricmp(const char*, const char*); // Commented out to avoid dllimport conflict
 // int __cdecl _strnicmp(const char*, const char*, size_t); // Commented out to avoid dllimport conflict
 // int __cdecl tolower(int); // Commented out to avoid dllimport conflict
-#endif
-#if 0
-char* __cdecl strncat(char*, const char*, size_t);
-int __cdecl strncmp(const char*, const char*, size_t) ;
-int __cdecl strnicmp(const char*, const char*, size_t);
-char* __cdecl strtok(char*, const char*);
-int __cdecl toupper(int);
-
-int __cdecl  _memicmp(const void*, const void*, size_t);
-char* __cdecl  _strdup(const char*) __MINGW_ATTRIB_MALLOC;
-int __cdecl _strcmpi(const char*, const char*);
-int __cdecl _stricoll(const char*, const char*);
-char* __cdecl _strlwr(char*);
-char* __cdecl _strnset(char*, int, size_t);
-char* __cdecl _strrev(char*);
-char* __cdecl _strset(char*, int);
-char* __cdecl _strupr(char*);
-void __cdecl _swab(const char*, char*, size_t);
 #endif
 
 

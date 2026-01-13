@@ -59,14 +59,21 @@ CP_HINTERFACEPART IP_Create_CommandButton(wp_Verb pfnVerb, CPs_Image_WithState* 
 	CPs_IPCommandButton* pCustomData;
 	
 	// Setup custom data
-	pCustomData = (CPs_IPCommandButton*)malloc(sizeof(*pCustomData));
+	pCustomData = (CPs_IPCommandButton*)SAFE_MALLOC(sizeof(*pCustomData));
+	if (!pCustomData)
+		return NULL;
 	pCustomData->m_pStateImage = pImageWS;
 	pCustomData->m_enCurrentState = igsQuiescent;
 	pCustomData->m_pfnVerb = pfnVerb;
 	pCustomData->m_bDown = FALSE;
 	
 	// Create new part and setup callbacks
-	pNewPart = (CPs_InterfacePart*)malloc(sizeof(*pNewPart));
+	pNewPart = (CPs_InterfacePart*)SAFE_MALLOC(sizeof(*pNewPart));
+	if (!pNewPart)
+	{
+		free(pCustomData);
+		return NULL;
+	}
 	memset(pNewPart, 0, sizeof(*pNewPart));
 	pNewPart->Destroy_PrivateData = IPCB_Destroy_PrivateData;
 	pNewPart->Draw = IPCB_Draw;

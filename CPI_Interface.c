@@ -137,7 +137,7 @@ void IF_ProcessInit(void)
 	wcPlaylist.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wcPlaylist.hbrBackground = (HBRUSH)GetStockObject(HOLLOW_BRUSH); // Prevent the system drawing white over our invaid rgn before we can paint
 	wcPlaylist.lpszMenuName = NULL;
-	wcPlaylist.lpszClassName = CLC_COOLPLAYER_INTERFACECLASSNAME;
+	wcPlaylist.lpszClassName = CLC_BRISKPLAYER_INTERFACECLASSNAME;
 	RegisterClass(&wcPlaylist);
 }
 
@@ -146,7 +146,7 @@ void IF_ProcessInit(void)
 //
 void IF_ProcessDeInit(void)
 {
-	UnregisterClass(CLC_COOLPLAYER_INTERFACECLASSNAME, GetModuleHandle(NULL));
+	UnregisterClass(CLC_BRISKPLAYER_INTERFACECLASSNAME, GetModuleHandle(NULL));
 }
 
 //
@@ -156,7 +156,9 @@ CP_HINTERFACE IF_Create(const char* pcTitle, const RECT* pInitialSize, const DWO
 {
 	CPs_InterfaceWindowState* pState;
 	
-	pState = (CPs_InterfaceWindowState*)malloc(sizeof(*pState));
+	pState = (CPs_InterfaceWindowState*)SAFE_MALLOC(sizeof(*pState));
+	if (!pState)
+		return NULL;
 	memset(pState, 0, sizeof(*pState));
 	
 	return pState;
@@ -179,7 +181,7 @@ void IF_OpenWindow(CP_HINTERFACE hInterface, const char* pcTitle, const RECT* pI
 	
 	// Create Windows window
 	HWND hWnd = CreateWindowEx(WS_EX_ACCEPTFILES,
-				   CLC_COOLPLAYER_INTERFACECLASSNAME,
+				   CLC_BRISKPLAYER_INTERFACECLASSNAME,
 				   pcTitle,
 				   WS_POPUP | WS_CLIPCHILDREN | WS_SYSMENU
 				   | ((dwStyle & CPC_INTERFACE_STYLE_RESIZING) ? WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME : 0),
@@ -238,14 +240,10 @@ void IF_SetVisible(CP_HINTERFACE hInterface, const BOOL bVisible)
 //
 void IF_SetFloatActiveSubPart(CPs_InterfaceWindowState* pState, CPs_InterfacePart* pNewFloatActiveSubPart)
 {
-	// If this OS cannot give us mouseleave notification - do not do any float active stuff
-	if (!pfnTrackMouseEvent)
-		return;
-		
 	if (pState->m_pFloatActiveSubpart == pNewFloatActiveSubPart)
 		return;
 		
-	// Set mouseleave event
+	// Set mouseleave event (TrackMouseEvent available since Windows XP)
 	if (pState->m_bMouseLeaveEventSet == FALSE)
 	{
 		TRACKMOUSEEVENT tme;
@@ -253,7 +251,7 @@ void IF_SetFloatActiveSubPart(CPs_InterfaceWindowState* pState, CPs_InterfacePar
 		tme.cbSize = sizeof(tme);
 		tme.dwFlags = TME_LEAVE;
 		tme.hwndTrack = pState->m_hWnd;
-		pState->m_bMouseLeaveEventSet = pfnTrackMouseEvent(&tme) ? TRUE : FALSE;
+		pState->m_bMouseLeaveEventSet = TrackMouseEvent(&tme) ? TRUE : FALSE;
 	}
 	
 	// Reset existing FA target
@@ -665,25 +663,18 @@ LRESULT CALLBACK exp_InterfaceWindowProc(HWND hWnd, UINT uiMessage, WPARAM wPara
 			MINMAXINFO* pMinMaxInfo = (MINMAXINFO*)lParam;
 			RECT rWorkArea;
 			
-			if (pfnGetMonitorInfo)
+			// Use multi-monitor APIs (available since Windows XP)
 			{
-				// Multimonitors are supported by this OS
 				MONITORINFO mi;
-				HMONITOR hmon = pfnMonitorFromWindow(pState->m_hWnd, MONITOR_DEFAULTTOPRIMARY);
+				HMONITOR hmon = MonitorFromWindow(pState->m_hWnd, MONITOR_DEFAULTTOPRIMARY);
 				mi.cbSize = sizeof(mi);
-				pfnGetMonitorInfo(hmon, &mi);
+				GetMonitorInfo(hmon, &mi);
 				
 				// Get the work area of this monitor - as an offset from this monitors virtual space
 				rWorkArea.left = mi.rcWork.left - mi.rcMonitor.left;
 				rWorkArea.right = mi.rcWork.right - mi.rcMonitor.left;
 				rWorkArea.top = mi.rcWork.top - mi.rcMonitor.top;
 				rWorkArea.bottom = mi.rcWork.bottom - mi.rcMonitor.top;
-			}
-			
-			else
-			{
-				// Single monitor only OS
-				SystemParametersInfo(SPI_GETWORKAREA, 0, &rWorkArea, 0);
 			}
 			
 			pMinMaxInfo->ptMinTrackSize.x = pState->m_szMinSize.cx;

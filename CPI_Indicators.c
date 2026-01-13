@@ -103,7 +103,9 @@ void CPIC_SetIndicatorValue(const char* pcName, const char* pcValue)
 	
 	if (!pIndicatorValue)
 	{
-		pIndicatorValue = (CPs_IndicatorValue*)malloc(sizeof(CPs_IndicatorValue));
+		pIndicatorValue = (CPs_IndicatorValue*)SAFE_MALLOC(sizeof(CPs_IndicatorValue));
+		if (!pIndicatorValue)
+			return;
 		STR_AllocSetString(&pIndicatorValue->m_pcName, pcName, FALSE);
 		
 		pIndicatorValue->m_pcValue = NULL;
@@ -149,7 +151,9 @@ void CPIC_BindIndicatorToControl(const char* pcName, CP_HINTERFACEPART hPart)
 {
 	CPs_IndicatorBinding* pIndicatorBinding;
 	
-	pIndicatorBinding = (CPs_IndicatorBinding*)malloc(sizeof(CPs_IndicatorBinding));
+	pIndicatorBinding = (CPs_IndicatorBinding*)SAFE_MALLOC(sizeof(CPs_IndicatorBinding));
+	if (!pIndicatorBinding)
+		return;
 	
 	STR_AllocSetString(&pIndicatorBinding->m_pcName, pcName, FALSE);
 	pIndicatorBinding->m_hPart = hPart;

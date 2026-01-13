@@ -33,281 +33,14 @@
 #include "CPString.h"
 #include "CPI_Translation.h"
 #include "CPI_Gettext.h"
+#include "WindowSnapping.h"
+#include "MainMenu.h"
+#include "CP_Config.h"
 
 // Forward declarations
 void main_translate_menu(void);
 void main_populate_language_menu(void);
 void main_switch_language(const char* languageCode);
-
-// Window snapping constants and functions
-#define SNAP_DISTANCE 12  // Pixels within which windows will snap (reduced for less aggressive snapping)
-#define SNAP_TO_SCREEN_EDGES 0  // Disable screen edge snapping
-#define SNAP_TO_OTHER_WINDOWS 1  // Enable snapping to other BriskPlayer windows
-
-// Window docking tracking
-typedef struct {
-    HWND window;
-    HWND dockedTo;
-    int offsetX;  // Horizontal offset from docked window
-    int offsetY;  // Vertical offset from docked window
-    BOOL isDocked;
-} WindowDockInfo;
-
-static WindowDockInfo g_dockInfo[4] = {0}; // Track up to 4 windows
-static BOOL g_movingDockedWindows = FALSE; // Prevent infinite recursion
-
-// Helper functions for window docking
-void SetWindowDocking(HWND window, HWND dockedTo, int offsetX, int offsetY)
-{
-    for (int i = 0; i < 4; i++) {
-        if (g_dockInfo[i].window == window || g_dockInfo[i].window == NULL) {
-            g_dockInfo[i].window = window;
-            g_dockInfo[i].dockedTo = dockedTo;
-            g_dockInfo[i].offsetX = offsetX;
-            g_dockInfo[i].offsetY = offsetY;
-            g_dockInfo[i].isDocked = TRUE;
-            break;
-        }
-    }
-}
-
-void ClearWindowDocking(HWND window)
-{
-    for (int i = 0; i < 4; i++) {
-        if (g_dockInfo[i].window == window) {
-            g_dockInfo[i].window = NULL;
-            g_dockInfo[i].dockedTo = NULL;
-            g_dockInfo[i].offsetX = 0;
-            g_dockInfo[i].offsetY = 0;
-            g_dockInfo[i].isDocked = FALSE;
-            break;
-        }
-    }
-}
-
-WindowDockInfo* GetWindowDockInfo(HWND window)
-{
-    for (int i = 0; i < 4; i++) {
-        if (g_dockInfo[i].window == window && g_dockInfo[i].isDocked) {
-            return &g_dockInfo[i];
-        }
-    }
-    return NULL;
-}
-
-void MoveDockedWindows(HWND movedWindow, int deltaX, int deltaY)
-{
-    // Check if sticky windows option is enabled
-    if (!options.sticky_windows || g_movingDockedWindows) return; // Prevent recursion
-    
-    g_movingDockedWindows = TRUE;
-    
-    // Find all windows docked to the moved window and move them
-    for (int i = 0; i < 4; i++) {
-        if (g_dockInfo[i].isDocked && g_dockInfo[i].dockedTo == movedWindow) {
-            HWND dockedWindow = g_dockInfo[i].window;
-            if (IsWindow(dockedWindow) && IsWindowVisible(dockedWindow)) {
-                RECT dockedRect;
-                if (GetWindowRect(dockedWindow, &dockedRect)) {
-                    SetWindowPos(dockedWindow, NULL, 
-                               dockedRect.left + deltaX, 
-                               dockedRect.top + deltaY,
-                               0, 0, SWP_NOSIZE | SWP_NOZORDER);
-                }
-            }
-        }
-    }
-    
-    g_movingDockedWindows = FALSE;
-}
-
-// Helper function to snap windows together
-void SnapWindow(HWND hWnd, RECT* pMovingRect)
-{
-    // Check if sticky windows option is enabled
-    if (!options.sticky_windows || !pMovingRect) return;
-    
-    RECT snapRect = *pMovingRect;
-    int snapTolerance = SNAP_DISTANCE;
-    BOOL snapped = FALSE;
-    
-    // Get screen dimensions for edge snapping
-    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-    int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-    
-    // Snap to screen edges
-    if (SNAP_TO_SCREEN_EDGES) {
-        // Left edge
-        if (abs(snapRect.left) <= snapTolerance) {
-            int offset = -snapRect.left;
-            snapRect.left += offset;
-            snapRect.right += offset;
-            snapped = TRUE;
-        }
-        // Right edge
-        else if (abs(snapRect.right - screenWidth) <= snapTolerance) {
-            int offset = screenWidth - snapRect.right;
-            snapRect.left += offset;
-            snapRect.right += offset;
-            snapped = TRUE;
-        }
-        
-        // Top edge
-        if (abs(snapRect.top) <= snapTolerance) {
-            int offset = -snapRect.top;
-            snapRect.top += offset;
-            snapRect.bottom += offset;
-            snapped = TRUE;
-        }
-        // Bottom edge
-        else if (abs(snapRect.bottom - screenHeight) <= snapTolerance) {
-            int offset = screenHeight - snapRect.bottom;
-            snapRect.top += offset;
-            snapRect.bottom += offset;
-            snapped = TRUE;
-        }
-    }
-    
-    // Snap to other BriskPlayer windows
-    if (SNAP_TO_OTHER_WINDOWS) {
-        HWND snapTargets[] = {
-            windows.wnd_main,
-            windows.dlg_playlist,
-            windows.m_hWndPlaylist,
-            windows.dlg_options
-        };
-        
-        HWND dockedToWindow = NULL;
-        int bestSnapDistance = snapTolerance + 1;
-        RECT bestSnapRect = snapRect;
-        
-        for (size_t i = 0; i < sizeof(snapTargets) / sizeof(HWND); i++) {
-            HWND targetWnd = snapTargets[i];
-            if (!targetWnd || targetWnd == hWnd || !IsWindowVisible(targetWnd)) {
-                continue;
-            }
-            
-            RECT targetRect;
-            if (GetWindowRect(targetWnd, &targetRect)) {
-                RECT candidateRect = snapRect;
-                int snapDistance = snapTolerance + 1;
-                BOOL candidateSnapped = FALSE;
-                
-                // Check horizontal snapping (left/right edges)
-                int rightEdgeDistance = abs(candidateRect.left - targetRect.right);
-                int leftEdgeDistance = abs(candidateRect.right - targetRect.left);
-                int leftAlignDistance = abs(candidateRect.left - targetRect.left);
-                int rightAlignDistance = abs(candidateRect.right - targetRect.right);
-                
-                if (rightEdgeDistance <= snapTolerance && rightEdgeDistance < snapDistance) {
-                    // Snap to right edge of target
-                    int offset = targetRect.right - candidateRect.left;
-                    candidateRect.left += offset;
-                    candidateRect.right += offset;
-                    snapDistance = rightEdgeDistance;
-                    candidateSnapped = TRUE;
-                }
-                else if (leftEdgeDistance <= snapTolerance && leftEdgeDistance < snapDistance) {
-                    // Snap to left edge of target
-                    int offset = targetRect.left - candidateRect.right;
-                    candidateRect.left += offset;
-                    candidateRect.right += offset;
-                    snapDistance = leftEdgeDistance;
-                    candidateSnapped = TRUE;
-                }
-                else if (leftAlignDistance <= snapTolerance && leftAlignDistance < snapDistance) {
-                    // Align left edges
-                    int offset = targetRect.left - candidateRect.left;
-                    candidateRect.left += offset;
-                    candidateRect.right += offset;
-                    snapDistance = leftAlignDistance;
-                    candidateSnapped = TRUE;
-                }
-                else if (rightAlignDistance <= snapTolerance && rightAlignDistance < snapDistance) {
-                    // Align right edges
-                    int offset = targetRect.right - candidateRect.right;
-                    candidateRect.left += offset;
-                    candidateRect.right += offset;
-                    snapDistance = rightAlignDistance;
-                    candidateSnapped = TRUE;
-                }
-                
-                // Check vertical snapping (top/bottom edges) - only if not already snapped horizontally
-                if (!candidateSnapped) {
-                    int bottomEdgeDistance = abs(candidateRect.top - targetRect.bottom);
-                    int topEdgeDistance = abs(candidateRect.bottom - targetRect.top);
-                    int topAlignDistance = abs(candidateRect.top - targetRect.top);
-                    int bottomAlignDistance = abs(candidateRect.bottom - targetRect.bottom);
-                    
-                    if (bottomEdgeDistance <= snapTolerance && bottomEdgeDistance < snapDistance) {
-                        // Snap to bottom edge of target
-                        int offset = targetRect.bottom - candidateRect.top;
-                        candidateRect.top += offset;
-                        candidateRect.bottom += offset;
-                        snapDistance = bottomEdgeDistance;
-                        candidateSnapped = TRUE;
-                    }
-                    else if (topEdgeDistance <= snapTolerance && topEdgeDistance < snapDistance) {
-                        // Snap to top edge of target
-                        int offset = targetRect.top - candidateRect.bottom;
-                        candidateRect.top += offset;
-                        candidateRect.bottom += offset;
-                        snapDistance = topEdgeDistance;
-                        candidateSnapped = TRUE;
-                    }
-                    else if (topAlignDistance <= snapTolerance && topAlignDistance < snapDistance) {
-                        // Align top edges
-                        int offset = targetRect.top - candidateRect.top;
-                        candidateRect.top += offset;
-                        candidateRect.bottom += offset;
-                        snapDistance = topAlignDistance;
-                        candidateSnapped = TRUE;
-                    }
-                    else if (bottomAlignDistance <= snapTolerance && bottomAlignDistance < snapDistance) {
-                        // Align bottom edges
-                        int offset = targetRect.bottom - candidateRect.bottom;
-                        candidateRect.top += offset;
-                        candidateRect.bottom += offset;
-                        snapDistance = bottomAlignDistance;
-                        candidateSnapped = TRUE;
-                    }
-                }
-                
-                // Use this snap if it's the closest one so far
-                if (candidateSnapped && snapDistance < bestSnapDistance) {
-                    bestSnapDistance = snapDistance;
-                    bestSnapRect = candidateRect;
-                    dockedToWindow = targetWnd;
-                    snapped = TRUE;
-                }
-            }
-        }
-        
-        // Apply the best snap if we found one
-        if (snapped) {
-            snapRect = bestSnapRect;
-            
-            // Record docking relationship
-            if (dockedToWindow) {
-                RECT dockedToRect;
-                if (GetWindowRect(dockedToWindow, &dockedToRect)) {
-                    int offsetX = snapRect.left - dockedToRect.left;
-                    int offsetY = snapRect.top - dockedToRect.top;
-                    SetWindowDocking(hWnd, dockedToWindow, offsetX, offsetY);
-                }
-            }
-        }
-        else {
-            // Clear docking if we're not snapped to anything
-            ClearWindowDocking(hWnd);
-        }
-    }
-    
-    // Update the rectangle if we snapped
-    if (snapped) {
-        *pMovingRect = snapRect;
-    }
-}
 
 // Function to populate language menu dynamically
 void main_populate_language_menu(void)
@@ -646,7 +379,7 @@ void main_update_title_text(void)
 	if (hItem_Current)
 		pcText = CPLI_GetTrackName(hItem_Current);
 	else
-		pcText = CP_COOLPLAYER;
+		pcText = CP_BRISKPLAYER;
 		
 	stringlen = strlen(pcText);
 	
@@ -680,8 +413,6 @@ void main_update_title_text(void)
 	rect.top = rect.left = 0;
 	rect.right = width * 2;
 	rect.bottom = Skin.Object[SongtitleText].h;
-	
-// ExtTextOut(SongtitleDc, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
 
 	h = (HBITMAP) SelectObject(drawables.dc_memory, graphics.bmp_main_up);
 	
@@ -717,7 +448,6 @@ void main_update_title_text(void)
 				   SRCCOPY);
 	}
 	
-	//     TextOut(SongtitleDc,0,0,text,stringlen);
 	SelectPalette(SongtitleDc, oldpal, FALSE);
 	SelectObject(drawables.dc_memory, h);
 	SelectObject(SongtitleDc, h2);
@@ -982,7 +712,7 @@ int     playlist_open_file(BOOL clearlist)
 			}
 			else
 			{
-				path_remove_filespec(pcPathBuffer);
+				(void)path_remove_filespec(pcPathBuffer);
 			}
 			
 			strcpy(options.last_used_directory, pcPathBuffer);
@@ -1330,8 +1060,6 @@ BOOL    main_draw_vu_all(HWND hWnd, WPARAM wParam, LPARAM lParam,
 					break;
 			}
 			
-			
-			//  main_draw_vu_from_mouse(hWnd, teller, Skin.Object[teller].maxw ? cursorpos.y : cursorpos.x);
 			main_draw_vu_from_value(hWnd, teller, waarde);
 		}
 	}
@@ -1495,7 +1223,6 @@ void    main_menuproc(HWND hWnd, LPPOINT points)
 	
 		case MENU_EXIT:
 			CPVERB_Exit(vaDoVerb, hWnd);
-			// DestroyWindow(hWnd);
 			break;
 			
 		case MENU_PLAYLIST:
@@ -1511,7 +1238,7 @@ void    main_menuproc(HWND hWnd, LPPOINT points)
 			break;
 			
 		case MENU_ABOUT:
-			about_create(hWnd);
+			(void)about_create(hWnd);
 			break;
 			
 		case MENU_OPENLOC:
@@ -1933,7 +1660,6 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 							
 						case ExitButton:
 							CPVERB_Exit(vaDoVerb, hWnd);
-							// DestroyWindow(hWnd);
 							break;
 							
 						case EjectButton:
@@ -2071,7 +1797,6 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				
 			CPlaylistWindow_Destroy();
 			
-			//  CPlayerWindow_Destroy();
 			options_write();
 			
 			CPL_DestroyPlaylist(globals.m_hPlaylist);
@@ -2598,7 +2323,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Ensure that this system is audio capable
 	if (waveOutGetNumDevs() < 1)
 	{
-		WCHAR* title = STR_ConvertToUnicode(CP_COOLPLAYER);
+		WCHAR* title = STR_ConvertToUnicode(CP_BRISKPLAYER);
 		MessageBoxW(GetDesktopWindow(), L"No audio devices in this system", title, MB_ICONSTOP | MB_OK);
 		free(title);
 		return -1;
@@ -2620,7 +2345,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	OutputDebugStringA("BriskPlayer: Translation system initialized...\n");
 	#endif
 	
-	CreateMutex(NULL, FALSE, CLC_COOLPLAYER_MUTEX);
+	CreateMutex(NULL, FALSE, CLC_BRISKPLAYER_MUTEX);
 	bAlreadyRuning = (GetLastError() == ERROR_ALREADY_EXISTS
 					  || GetLastError() == ERROR_ACCESS_DENIED);
 	// The call fails with ERROR_ACCESS_DENIED if the Mutex was
@@ -2630,7 +2355,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (bAlreadyRuning)
 	{
 		// Find the other coolplayer instance
-		hWndCoolPlayer = FindWindow(CLC_COOLPLAYER_WINDOWCLASSNAME, NULL);
+		hWndCoolPlayer = FindWindow(CLC_BRISKPLAYER_WINDOWCLASSNAME, NULL);
 		
 		if (hWndCoolPlayer != NULL)
 		{
@@ -2705,7 +2430,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		#ifdef _DEBUG
 		OutputDebugStringA("BriskPlayer: FAILED to create playlist - exiting!\n");
 		#endif
-		WCHAR* title = STR_ConvertToUnicode(CP_COOLPLAYER);
+		WCHAR* title = STR_ConvertToUnicode(CP_BRISKPLAYER);
 		MessageBoxW(GetDesktopWindow(), L"Failed to create playlist", title, MB_ICONSTOP | MB_OK);
 		free(title);
 		return -1;
@@ -2790,7 +2515,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ZeroMemory(&wc, sizeof(wc));
 		wc.style         = CS_OWNDC;
 		//wc.style = CS_PARENTDC;
-		wc.lpszClassName = CLC_COOLPLAYER_WINDOWCLASSNAME;
+		wc.lpszClassName = CLC_BRISKPLAYER_WINDOWCLASSNAME;
 		wc.lpfnWndProc = (WNDPROC) main_windowproc;
 		wc.hInstance = hInstance;
 		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
@@ -2806,7 +2531,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			globals.m_hPlayer = NULL;
 			hWnd =
 				CreateWindowEx(WS_EX_ACCEPTFILES | WS_EX_TOOLWINDOW,
-							   CLC_COOLPLAYER_WINDOWCLASSNAME, CP_COOLPLAYER,
+							   CLC_BRISKPLAYER_WINDOWCLASSNAME, CP_BRISKPLAYER,
 							   WS_POPUP | WS_CLIPSIBLINGS,
 							   options.main_window_pos.x,
 							   options.main_window_pos.y, bm.bmWidth,
@@ -2855,18 +2580,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				
 				CPI_Player__SetPositionRange(globals.m_hPlayer,
 											 Skin.Object[PositionSlider].maxw ? Skin.Object[PositionSlider].h : Skin.Object[PositionSlider].w);
-				CP_InitWindowsRoutines();
 				IF_ProcessInit();
 				
-				// Check if glb_pSkin is initialized before creating playlist window
-				extern CPs_Skin* glb_pSkin;
+				// Create the playlist window
+				CPlaylistWindow_Create();
 				
-				if (glb_pSkin != NULL) {
-					//  CPlayerWindow_Create();
-					CPlaylistWindow_Create();
-				}
-				
-				window_set_always_on_top(hWnd, options.always_on_top);
+				(void)window_set_always_on_top(hWnd, options.always_on_top);
 				
 				main_set_eq();
 				

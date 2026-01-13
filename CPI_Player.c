@@ -398,7 +398,9 @@ void CPI_Player__SetEQ(CP_HPLAYER hPlayer, const BOOL bEnabled, const int cBands
 	CP_CHECKOBJECT(pPlayEngine);
 	
 	// Setup params (callee frees!)
-	pNewEQSettings = (CPs_EQSettings*)malloc(sizeof(*pNewEQSettings));
+	pNewEQSettings = (CPs_EQSettings*)SAFE_MALLOC(sizeof(*pNewEQSettings));
+	if (!pNewEQSettings)
+		return;
 	pNewEQSettings->m_bEnabled = bEnabled;
 	
 	// Setup bands - for some reason the UI is 1 based !!!

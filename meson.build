@@ -241,13 +241,17 @@ brisksrc = files([
     'DLG_Find.c',
     'globals.c',
     'main.c',
+    'MainMenu.c',
     'options.c',
     'profile.c',
     'RotatingIcon.c',
     'shwapi.c',
     'skin.c',
     'stdafx.c',
-    'WindowsOS.c'
+    'WindowsOS.c',
+    'WindowSnapping.c',
+    'WinModern.c',
+    'CP_Config.c'
 ])
 
 # Keep WAV and WinAmp plugin support

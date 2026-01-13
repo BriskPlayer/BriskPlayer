@@ -14,6 +14,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Options
 option(ENABLE_NLS "Enable internationalization support" ON)
 option(STATIC_LINK "Link statically" ON)
+option(BUILD_TESTS "Build unit tests" OFF)
 
 # Platform-specific settings
 if(MSVC)
@@ -112,6 +113,7 @@ set(BRISK_SOURCES
     DLG_Properties.c
     globals.c
     main.c
+    MainMenu.c
     options.c
     profile.c
     RotatingIcon.c
@@ -119,6 +121,9 @@ set(BRISK_SOURCES
     skin.c
     stdafx.c
     WindowsOS.c
+    WindowSnapping.c
+    WinModern.c
+    CP_Config.c
 )
 
 # Resource file
@@ -417,4 +422,9 @@ install(TARGETS briskplayer RUNTIME DESTINATION bin)
 # Add translations subdirectory
 if(ENABLE_NLS)
     add_subdirectory(po)
+endif()
+
+# Add tests subdirectory
+if(BUILD_TESTS)
+    add_subdirectory(tests)
 endif()

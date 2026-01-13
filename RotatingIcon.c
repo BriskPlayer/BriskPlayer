@@ -230,4 +230,38 @@ void CPSYSICON_SetTipText(CP_HSYSICON hSysIconData, const char* pcNewTipText)
 //
 //
 //
+void CPSYSICON_ShowBalloon(CP_HSYSICON hSysIconData, 
+                           const char* pcTitle, 
+                           const char* pcMessage,
+                           DWORD dwInfoFlags)
+{
+	CPs_SysIcon* pSysIconData = (CPs_SysIcon*)hSysIconData;
+	NOTIFYICONDATAW nic;
+	CP_CHECKOBJECT(pSysIconData);
+	
+	ZeroMemory(&nic, sizeof(nic));
+	nic.cbSize = sizeof(NOTIFYICONDATAW);
+	nic.hWnd = pSysIconData->m_hWnd;
+	nic.uID = NOTIFY_ICON_ID;
+	nic.uFlags = NIF_INFO;
+	nic.dwInfoFlags = dwInfoFlags;
+	
+	// Convert title and message to Unicode
+	if (pcTitle)
+	{
+		MultiByteToWideChar(CP_UTF8, 0, pcTitle, -1, 
+		                    nic.szInfoTitle, sizeof(nic.szInfoTitle) / sizeof(wchar_t));
+	}
+	
+	if (pcMessage)
+	{
+		MultiByteToWideChar(CP_UTF8, 0, pcMessage, -1,
+		                    nic.szInfo, sizeof(nic.szInfo) / sizeof(wchar_t));
+	}
+	
+	Shell_NotifyIconW(NIM_MODIFY, &nic);
+}
 
+//
+//
+//

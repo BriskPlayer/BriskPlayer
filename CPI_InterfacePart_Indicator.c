@@ -53,11 +53,19 @@ CP_HINTERFACEPART IP_Create_Indicator(const char* pcName)
 	CPs_IPIndicator* pCustomData;
 	
 	// Setup custom data
-	pCustomData = (CPs_IPIndicator*)malloc(sizeof(*pCustomData));
+	pCustomData = (CPs_IPIndicator*)SAFE_MALLOC(sizeof(*pCustomData));
+	if (!pCustomData)
+		return NULL;
 	STR_AllocSetString(&pCustomData->m_pcName, pcName, FALSE);
 	
 	// Create new part and setup callbacks
-	pNewPart = (CPs_InterfacePart*)malloc(sizeof(*pNewPart));
+	pNewPart = (CPs_InterfacePart*)SAFE_MALLOC(sizeof(*pNewPart));
+	if (!pNewPart)
+	{
+		free(pCustomData->m_pcName);
+		free(pCustomData);
+		return NULL;
+	}
 	memset(pNewPart, 0, sizeof(*pNewPart));
 	pNewPart->Destroy_PrivateData = IPIC_Destroy_PrivateData;
 	pNewPart->Draw = IPIC_Draw;

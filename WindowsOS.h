@@ -18,44 +18,27 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-////////////////////////////////////////////////////////////////////////////////
 
-
-
+#ifndef WINDOWS_OS_H
+#define WINDOWS_OS_H
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// OS functions
+// OS Compatibility Layer
+// Minimum target: Windows XP (0x0501)
+//
+// Note: Legacy dynamic function loading has been removed. All APIs used here
+// are available on Windows XP and later. The previous code dynamically loaded
+// GetMonitorInfo, MonitorFromWindow, and TrackMouseEvent for Windows 95/NT4
+// compatibility, but this is no longer needed.
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <windows.h>
 
+// Helper functions for common Windows operations
+BOOL window_set_always_on_top(HWND hWnd, BOOL bOnTop);
+BOOL path_remove_filespec(char* pszPath);
+HWND about_create(HWND hWndParent);
 
-////////////////////////////////////////////////////////////////////////////////
-// Win2000/98 API stuff
-// needed only for VC6 compile **/
-#ifndef MONITOR_DEFAULTTONULL
-typedef void* HMONITOR;
-
-typedef struct _MONITORINFO
-{
-	DWORD  cbSize;
-	RECT   rcMonitor;
-	RECT   rcWork;
-	DWORD  dwFlags;
-} MONITORINFO;
-
-#define MONITOR_DEFAULTTONULL       0x00000000
-#define MONITOR_DEFAULTTOPRIMARY    0x00000001
-#define MONITOR_DEFAULTTONEAREST    0x00000002
-#endif
-typedef BOOL (WINAPI *wp_GetMonitorInfo)(HMONITOR hMonitor, MONITORINFO* lpmi);
-typedef HMONITOR(WINAPI *wp_MonitorFromWindow)(HWND hwnd, DWORD dwFlags);
-typedef BOOL (WINAPI *wp_TrackMouseEvent)(LPTRACKMOUSEEVENT lpEventTrack);
-//
-extern wp_GetMonitorInfo pfnGetMonitorInfo;
-extern wp_MonitorFromWindow pfnMonitorFromWindow;
-extern wp_TrackMouseEvent pfnTrackMouseEvent;
-//
-////////////////////////////////////////////////////////////////////////////////
-void CP_InitWindowsRoutines(void);
+#endif // WINDOWS_OS_H

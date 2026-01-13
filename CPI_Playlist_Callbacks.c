@@ -51,6 +51,9 @@ void CPL_cb_OnPlaylistAppend(const CP_HPLAYLISTITEM hItem)
 {
 	int iNewItemIDX;
 	
+	if (!globals.m_hPlaylistViewControl)
+		return;
+	
 	iNewItemIDX = CLV_AddItem(globals.m_hPlaylistViewControl, hItem);
 	CPLI_SetCookie(hItem, iNewItemIDX);
 }
@@ -64,7 +67,8 @@ void CPL_cb_OnPlaylistItemDelete(const CP_HPLAYLISTITEM hItem)
 	int iItemIDX = CPLI_GetCookie(hItem);
 	
 	// Remove the item from the list
-	CLV_DeleteItem(globals.m_hPlaylistViewControl, iItemIDX);
+	if (globals.m_hPlaylistViewControl)
+		CLV_DeleteItem(globals.m_hPlaylistViewControl, iItemIDX);
 	
 	// We are storing the item number on the item cookie - we must now renumber all
 	// list items after this item

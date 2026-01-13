@@ -52,7 +52,7 @@ static BOOL ValidateURLInput(const char* pcFlexiURL, size_t* piLength)
 	if (iLen > CIC_MAX_URL_LENGTH)
 	{
 		CP_TRACE0("URL too long, exceeds maximum allowed length");
-		printf("ValidateURLInput: URL too long: %zu bytes (max %d)\n", iLen, CIC_MAX_URL_LENGTH);
+		CP_LOG_WARNING("ValidateURLInput: URL too long: %zu bytes (max %d)\n", iLen, CIC_MAX_URL_LENGTH);
 		return FALSE;
 	}
 	
@@ -107,7 +107,7 @@ CPs_InStream* CP_CreateInStream(const char* pcFlexiURL, HWND hWndOwner)
 	}
 	
 	CP_TRACE1("CP_CreateInStream: Processing URL: %s", pcFlexiURL);
-	printf("CP_CreateInStream: Processing URL: %s\n", pcFlexiURL);
+	CP_LOG_DEBUG("CP_CreateInStream: Processing URL: %s\n", pcFlexiURL);
 	
 	// Check for playlist files FIRST (.pls, .m3u, .m3u8) - case insensitive
 	// This needs to be before HTTP/HTTPS detection because playlist URLs are often HTTP/HTTPS
@@ -116,7 +116,7 @@ CPs_InStream* CP_CreateInStream(const char* pcFlexiURL, HWND hWndOwner)
 		strstr(pcFlexiURL, ".m3u8") != NULL || strstr(pcFlexiURL, ".M3U8") != NULL)
 	{
 		CP_TRACE0("CP_CreateInStream: Detected as playlist file - calling CP_CreateInStream_Internet");
-		printf("CP_CreateInStream: Detected as playlist file - calling CP_CreateInStream_Internet\n");
+		CP_LOG_DEBUG("CP_CreateInStream: Detected as playlist file - calling CP_CreateInStream_Internet\n");
 		pNewStream = CP_CreateInStream_Internet(pcFlexiURL, hWndOwner);
 		
 		if (pNewStream)

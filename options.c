@@ -57,22 +57,6 @@ static void TranslateStaticControls(HWND hwndDlg)
     }
 }
 
-// Helper function to resize dialog based on translated text lengths
-static void ResizeDialogForTranslations(HWND hwndDlg)
-{
-    // Dialog template has been updated to accommodate longer German text
-    // No dynamic resizing needed anymore
-    (void)hwndDlg; // Suppress unused parameter warning
-}
-
-// Helper function to adjust control positions for better layout with longer text
-static void AdjustControlLayout(HWND hwndDlg)
-{
-    // Dialog template has been updated to accommodate longer German text
-    // No dynamic adjustments needed anymore
-    (void)hwndDlg; // Suppress unused parameter warning
-}
-
 //
 //
 //
@@ -173,12 +157,6 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			
 			// Translate static text controls (these have ID -1, so we need to find them by text)
 			TranslateStaticControls(hwndDlg);
-			
-			// Resize dialog if needed to accommodate longer translations
-			ResizeDialogForTranslations(hwndDlg);
-			
-			// Adjust control layout for better appearance
-			AdjustControlLayout(hwndDlg);
 			
 			if (options.use_default_skin == TRUE)
 				SendDlgItemMessage(hwndDlg, IDC_PLAYERSKINCHECK,
@@ -302,7 +280,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 				// Convert initial directory to Unicode
 				char pathbuffie[MAX_PATH];
 				strcpy(pathbuffie, (char*)options.main_skin_file);
-				path_remove_filespec(pathbuffie);
+				(void)path_remove_filespec(pathbuffie);
 				WCHAR* pwcInitialDir = STR_ConvertToUnicode(pathbuffie);
 				
 				fn.lStructSize = sizeof(OPENFILENAMEW);
@@ -418,6 +396,9 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					options.show_on_taskbar =
 						(BOOL)SendDlgItemMessage(hwndDlg, IDC_TASKBAR, BM_GETCHECK,
 										   0, 0);
+					options.sticky_windows =
+						(BOOL)SendDlgItemMessage(hwndDlg, IDC_STICKYWINDOWS, BM_GETCHECK,
+										   0, 0);
 					                       
 					if (options.show_on_taskbar)
 					{
@@ -456,10 +437,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					options.always_on_top =
 						(BOOL)SendDlgItemMessage(hwndDlg, IDC_ONTOP, BM_GETCHECK, 0,
 										   0);
-					window_set_always_on_top(hWnd, options.always_on_top);
-					
-					options.sticky_windows =
-						(BOOL)SendDlgItemMessage(hwndDlg, IDC_STICKYWINDOWS, BM_GETCHECK, 0, 0);
+						(void)window_set_always_on_top(hWnd, options.always_on_top);
 					
 					GetDlgItemText(hwndDlg, IDC_LOADSKIN,
 								   (char*)options.main_skin_file, MAX_PATH);
@@ -539,7 +517,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					
 					GetModuleFileName(NULL, pathbuf, MAX_PATH);
 					snprintf(stringval, sizeof(stringval), "%s,%1d", pathbuf, 1);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT, CIC_COOLPLAYER_FILETYPE,
+					RegCreateKeyEx(HKEY_CLASSES_ROOT, CIC_BRISKPLAYER_FILETYPE,
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
@@ -547,7 +525,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								  (const BYTE*)T(STR_APP_AUDIO_FILE_DESC), strlen(T(STR_APP_AUDIO_FILE_DESC)) + 1);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_FILETYPE "\\DefaultIcon",
+								   CIC_BRISKPLAYER_FILETYPE "\\DefaultIcon",
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
@@ -555,19 +533,19 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								  strlen(stringval) + 1);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_FILETYPE "\\Shell", 0,
+								   CIC_BRISKPLAYER_FILETYPE "\\Shell", 0,
 								   NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_FILETYPE "\\Shell\\Open",
+								   CIC_BRISKPLAYER_FILETYPE "\\Shell\\Open",
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-							   CIC_COOLPLAYER_FILETYPE "\\Shell\\Open\\command",
+							   CIC_BRISKPLAYER_FILETYPE "\\Shell\\Open\\command",
 							   0, NULL, REG_OPTION_NON_VOLATILE,
 							   KEY_ALL_ACCESS, NULL, &result,
 							   &lpdwDisposition);
@@ -577,13 +555,13 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					RegCloseKey(result);
 					
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_FILETYPE "\\Shell\\BriskPlayer Queue",
+								   CIC_BRISKPLAYER_FILETYPE "\\Shell\\BriskPlayer Queue",
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_FILETYPE "\\Shell\\BriskPlayer Queue\\command",
+								   CIC_BRISKPLAYER_FILETYPE "\\Shell\\BriskPlayer Queue\\command",
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
@@ -593,13 +571,13 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					RegCloseKey(result);
 					
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_FILETYPE "\\Shell\\BriskPlayer Play",
+								   CIC_BRISKPLAYER_FILETYPE "\\Shell\\BriskPlayer Play",
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_FILETYPE "\\Shell\\BriskPlayer Play\\command",
+								   CIC_BRISKPLAYER_FILETYPE "\\Shell\\BriskPlayer Play\\command",
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
@@ -614,7 +592,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
 					RegSetValueEx(result, NULL, 0, REG_SZ,
-								  (const BYTE*)CIC_COOLPLAYER_PLAYLISTFILETYPE, strlen(CIC_COOLPLAYER_PLAYLISTFILETYPE) + 1);
+								  (const BYTE*)CIC_BRISKPLAYER_PLAYLISTFILETYPE, strlen(CIC_BRISKPLAYER_PLAYLISTFILETYPE) + 1);
 					RegCloseKey(result);
 					
 					RegCreateKeyEx(HKEY_CLASSES_ROOT, ".pls", 0, NULL,
@@ -622,10 +600,10 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
 					RegSetValueEx(result, NULL, 0, REG_SZ,
-								  (const BYTE*)CIC_COOLPLAYER_PLAYLISTFILETYPE, strlen(CIC_COOLPLAYER_PLAYLISTFILETYPE) + 1);
+								  (const BYTE*)CIC_BRISKPLAYER_PLAYLISTFILETYPE, strlen(CIC_BRISKPLAYER_PLAYLISTFILETYPE) + 1);
 					RegCloseKey(result);
 					
-					RegCreateKeyEx(HKEY_CLASSES_ROOT, CIC_COOLPLAYER_PLAYLISTFILETYPE,
+					RegCreateKeyEx(HKEY_CLASSES_ROOT, CIC_BRISKPLAYER_PLAYLISTFILETYPE,
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
@@ -633,7 +611,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								  (const BYTE*)T(STR_APP_PLAYLIST_DESC), strlen(T(STR_APP_PLAYLIST_DESC)) + 1);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_PLAYLISTFILETYPE "\\DefaultIcon",
+								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\DefaultIcon",
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
@@ -642,19 +620,19 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								  strlen(stringval) + 1);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_PLAYLISTFILETYPE "\\Shell", 0,
+								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell", 0,
 								   NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_PLAYLISTFILETYPE "\\Shell\\Open",
+								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\Open",
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_PLAYLISTFILETYPE "\\Shell\\Open\\command",
+								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\Open\\command",
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
@@ -664,13 +642,13 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					RegCloseKey(result);
 					
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_PLAYLISTFILETYPE "\\Shell\\BriskPlayer Queue",
+								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\BriskPlayer Queue",
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_PLAYLISTFILETYPE "\\Shell\\BriskPlayer Queue\\command",
+								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\BriskPlayer Queue\\command",
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
@@ -679,13 +657,13 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								  strlen(stringval) + 1);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_PLAYLISTFILETYPE "\\Shell\\BriskPlayer Play",
+								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\BriskPlayer Play",
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
 					RegCloseKey(result);
 					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_COOLPLAYER_PLAYLISTFILETYPE "\\Shell\\BriskPlayer Play\\command",
+								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\BriskPlayer Play\\command",
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
@@ -722,10 +700,10 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					RegCloseKey(result);
 					
 					
-					RegDeleteKey(HKEY_CLASSES_ROOT, CIC_COOLPLAYER_FILETYPE "\\Shell\\Enqueue in BriskPlayer\\command");
-					RegDeleteKey(HKEY_CLASSES_ROOT, CIC_COOLPLAYER_FILETYPE "\\Shell\\Enqueue in BriskPlayer\\");
-					RegDeleteKey(HKEY_CLASSES_ROOT, CIC_COOLPLAYER_PLAYLISTFILETYPE "\\Shell\\Enqueue in BriskPlayer\\command");
-					RegDeleteKey(HKEY_CLASSES_ROOT, CIC_COOLPLAYER_PLAYLISTFILETYPE "\\Shell\\Enqueue in BriskPlayer\\");
+					RegDeleteKey(HKEY_CLASSES_ROOT, CIC_BRISKPLAYER_FILETYPE "\\Shell\\Enqueue in BriskPlayer\\command");
+					RegDeleteKey(HKEY_CLASSES_ROOT, CIC_BRISKPLAYER_FILETYPE "\\Shell\\Enqueue in BriskPlayer\\");
+					RegDeleteKey(HKEY_CLASSES_ROOT, CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\Enqueue in BriskPlayer\\command");
+					RegDeleteKey(HKEY_CLASSES_ROOT, CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\Enqueue in BriskPlayer\\");
 					
 				// Convert translated strings to Unicode
 				WCHAR* pwcMsg = STR_ConvertToUnicode(T(STR_MSG_FILETYPES_REGISTERED));

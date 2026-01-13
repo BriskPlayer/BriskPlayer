@@ -87,7 +87,9 @@ void CPFA_EmptyFileAssociations(CPs_CoDecModule* pCoDec)
 //
 void CPFA_AddFileAssociation(CPs_CoDecModule* pCoDec, const char* pcExtension, DWORD dwCookie)
 {
-	CPs_FileAssociation* pNewAssociation = (CPs_FileAssociation*)malloc(sizeof(CPs_FileAssociation));
+	CPs_FileAssociation* pNewAssociation = (CPs_FileAssociation*)SAFE_MALLOC(sizeof(CPs_FileAssociation));
+	if (!pNewAssociation)
+		return;
 	
 	// Check that this extension is not already used
 	CPs_FileAssociation* pCursor = (CPs_FileAssociation*)pCoDec->m_pFileAssociationCookie;
@@ -166,7 +168,7 @@ void CPFA_AssociateWithEXE(CPs_CoDecModule* pCoDec)
 					   REG_OPTION_NON_VOLATILE,
 					   KEY_ALL_ACCESS, NULL, &hKey,
 					   &dwDisposition);
-		RegSetValueEx(hKey, NULL, 0, REG_SZ, CIC_COOLPLAYER_FILETYPE, sizeof(CIC_COOLPLAYER_FILETYPE));
+		RegSetValueEx(hKey, NULL, 0, REG_SZ, CIC_BRISKPLAYER_FILETYPE, sizeof(CIC_BRISKPLAYER_FILETYPE));
 		RegCloseKey(hKey);
 		
 		// Cleanup

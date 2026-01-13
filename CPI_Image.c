@@ -116,7 +116,12 @@ CPs_Image* CPIG_CreateImage_FromSubFile(CP_COMPOSITEFILE hmComposite, const char
 	free(pFileData);
 	
 	// Setup Image struct
-	pNewImage = (CPs_Image*)malloc(sizeof(CPs_Image));
+	pNewImage = (CPs_Image*)SAFE_MALLOC(sizeof(CPs_Image));
+	if (!pNewImage)
+	{
+		DeleteObject(hbmLoad);
+		return NULL;
+	}
 	pNewImage->m_hbmImage = hbmLoad;
 	pNewImage->m_szSize = szBitmap;
 	return pNewImage;
@@ -140,7 +145,12 @@ CPs_Image* CPIG_CreateImage_FromResource(const UINT uiResourceID)
 	GetObject(hbmLoad, sizeof(bmLoad), &bmLoad);
 	
 	// Setup Image struct
-	pNewImage = (CPs_Image*)malloc(sizeof(CPs_Image));
+	pNewImage = (CPs_Image*)SAFE_MALLOC(sizeof(CPs_Image));
+	if (!pNewImage)
+	{
+		DeleteObject(hbmLoad);
+		return NULL;
+	}
 	
 	pNewImage->m_hbmImage = hbmLoad;
 	pNewImage->m_szSize.cx = bmLoad.bmWidth;
@@ -159,7 +169,9 @@ CPs_Image_WithState* CPIG_CreateStateImage(CPs_Image* pSource, const int iNumSta
 	
 	CP_ASSERT((iNumStates - 1) <= igsLast);
 	
-	pNewIS = (CPs_Image_WithState*)malloc(sizeof(*pNewIS));
+	pNewIS = (CPs_Image_WithState*)SAFE_MALLOC(sizeof(*pNewIS));
+	if (!pNewIS)
+		return NULL;
 	pNewIS->m_pImage = pSource;
 	pNewIS->m_iStateHeight = pSource->m_szSize.cy / iNumStates;
 	memset(pNewIS->m_ptSource, 0, sizeof(pNewIS->m_ptSource));

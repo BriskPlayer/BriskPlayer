@@ -19,50 +19,6 @@
  */
 ////////////////////////////////////////////////////////////////////////////////
 
-
-
 #include "stdafx.h"
 #include "globals.h"
 #include "WindowsOS.h"
-
-
-
-wp_GetMonitorInfo pfnGetMonitorInfo;
-wp_MonitorFromWindow pfnMonitorFromWindow;
-wp_TrackMouseEvent pfnTrackMouseEvent;
-////////////////////////////////////////////////////////////////////////////////
-//
-//
-//
-void CP_InitWindowsRoutines(void)
-{
-    HMODULE hmUser32 = GetModuleHandle("USER32");
-    
-    // Use unions to safely cast function pointers
-    union {
-        FARPROC proc;
-        wp_GetMonitorInfo func;
-    } getMonitorInfo;
-    
-    union {
-        FARPROC proc;
-        wp_MonitorFromWindow func;
-    } monitorFromWindow;
-    
-    union {
-        FARPROC proc;
-        wp_TrackMouseEvent func;
-    } trackMouseEvent;
-    
-    getMonitorInfo.proc = GetProcAddress(hmUser32, "GetMonitorInfoA");
-    pfnGetMonitorInfo = getMonitorInfo.func;
-    
-    monitorFromWindow.proc = GetProcAddress(hmUser32, "MonitorFromWindow");
-    pfnMonitorFromWindow = monitorFromWindow.func;
-    
-    trackMouseEvent.proc = GetProcAddress(hmUser32, "TrackMouseEvent");
-    pfnTrackMouseEvent = trackMouseEvent.func;
-}
-//
-//
-//

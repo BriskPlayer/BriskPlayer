@@ -126,7 +126,7 @@ BOOL ReadStreamData(HINTERNET hURLStream, CPs_BufferFillerContext* pContext, BYT
 		if (dwMetaDataSize > CIC_MAX_METADATA_SIZE)
 		{
 			CP_TRACE0("EP_FillerThread::Metadata block too large");
-			printf("Metadata block size %lu exceeds maximum %d bytes\n", dwMetaDataSize, CIC_MAX_METADATA_SIZE);
+			CP_LOG_WARNING("Metadata block size %lu exceeds maximum %d bytes\n", dwMetaDataSize, CIC_MAX_METADATA_SIZE);
 			// Skip the metadata but don't fail the connection
 			BYTE bDummy;
 			for (DWORD i = 0; i < dwMetaDataSize; i++)
@@ -186,13 +186,13 @@ char* DownloadPlaylistContent(const char* pcURL)
 	const DWORD dwChunkSize = 4096;
 	
 	// Simple test - output to console regardless of debug mode
-	printf("DownloadPlaylistContent: Starting download of %s\n", pcURL);
+	CP_LOG_DEBUG("DownloadPlaylistContent: Starting download of %s\n", pcURL);
 	
 	hInternet = InternetOpen("BriskPlayer/3.0", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0L);
 	if (!hInternet) 
 	{
 		DWORD dwError = GetLastError();
-		printf("DownloadPlaylistContent: InternetOpen failed with error %lu\n", dwError);
+		CP_LOG_ERROR("DownloadPlaylistContent: InternetOpen failed with error %lu\n", dwError);
 		return NULL;
 	}
 	
@@ -206,12 +206,12 @@ char* DownloadPlaylistContent(const char* pcURL)
 	if (!hURL)
 	{
 		DWORD dwError = GetLastError();
-		printf("DownloadPlaylistContent: InternetOpenUrl failed for %s with error %lu\n", pcURL, dwError);
+		CP_LOG_ERROR("DownloadPlaylistContent: InternetOpenUrl failed for %s with error %lu\n", pcURL, dwError);
 		InternetCloseHandle(hInternet);
 		return NULL;
 	}
 	
-	printf("DownloadPlaylistContent: Successfully opened URL, starting to read content\n");
+	CP_LOG_VERBOSE("DownloadPlaylistContent: Successfully opened URL, starting to read content\n");
 	
 	// Read the content in chunks
 	char* pcBuffer = CALLOC_TYPE(char, dwChunkSize);
@@ -223,7 +223,7 @@ char* DownloadPlaylistContent(const char* pcURL)
 		// Enforce maximum playlist size to prevent memory exhaustion
 		if (dwTotalSize + dwBytesRead > CIC_MAX_PLAYLIST_SIZE)
 		{
-			printf("DownloadPlaylistContent: Playlist too large (exceeds %d bytes)\n", CIC_MAX_PLAYLIST_SIZE);
+			CP_LOG_WARNING("DownloadPlaylistContent: Playlist too large (exceeds %d bytes)\n", CIC_MAX_PLAYLIST_SIZE);
 			free(pcContent);
 			pcContent = NULL;
 			break;
@@ -232,7 +232,7 @@ char* DownloadPlaylistContent(const char* pcURL)
 		// Check for integer overflow before realloc
 		if (dwTotalSize > (DWORD)(SIZE_MAX - dwBytesRead - 1))
 		{
-			printf("DownloadPlaylistContent: Content too large, aborting\n");
+			CP_LOG_WARNING("DownloadPlaylistContent: Content too large, aborting\n");
 			free(pcContent);
 			pcContent = NULL;
 			break;
@@ -241,7 +241,7 @@ char* DownloadPlaylistContent(const char* pcURL)
 		char* pcNewContent = (char*)realloc(pcContent, dwTotalSize + dwBytesRead + 1);
 		if (!pcNewContent)
 		{
-			printf("DownloadPlaylistContent: Failed to allocate memory\n");
+			CP_LOG_ERROR("DownloadPlaylistContent: Failed to allocate memory\n");
 			free(pcContent);
 			pcContent = NULL;
 			break;
@@ -251,7 +251,7 @@ char* DownloadPlaylistContent(const char* pcURL)
 		memcpy(pcContent + dwTotalSize, pcBuffer, dwBytesRead);
 		dwTotalSize += dwBytesRead;
 		pcContent[dwTotalSize] = '\0';
-		printf("DownloadPlaylistContent: Reading chunk\n");
+		CP_LOG_VERBOSE("DownloadPlaylistContent: Reading chunk\n");
 	}
 	
 	free(pcBuffer);
@@ -260,7 +260,7 @@ char* DownloadPlaylistContent(const char* pcURL)
 	
 	if (!pcContent || dwTotalSize == 0)
 	{
-		printf("DownloadPlaylistContent: No content downloaded or empty file\n");
+		CP_LOG_WARNING("DownloadPlaylistContent: No content downloaded or empty file\n");
 		if (pcContent)
 		{
 			free(pcContent);
@@ -269,11 +269,11 @@ char* DownloadPlaylistContent(const char* pcURL)
 		return NULL;
 	}
 	
-	printf("DownloadPlaylistContent: Download complete - %lu bytes from %s\n", dwTotalSize, pcURL);
+	CP_LOG_DEBUG("DownloadPlaylistContent: Download complete - %lu bytes from %s\n", dwTotalSize, pcURL);
 	
 	if (dwTotalSize > 0 && dwTotalSize < 500)
 	{
-		printf("DownloadPlaylistContent: Content: %s\n", pcContent);
+		CP_LOG_VERBOSE("DownloadPlaylistContent: Content: %s\n", pcContent);
 	}
 	
 	return pcContent;

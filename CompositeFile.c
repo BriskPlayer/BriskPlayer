@@ -142,7 +142,12 @@ CP_COMPOSITEFILE CF_Create_FromFile(const char* pcPath)
 	}
 	
 	// Form a memory mapped file from the source
-	pContext = (CPs_CompositeContext*)malloc(sizeof(CPs_CompositeContext));
+	pContext = (CPs_CompositeContext*)SAFE_MALLOC(sizeof(CPs_CompositeContext));
+	if (!pContext)
+	{
+		CloseHandle(hFile);
+		return NULL;
+	}
 	
 	pContext->m_dwFileSize = dwFileSize;
 	

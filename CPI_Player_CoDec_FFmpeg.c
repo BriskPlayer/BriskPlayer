@@ -27,6 +27,8 @@
 
 #include "CPI_Player_CoDec_C23.h"
 #include "CPI_Stream.h"
+#include "threading_compat.h"
+#include "debug.h"  // For CP_LOG macros
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
@@ -34,47 +36,6 @@
 #include <libswresample/swresample.h>
 #include <string.h>
 #include <assert.h>
-
-// Threading support with fallback
-#if HAVE_C23_THREADING
-    #include <threads.h>
-#else
-    // Use Windows CRITICAL_SECTION as fallback
-    #ifndef NOMINMAX
-        #define NOMINMAX
-    #endif
-    #ifndef WIN32_LEAN_AND_MEAN
-        #define WIN32_LEAN_AND_MEAN
-    #endif
-    #include <windows.h>
-    
-    // Define mtx_t as CRITICAL_SECTION for Windows fallback
-    typedef CRITICAL_SECTION mtx_t;
-    #define mtx_plain 0
-    
-    static inline int mtx_init(mtx_t* mtx, int type) {
-        (void)type;  // Unused
-        InitializeCriticalSection(mtx);
-        return 0;  // Success
-    }
-    
-    static inline int mtx_lock(mtx_t* mtx) {
-        EnterCriticalSection(mtx);
-        return 0;  // Success
-    }
-    
-    static inline int mtx_unlock(mtx_t* mtx) {
-        LeaveCriticalSection(mtx);
-        return 0;  // Success
-    }
-    
-    static inline void mtx_destroy(mtx_t* mtx) {
-        DeleteCriticalSection(mtx);
-    }
-    
-    // Define thrd_success constant for compatibility
-    #define thrd_success 0
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // C23 Enhanced FFmpeg Context with Better Type Safety
@@ -359,7 +320,7 @@ static BOOL ffmpeg_OpenFile(CP_HCODECMODULE hModule, const char* pcFilename,
     // Method 4: If still no duration, set to 0 (unknown) - let it play to the end
     // The player will detect end-of-stream naturally
     if (context->total_samples == 0) {
-        printf("Warning: Could not determine file duration for %s, will play until EOF\n", pcFilename);
+        CP_LOG_WARNING("Could not determine file duration for %s, will play until EOF\n", pcFilename);
     }
     
     context->current_sample = 0;
@@ -541,7 +502,7 @@ static void ffmpeg_GetFileInfo(CP_HCODECMODULE hModule, CPs_FileInfo* pInfo) {
         pInfo->m_iFileLength_Secs = 86400; // 24 hours - essentially unlimited
     }
     
-    printf("FFmpeg GetFileInfo: total_samples=%llu, sample_rate=%u, duration_secs=%d\n",
+    CP_LOG_VERBOSE("FFmpeg GetFileInfo: total_samples=%llu, sample_rate=%u, duration_secs=%d\n",
            context->total_samples, context->sample_rate, pInfo->m_iFileLength_Secs);
     
     mtx_unlock(&context->context_mutex);

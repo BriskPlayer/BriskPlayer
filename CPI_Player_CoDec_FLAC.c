@@ -28,50 +28,10 @@
 #define FLAC__NO_DLL  // Static linking with FLAC library
 #include "CPI_Player_CoDec_C23.h"
 #include "CPI_Stream.h"
+#include "threading_compat.h"  // Consolidated threading support
 #include <FLAC/stream_decoder.h>
 #include <string.h>
 #include <assert.h>
-
-// Threading support with fallback
-#if HAVE_C23_THREADING
-    #include <threads.h>
-#else
-    // Use Windows CRITICAL_SECTION as fallback
-    #ifndef NOMINMAX
-        #define NOMINMAX
-    #endif
-    #ifndef WIN32_LEAN_AND_MEAN
-        #define WIN32_LEAN_AND_MEAN
-    #endif
-    #include <windows.h>
-    
-    // Define mtx_t as CRITICAL_SECTION for Windows fallback
-    typedef CRITICAL_SECTION mtx_t;
-    #define mtx_plain 0
-    
-    static inline int mtx_init(mtx_t* mtx, int type) {
-        (void)type;  // Unused
-        InitializeCriticalSection(mtx);
-        return 0;  // Success
-    }
-    
-    static inline int mtx_lock(mtx_t* mtx) {
-        EnterCriticalSection(mtx);
-        return 0;  // Success
-    }
-    
-    static inline int mtx_unlock(mtx_t* mtx) {
-        LeaveCriticalSection(mtx);
-        return 0;  // Success
-    }
-    
-    static inline void mtx_destroy(mtx_t* mtx) {
-        DeleteCriticalSection(mtx);
-    }
-    
-    // Define thrd_success constant for compatibility
-    #define thrd_success 0
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // C23 Enhanced FLAC Context with Better Type Safety

@@ -37,7 +37,9 @@ void CPDlgProperties_Show(HWND hWndParent, CP_HPLAYLISTITEM hItem)
 		return;
 		
 	// Allocate dialog data
-	pData = (CPDlgProperties_Data*)malloc(sizeof(CPDlgProperties_Data));
+	pData = (CPDlgProperties_Data*)SAFE_MALLOC(sizeof(CPDlgProperties_Data));
+	if (!pData)
+		return;
 	pData->m_hItem = hItem;
 	pData->m_hAlbumArt = NULL;
 	

@@ -151,7 +151,11 @@ void CPlaylistWindow_Destroy(void)
 	CPAAT_Cleanup();
 	
 	// Cleanup windows
-	IF_CloseWindow(windows.m_hifPlaylist);
+	if (windows.m_hifPlaylist)
+	{
+		IF_CloseWindow(windows.m_hifPlaylist);
+		windows.m_hifPlaylist = NULL;
+	}
 	globals.m_hPlaylistViewControl = NULL;
 }
 
@@ -194,6 +198,9 @@ void CPlaylistWindow_CreateSubparts(void)
 //
 void CPlaylistWindow_SetVisible(const BOOL bNewVisibleState)
 {
+	if (!windows.m_hifPlaylist)
+		return;
+	
 	CheckMenuItem(globals.main_menu_popup, MENU_PLAYLIST, MF_BYCOMMAND | (bNewVisibleState ? MF_CHECKED : 0));
 	IF_SetVisible(windows.m_hifPlaylist, bNewVisibleState);
 }

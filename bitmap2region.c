@@ -73,7 +73,9 @@ HRGN main_bitmap_to_region(HBITMAP hBmp, COLORREF cTransparentColor)
 
 	// Get the size of the source
 	GetObject(hBmp, sizeof(bitmap), &bitmap);
-	pBitmapBits = (DWORD*)malloc(sizeof(DWORD) * bitmap.bmWidth * bitmap.bmHeight);
+	pBitmapBits = (DWORD*)SAFE_MALLOC(sizeof(DWORD) * bitmap.bmWidth * bitmap.bmHeight);
+	if (!pBitmapBits)
+		return NULL;
 
 	// Extract the bits of the bitmap
 	{
@@ -202,14 +204,21 @@ HRGN main_bitmap_to_region_1bit(HBITMAP hBmp, COLORREF cTransparentColor)
 	else
 		iEndofLineCorrection = 0;
 
-	pBitmapBits = (BYTE*)malloc(iStride * bitmap.bmHeight);
+	pBitmapBits = (BYTE*)SAFE_MALLOC(iStride * bitmap.bmHeight);
+	if (!pBitmapBits)
+		return NULL;
 
 	// Extract the bits of the bitmap
 	{
 		BITMAPINFO* pBMI;
 		HDC dc;
 
-		pBMI = malloc(sizeof(BITMAPINFO) + (sizeof(RGBQUAD)<<1));
+		pBMI = SAFE_MALLOC(sizeof(BITMAPINFO) + (sizeof(RGBQUAD)<<1));
+		if (!pBMI)
+		{
+			free(pBitmapBits);
+			return NULL;
+		}
 		memset(pBMI, 0, sizeof(*pBMI));
 		pBMI->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 		pBMI->bmiHeader.biPlanes = 1;

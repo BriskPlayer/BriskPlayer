@@ -426,20 +426,20 @@ void CPL_AddSingleFile(CP_HPLAYLIST hPlaylist, const char* pcPath, const char* p
 		if (extension == NULL)
 			return;
 		
-		printf("CPL_AddItem: Checking file extension '%s' against codecs\n", extension);
+		CP_LOG_VERBOSE("CPL_AddItem: Checking file extension '%s' against codecs\n", extension);
 			
 		for (i = 0; i <= CP_CODEC_last; i++)
 		{
 			if (CPFA_IsAssociated(&pContext->m_CoDecs[i], extension, &tempcookie))
 			{
-				printf("CPL_AddItem: Extension '%s' is supported by codec %d\n", extension, i);
+				CP_LOG_VERBOSE("CPL_AddItem: Extension '%s' is supported by codec %d\n", extension, i);
 				valid = TRUE;
 				break;
 			}
 		}
 		
 		if (!valid)
-			printf("CPL_AddItem: Extension '%s' is not supported by any codec\n", extension);
+			CP_LOG_VERBOSE("CPL_AddItem: Extension '%s' is not supported by any codec\n", extension);
 		
 		// we could get here and still be valid
 		// it might get here if a stream is of the form http://ipaddr:port with no
@@ -540,12 +540,14 @@ void CPL_HandleAsyncNotify(CP_HPLAYLIST hPlaylist, WPARAM wParam, LPARAM lParam)
 	int iChunkItemIDX;
 	
 	// Add all of the items in the chunk
-	CLV_BeginBatch(globals.m_hPlaylistViewControl);
+	if (globals.m_hPlaylistViewControl)
+		CLV_BeginBatch(globals.m_hPlaylistViewControl);
 	
 	for (iChunkItemIDX = 0; iChunkItemIDX < pChunk->m_iNumberInChunk; iChunkItemIDX++)
 		CPL_AddSingleFile_pt2(globals.m_hPlaylist, pChunk->m_aryItems[iChunkItemIDX], pChunk->m_aryBatchIDs[iChunkItemIDX]);
 		
-	CLV_EndBatch(globals.m_hPlaylistViewControl);
+	if (globals.m_hPlaylistViewControl)
+		CLV_EndBatch(globals.m_hPlaylistViewControl);
 	
 	// Cleanup
 	free(pChunk);
@@ -1159,12 +1161,12 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 			INTERNET_BUFFERS internetbuffer;
 			char *pcPlaylistBuffer;
 			
-			printf("CPL_AddFile: Processing PLS URL: %s\n", pcFilename);
+			CP_LOG_DEBUG("CPL_AddFile: Processing PLS URL: %s\n", pcFilename);
 			
-			hInternet = InternetOpen(CP_COOLPLAYER, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0L);
+			hInternet = InternetOpen(CP_BRISKPLAYER, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0L);
 			if (hInternet == NULL)
 			{
-				printf("CPL_AddFile: InternetOpen failed for PLS URL\n");
+				CP_LOG_ERROR("CPL_AddFile: InternetOpen failed for PLS URL\n");
 				CPL_cb_LockWindowUpdates(FALSE);
 				return;
 			}
@@ -1177,7 +1179,7 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 				
 			if (hURLStream == NULL)
 			{
-				printf("CPL_AddFile: InternetOpenUrl failed for PLS URL: %s\n", pcFilename);
+				CP_LOG_ERROR("CPL_AddFile: InternetOpenUrl failed for PLS URL: %s\n", pcFilename);
 				InternetCloseHandle(hInternet);
 				CPL_cb_LockWindowUpdates(FALSE);
 				return;
@@ -1187,7 +1189,7 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 			pcPlaylistBuffer = CALLOC_TYPE(char, 0x40001);
 			if (!pcPlaylistBuffer)
 			{
-				printf("CPL_AddFile: Memory allocation failed for PLS URL\n");
+				CP_LOG_ERROR("CPL_AddFile: Memory allocation failed for PLS URL\n");
 				InternetCloseHandle(hURLStream);
 				InternetCloseHandle(hInternet);
 				CPL_cb_LockWindowUpdates(FALSE);
@@ -1209,7 +1211,7 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 			
 			if ((!bReadResult) || (!internetbuffer.dwBufferLength))
 			{
-				printf("CPL_AddFile: Failed to download PLS content from: %s\n", pcFilename);
+				CP_LOG_ERROR("CPL_AddFile: Failed to download PLS content from: %s\n", pcFilename);
 				free(pcPlaylistBuffer);
 				CPL_cb_LockWindowUpdates(FALSE);
 				return;
@@ -1217,7 +1219,7 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 			
 			// Null-terminate the buffer
 			pcPlaylistBuffer[internetbuffer.dwBufferLength] = '\0';
-			printf("CPL_AddFile: Downloaded %lu bytes of PLS content\n", internetbuffer.dwBufferLength);
+			CP_LOG_DEBUG("CPL_AddFile: Downloaded %lu bytes of PLS content\n", internetbuffer.dwBufferLength);
 			
 			// Parse PLS content manually
 			char* pcLine = pcPlaylistBuffer;
@@ -1251,7 +1253,7 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 						
 						if (*pcEquals)
 						{
-							printf("CPL_AddFile: Found stream URL: %s\n", pcEquals);
+							CP_LOG_DEBUG("CPL_AddFile: Found stream URL: %s\n", pcEquals);
 							CPL_AddPrefixedFile(hPlaylist, pcEquals, NULL, pcFilename, iPlaylist_VolumeBytes, iPlaylist_DirectoryBytes);
 						}
 					}
@@ -1318,7 +1320,7 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 				(_strnicmp(pcFilename, CIC_FTPHEADER, sizeof(CIC_FTPHEADER) - 1) == 0))
 		{
 			// This playlist is located on the internet, so we have to download it.
-			hInternet = InternetOpen(CP_COOLPLAYER,
+			hInternet = InternetOpen(CP_BRISKPLAYER,
 									 INTERNET_OPEN_TYPE_PRECONFIG,
 									 NULL, NULL, 0L);
 			                         
