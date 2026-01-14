@@ -48,14 +48,30 @@
     #include <intrin.h>
     #define HAVE_SIMD_MEMCPY 1
 #elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
-    #include <emmintrin.h>  // SSE2
-    #define HAVE_SIMD_MEMCPY 1
+    // Check if SSE2 is available at compile time
+    #if defined(__SSE2__) || defined(__x86_64__)
+        #include <emmintrin.h>  // SSE2
+        #define HAVE_SIMD_MEMCPY 1
+    #else
+        // SSE2 not enabled by default (e.g., i686 cross-compilation)
+        // Try to enable it via target attribute
+        #if __GNUC__ >= 4
+            #include <emmintrin.h>  // SSE2
+            #define HAVE_SIMD_MEMCPY 1
+            #define NEED_SSE2_TARGET_ATTR 1
+        #else
+            #define HAVE_SIMD_MEMCPY 0
+        #endif
+    #endif
 #else
     #define HAVE_SIMD_MEMCPY 0
 #endif
 
 // Optimized memory copy for audio buffers
 // Uses SSE2 streaming stores for large aligned transfers
+#if HAVE_SIMD_MEMCPY && defined(NEED_SSE2_TARGET_ATTR)
+__attribute__((target("sse2")))
+#endif
 static void CircleBufferMemcpy(void* dest, const void* src, size_t size)
 {
 #if HAVE_SIMD_MEMCPY

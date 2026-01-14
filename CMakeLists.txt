@@ -408,29 +408,77 @@ if(CMAKE_CXX_COMPILER MATCHES "mingw" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     get_filename_component(COMPILER_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
     get_filename_component(COMPILER_ROOT ${COMPILER_DIR} DIRECTORY)
     
+    # Build list of potential library search paths
+    # Priority: GCC library paths (where libstdc++.a actually lives in MXE), 
+    # then CMAKE_FIND_ROOT_PATH, then compiler-relative paths
+    set(LIB_SEARCH_PATHS "")
+    set(MXE_TARGETS "i686-w64-mingw32.static;x86_64-w64-mingw32.static;i686-w64-mingw32.shared;x86_64-w64-mingw32.shared;i686-w64-mingw32;x86_64-w64-mingw32")
+    set(GCC_VERSIONS "14.2.0;14.1.0;14.0.0;13.3.0;13.2.0;13.1.0;13.0.0;12.4.0;12.3.0;12.2.0;12.1.0;12.0.0;11.5.0;11.4.0;11.3.0;11.2.0;11.1.0;11.0.0;10.5.0;10.4.0;10.3.0;10.2.0;10.1.0")
+    
+    # MXE stores libstdc++.a in lib/gcc/<target>/<version>/
+    # Check relative to CMAKE_FIND_ROOT_PATH parent (mxe/usr)
+    if(CMAKE_FIND_ROOT_PATH)
+        foreach(ROOT_PATH ${CMAKE_FIND_ROOT_PATH})
+            get_filename_component(MXE_USR "${ROOT_PATH}" DIRECTORY)
+            foreach(MXE_TARGET ${MXE_TARGETS})
+                foreach(GCC_VER ${GCC_VERSIONS})
+                    list(APPEND LIB_SEARCH_PATHS "${MXE_USR}/lib/gcc/${MXE_TARGET}/${GCC_VER}")
+                endforeach()
+            endforeach()
+        endforeach()
+    endif()
+    
+    # Also check relative to compiler root
+    foreach(MXE_TARGET ${MXE_TARGETS})
+        foreach(GCC_VER ${GCC_VERSIONS})
+            list(APPEND LIB_SEARCH_PATHS "${COMPILER_ROOT}/lib/gcc/${MXE_TARGET}/${GCC_VER}")
+        endforeach()
+    endforeach()
+    
+    # MXE sets CMAKE_FIND_ROOT_PATH to the target sysroot (e.g., .../mxe/usr/i686-w64-mingw32.static)
+    if(CMAKE_FIND_ROOT_PATH)
+        foreach(ROOT_PATH ${CMAKE_FIND_ROOT_PATH})
+            list(APPEND LIB_SEARCH_PATHS "${ROOT_PATH}/lib")
+        endforeach()
+    endif()
+    
+    # Also check MXE target directories relative to compiler root
+    foreach(MXE_TARGET ${MXE_TARGETS})
+        list(APPEND LIB_SEARCH_PATHS "${COMPILER_ROOT}/${MXE_TARGET}/lib")
+    endforeach()
+    
+    # Fallback paths for native MSYS2/MinGW
+    list(APPEND LIB_SEARCH_PATHS "${COMPILER_ROOT}/lib")
+    
     # For Windows XP compatibility, link winpthread before libstdc++
     # This provides XP-compatible implementations of threading primitives
-    # Check for both cross-compilation path and native MSYS2 path
-    set(WINPTHREAD_LIB "${COMPILER_ROOT}/i686-w64-mingw32/lib/libwinpthread.a")
-    if(NOT EXISTS "${WINPTHREAD_LIB}")
-        set(WINPTHREAD_LIB "${COMPILER_ROOT}/lib/libwinpthread.a")
-    endif()
-    if(EXISTS "${WINPTHREAD_LIB}")
+    set(WINPTHREAD_LIB "")
+    foreach(SEARCH_PATH ${LIB_SEARCH_PATHS})
+        set(CANDIDATE_LIB "${SEARCH_PATH}/libwinpthread.a")
+        if(EXISTS "${CANDIDATE_LIB}")
+            set(WINPTHREAD_LIB "${CANDIDATE_LIB}")
+            break()
+        endif()
+    endforeach()
+    if(WINPTHREAD_LIB)
         target_link_libraries(briskplayer PRIVATE "${WINPTHREAD_LIB}")
         message(STATUS "✓ Linked winpthread for XP compatibility: ${WINPTHREAD_LIB}")
     endif()
     
     # Link the static C++ standard library using full path
-    # Check for both cross-compilation path and native MSYS2 path
-    set(STDCXX_LIB "${COMPILER_ROOT}/i686-w64-mingw32/lib/libstdc++.a")
-    if(NOT EXISTS "${STDCXX_LIB}")
-        set(STDCXX_LIB "${COMPILER_ROOT}/lib/libstdc++.a")
-    endif()
-    if(EXISTS "${STDCXX_LIB}")
+    set(STDCXX_LIB "")
+    foreach(SEARCH_PATH ${LIB_SEARCH_PATHS})
+        set(CANDIDATE_LIB "${SEARCH_PATH}/libstdc++.a")
+        if(EXISTS "${CANDIDATE_LIB}")
+            set(STDCXX_LIB "${CANDIDATE_LIB}")
+            break()
+        endif()
+    endforeach()
+    if(STDCXX_LIB)
         target_link_libraries(briskplayer PRIVATE "${STDCXX_LIB}")
         message(STATUS "✓ Linked C++ standard library: ${STDCXX_LIB}")
     else()
-        message(WARNING "Could not find libstdc++.a at ${STDCXX_LIB}")
+        message(WARNING "Could not find libstdc++.a - the linker will search standard paths")
     endif()
 endif()
 
