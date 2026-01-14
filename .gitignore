@@ -12,6 +12,7 @@ CMakeFiles/
 cmake_install.cmake
 Makefile
 *.cmake
+CP_Version.h
 
 # Compiled executables
 *.exe
