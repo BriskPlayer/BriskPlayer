@@ -2012,9 +2012,11 @@ int     main_play_control(WORD wParam, HWND hWnd)
 					main_skin_select_menu(skinpathje);
 				}
 			}
-			
 			else
-				main_set_default_skin();
+			{
+				// Using built-in skin - cycle through variants (Normal -> Shade -> Normal)
+				main_set_next_builtin_skin();
+			}
 				
 			if (options.scroll_track_title)
 				SetTimer(hWnd, CPC_TIMERID_SCROLLTITLETEXT, 50, NULL);

@@ -4,12 +4,14 @@
 //
 #define IDR_RT_MANIFEST                 1
 #define IDB_MAINUP                      101
+#define IDB_MAINDOWN                    132
+#define IDB_MAINSW                      133
+#define IDB_MAINSMALLFONT               115
+#define IDB_MAINBIGFONT                 116
 #define IDD_PLAYLIST                    108
 #define APP_ICON                        110
 #define IDR_MENU1                       111
 #define IDR_ACCELERATOR1                114
-#define IDB_MAINSMALLFONT               115
-#define IDB_MAINBIGFONT                 116
 #define IDD_ABOUT                       118
 #define IDR_ABOUT1                      125
 #define IDD_OPTIONS                     126
@@ -17,7 +19,6 @@
 #define IDI_ICON_PLS                    129
 #define IDD_TAGEDIT                     130
 #define IDD_URL                         131
-#define IDB_MAINDOWN                    132
 #define IDR_KEYBOARD                    149
 #define IDB_SYSTRAYBG                   152
 #define IDB_SYSTRAYFG                   153
@@ -26,6 +27,16 @@
 #define IDB_PLAYLIST_CURRENTTRACK       157
 #define IDD_QUICKFIND                   158
 #define IDR_DEFAULTSKIN                 192
+// Built-in skin variants (shade mode)
+#define IDB_SHADEUP                     193
+#define IDB_SHADEDOWN                   197
+#define IDB_SHADESW                     198
+#define IDB_SHADETIMEFONT               199
+#define IDB_SHADETEXTFONT               200
+// Built-in skin variants (EQ mode)
+#define IDB_EQUP                        201
+#define IDB_EQTIMEFONT                  204
+#define IDB_EQTEXTFONT                  205
 #define IDB_SYSICON                     194
 #define IDB_SYSICON_MASK                196
 #define IDC_PLAYLIST                    1000

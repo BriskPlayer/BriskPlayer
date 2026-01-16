@@ -18,6 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+// Built-in skin variants
+typedef enum BuiltinSkinVariant
+{
+	BUILTIN_SKIN_NORMAL = 0,   // Default/basic skin
+	BUILTIN_SKIN_EQ,           // Skin with EQ panel visible
+	BUILTIN_SKIN_SHADE,        // Shade/compact mode
+	BUILTIN_SKIN_COUNT         // Total number of built-in variants
+} BuiltinSkinVariant;
 
 enum Objects
 {
@@ -91,3 +99,9 @@ typedef struct Skin
 	char    aTimeFont[MAX_PATH];
 	char    aTextFont[MAX_PATH];
 } CoolSkin;
+
+// Built-in skin functions
+int main_set_default_skin(void);
+int main_set_eq_skin(void);
+int main_set_shade_skin(void);
+int main_set_next_builtin_skin(void);

@@ -32,12 +32,26 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Bitmap
 //
 
-IDB_MAINDOWN            BITMAP                  "res/main_down.bmp"
-IDB_MAINBIGFONT         BITMAP                  "res/main_bigfont.bmp"
-IDB_MAINSMALLFONT       BITMAP                  "res/main_smallfont.bmp"
-IDB_MAINUP              BITMAP                  "res/main_up.bmp"
+// Built-in normal mode skin bitmaps
+IDB_MAINUP              BITMAP                  "res/normal_up.bmp"
+IDB_MAINDOWN            BITMAP                  "res/eq_down.bmp"
+IDB_MAINSW              BITMAP                  "res/eq_sw.bmp"
+IDB_MAINBIGFONT         BITMAP                  "res/normal_numbers.bmp"
+IDB_MAINSMALLFONT       BITMAP                  "res/normal_text.bmp"
 IDB_SYSICON             BITMAP                  "res/SysIcon.bmp"
 IDB_SYSICON_MASK        BITMAP                  "res/SysIcon_Mask.bmp"
+
+// Built-in shade mode skin bitmaps
+IDB_SHADEUP             BITMAP                  "res/shade_up.bmp"
+IDB_SHADEDOWN           BITMAP                  "res/shade_down.bmp"
+IDB_SHADESW             BITMAP                  "res/shade_sw.bmp"
+IDB_SHADETIMEFONT       BITMAP                  "res/shade_time.bmp"
+IDB_SHADETEXTFONT       BITMAP                  "res/shade_text.bmp"
+
+// Built-in EQ mode skin bitmaps (shares down/sw with normal mode)
+IDB_EQUP                BITMAP                  "res/eq_up.bmp"
+IDB_EQTIMEFONT          BITMAP                  "res/eq_numbers.bmp"
+IDB_EQTEXTFONT          BITMAP                  "res/eq_text.bmp"
 
 
 /////////////////////////////////////////////////////////////////////////////

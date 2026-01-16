@@ -124,17 +124,26 @@ int main_set_default_skin(void)
 	
 	Skin.transparentcolor = 0xff00ff;
 	hInstance = GetModuleHandle(NULL);
+	
+	// Load normal skin bitmaps from resources
+	DeleteObject(graphics.bmp_main_up);
 	graphics.bmp_main_up =
 		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_MAINUP),
 							IMAGE_BITMAP, 0, 0, 0L);
+	DeleteObject(graphics.bmp_main_down);
 	graphics.bmp_main_down =
 		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_MAINDOWN),
 							IMAGE_BITMAP, 0, 0, 0L);
-	graphics.bmp_main_switch = graphics.bmp_main_down;
+	DeleteObject(graphics.bmp_main_switch);
+	graphics.bmp_main_switch =
+		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_MAINSW),
+							IMAGE_BITMAP, 0, 0, 0L);
+	DeleteObject(graphics.bmp_main_time_font);
 	graphics.bmp_main_time_font =
 		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_MAINBIGFONT),
 							IMAGE_BITMAP, 0, 0, 0L);
 	graphics.bmp_main_track_font = graphics.bmp_main_time_font;
+	DeleteObject(graphics.bmp_main_title_font);
 	graphics.bmp_main_title_font =
 		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_MAINSMALLFONT),
 							IMAGE_BITMAP, 0, 0, 0L);
@@ -153,12 +162,242 @@ int main_set_default_skin(void)
 				  positionpercentage);
 	}
 	
-	globals.main_bool_skin_next_is_default = FALSE;
+	globals.main_bool_skin_next_is_default = TRUE;
+	globals.builtin_skin_variant = BUILTIN_SKIN_NORMAL;
 	
 	main_update_title_text();
 	main_skin_select_menu("Default");
 	
 	return TRUE;
+}
+
+// Set the built-in shade (compact) skin
+int main_set_shade_skin(void)
+{
+	HINSTANCE hInstance;
+	float   positionpercentage;
+	
+	if (Skin.Object[PositionSlider].maxw == 1)
+	{
+		positionpercentage =
+			(float) globals.main_int_track_position /
+			(float) Skin.Object[PositionSlider].h;
+	}
+	else
+	{
+		positionpercentage =
+			(float) globals.main_int_track_position /
+			(float) Skin.Object[PositionSlider].w;
+	}
+	
+	globals.main_int_title_scroll_position = 0;
+	globals.mail_int_title_scroll_max_position = 0;
+
+	memset(&Skin, 0, sizeof(Skin));
+	
+	// Shade mode skin coordinates from CoolPlayer+Portable_shade.ini
+	main_skin_set_struct_value(PlaySwitch, 45, 2, 20, 20, 0, 45, 2, 20, 20, "");
+	main_skin_set_struct_value(StopSwitch, 84, 2, 20, 20, 0, 84, 2, 20, 20, "");
+	main_skin_set_struct_value(PauseSwitch, 65, 2, 20, 20, 0, 65, 2, 20, 20, "");
+	main_skin_set_struct_value(RepeatSwitch, 240, 0, 20, 12, 0, 240, 0, 20, 12, "");
+	main_skin_set_struct_value(ShuffleSwitch, 240, 13, 20, 12, 0, 240, 13, 20, 12, "");
+	// EqSwitch is disabled in shade mode - set to 0,0,0,0
+	main_skin_set_struct_value(EqSwitch, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(MinimizeButton, 262, 0, 27, 13, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(ExitButton, 315, 0, 27, 13, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(NextSkinButton, 288, 0, 28, 13, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(EjectButton, 221, 0, 20, 12, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(NextButton, 104, 2, 20, 20, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(PrevButton, 26, 2, 20, 20, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(MoveArea, 0, 0, 15, 25, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(PlaylistButton, 221, 13, 20, 12, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(VolumeSlider, 264, 16, 65, 6, 0, 264, 16, 11, 6, "");
+	main_skin_set_struct_value(PositionSlider, 132, 18, 73, 6, 0, 131, 18, 12, 6, "");
+	// No EQ sliders in shade mode
+	main_skin_set_struct_value(Eq1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(Eq2, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(Eq3, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(Eq4, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(Eq5, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(Eq6, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(Eq7, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(Eq8, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(SongtitleText, 176, 9, 5, 7, 6, 0, 0, 0, 0, "");
+	// TrackText is not used in shade mode
+	main_skin_set_struct_value(TrackText, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(TimeText, 134, 9, 5, 7, 0, 0, 0, 0, 0, "");
+	// No bitrate/freq display in shade mode
+	main_skin_set_struct_value(BitrateText, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(FreqText, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
+	
+	Skin.transparentcolor = 0xff00ff;
+	hInstance = GetModuleHandle(NULL);
+	
+	// Load shade mode bitmaps from resources
+	DeleteObject(graphics.bmp_main_up);
+	graphics.bmp_main_up =
+		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_SHADEUP),
+							IMAGE_BITMAP, 0, 0, 0L);
+	DeleteObject(graphics.bmp_main_down);
+	graphics.bmp_main_down =
+		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_SHADEDOWN),
+							IMAGE_BITMAP, 0, 0, 0L);
+	DeleteObject(graphics.bmp_main_switch);
+	graphics.bmp_main_switch =
+		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_SHADESW),
+							IMAGE_BITMAP, 0, 0, 0L);
+	DeleteObject(graphics.bmp_main_time_font);
+	graphics.bmp_main_time_font =
+		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_SHADETIMEFONT),
+							IMAGE_BITMAP, 0, 0, 0L);
+	graphics.bmp_main_track_font = graphics.bmp_main_time_font;
+	DeleteObject(graphics.bmp_main_title_font);
+	graphics.bmp_main_title_font =
+		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_SHADETEXTFONT),
+							IMAGE_BITMAP, 0, 0, 0L);
+	                        
+	if (Skin.Object[PositionSlider].maxw == 1)
+	{
+		globals.main_int_track_position =
+			(int)((float)(Skin.Object[PositionSlider].h) *
+				  positionpercentage);
+	}
+	else
+	{
+		globals.main_int_track_position =
+			(int)((float)(Skin.Object[PositionSlider].w) *
+				  positionpercentage);
+	}
+	
+	globals.main_bool_skin_next_is_default = TRUE;
+	globals.builtin_skin_variant = BUILTIN_SKIN_SHADE;
+	
+	main_update_title_text();
+	main_skin_select_menu("Default");
+	
+	return TRUE;
+}
+
+// Set the built-in EQ skin (with EQ panel visible)
+int main_set_eq_skin(void)
+{
+	HINSTANCE hInstance;
+	float   positionpercentage;
+	
+	if (Skin.Object[PositionSlider].maxw == 1)
+	{
+		positionpercentage =
+			(float) globals.main_int_track_position /
+			(float) Skin.Object[PositionSlider].h;
+	}
+	else
+	{
+		positionpercentage =
+			(float) globals.main_int_track_position /
+			(float) Skin.Object[PositionSlider].w;
+	}
+	
+	globals.main_int_title_scroll_position = 0;
+	globals.mail_int_title_scroll_max_position = 0;
+
+	memset(&Skin, 0, sizeof(Skin));
+	
+	// EQ skin coordinates from CoolPlayer+Portable_EQ.ini
+	main_skin_set_struct_value(PlaySwitch, 52, 108, 31, 32, 0, 52, 108, 31, 32, "");
+	main_skin_set_struct_value(StopSwitch, 120, 113, 27, 27, 0, 120, 113, 27, 27, "");
+	main_skin_set_struct_value(PauseSwitch, 87, 111, 29, 29, 0, 87, 111, 29, 29, "");
+	main_skin_set_struct_value(RepeatSwitch, 274, 33, 33, 32, 0, 274, 33, 33, 32, "");
+	main_skin_set_struct_value(ShuffleSwitch, 306, 32, 30, 26, 0, 306, 32, 30, 26, "");
+	main_skin_set_struct_value(EqSwitch, 359, 14, 51, 20, 0, 359, 14, 51, 20, "");
+	main_skin_set_struct_value(MinimizeButton, 262, 0, 27, 14, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(ExitButton, 315, 0, 28, 14, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(NextSkinButton, 288, 0, 28, 14, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(EjectButton, 186, 113, 27, 28, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(NextButton, 151, 114, 26, 25, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(PrevButton, 22, 114, 26, 25, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(MoveArea, 0, 0, 15, 25, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(PlaylistButton, 214, 113, 28, 28, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(VolumeSlider, 252, 121, 65, 11, 0, 252, 121, 20, 11, "");
+	main_skin_set_struct_value(PositionSlider, 19, 92, 298, 11, 0, 18, 92, 20, 11, "");
+	// EQ sliders
+	main_skin_set_struct_value(Eq1, 360, 40, 9, 53, 1, 360, 40, 9, 11, "");
+	main_skin_set_struct_value(Eq2, 378, 40, 9, 53, 1, 378, 40, 9, 11, "");
+	main_skin_set_struct_value(Eq3, 396, 40, 9, 53, 1, 396, 40, 9, 11, "");
+	main_skin_set_struct_value(Eq4, 414, 40, 9, 53, 1, 414, 40, 9, 11, "");
+	main_skin_set_struct_value(Eq5, 432, 40, 9, 53, 1, 432, 40, 9, 11, "");
+	main_skin_set_struct_value(Eq6, 450, 40, 9, 53, 1, 450, 40, 9, 11, "");
+	main_skin_set_struct_value(Eq7, 468, 40, 9, 53, 1, 468, 40, 9, 11, "");
+	main_skin_set_struct_value(Eq8, 486, 40, 9, 53, 1, 486, 40, 9, 11, "");
+	main_skin_set_struct_value(SongtitleText, 30, 70, 6, 11, 30, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(TrackText, 42, 37, 14, 21, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(TimeText, 105, 37, 14, 21, 0, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(BitrateText, 280, 70, 6, 11, 4, 0, 0, 0, 0, "");
+	main_skin_set_struct_value(FreqText, 316, 70, 6, 11, 4, 0, 0, 0, 0, "");
+	
+	Skin.transparentcolor = 0xff00ff;
+	hInstance = GetModuleHandle(NULL);
+	
+	// Load EQ skin bitmaps from resources (shares down/sw with normal mode)
+	DeleteObject(graphics.bmp_main_up);
+	graphics.bmp_main_up =
+		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_EQUP),
+							IMAGE_BITMAP, 0, 0, 0L);
+	DeleteObject(graphics.bmp_main_down);
+	graphics.bmp_main_down =
+		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_MAINDOWN),
+							IMAGE_BITMAP, 0, 0, 0L);
+	DeleteObject(graphics.bmp_main_switch);
+	graphics.bmp_main_switch =
+		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_MAINSW),
+							IMAGE_BITMAP, 0, 0, 0L);
+	DeleteObject(graphics.bmp_main_time_font);
+	graphics.bmp_main_time_font =
+		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_EQTIMEFONT),
+							IMAGE_BITMAP, 0, 0, 0L);
+	graphics.bmp_main_track_font = graphics.bmp_main_time_font;
+	DeleteObject(graphics.bmp_main_title_font);
+	graphics.bmp_main_title_font =
+		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_EQTEXTFONT),
+							IMAGE_BITMAP, 0, 0, 0L);
+	                        
+	if (Skin.Object[PositionSlider].maxw == 1)
+	{
+		globals.main_int_track_position =
+			(int)((float)(Skin.Object[PositionSlider].h) *
+				  positionpercentage);
+	}
+	else
+	{
+		globals.main_int_track_position =
+			(int)((float)(Skin.Object[PositionSlider].w) *
+				  positionpercentage);
+	}
+	
+	globals.main_bool_skin_next_is_default = TRUE;
+	globals.builtin_skin_variant = BUILTIN_SKIN_EQ;
+	
+	main_update_title_text();
+	main_skin_select_menu("Default");
+	
+	return TRUE;
+}
+
+// Set the next built-in skin variant (cycles through Normal -> EQ -> Shade -> Normal)
+int main_set_next_builtin_skin(void)
+{
+	// Cycle to the next variant
+	BuiltinSkinVariant nextVariant = (globals.builtin_skin_variant + 1) % BUILTIN_SKIN_COUNT;
+	
+	switch (nextVariant)
+	{
+		case BUILTIN_SKIN_EQ:
+			return main_set_eq_skin();
+		case BUILTIN_SKIN_SHADE:
+			return main_set_shade_skin();
+		case BUILTIN_SKIN_NORMAL:
+		default:
+			return main_set_default_skin();
+	}
 }
 
 int     main_add_tooltips(HWND hWnd, BOOL update)

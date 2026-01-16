@@ -458,6 +458,7 @@ typedef struct
 	BOOL    main_bool_skin_next_is_default;
 	BOOL    main_bool_slider_keep_focus;
 	BOOL    playlist_bool_force_skin_from_options;
+	BuiltinSkinVariant builtin_skin_variant;  // Current built-in skin variant (Normal/Shade)
 	int     main_int_track_position;
 	RECT    playlist_rect;
 	HMENU   main_menu_popup;
