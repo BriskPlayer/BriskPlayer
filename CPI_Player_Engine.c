@@ -666,8 +666,8 @@ void StartPlay(CPs_CoDecModule* pCoDec, CPs_PlayerContext* pContext)
 	pContext->m_Equaliser.Initialise(&pContext->m_Equaliser, FileInfo.m_iFreq_Hz, FileInfo.m_b16bit);
 	pContext->m_pCurrentOutputModule->Initialise(pContext->m_pCurrentOutputModule, &FileInfo, &pContext->m_Equaliser);
 	
-	// If the volume isn't 100% then set the volume level
-//    if(!pContext->m_iInternalVolume)
+	// Sync internal volume with saved volume and apply to output module
+	pContext->m_iInternalVolume = globals.m_iVolume;
 	pContext->m_pCurrentOutputModule->SetInternalVolume(pContext->m_pCurrentOutputModule, pContext->m_iInternalVolume);
 }
 

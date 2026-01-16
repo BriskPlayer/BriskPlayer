@@ -289,8 +289,18 @@ void CPP_OMFA_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInf
 	// Set initial state
 	pContext->m_bInitialized = TRUE;
 	pContext->m_bPaused = FALSE;
-	pContext->m_fVolume = 1.0f;
 	pContext->m_iCurrentBuffer = 0;
+	
+	// Apply saved volume immediately using cubic curve for natural perception
+	{
+		double volumeNormalized = (double)globals.m_iVolume / 100.0;
+		double volumeCubic = volumeNormalized * volumeNormalized * volumeNormalized;
+		pContext->m_fVolume = (float)volumeCubic;
+		
+		// Apply to both source and mastering voice
+		FAudioVoice_SetVolume(pContext->m_pSourceVoice, pContext->m_fVolume, FAUDIO_COMMIT_NOW);
+		FAudioVoice_SetVolume(pContext->m_pMasteringVoice, pContext->m_fVolume, FAUDIO_COMMIT_NOW);
+	}
 	
 	// Start the source voice
 	FAudioSourceVoice_Start(pContext->m_pSourceVoice, 0, FAUDIO_COMMIT_NOW);
@@ -501,15 +511,19 @@ void CPP_OMFA_SetInternalVolume(CPs_OutputModule* pModule, const int iNewVolume)
 {
 	CPs_OutputContext_FAudio* pContext = (CPs_OutputContext_FAudio*)pModule->m_pModuleCookie;
 	
-	if (!pContext || !pContext->m_bInitialized)
+	if (!pContext || !pContext->m_bInitialized || !pContext->m_pSourceVoice)
 		return;
-		
-	// Convert volume from 0-100 to 0.0-1.0 using decimal precision
-	audio_precision_t volumePrecise = (audio_precision_t)iNewVolume / AUDIO_DECIMAL(100.0);
-	pContext->m_fVolume = (float)volumePrecise;
 	
-	// Apply volume to source voice
+	// Use cubic curve for more natural volume perception (same as DirectSound)
+	// This gives finer control at lower volumes where human hearing is more sensitive
+	double volumeNormalized = (double)iNewVolume / 100.0;
+	double volumeCubic = volumeNormalized * volumeNormalized * volumeNormalized;
+	pContext->m_fVolume = (float)volumeCubic;
+	
+	// Apply volume to both source and mastering voice
 	FAudioVoice_SetVolume(pContext->m_pSourceVoice, pContext->m_fVolume, FAUDIO_COMMIT_NOW);
+	if (pContext->m_pMasteringVoice)
+		FAudioVoice_SetVolume(pContext->m_pMasteringVoice, pContext->m_fVolume, FAUDIO_COMMIT_NOW);
 }
 
 // FAudio voice callback - called when a buffer completes

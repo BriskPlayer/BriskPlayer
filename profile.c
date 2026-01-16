@@ -262,7 +262,8 @@ void    options_read(void)
 	// Read mixer mode
 	{
 		char cMixerMode[32];
-		GetPrivateProfileString("Mixer", "Mode", "Master", cMixerMode, 32, pathbuf);
+		// Default to internal volume for better compatibility with FAudio
+		GetPrivateProfileString("Mixer", "Mode", "internal", cMixerMode, 32, pathbuf);
 		
 		if (stricmp(cMixerMode, "wave") == 0)
 			globals.m_enMixerMode = mmWaveVolume;

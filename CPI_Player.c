@@ -230,7 +230,9 @@ void CPI_Player__ReopenMixer(CP_HPLAYER hPlayer)
 								 &linecontrols,
 								 MIXER_OBJECTF_HMIXER | MIXER_GETLINECONTROLSF_ONEBYTYPE);
 			pPlayEngine->m_dwMixerControlID = mixercontrol.dwControlID;
-			CPI_Player__SetInternalVolume(pPlayEngine, 100);
+			// Set internal volume to user's saved volume - needed for output modules
+			// like FAudio that bypass the Windows mixer
+			CPI_Player__SetInternalVolume(pPlayEngine, globals.m_iVolume);
 		}
 		
 		else
@@ -332,8 +334,7 @@ void CPI_Player__SetVolume(CP_HPLAYER hPlayer, const int iNewVolume)
 	CPs_PlayEngine* pPlayEngine = (CPs_PlayEngine*)hPlayer;
 	CP_CHECKOBJECT(pPlayEngine);
 	
-	// Set volume through mixer
-	
+	// Set volume through mixer (for DirectSound/WaveOut that use Windows mixer)
 	if (pPlayEngine->m_hVolumeMixer)
 	{
 		MIXERCONTROLDETAILS_UNSIGNED VolumeLevel;
@@ -351,8 +352,9 @@ void CPI_Player__SetVolume(CP_HPLAYER hPlayer, const int iNewVolume)
 		mixerSetControlDetails((HMIXEROBJ)pPlayEngine->m_hVolumeMixer, &details, MIXER_OBJECTF_HMIXER);
 	}
 	
-	else
-		CPI_Player__SetInternalVolume(pPlayEngine, globals.m_iVolume);
+	// Always set internal volume as well - this ensures output modules like FAudio
+	// that bypass the Windows mixer still respect the volume setting
+	CPI_Player__SetInternalVolume(pPlayEngine, iNewVolume);
 }
 
 //
