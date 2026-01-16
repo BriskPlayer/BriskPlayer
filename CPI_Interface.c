@@ -747,13 +747,12 @@ void IF_RebuildRegion(CP_HINTERFACE hInterface)
 	if (pState->m_bSkipRegion)
 		return;
 		
-	// Create an offscreen
+	// Create an offscreen 32-bit bitmap for region calculation
 	GetClientRect(pState->m_hWnd, &rClient);
-	
-	bmSurface = CreateBitmap(rClient.right, rClient.bottom, 1, 1, NULL);
 	
 	dcScreen = GetDC(pState->m_hWnd);
 	dcDraw = CreateCompatibleDC(dcScreen);
+	bmSurface = CreateCompatibleBitmap(dcScreen, rClient.right, rClient.bottom);
 	
 	bmOld = (HBITMAP)SelectObject(dcDraw, bmSurface);
 	
@@ -775,7 +774,7 @@ void IF_RebuildRegion(CP_HINTERFACE hInterface)
 	DeleteDC(dcDraw);
 	
 	// Setup region
-	rgnWindow = main_bitmap_to_region_1bit(bmSurface, glb_pSkin->m_clrTransparent);
+	rgnWindow = main_bitmap_to_region(bmSurface, glb_pSkin->m_clrTransparent);
 	
 	DeleteObject(bmSurface);
 	

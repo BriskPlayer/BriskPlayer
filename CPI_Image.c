@@ -24,6 +24,7 @@
 #include "stdafx.h"
 #include "globals.h"
 #include "CompositeFile.h"
+#include "WinModern.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -33,27 +34,32 @@
 CPs_Image* CPIG_CreateImage_FromFile(const char* pcFilename)
 {
 	HBITMAP hbmLoad;
-	BITMAP bmLoad;
 	CPs_Image* pNewImage;
 	char cFilename[MAX_PATH];
+	wchar_t wcFilename[MAX_PATH];
+	int width, height;
 	
 	strcpy(cFilename, "P:\\Skin\\");
 	strcat(cFilename, pcFilename);
 	
-	hbmLoad = LoadImage(NULL, cFilename, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+	// Convert to wide char and load via WIC (supports PNG, JPEG, GIF, BMP, etc.)
+	MultiByteToWideChar(CP_UTF8, 0, cFilename, -1, wcFilename, MAX_PATH);
+	hbmLoad = WIC_LoadImageFromFile(wcFilename, &width, &height);
 	
 	if (!hbmLoad)
 		return NULL;
-		
-	// Get bitmap properties
-	GetObject(hbmLoad, sizeof(bmLoad), &bmLoad);
 	
 	// Setup Image struct
-	pNewImage = (CPs_Image*)malloc(sizeof(CPs_Image));
+	pNewImage = (CPs_Image*)SAFE_MALLOC(sizeof(CPs_Image));
+	if (!pNewImage)
+	{
+		DeleteObject(hbmLoad);
+		return NULL;
+	}
 	
 	pNewImage->m_hbmImage = hbmLoad;
-	pNewImage->m_szSize.cx = bmLoad.bmWidth;
-	pNewImage->m_szSize.cy = bmLoad.bmHeight;
+	pNewImage->m_szSize.cx = width;
+	pNewImage->m_szSize.cy = height;
 	
 	return pNewImage;
 }
@@ -67,53 +73,21 @@ CPs_Image* CPIG_CreateImage_FromSubFile(CP_COMPOSITEFILE hmComposite, const char
 	unsigned int iLength;
 	BOOL bSucceeded;
 	HBITMAP hbmLoad;
-	SIZE szBitmap;
 	CPs_Image* pNewImage;
+	int width, height;
 	
 	bSucceeded = CF_GetSubFile(hmComposite, pcSubFilename, &pFileData, &iLength);
 	
 	if (!bSucceeded)
 		return NULL;
-		
-	// Decode bitmap
-	{
-		BITMAPFILEHEADER* pFileHeader = (BITMAPFILEHEADER*)pFileData;
-		BITMAPINFO* pBitmapInfo;
-		void* pBitmapBytes;
-		HDC dcDisplay, dcDraw;
-		
-		// Check bitmap cookie
-		
-		if (pFileHeader->bfType != 0x4D42)
-		{
-			free(pFileData);
-			return NULL;
-		}
-		
-		// Upload bitmap to a DDB
-		pBitmapInfo = (BITMAPINFO*)(((BYTE*)pFileData) + sizeof(BITMAPFILEHEADER));
-		
-		pBitmapBytes = ((BYTE*)pFileData) + pFileHeader->bfOffBits;
-		
-		dcDisplay = GetDC(NULL);
-		
-		szBitmap.cx = pBitmapInfo->bmiHeader.biWidth;
-		szBitmap.cy = pBitmapInfo->bmiHeader.biHeight;
-		
-		hbmLoad = CreateCompatibleBitmap(dcDisplay, szBitmap.cx, szBitmap.cy);
-		
-		dcDraw = CreateCompatibleDC(dcDisplay);
-		
-		ReleaseDC(NULL, dcDisplay);
-		
-		SetDIBits(dcDraw, hbmLoad, 0, pBitmapInfo->bmiHeader.biHeight,
-				  pBitmapBytes, pBitmapInfo, DIB_RGB_COLORS);
-		          
-		// Cleanup
-		DeleteDC(dcDraw);
-	}
+	
+	// Load via WIC (supports PNG, JPEG, GIF, BMP, etc.)
+	hbmLoad = WIC_LoadImageFromMemory(pFileData, iLength, &width, &height);
 	
 	free(pFileData);
+	
+	if (!hbmLoad)
+		return NULL;
 	
 	// Setup Image struct
 	pNewImage = (CPs_Image*)SAFE_MALLOC(sizeof(CPs_Image));
@@ -123,7 +97,8 @@ CPs_Image* CPIG_CreateImage_FromSubFile(CP_COMPOSITEFILE hmComposite, const char
 		return NULL;
 	}
 	pNewImage->m_hbmImage = hbmLoad;
-	pNewImage->m_szSize = szBitmap;
+	pNewImage->m_szSize.cx = width;
+	pNewImage->m_szSize.cy = height;
 	return pNewImage;
 }
 

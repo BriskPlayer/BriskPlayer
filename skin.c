@@ -24,6 +24,7 @@
 #include "CompositeFile.h"
 #include "resource.h"
 #include "CPI_Gettext.h"
+#include "WinModern.h"
 
 // Forward declarations for CPSK functions
 void CPSK_DestroySkin(CPs_Skin* pSkin);
@@ -46,6 +47,15 @@ void CPlaylistWindow_SetVisible(const BOOL bNewVisibleState);
 
 // Forward declarations for interface functions
 HWND IF_GetHWnd(CP_HINTERFACE hInterface);
+
+// Helper function to load image from file path using WIC
+// Supports PNG, JPEG, GIF, BMP, TIFF formats
+static HBITMAP LoadImageFromPath(const char* pcFilePath)
+{
+	wchar_t wcFilePath[MAX_PATH];
+	MultiByteToWideChar(CP_UTF8, 0, pcFilePath, -1, wcFilePath, MAX_PATH);
+	return WIC_LoadImageFromFile(wcFilePath, NULL, NULL);
+}
 
 int main_set_default_skin(void)
 {
@@ -582,11 +592,9 @@ int     main_skin_open(char *name)
 	(void)path_remove_filespec(pathbuf);
 	
 	strcat_s(pathbuf, sizeof(pathbuf), Skin.CoolUp);
-	hInstance = GetModuleHandle(NULL);
+	(void)hInstance;  // No longer needed for external files
 	DeleteObject(graphics.bmp_main_up);
-	graphics.bmp_main_up =
-		(HBITMAP) LoadImage(hInstance, pathbuf, IMAGE_BITMAP, 0, 0,
-							LR_LOADFROMFILE);
+	graphics.bmp_main_up = LoadImageFromPath(pathbuf);
 	                        
 	if (!graphics.bmp_main_up)
 	{
@@ -598,9 +606,7 @@ int     main_skin_open(char *name)
 	
 	strcat_s(pathbuf, sizeof(pathbuf), Skin.CoolDown);
 	DeleteObject(graphics.bmp_main_down);
-	graphics.bmp_main_down =
-		(HBITMAP) LoadImage(hInstance, pathbuf, IMAGE_BITMAP, 0, 0,
-							LR_LOADFROMFILE);
+	graphics.bmp_main_down = LoadImageFromPath(pathbuf);
 	                        
 	if (!graphics.bmp_main_down)
 	{
@@ -612,9 +618,7 @@ int     main_skin_open(char *name)
 	
 	strcat_s(pathbuf, sizeof(pathbuf), Skin.CoolSwitch);
 	DeleteObject(graphics.bmp_main_switch);
-	graphics.bmp_main_switch =
-		(HBITMAP) LoadImage(hInstance, pathbuf, IMAGE_BITMAP, 0, 0,
-							LR_LOADFROMFILE);
+	graphics.bmp_main_switch = LoadImageFromPath(pathbuf);
 	                        
 	if (!graphics.bmp_main_switch)
 	{
@@ -626,9 +630,7 @@ int     main_skin_open(char *name)
 	
 	strcat_s(pathbuf, sizeof(pathbuf), Skin.aTimeFont);
 	DeleteObject(graphics.bmp_main_time_font);
-	graphics.bmp_main_time_font =
-		(HBITMAP) LoadImage(hInstance, pathbuf, IMAGE_BITMAP, 0, 0,
-							LR_LOADFROMFILE);
+	graphics.bmp_main_time_font = LoadImageFromPath(pathbuf);
 	                        
 	if (!graphics.bmp_main_time_font)
 	{
@@ -640,9 +642,7 @@ int     main_skin_open(char *name)
 	
 	strcat_s(pathbuf, sizeof(pathbuf), Skin.aTrackFont);
 	DeleteObject(graphics.bmp_main_track_font);
-	graphics.bmp_main_track_font =
-		(HBITMAP) LoadImage(hInstance, pathbuf, IMAGE_BITMAP, 0, 0,
-							LR_LOADFROMFILE);
+	graphics.bmp_main_track_font = LoadImageFromPath(pathbuf);
 	                        
 	if (!graphics.bmp_main_track_font)
 	{
@@ -654,9 +654,7 @@ int     main_skin_open(char *name)
 	
 	strcat_s(pathbuf, sizeof(pathbuf), Skin.aTextFont);
 	DeleteObject(graphics.bmp_main_title_font);
-	graphics.bmp_main_title_font =
-		(HBITMAP) LoadImage(hInstance, pathbuf, IMAGE_BITMAP, 0, 0,
-							LR_LOADFROMFILE);
+	graphics.bmp_main_title_font = LoadImageFromPath(pathbuf);
 	                        
 	if (!graphics.bmp_main_title_font)
 	{

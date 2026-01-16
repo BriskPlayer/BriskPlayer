@@ -82,13 +82,24 @@ typedef struct IWICBitmapSourceVtbl {
 
 struct IWICBitmapSource { const IWICBitmapSourceVtbl* lpVtbl; };
 
-// IWICBitmapDecoder vtable
+// IWICBitmapDecoder vtable - must match exact COM interface order
 typedef struct IWICBitmapDecoderVtbl {
+    // IUnknown (0-2)
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(IWICBitmapDecoder*, REFIID, void**);
     ULONG (STDMETHODCALLTYPE *AddRef)(IWICBitmapDecoder*);
     ULONG (STDMETHODCALLTYPE *Release)(IWICBitmapDecoder*);
-    void* _unused[5];
-    HRESULT (STDMETHODCALLTYPE *GetFrame)(IWICBitmapDecoder*, UINT, IWICBitmapFrameDecode**);
+    // IWICBitmapDecoder methods (3-11)
+    HRESULT (STDMETHODCALLTYPE *QueryCapability)(IWICBitmapDecoder*, void*, DWORD*);  // 3
+    HRESULT (STDMETHODCALLTYPE *Initialize)(IWICBitmapDecoder*, void*, WICDecodeOptions);  // 4
+    HRESULT (STDMETHODCALLTYPE *GetContainerFormat)(IWICBitmapDecoder*, GUID*);  // 5
+    HRESULT (STDMETHODCALLTYPE *GetDecoderInfo)(IWICBitmapDecoder*, void**);  // 6
+    HRESULT (STDMETHODCALLTYPE *CopyPalette)(IWICBitmapDecoder*, void*);  // 7
+    HRESULT (STDMETHODCALLTYPE *GetMetadataQueryReader)(IWICBitmapDecoder*, void**);  // 8
+    HRESULT (STDMETHODCALLTYPE *GetPreview)(IWICBitmapDecoder*, void**);  // 9
+    HRESULT (STDMETHODCALLTYPE *GetColorContexts)(IWICBitmapDecoder*, UINT, void**, UINT*);  // 10
+    HRESULT (STDMETHODCALLTYPE *GetThumbnail)(IWICBitmapDecoder*, void**);  // 11
+    HRESULT (STDMETHODCALLTYPE *GetFrameCount)(IWICBitmapDecoder*, UINT*);  // 12
+    HRESULT (STDMETHODCALLTYPE *GetFrame)(IWICBitmapDecoder*, UINT, IWICBitmapFrameDecode**);  // 13
 } IWICBitmapDecoderVtbl;
 
 struct IWICBitmapDecoder { const IWICBitmapDecoderVtbl* lpVtbl; };
@@ -127,6 +138,7 @@ struct IWICFormatConverter { const IWICFormatConverterVtbl* lpVtbl; };
 
 // IWICStream vtable
 typedef struct IWICStreamVtbl {
+    // IUnknown methods
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(IWICStream*, REFIID, void**);
     ULONG (STDMETHODCALLTYPE *AddRef)(IWICStream*);
     ULONG (STDMETHODCALLTYPE *Release)(IWICStream*);
@@ -134,28 +146,51 @@ typedef struct IWICStreamVtbl {
     HRESULT (STDMETHODCALLTYPE *Read)(IWICStream*, void*, ULONG, ULONG*);
     HRESULT (STDMETHODCALLTYPE *Write)(IWICStream*, const void*, ULONG, ULONG*);
     // IStream methods
-    void* _unused[6];
+    HRESULT (STDMETHODCALLTYPE *Seek)(IWICStream*, LARGE_INTEGER, DWORD, ULARGE_INTEGER*);
+    HRESULT (STDMETHODCALLTYPE *SetSize)(IWICStream*, ULARGE_INTEGER);
+    HRESULT (STDMETHODCALLTYPE *CopyTo)(IWICStream*, void*, ULARGE_INTEGER, ULARGE_INTEGER*, ULARGE_INTEGER*);
+    HRESULT (STDMETHODCALLTYPE *Commit)(IWICStream*, DWORD);
+    HRESULT (STDMETHODCALLTYPE *Revert)(IWICStream*);
+    HRESULT (STDMETHODCALLTYPE *LockRegion)(IWICStream*, ULARGE_INTEGER, ULARGE_INTEGER, DWORD);
+    HRESULT (STDMETHODCALLTYPE *UnlockRegion)(IWICStream*, ULARGE_INTEGER, ULARGE_INTEGER, DWORD);
+    HRESULT (STDMETHODCALLTYPE *Stat)(IWICStream*, void*, DWORD);
+    HRESULT (STDMETHODCALLTYPE *Clone)(IWICStream*, void**);
     // IWICStream methods
     HRESULT (STDMETHODCALLTYPE *InitializeFromIStream)(IWICStream*, void*);
     HRESULT (STDMETHODCALLTYPE *InitializeFromFilename)(IWICStream*, LPCWSTR, DWORD);
     HRESULT (STDMETHODCALLTYPE *InitializeFromMemory)(IWICStream*, BYTE*, DWORD);
+    HRESULT (STDMETHODCALLTYPE *InitializeFromIStreamRegion)(IWICStream*, void*, ULARGE_INTEGER, ULARGE_INTEGER);
 } IWICStreamVtbl;
 
 struct IWICStream { const IWICStreamVtbl* lpVtbl; };
 
-// IWICImagingFactory vtable
+// IWICImagingFactory vtable - must match exact COM interface order
 typedef struct IWICImagingFactoryVtbl {
+    // IUnknown methods (0-2)
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(IWICImagingFactory*, REFIID, void**);
     ULONG (STDMETHODCALLTYPE *AddRef)(IWICImagingFactory*);
     ULONG (STDMETHODCALLTYPE *Release)(IWICImagingFactory*);
+    // IWICImagingFactory methods (3-19)
     HRESULT (STDMETHODCALLTYPE *CreateDecoderFromFilename)(IWICImagingFactory*, LPCWSTR, const GUID*, 
-              DWORD, WICDecodeOptions, IWICBitmapDecoder**);
+              DWORD, WICDecodeOptions, IWICBitmapDecoder**);  // 3
     HRESULT (STDMETHODCALLTYPE *CreateDecoderFromStream)(IWICImagingFactory*, void*, const GUID*,
-              WICDecodeOptions, IWICBitmapDecoder**);
-    void* _unused[8];
-    HRESULT (STDMETHODCALLTYPE *CreateFormatConverter)(IWICImagingFactory*, IWICFormatConverter**);
-    void* _unused2[3];
-    HRESULT (STDMETHODCALLTYPE *CreateStream)(IWICImagingFactory*, IWICStream**);
+              WICDecodeOptions, IWICBitmapDecoder**);  // 4
+    HRESULT (STDMETHODCALLTYPE *CreateDecoderFromFileHandle)(IWICImagingFactory*, ULONG_PTR, const GUID*,
+              WICDecodeOptions, IWICBitmapDecoder**);  // 5
+    HRESULT (STDMETHODCALLTYPE *CreateComponentInfo)(IWICImagingFactory*, REFGUID, void**);  // 6
+    HRESULT (STDMETHODCALLTYPE *CreateDecoder)(IWICImagingFactory*, REFGUID, const GUID*, IWICBitmapDecoder**);  // 7
+    HRESULT (STDMETHODCALLTYPE *CreateEncoder)(IWICImagingFactory*, REFGUID, const GUID*, void**);  // 8
+    HRESULT (STDMETHODCALLTYPE *CreatePalette)(IWICImagingFactory*, void**);  // 9
+    HRESULT (STDMETHODCALLTYPE *CreateFormatConverter)(IWICImagingFactory*, IWICFormatConverter**);  // 10
+    HRESULT (STDMETHODCALLTYPE *CreateBitmapScaler)(IWICImagingFactory*, void**);  // 11
+    HRESULT (STDMETHODCALLTYPE *CreateBitmapClipper)(IWICImagingFactory*, void**);  // 12
+    HRESULT (STDMETHODCALLTYPE *CreateBitmapFlipRotator)(IWICImagingFactory*, void**);  // 13
+    HRESULT (STDMETHODCALLTYPE *CreateStream)(IWICImagingFactory*, IWICStream**);  // 14
+    HRESULT (STDMETHODCALLTYPE *CreateColorContext)(IWICImagingFactory*, void**);  // 15
+    HRESULT (STDMETHODCALLTYPE *CreateColorTransformer)(IWICImagingFactory*, void**);  // 16
+    HRESULT (STDMETHODCALLTYPE *CreateBitmap)(IWICImagingFactory*, UINT, UINT, REFGUID, DWORD, void**);  // 17
+    HRESULT (STDMETHODCALLTYPE *CreateBitmapFromSource)(IWICImagingFactory*, void*, DWORD, void**);  // 18
+    HRESULT (STDMETHODCALLTYPE *CreateBitmapFromSourceRect)(IWICImagingFactory*, void*, UINT, UINT, UINT, UINT, void**);  // 19
 } IWICImagingFactoryVtbl;
 
 struct IWICImagingFactory { const IWICImagingFactoryVtbl* lpVtbl; };
