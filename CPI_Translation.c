@@ -66,6 +66,9 @@ static void __translation_strings_marker(void)
     _(STR_MENU_SKIN);
     _(STR_MENU_LANGUAGE);
     _(STR_MENU_PLAY_CONTROL);
+    _(STR_MENU_DSP_PLUGINS);
+    _(STR_DSP_NONE);
+    _(STR_DSP_CONFIGURE);
     
     // Dialog strings
     _(STR_DLG_URL_TITLE);

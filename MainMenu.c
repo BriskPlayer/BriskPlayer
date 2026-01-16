@@ -118,6 +118,10 @@ void MainMenu_TranslateAll(void)
                 ModifyMenu(globals.main_menu_popup, i, MF_BYPOSITION | MF_POPUP | MF_STRING, 
                            (UINT_PTR)subMenu, T(STR_MENU_LANGUAGE));
             }
+            else if (i == DSP_SUBMENU_INDEX) {
+                ModifyMenu(globals.main_menu_popup, i, MF_BYPOSITION | MF_POPUP | MF_STRING, 
+                           (UINT_PTR)subMenu, T(STR_MENU_DSP_PLUGINS));
+            }
             else {
                 // Check if this is the Play Control submenu
                 MENUITEMINFO mii = {0};

@@ -37,11 +37,13 @@
 #include "WindowSnapping.h"
 #include "MainMenu.h"
 #include "CP_Config.h"
+#include "CPI_Player_DSP.h"
 
 // Forward declarations
 void main_translate_menu(void);
 void main_populate_language_menu(void);
 void main_switch_language(const char* languageCode);
+void main_populate_dsp_menu(void);
 
 // Function to populate language menu dynamically
 void main_populate_language_menu(void)
@@ -122,6 +124,18 @@ void main_switch_language(const char* languageCode)
     main_populate_language_menu();
 }
 
+// Function to populate DSP menu dynamically
+void main_populate_dsp_menu(void)
+{
+    HMENU dspMenu = GetSubMenu(globals.main_menu_popup, DSP_SUBMENU_INDEX);
+    if (!dspMenu) {
+        return;
+    }
+    
+    // Use the DSP module's built-in menu population
+    CPDSP_PopulateMenu(dspMenu, MENU_DSP_BASE);
+}
+
 // Function to translate menu items
 void main_translate_menu(void)
 {
@@ -162,6 +176,10 @@ void main_translate_menu(void)
             // Check if this is the Language submenu
             else if (i == LANGUAGE_SUBMENU_INDEX) {
                 ModifyMenu(globals.main_menu_popup, i, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT_PTR)subMenu, T(STR_MENU_LANGUAGE));
+            }
+            // Check if this is the DSP Plugins submenu
+            else if (i == DSP_SUBMENU_INDEX) {
+                ModifyMenu(globals.main_menu_popup, i, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT_PTR)subMenu, T(STR_MENU_DSP_PLUGINS));
             }
             // Check if this is the Play Control submenu by looking for known menu items
             else {
@@ -1283,6 +1301,14 @@ void    main_menuproc(HWND hWnd, LPPOINT points)
 		// Handle other commands
 		default:
 		{
+			// Handle DSP plugin menu items
+			if (retval >= MENU_DSP_BASE && retval < MENU_DSP_BASE + 1001) {
+				if (CPDSP_HandleMenuCommand(retval, MENU_DSP_BASE)) {
+					main_populate_dsp_menu();  // Refresh menu to show new selection
+				}
+				break;
+			}
+			
 			// Handle dynamic language menu items that might fall through
 			if (retval >= MENU_LANGUAGE_BASE && retval < MENU_LANGUAGE_BASE + 32) {
 				// Get the language index from menu ID
@@ -1804,6 +1830,9 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				CPL_DestroyPlaylist(globals.m_hPlaylist);
 			if (globals.m_hPlayer)
 				CPI_Player__Destroy(globals.m_hPlayer);
+			
+			// Cleanup DSP plugin system
+			CPDSP_Uninitialize();
 			
 			CPIC_FreeIndicators();
 			
@@ -2576,6 +2605,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				SetWindowRgn(hWnd, winregion, TRUE);
 				ShowWindow(hWnd, globals.main_int_show_minimized);
 				globals.m_hSysIcon = CPSYSICON_Create(hWnd);
+				
+				// Initialize DSP plugin system (after window is fully shown)
+				CPDSP_Initialize(hWnd);
+				CPDSP_ScanForPlugins();
+				main_populate_dsp_menu();
 				
 				SAFE_PLAYER_CALL1(CPI_Player__SetPositionRange,
 								   Skin.Object[PositionSlider].maxw ? Skin.Object[PositionSlider].h : Skin.Object[PositionSlider].w);

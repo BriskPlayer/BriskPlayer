@@ -117,6 +117,10 @@ BEGIN
             MENUITEM "English",                     MENU_LANGUAGE_EN
             MENUITEM "Deutsch",                     MENU_LANGUAGE_DE
         END
+        POPUP "&DSP Plugins"
+        BEGIN
+            MENUITEM "None (Disabled)",             MENU_DSP_NONE
+        END
         MENUITEM SEPARATOR
         POPUP "Play &Control"
         BEGIN

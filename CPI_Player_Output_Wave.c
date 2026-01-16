@@ -28,6 +28,7 @@
 #include "CPI_Player_CoDec.h"
 #include "CPI_Player_Output.h"
 #include "CPI_Equaliser.h"
+#include "CPI_Player_DSP.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -51,6 +52,11 @@ typedef struct __CPs_OutputContext_Wave
 	DWORD m_aryBlockSizes[CPC_NUMBEROFOUTPUTBLOCKS];
 	void* m_pBlockBase;
 	int m_iLastReadBlockIDX;
+	
+	// Format info for DSP
+	WORD m_wBitsPerSample;
+	WORD m_nChannels;
+	DWORD m_nSamplesPerSec;
 	
 	CPs_EqualiserModule* m_pEqualiser;
 	
@@ -119,6 +125,11 @@ void CPP_OMWV_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInf
 		waveformatex.nChannels = pFileInfo->m_bStereo ? 2 : 1;
 		waveformatex.nSamplesPerSec = pFileInfo->m_iFreq_Hz;
 		waveformatex.wBitsPerSample = pFileInfo->m_b16bit ? 16 : 8;
+		
+		// Store format info for DSP processing
+		pContext->m_wBitsPerSample = waveformatex.wBitsPerSample;
+		pContext->m_nChannels = waveformatex.nChannels;
+		pContext->m_nSamplesPerSec = waveformatex.nSamplesPerSec;
 		
 		// Calculate block align with overflow protection
 		DWORD blockAlign = (waveformatex.nChannels * waveformatex.wBitsPerSample) >> 3;
@@ -266,6 +277,16 @@ void CPP_OMWV_RefillBuffers(CPs_OutputModule* pModule)
 				// Note that the EQ module is initailised and uninitialsed by the engine
 				CPs_EqualiserModule* pEQModule = (CPs_EqualiserModule*)pModule->m_pEqualiser;
 				pEQModule->ApplyEQToBlock_Inplace(pEQModule, pOutputBlock->lpData, pOutputBlock->dwBufferLength);
+			}
+			
+			// Apply DSP plugin processing
+			if (pOutputBlock->dwBufferLength > 0 && CPDSP_IsActive())
+			{
+				int bytesPerSample = (pContext->m_wBitsPerSample / 8) * pContext->m_nChannels;
+				int numSamples = pOutputBlock->dwBufferLength / bytesPerSample;
+				CPDSP_ProcessSamples((short int*)pOutputBlock->lpData, numSamples,
+					pContext->m_wBitsPerSample, pContext->m_nChannels,
+					pContext->m_nSamplesPerSec);
 			}
 			
 			if (pOutputBlock->dwBufferLength > 0)

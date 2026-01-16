@@ -128,6 +128,11 @@
 #define MENU_LANGUAGE_DE                6002
 #define MENU_LANGUAGE_FR                6003
 // Add more language IDs as needed (6004, 6005, etc.)
+
+// DSP Plugin menu IDs (start at 7000)
+#define MENU_DSP_BASE                   7000
+#define MENU_DSP_NONE                   7000
+#define MENU_DSP_CONFIGURE              8000
 #define ID_DELETE                       40007
 #define ID_REPEAT                       40008
 #define ID_SHUFFLE                      40009

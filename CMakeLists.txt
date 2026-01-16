@@ -117,6 +117,7 @@ set(BRISK_SOURCES
     CPI_Player_CoDec_WAV.c
     CPI_Player_CoDec_WinAmpPlugin.c
     CPI_Player_CoDec_FFmpeg.c
+    CPI_Player_DSP.c
     CPI_Player_Engine.c
     CPI_Player_FileAssoc.c
     CPI_Player_Output_DirectSound.c

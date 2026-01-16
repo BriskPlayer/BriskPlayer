@@ -134,6 +134,9 @@
 #define STR_MENU_SKIN "Skin"
 #define STR_MENU_LANGUAGE "Language"
 #define STR_MENU_PLAY_CONTROL "Playback"
+#define STR_MENU_DSP_PLUGINS "DSP Plugins"
+#define STR_DSP_NONE "None (Disabled)"
+#define STR_DSP_CONFIGURE "Configure..."
 
 // Dialog strings
 #define STR_DLG_OPTIONS_TITLE "Options"

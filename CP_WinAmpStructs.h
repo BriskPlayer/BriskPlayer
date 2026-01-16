@@ -174,3 +174,60 @@ typedef struct
 //
 //
 //
+////////////////////////////////////////////////////////////////////////////////
+// DSP Plugin Structures
+// DSP plugins use a different interface - they export winampDSPGetHeader2()
+////////////////////////////////////////////////////////////////////////////////
+
+#define DSP_HDRVER 0x20
+
+// Forward declaration for the module struct
+struct winampDSPModule;
+
+// DSP Plugin Header - returned by winampDSPGetHeader2()
+typedef struct
+{
+	int version;                    // DSP_HDRVER
+	char *description;              // Description of the DSP plugin
+	
+	// Pointer to function that returns the DSP module at index 'n'
+	// Returns NULL when no more modules are available
+	struct winampDSPModule* (*getModule)(int n);
+	
+	// Optional: called on Winamp exit (added in DSP header version 0x21)
+	void (*sf)(int param);
+} winampDSPHeader;
+
+// DSP Module - does the actual processing
+typedef struct winampDSPModule
+{
+	char *description;              // Description of this particular DSP module
+	HWND hwndParent;               // Parent window (filled in by winamp)
+	HINSTANCE hDllInstance;        // DLL instance handle (filled in by winamp)
+	
+	void (*Config)(struct winampDSPModule *this_mod);  // Configuration dialog
+	int (*Init)(struct winampDSPModule *this_mod);     // Init - return 0 on success
+	
+	// Modify samples - return number of samples
+	// numsamples = number of sample PAIRS (for stereo)
+	// bps = bits per sample (8, 16, 24, or 32)
+	// nch = number of channels (1 = mono, 2 = stereo)
+	// srate = sample rate in Hz
+	int (*ModifySamples)(struct winampDSPModule *this_mod, 
+	                     short int *samples, 
+	                     int numsamples, 
+	                     int bps, 
+	                     int nch, 
+	                     int srate);
+	
+	void (*Quit)(struct winampDSPModule *this_mod);    // Called when unloading
+	
+	void *userData;                 // User data - can be used by the module for storage
+} winampDSPModule;
+
+// Function pointer type for the DSP header export
+typedef winampDSPHeader* (*winampDSPGetHeaderType)(void);
+
+//
+//
+//

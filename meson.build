@@ -220,6 +220,7 @@ brisksrc = files([
     'CPI_Player_Callbacks.c',
     'CPI_Player_CoDec_WAV.c',
     'CPI_Player_CoDec_WinAmpPlugin.c',
+    'CPI_Player_DSP.c',
     'CPI_Player_Engine.c',
     'CPI_Player_FileAssoc.c',
     'CPI_Player_Output_DirectSound.c',
@@ -257,6 +258,7 @@ brisksrc = files([
 # Keep WAV and WinAmp plugin support
 brisksrc += files('CPI_Player_CoDec_WAV.c')
 brisksrc += files('CPI_Player_CoDec_WinAmpPlugin.c')
+brisksrc += files('CPI_Player_DSP.c')
 
 # FFmpeg is now the primary codec - required
 if ffmpeg_available

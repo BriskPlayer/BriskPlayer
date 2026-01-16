@@ -26,6 +26,7 @@
 #include "CPI_Player_CoDec.h"
 #include "CP_WinAmpStructs.h"
 #include "CPI_CircleBuffer.h"
+#include "CPI_Player_DSP.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -105,17 +106,15 @@ void CP_Dummy_VSAAdd(void *data, int timestamp)
 
 int CP_Dummy_dsp_isactive(void)
 {
-	return 0;
+	return CPDSP_IsActive() ? 1 : 0;
 }
 
 int CP_Dummy_dsp_dosamples(short int *samples, int numsamples, int bps, int nch, int srate)
 {
-	(void)samples; // Suppress unused parameter warning
-	(void)numsamples; // Suppress unused parameter warning
-	(void)bps; // Suppress unused parameter warning
-	(void)nch; // Suppress unused parameter warning
-	(void)srate; // Suppress unused parameter warning
-	return 0;
+	if (CPDSP_IsActive()) {
+		return CPDSP_ProcessSamples(samples, numsamples, bps, nch, srate);
+	}
+	return numsamples;
 }
 
 //

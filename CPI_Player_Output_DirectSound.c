@@ -27,6 +27,7 @@
 #include "CPI_Player_CoDec.h"
 #include "CPI_Player_Output.h"
 #include "CPI_Equaliser.h"
+#include "CPI_Player_DSP.h"
 #define DIRECTSOUND_VERSION 0x0500  /* Version 5.0 */
 #include <dsound.h>
 #include <math.h>
@@ -387,6 +388,17 @@ void CPP_OMDS_RefillBuffers(CPs_OutputModule* pModule)
 			
 			if (RealLength)
 				pEQModule->ApplyEQToBlock_Inplace(pEQModule, pbData + pContext->m_WriteCursor, RealLength);
+		}
+		
+		// Apply DSP plugin processing
+		if (RealLength && CPDSP_IsActive())
+		{
+			// DSP processes in samples, not bytes (16-bit stereo = 4 bytes per sample)
+			int bytesPerSample = (pContext->WaveFile.wBitsPerSample / 8) * pContext->WaveFile.nChannels;
+			int numSamples = RealLength / bytesPerSample;
+			CPDSP_ProcessSamples((short int*)(pbData + pContext->m_WriteCursor), numSamples, 
+				pContext->WaveFile.wBitsPerSample, pContext->WaveFile.nChannels, 
+				pContext->WaveFile.nSamplesPerSec);
 		}
 		
 		// Move cursor

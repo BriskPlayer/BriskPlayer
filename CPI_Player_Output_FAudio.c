@@ -25,6 +25,7 @@
 #include "CPI_Player_CoDec.h"
 #include "CPI_Player_Output.h"
 #include "CPI_Equaliser.h"
+#include "CPI_Player_DSP.h"
 
 #include <FAudio.h>
 
@@ -404,6 +405,16 @@ void CPP_OMFA_RefillBuffers(CPs_OutputModule* pModule)
 		if (pContext->m_pEqualiser && dwBytesRead > 0)
 		{
 			pContext->m_pEqualiser->ApplyEQToBlock_Inplace(pContext->m_pEqualiser, pContext->m_pBuffers[bufferIndex], dwBytesRead);
+		}
+		
+		// Apply DSP plugin processing
+		if (dwBytesRead > 0 && CPDSP_IsActive())
+		{
+			int bytesPerSample = (pContext->m_WaveFormat.wBitsPerSample / 8) * pContext->m_WaveFormat.nChannels;
+			int numSamples = dwBytesRead / bytesPerSample;
+			CPDSP_ProcessSamples((short int*)pContext->m_pBuffers[bufferIndex], numSamples,
+				pContext->m_WaveFormat.wBitsPerSample, pContext->m_WaveFormat.nChannels,
+				pContext->m_WaveFormat.nSamplesPerSec);
 		}
 		
 		// Prepare FAudio buffer
