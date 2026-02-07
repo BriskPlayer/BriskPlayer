@@ -1,3 +1,6 @@
+#ifndef STDAFX_H
+#define STDAFX_H
+
 //#define _WIN32_WINDOWS 0x0410
 #define WIN32_LEAN_AND_MEAN
 
@@ -32,10 +35,28 @@
 #include <shellapi.h>
 #include <io.h>
 
-// Only define sprintf as wsprintf if not already defined by libintl
+// Safe sprintf replacement using snprintf
+// NOTE: wsprintf does NOT support floating-point (%f, %e, %g) format specifiers.
+// We use _snprintf instead, which supports all C format specifiers.
+// The buffer size is inferred via a wrapper - callers must ensure adequate buffer size.
 #ifndef sprintf
-#define sprintf wsprintf
+#define sprintf cp_sprintf_wrapper
 #endif
+
+// cp_sprintf_wrapper: drop-in replacement for sprintf that is safer than wsprintf
+// Supports floating-point format specifiers unlike wsprintf
+// NOTE: Buffer size cannot be inferred from sprintf signature. This uses a
+// conservative maximum. Prefer snprintf(buf, sizeof(buf), ...) for new code.
+static inline int cp_sprintf_wrapper(char* buffer, const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    int result = _vsnprintf(buffer, 2048, format, args);
+    if (result < 0)
+        buffer[2047] = '\0'; // Ensure null-termination on truncation
+    va_end(args);
+    return result;
+}
 
 // String function macros - legacy compatibility layer
 // NOTE: These macros map to Windows lstr* functions for compatibility.
@@ -76,3 +97,5 @@ char* __cdecl strstr(const char*, const char*);
 #ifndef IDC_STATIC  /* May be predefined by resource compiler.  */
 #define IDC_STATIC (-1)
 #endif
+
+#endif /* STDAFX_H */

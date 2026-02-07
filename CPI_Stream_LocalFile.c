@@ -79,6 +79,14 @@ CPs_InStream* CP_CreateInStream_LocalFile(const char* pcFlexiURL, HWND hWndOwner
 		CPs_InStream* pNewStream = MALLOC_TYPE(CPs_InStream);
 		CPs_InStream_File* pContext = MALLOC_TYPE(CPs_InStream_File);
 		
+		if (!pNewStream || !pContext)
+		{
+			free(pNewStream);
+			free(pContext);
+			CloseHandle(hFile);
+			return NULL;
+		}
+		
 		pNewStream->Uninitialise = CPSLOCAL_Uninitialise;
 		pNewStream->Read = CPSLOCAL_Read;
 		pNewStream->Seek = CPSLOCAL_Seek;

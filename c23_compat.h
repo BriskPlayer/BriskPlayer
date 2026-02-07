@@ -226,8 +226,14 @@ static inline BOOL check_add_overflow_u32(DWORD a, DWORD b, DWORD* result)
     // MSVC fallback - simple macro without typeof (WARNING: evaluates arguments multiple times)
     #define TYPEOF_MAX(a, b) (((a) > (b)) ? (a) : (b))
     #define TYPEOF_MIN(a, b) (((a) < (b)) ? (a) : (b))
-    // TYPEOF_SWAP not available on MSVC without typeof - use a temp variable manually
-    #define TYPEOF_SWAP(a, b) do { /* Not supported on MSVC - use manual swap */ } while(0)
+    // TYPEOF_SWAP for MSVC - requires both operands to be the same type
+    // Users must ensure a and b are the same type
+    #define TYPEOF_SWAP(a, b) do { \
+        unsigned char _swap_tmp[sizeof(a)]; \
+        memcpy(_swap_tmp, &(a), sizeof(a)); \
+        memcpy(&(a), &(b), sizeof(a)); \
+        memcpy(&(b), _swap_tmp, sizeof(a)); \
+    } while(0)
 #endif
 
 // Type-safe container_of macro - GCC/Clang only
@@ -249,18 +255,23 @@ static inline BOOL check_add_overflow_u32(DWORD a, DWORD b, DWORD* result)
 #define SAFE_FREE(ptr) do { if(ptr) { free(ptr); (ptr) = NULL; } } while(0)
 
 // Windows INI file helper macro for writing integer values
-// Creates temporary buffer and converts integer to string in one expression
-#define INT_TO_INI_STRING(value) ({ \
-    static char _ini_buf[32]; \
-    snprintf(_ini_buf, sizeof(_ini_buf), "%d", (int)(value)); \
-    _ini_buf; \
-})
+// Thread-safe inline function to convert integer to string for INI writes
+static inline const char* int_to_ini_string_impl(char* buf, size_t buf_size, int value)
+{
+    snprintf(buf, buf_size, "%d", value);
+    return buf;
+}
 
-// Simpler version using compound literal (C99+ compatible)
+// Usage: char buf[33]; INT_TO_INI_STRING(buf, value)
+#define INT_TO_INI_STRING(buf, value) int_to_ini_string_impl(buf, sizeof(buf), (int)(value))
+
+// Write integer value to INI file (thread-safe, uses stack buffer)
 #define WRITE_INT_TO_INI(section, key, value, filepath) \
-    WritePrivateProfileString((section), (key), \
-        (char[33]){snprintf((char[33]){}, 33, "%d", (int)(value))}, \
-        (filepath))
+    do { \
+        char _ini_buf[33]; \
+        snprintf(_ini_buf, sizeof(_ini_buf), "%d", (int)(value)); \
+        WritePrivateProfileString((section), (key), _ini_buf, (filepath)); \
+    } while(0)
 
 // C23 decimal floating-point support for improved precision
 // For audio calculations where precision matters
@@ -434,22 +445,28 @@ typedef struct {
     int priority;
 } audio_event_handler_t;
 
-// Functional composition helpers - GCC/Clang only
-#if defined(__GNUC__) || defined(__clang__)
-    #define COMPOSE_AUDIO_FN(fn1, fn2) \
-        ({ \
-            typeof(fn1) _f1 = (fn1); \
-            typeof(fn2) _f2 = (fn2); \
-            void _composed(void* data, size_t size, void* user) { \
-                _f1(data, size, user); \
-                _f2(data, size, user); \
-            } \
-            _composed; \
-        })
-#else
-    // MSVC: Not supported (requires nested functions and typeof)
-    #define COMPOSE_AUDIO_FN(fn1, fn2) (fn1)
-#endif
+// Audio function composition - applies fn1 then fn2 to the same data.
+// Use compose_audio_fn_create() to build a composed processor, then call it.
+typedef struct {
+    audio_processor_fn first;
+    audio_processor_fn second;
+} composed_audio_fn_t;
+
+static inline void composed_audio_fn_call(void* samples, size_t count, void* user_data)
+{
+    composed_audio_fn_t* composed = (composed_audio_fn_t*)user_data;
+    if (composed->first)  composed->first(samples, count, user_data);
+    if (composed->second) composed->second(samples, count, user_data);
+}
+
+static inline composed_audio_fn_t compose_audio_fn_create(audio_processor_fn fn1, audio_processor_fn fn2)
+{
+    composed_audio_fn_t result = { fn1, fn2 };
+    return result;
+}
+
+// Legacy macro - prefer compose_audio_fn_create() for new code
+#define COMPOSE_AUDIO_FN(fn1, fn2) (fn1)
 
 // C23 Compound literals for audio configuration
 #define AUDIO_CONFIG(freq, channels, bits) \
@@ -592,14 +609,23 @@ typedef struct {
     #define HAS_BIT_PRECISE_TYPES 0
 #endif
 
-// Audio sample type selection macro using bit-precise types
-#define AUDIO_SAMPLE_TYPE(bits) \
-    _Generic((bits), \
-        8: int8_t, \
-        16: int16_t, \
-        24: audio_sample_24bit_t, \
-        32: int32_t, \
-        default: int16_t \
-    )
+// Audio sample type selection - use explicit types since _Generic dispatches
+// on type, not value. For compile-time bit-depth selection, use these typedefs:
+typedef int8_t  audio_sample_8bit_t;
+typedef int16_t audio_sample_16bit_t;
+typedef int32_t audio_sample_32bit_t;
+// audio_sample_24bit_t is defined above
+
+// Runtime bit-depth to sample size mapping
+static inline size_t audio_sample_size(int bits)
+{
+    switch (bits) {
+        case 8:  return sizeof(int8_t);
+        case 16: return sizeof(int16_t);
+        case 24: return sizeof(audio_sample_24bit_t);
+        case 32: return sizeof(int32_t);
+        default: return sizeof(int16_t);
+    }
+}
 
 #endif // C23_FEATURES_H

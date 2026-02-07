@@ -133,7 +133,7 @@ void Properties_OnInit(HWND hWnd, CP_HPLAYLISTITEM hItem)
 	iValue = CPLI_GetTrackNum(hItem);
 	if (iValue > 0)
 	{
-		sprintf(buffer, "%d", iValue);
+		snprintf(buffer, sizeof(buffer), "%d", iValue);
 		SetDlgItemTextA(hWnd, IDC_PROP_TRACK, buffer);
 	}
 	
@@ -153,14 +153,14 @@ void Properties_OnInit(HWND hWnd, CP_HPLAYLISTITEM hItem)
 	iValue = CPLI_GetBPM(hItem);
 	if (iValue > 0)
 	{
-		sprintf(buffer, "%d", iValue);
+		snprintf(buffer, sizeof(buffer), "%d", iValue);
 		SetDlgItemTextA(hWnd, IDC_PROP_BPM, buffer);
 	}
 	
 	iValue = CPLI_GetDiscNumber(hItem);
 	if (iValue > 0)
 	{
-		sprintf(buffer, "%d", iValue);
+		snprintf(buffer, sizeof(buffer), "%d", iValue);
 		SetDlgItemTextA(hWnd, IDC_PROP_DISCNUMBER, buffer);
 	}
 	
@@ -168,28 +168,28 @@ void Properties_OnInit(HWND hWnd, CP_HPLAYLISTITEM hItem)
 	iValue = CPLI_GetBitrate(hItem);
 	if (iValue > 0)
 	{
-		sprintf(buffer, "%d kbps", iValue);
+		snprintf(buffer, sizeof(buffer), "%d kbps", iValue);
 		SetDlgItemTextA(hWnd, IDC_PROP_BITRATE, buffer);
 	}
 	
 	iValue = CPLI_GetSampleRate(hItem);
 	if (iValue > 0)
 	{
-		sprintf(buffer, "%d Hz", iValue);
+		snprintf(buffer, sizeof(buffer), "%d Hz", iValue);
 		SetDlgItemTextA(hWnd, IDC_PROP_SAMPLERATE, buffer);
 	}
 	
 	iValue = CPLI_GetBitDepth(hItem);
 	if (iValue > 0)
 	{
-		sprintf(buffer, "%d-bit", iValue);
+		snprintf(buffer, sizeof(buffer), "%d-bit", iValue);
 		SetDlgItemTextA(hWnd, IDC_PROP_BITDEPTH, buffer);
 	}
 	
 	iValue = CPLI_GetChannels(hItem);
 	if (iValue > 0)
 	{
-		sprintf(buffer, "%d", iValue);
+		snprintf(buffer, sizeof(buffer), "%d", iValue);
 		SetDlgItemTextA(hWnd, IDC_PROP_CHANNELS, buffer);
 	}
 	
@@ -201,11 +201,11 @@ void Properties_OnInit(HWND hWnd, CP_HPLAYLISTITEM hItem)
 	if (iValue > 0)
 	{
 		if (iValue >= 1048576)
-			sprintf(buffer, "%.2f MB", iValue / 1048576.0f);
+			snprintf(buffer, sizeof(buffer), "%.2f MB", iValue / 1048576.0f);
 		else if (iValue >= 1024)
-			sprintf(buffer, "%.2f KB", iValue / 1024.0f);
+			snprintf(buffer, sizeof(buffer), "%.2f KB", iValue / 1024.0f);
 		else
-			sprintf(buffer, "%d bytes", iValue);
+			snprintf(buffer, sizeof(buffer), "%d bytes", iValue);
 		SetDlgItemTextA(hWnd, IDC_PROP_FILESIZE, buffer);
 	}
 	
@@ -213,14 +213,14 @@ void Properties_OnInit(HWND hWnd, CP_HPLAYLISTITEM hItem)
 	fValue = CPLI_GetReplayGain_Track_Gain(hItem);
 	if (fValue != 0.0f)
 	{
-		sprintf(buffer, "%.2f dB", fValue);
+		snprintf(buffer, sizeof(buffer), "%.2f dB", fValue);
 		SetDlgItemTextA(hWnd, IDC_PROP_REPLAYGAIN_TRACK, buffer);
 	}
 	
 	fValue = CPLI_GetReplayGain_Album_Gain(hItem);
 	if (fValue != 0.0f)
 	{
-		sprintf(buffer, "%.2f dB", fValue);
+		snprintf(buffer, sizeof(buffer), "%.2f dB", fValue);
 		SetDlgItemTextA(hWnd, IDC_PROP_REPLAYGAIN_ALBUM, buffer);
 	}
 	
@@ -295,12 +295,12 @@ void Properties_OnUpdateFromMusicBrainz(HWND hWnd, CP_HPLAYLISTITEM hItem)
 	// For now, just open the MusicBrainz page for the recording or release
 	if (pcTrackID)
 	{
-		sprintf(url, "https://musicbrainz.org/recording/%s", pcTrackID);
+		snprintf(url, sizeof(url), "https://musicbrainz.org/recording/%s", pcTrackID);
 		ShellExecuteA(hWnd, "open", url, NULL, NULL, SW_SHOWNORMAL);
 	}
 	else if (pcReleaseID)
 	{
-		sprintf(url, "https://musicbrainz.org/release/%s", pcReleaseID);
+		snprintf(url, sizeof(url), "https://musicbrainz.org/release/%s", pcReleaseID);
 		ShellExecuteA(hWnd, "open", url, NULL, NULL, SW_SHOWNORMAL);
 	}
 	

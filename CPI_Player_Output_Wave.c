@@ -112,6 +112,11 @@ void CPP_OMWV_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInf
 	CPs_OutputContext_Wave* pContext;
 	CP_ASSERT(pModule->m_pModuleCookie == NULL);
 	pContext = MALLOC_TYPE(CPs_OutputContext_Wave);
+	if (!pContext)
+	{
+		CP_TRACE0("Wave out: Failed to allocate context");
+		return;
+	}
 	pModule->m_pModuleCookie = pContext;
 	CP_TRACE0("Wave out initialising");
 	
@@ -172,6 +177,11 @@ void CPP_OMWV_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInf
 	pContext->m_pBlockBase = VirtualAlloc(NULL,
 										  CPC_OUTPUTBLOCKSIZE * (CPC_NUMBEROFOUTPUTBLOCKS << 1),
 										  MEM_COMMIT, PAGE_READWRITE);
+	if (!pContext->m_pBlockBase)
+	{
+		CP_TRACE0("Wave out: VirtualAlloc failed for output blocks");
+		return;
+	}
 	pContext->m_iLastReadBlockIDX = 0;
 	
 	// Create wave blocks

@@ -92,6 +92,9 @@ typedef struct FFmpegContext {
     // Frame and packet for decoding
     AVFrame* frame;
     AVPacket* packet;
+    
+    // Original codec sample rate (before resampling) - needed for seek calculations
+    uint32_t codec_sample_rate;
 } FFmpegContext;
 
 // C23 constexpr configuration
@@ -113,11 +116,12 @@ static void ffmpeg_log_error(FFmpegContext* context, int error_code, const char*
     }
 }
 
-static void ffmpeg_cleanup_context(FFmpegContext* context) {
+// If already_locked is true, caller already holds context_mutex
+static void ffmpeg_cleanup_context_locked(FFmpegContext* context, bool already_locked) {
     if (!context) return;
     
-    // Only lock if the mutex was initialized
-    if (context->mutex_initialized) {
+    // Only lock if the mutex was initialized and we don't already hold it
+    if (context->mutex_initialized && !already_locked) {
         mtx_lock(&context->context_mutex);
     }
     
@@ -161,9 +165,13 @@ static void ffmpeg_cleanup_context(FFmpegContext* context) {
     
     context->state = FFMPEG_STATE_UNINITIALIZED;
     
-    if (context->mutex_initialized) {
+    if (context->mutex_initialized && !already_locked) {
         mtx_unlock(&context->context_mutex);
     }
+}
+
+static void ffmpeg_cleanup_context(FFmpegContext* context) {
+    ffmpeg_cleanup_context_locked(context, false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -199,37 +207,31 @@ static BOOL ffmpeg_OpenFile(CP_HCODECMODULE hModule, const char* pcFilename,
     
     mtx_lock(&context->context_mutex);
     
-    // Clean up any previous file
+    // Clean up any previous file (we already hold the mutex)
     if (context->state != FFMPEG_STATE_UNINITIALIZED) {
-        ffmpeg_cleanup_context(context);
+        ffmpeg_cleanup_context_locked(context, true);
     }
+    
+    BOOL result = FALSE;
     
     // Store file path
     context->file_path = _strdup(pcFilename);
     if (!context->file_path) {
-        mtx_unlock(&context->context_mutex);
-        return FALSE;
+        goto cleanup;
     }
     
     // Open input file
     int ret = avformat_open_input(&context->format_ctx, pcFilename, NULL, NULL);
     if (ret < 0) {
         ffmpeg_log_error(context, ret, "Failed to open file");
-        free(context->file_path);
-        context->file_path = NULL;
-        mtx_unlock(&context->context_mutex);
-        return FALSE;
+        goto cleanup;
     }
     
     // Retrieve stream information
     ret = avformat_find_stream_info(context->format_ctx, NULL);
     if (ret < 0) {
         ffmpeg_log_error(context, ret, "Failed to find stream info");
-        avformat_close_input(&context->format_ctx);
-        free(context->file_path);
-        context->file_path = NULL;
-        mtx_unlock(&context->context_mutex);
-        return FALSE;
+        goto cleanup;
     }
     
     // Find the best audio stream
@@ -239,11 +241,7 @@ static BOOL ffmpeg_OpenFile(CP_HCODECMODULE hModule, const char* pcFilename,
     if (context->audio_stream_index < 0) {
         snprintf(context->error_message, sizeof(context->error_message),
                  "No audio stream found");
-        avformat_close_input(&context->format_ctx);
-        free(context->file_path);
-        context->file_path = NULL;
-        mtx_unlock(&context->context_mutex);
-        return FALSE;
+        goto cleanup;
     }
     
     // Allocate codec context
@@ -251,11 +249,7 @@ static BOOL ffmpeg_OpenFile(CP_HCODECMODULE hModule, const char* pcFilename,
     if (!context->codec_ctx) {
         snprintf(context->error_message, sizeof(context->error_message),
                  "Failed to allocate codec context");
-        avformat_close_input(&context->format_ctx);
-        free(context->file_path);
-        context->file_path = NULL;
-        mtx_unlock(&context->context_mutex);
-        return FALSE;
+        goto cleanup;
     }
     
     // Copy codec parameters
@@ -263,28 +257,19 @@ static BOOL ffmpeg_OpenFile(CP_HCODECMODULE hModule, const char* pcFilename,
     ret = avcodec_parameters_to_context(context->codec_ctx, audio_stream->codecpar);
     if (ret < 0) {
         ffmpeg_log_error(context, ret, "Failed to copy codec parameters");
-        avcodec_free_context(&context->codec_ctx);
-        avformat_close_input(&context->format_ctx);
-        free(context->file_path);
-        context->file_path = NULL;
-        mtx_unlock(&context->context_mutex);
-        return FALSE;
+        goto cleanup;
     }
     
     // Open codec
     ret = avcodec_open2(context->codec_ctx, context->codec, NULL);
     if (ret < 0) {
         ffmpeg_log_error(context, ret, "Failed to open codec");
-        avcodec_free_context(&context->codec_ctx);
-        avformat_close_input(&context->format_ctx);
-        free(context->file_path);
-        context->file_path = NULL;
-        mtx_unlock(&context->context_mutex);
-        return FALSE;
+        goto cleanup;
     }
     
     // Store audio format information
     context->sample_rate = context->codec_ctx->sample_rate;
+    context->codec_sample_rate = context->codec_ctx->sample_rate;  // Preserve original rate for seek
     context->channels = context->codec_ctx->ch_layout.nb_channels;
     context->bits_per_sample = 16; // We'll convert to 16-bit
     
@@ -310,15 +295,12 @@ static BOOL ffmpeg_OpenFile(CP_HCODECMODULE hModule, const char* pcFilename,
     if (context->total_samples == 0 && context->codec_ctx->bit_rate > 0) {
         int64_t file_size = avio_size(context->format_ctx->pb);
         if (file_size > 0) {
-            // Estimate duration: (file_size * 8) / bit_rate = seconds
-            // Then: seconds * sample_rate = samples
             int64_t duration_secs = (file_size * 8) / context->codec_ctx->bit_rate;
             context->total_samples = duration_secs * context->sample_rate;
         }
     }
     
     // Method 4: If still no duration, set to 0 (unknown) - let it play to the end
-    // The player will detect end-of-stream naturally
     if (context->total_samples == 0) {
         CP_LOG_WARNING("Could not determine file duration for %s, will play until EOF\n", pcFilename);
     }
@@ -330,7 +312,6 @@ static BOOL ffmpeg_OpenFile(CP_HCODECMODULE hModule, const char* pcFilename,
         context->sample_rate != FFMPEG_OUTPUT_SAMPLE_RATE ||
         context->channels != FFMPEG_OUTPUT_CHANNELS) {
         
-        // Allocate resampler context
         ret = swr_alloc_set_opts2(&context->swr_ctx,
                                   &(AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO,
                                   FFMPEG_OUTPUT_FORMAT,
@@ -342,24 +323,13 @@ static BOOL ffmpeg_OpenFile(CP_HCODECMODULE hModule, const char* pcFilename,
         
         if (ret < 0) {
             ffmpeg_log_error(context, ret, "Failed to allocate resampler");
-            avcodec_free_context(&context->codec_ctx);
-            avformat_close_input(&context->format_ctx);
-            free(context->file_path);
-            context->file_path = NULL;
-            mtx_unlock(&context->context_mutex);
-            return FALSE;
+            goto cleanup;
         }
         
         ret = swr_init(context->swr_ctx);
         if (ret < 0) {
             ffmpeg_log_error(context, ret, "Failed to initialize resampler");
-            swr_free(&context->swr_ctx);
-            avcodec_free_context(&context->codec_ctx);
-            avformat_close_input(&context->format_ctx);
-            free(context->file_path);
-            context->file_path = NULL;
-            mtx_unlock(&context->context_mutex);
-            return FALSE;
+            goto cleanup;
         }
         
         // Update output parameters
@@ -374,39 +344,29 @@ static BOOL ffmpeg_OpenFile(CP_HCODECMODULE hModule, const char* pcFilename,
     if (!context->frame || !context->packet) {
         snprintf(context->error_message, sizeof(context->error_message),
                  "Failed to allocate frame/packet");
-        if (context->frame) av_frame_free(&context->frame);
-        if (context->packet) av_packet_free(&context->packet);
-        if (context->swr_ctx) swr_free(&context->swr_ctx);
-        avcodec_free_context(&context->codec_ctx);
-        avformat_close_input(&context->format_ctx);
-        free(context->file_path);
-        context->file_path = NULL;
-        mtx_unlock(&context->context_mutex);
-        return FALSE;
+        goto cleanup;
     }
     
     // Allocate PCM buffer
     context->buffer_size = FFMPEG_BUFFER_SIZE * context->channels;
     context->pcm_buffer = CALLOC_TYPE(int16_t, context->buffer_size);
     if (!context->pcm_buffer) {
-        av_frame_free(&context->frame);
-        av_packet_free(&context->packet);
-        if (context->swr_ctx) swr_free(&context->swr_ctx);
-        avcodec_free_context(&context->codec_ctx);
-        avformat_close_input(&context->format_ctx);
-        free(context->file_path);
-        context->file_path = NULL;
-        mtx_unlock(&context->context_mutex);
-        return FALSE;
+        goto cleanup;
     }
     
     context->buffer_position = 0;
     context->samples_in_buffer = 0;
     context->end_of_stream = false;
     context->state = FFMPEG_STATE_READY;
+    result = TRUE;
     
+cleanup:
+    if (!result) {
+        // We already hold the mutex, use locked variant
+        ffmpeg_cleanup_context_locked(context, true);
+    }
     mtx_unlock(&context->context_mutex);
-    return TRUE;
+    return result;
 }
 
 static void ffmpeg_CloseFile(CP_HCODECMODULE hModule) {
@@ -426,33 +386,58 @@ static void ffmpeg_Seek(CP_HCODECMODULE hModule, const int iNumerator, const int
     
     mtx_lock(&context->context_mutex);
     
-    if (iDenominator == 0 || context->total_samples == 0) {
+    if (iDenominator == 0) {
         mtx_unlock(&context->context_mutex);
         return;
     }
     
-    // Calculate target sample
-    uint64_t target_sample = (context->total_samples * iNumerator) / iDenominator;
+    int ret;
+    double seek_fraction = (double)iNumerator / (double)iDenominator;
     
-    // Convert to timestamp
-    AVStream* audio_stream = context->format_ctx->streams[context->audio_stream_index];
-    int64_t timestamp = av_rescale(target_sample,
-                                   audio_stream->time_base.den,
-                                   audio_stream->time_base.num * context->codec_ctx->sample_rate);
-    
-    // Seek in the file
-    int ret = av_seek_frame(context->format_ctx, context->audio_stream_index,
+    if (context->total_samples > 0) {
+        // Known duration: calculate target sample and convert to stream timestamp
+        uint64_t target_sample = (uint64_t)(seek_fraction * context->total_samples);
+        
+        AVStream* audio_stream = context->format_ctx->streams[context->audio_stream_index];
+        int64_t timestamp = av_rescale(target_sample,
+                                       audio_stream->time_base.den,
+                                       audio_stream->time_base.num * context->codec_sample_rate);
+        
+        ret = av_seek_frame(context->format_ctx, context->audio_stream_index,
                            timestamp, AVSEEK_FLAG_BACKWARD);
+        
+        if (ret >= 0) {
+            context->current_sample = target_sample;
+        }
+    } else {
+        // Unknown duration: use time-based seek via format context duration estimate
+        // GetFileInfo reports 86400 secs for unknown duration, so the UI slider
+        // will send proportional seek values based on that
+        int64_t seek_target_us;
+        if (context->format_ctx->duration != AV_NOPTS_VALUE && context->format_ctx->duration > 0) {
+            seek_target_us = (int64_t)(seek_fraction * context->format_ctx->duration);
+        } else {
+            // No duration at all, estimate based on reported 86400s
+            seek_target_us = (int64_t)(seek_fraction * 86400.0 * AV_TIME_BASE);
+        }
+        
+        ret = avformat_seek_file(context->format_ctx, -1,
+                                INT64_MIN, seek_target_us, INT64_MAX, 0);
+        
+        if (ret >= 0 && context->sample_rate > 0) {
+            context->current_sample = (uint64_t)(seek_fraction * 86400.0 * context->sample_rate);
+        }
+    }
     
     if (ret >= 0) {
         // Flush codec buffers
         avcodec_flush_buffers(context->codec_ctx);
         
-        // Reset buffer
+        // Reset buffer and re-enable decoding
         context->buffer_position = 0;
         context->samples_in_buffer = 0;
-        context->current_sample = target_sample;
         context->end_of_stream = false;
+        context->state = FFMPEG_STATE_READY;
     }
     
     mtx_unlock(&context->context_mutex);
@@ -559,6 +544,14 @@ static BOOL ffmpeg_GetPCMBlock(CP_HCODECMODULE hModule, void* pBlock, DWORD* pdw
         int ret = av_read_frame(context->format_ctx, context->packet);
         
         if (ret == AVERROR_EOF) {
+            // Drain the decoder: send a NULL packet to flush remaining frames
+            avcodec_send_packet(context->codec_ctx, NULL);
+            ret = avcodec_receive_frame(context->codec_ctx, context->frame);
+            if (ret == 0) {
+                // Got a flushed frame, process it below via the resample path
+                goto process_frame;
+            }
+            // No more frames to drain
             context->end_of_stream = true;
             context->state = FFMPEG_STATE_END_OF_STREAM;
             break;
@@ -594,13 +587,17 @@ static BOOL ffmpeg_GetPCMBlock(CP_HCODECMODULE hModule, void* pBlock, DWORD* pdw
             continue;
         }
         
+process_frame:
         // Resample if needed
         int out_samples;
+        // Maximum output samples that fit in pcm_buffer
+        int max_out_samples = (int)(context->buffer_size / context->channels);
+        
         if (context->swr_ctx) {
             uint8_t* output_buffer = (uint8_t*)context->pcm_buffer;
             out_samples = swr_convert(context->swr_ctx,
                                      &output_buffer,
-                                     FFMPEG_BUFFER_SIZE,
+                                     max_out_samples,
                                      (const uint8_t**)context->frame->data,
                                      context->frame->nb_samples);
             
@@ -611,6 +608,10 @@ static BOOL ffmpeg_GetPCMBlock(CP_HCODECMODULE hModule, void* pBlock, DWORD* pdw
         } else {
             // Direct copy (no resampling needed)
             out_samples = context->frame->nb_samples;
+            // Clamp to buffer capacity to prevent overflow
+            if (out_samples > max_out_samples) {
+                out_samples = max_out_samples;
+            }
             memcpy(context->pcm_buffer,
                    context->frame->data[0],
                    out_samples * context->channels * sizeof(int16_t));
@@ -770,7 +771,7 @@ void CP_InitialiseCodec_FFmpeg(CPs_CoDecModule* codec) {
     CPFA_AddFileAssociation(codec, "mka", 0);   // Matroska Audio
     //CPFA_AddFileAssociation(codec, "ofr", 0);   // OptimFROG
     //CPFA_AddFileAssociation(codec, "ofs", 0);   // OptimFROG DualStream
-    CPFA_AddFileAssociation(codec, "spx", 0);   // Speex
+    // spx (Speex) already registered under Ogg container formats
     CPFA_AddFileAssociation(codec, "gsm", 0);   // GSM Audio
     CPFA_AddFileAssociation(codec, "iff", 0);   // Interchange File Format
     CPFA_AddFileAssociation(codec, "svx", 0);   // 8SVX/16SV Amiga

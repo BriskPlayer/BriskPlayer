@@ -402,6 +402,12 @@ void ProbeWinAmpModule(CPs_CoDecModule* pCoDec, const char* pcModulePath)
 	{
 		char* pExtensions = pInModule->FileExtensions;
 		CP_PlugInModule* pNewPlugInModule = (CP_PlugInModule*)malloc(sizeof(CP_PlugInModule));
+		if (!pNewPlugInModule)
+		{
+			CP_TRACE0("Failed to allocate WinAmp plugin module");
+			FreeLibrary(hModPlugin);
+			return;
+		}
 		
 		// Create new plug in module and add it to our list
 		pNewPlugInModule->m_pNext = pContext->m_pFirstPlugIn;
@@ -429,6 +435,11 @@ void ProbeWinAmpModule(CPs_CoDecModule* pCoDec, const char* pcModulePath)
 					{
 						const int iExtensionLen = (int)(pcExtensionCursor - pcLastExtensionStart);
 						char* pcExtensionCopy = (char*)malloc(iExtensionLen + 1);
+						if (!pcExtensionCopy)
+						{
+							pcLastExtensionStart = pcExtensionCursor + 1;
+							continue;
+						}
 						
 						memcpy(pcExtensionCopy, pcLastExtensionStart, iExtensionLen);
 						pcExtensionCopy[iExtensionLen] = '\0';
@@ -531,6 +542,11 @@ void CP_InitialiseCodec_WinAmpPlugin(CPs_CoDecModule* pCoDec)
 	
 	// Setup private data
 	pCoDec->m_pModuleCookie = malloc(sizeof(CPs_CoDec_WinAmpPlugin));
+	if (!pCoDec->m_pModuleCookie)
+	{
+		CP_TRACE0("Failed to allocate WinAmp plugin codec context");
+		return;
+	}
 	pContext = (CPs_CoDec_WinAmpPlugin*)pCoDec->m_pModuleCookie;
 	
 	pContext->m_pFirstPlugIn = 0L;

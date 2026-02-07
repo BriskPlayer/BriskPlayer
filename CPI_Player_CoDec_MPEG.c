@@ -402,6 +402,8 @@ void CP_InitialiseCodec_MPEG(CPs_CoDecModule* pCoDec)
 	
 	// Setup private data
 	pCoDec->m_pModuleCookie = malloc(sizeof(CPs_CoDec_MPEG));
+	if (!pCoDec->m_pModuleCookie)
+		return;
 	pContext = (CPs_CoDec_MPEG*)pCoDec->m_pModuleCookie;
 	pContext->m_pInStream = NULL;
 	pContext->size = 0;

@@ -105,13 +105,13 @@ void main_switch_language(const char* languageCode)
 {
     // Add debug output to see what's happening
     char debugMsg[256];
-    sprintf(debugMsg, "Attempting to switch to language: %s", languageCode);
+    snprintf(debugMsg, sizeof(debugMsg), "Attempting to switch to language: %s", languageCode);
     OutputDebugStringA(debugMsg);
     
     // Use the new gettext system to set the language
     CPG_SetLanguage(languageCode);
     
-    sprintf(debugMsg, "Language set to: %s", languageCode);
+    snprintf(debugMsg, sizeof(debugMsg), "Language set to: %s", languageCode);
     OutputDebugStringA(debugMsg);
     
     // Save the preference
@@ -2306,7 +2306,7 @@ char   *str_delete_substr(char *strbuf, char *strtodel)
 		offset = strstr(strbuf, strtodel);
 		
 		if (offset)
-			strcpy(offset, (offset + strlen(strtodel)));
+			memmove(offset, offset + strlen(strtodel), strlen(offset + strlen(strtodel)) + 1);
 		else
 			break;
 	}

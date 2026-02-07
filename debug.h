@@ -49,7 +49,8 @@ int _CrtDbgReport(
 	char szBuffer[1024];
 	va_list args;
 	va_start(args, lpszFormat);
-	_vsnprintf(szBuffer, sizeof(szBuffer) / sizeof(WCHAR), lpszFormat, args);
+	_vsnprintf(szBuffer, sizeof(szBuffer) - 1, lpszFormat, args);
+	szBuffer[sizeof(szBuffer) - 1] = '\0';
 	OutputDebugString(szBuffer);
 	va_end(args);
 	return 1;
@@ -68,8 +69,8 @@ int _CrtDbgReport(
 #define CP_TRACE4(format, arg1, arg2, arg3, arg4) _CrtDbgReport(_CRT_WARN, __FILE__, __LINE__, NULL, format "\n", arg1, arg2, arg3, arg4)
 #define CP_TRACE5(format, arg1, arg2, arg3, arg4, arg5) _CrtDbgReport(_CRT_WARN, __FILE__, __LINE__, NULL, format "\n", arg1, arg2, arg3, arg4, arg5)
 //
-#define CP_ASSERT(expr) if(!(expr)) { CP_TRACE1("ASSERTION %s FAILS", #expr); }
-#define CP_FAIL(errstring) { CP_TRACE1("HARD FAILURE %s", #errstring); }
+#define CP_ASSERT(expr) if(!(expr)) { CP_TRACE1("ASSERTION %s FAILS", #expr); DebugBreak(); }
+#define CP_FAIL(errstring) { CP_TRACE1("HARD FAILURE %s", #errstring); DebugBreak(); }
 //
 #define CP_CHECKOBJECT(obj_ptr_typed) if(!obj_ptr_typed) { CP_TRACE1("POINTER %s is NULL", #obj_ptr_typed); }
 

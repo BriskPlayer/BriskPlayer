@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 # Note: CXX language is required because TagLib (even tag_c.lib) is a C++ library
 # Your source code is pure C, but we need C++ runtime to link against TagLib
-project(briskplayer VERSION 3.0.1 LANGUAGES C CXX)
+project(briskplayer VERSION 3.0.2 LANGUAGES C CXX)
 
 # Calculate build number from version (MAJOR * 100 + MINOR * 10 + PATCH)
 math(EXPR CP_BUILD_NUMBER "${PROJECT_VERSION_MAJOR} * 100 + ${PROJECT_VERSION_MINOR} * 10 + ${PROJECT_VERSION_PATCH}")
@@ -335,7 +335,7 @@ else()
     # Disable NLS for this file to avoid conflicts with TagLib templates
     set_source_files_properties(CPI_TagLib.c PROPERTIES 
         LANGUAGE CXX
-        COMPILE_FLAGS "-Wno-error=template-body -UENABLE_NLS")
+        COMPILE_FLAGS "-UENABLE_NLS")
     set_source_files_properties(CPI_AlbumArtTooltip.c PROPERTIES LANGUAGE CXX)
     
     # Use C++ linker for MinGW since we link against C++ libraries (TagLib)

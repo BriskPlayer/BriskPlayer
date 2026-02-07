@@ -1,5 +1,5 @@
 project('briskplayer', ['c', 'cpp'],
-    version : '3.0.0',
+    version : '3.0.1',
     license : 'GPL-2.0-or-later',
     default_options : ['warning_level=3', 'c_std=c17', 'cpp_std=c++17'])
 
@@ -240,6 +240,7 @@ brisksrc = files([
     'CPI_Verbs.c',
     'CPSK_Skin.c',
     'DLG_Find.c',
+    'DLG_Properties.c',
     'globals.c',
     'main.c',
     'MainMenu.c',
@@ -254,11 +255,6 @@ brisksrc = files([
     'WinModern.c',
     'CP_Config.c'
 ])
-
-# Keep WAV and WinAmp plugin support
-brisksrc += files('CPI_Player_CoDec_WAV.c')
-brisksrc += files('CPI_Player_CoDec_WinAmpPlugin.c')
-brisksrc += files('CPI_Player_DSP.c')
 
 # FFmpeg is now the primary codec - required
 if ffmpeg_available

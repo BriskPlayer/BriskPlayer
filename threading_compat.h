@@ -119,10 +119,14 @@ typedef CRITICAL_SECTION mtx_t;
 #if _WIN32_WINNT >= 0x0600
 typedef CONDITION_VARIABLE cp_condition_t;
 #else
-// For XP compatibility, use a simpler event-based approach
+// For XP compatibility, use a semaphore-based approach (defined below)
+// The struct is forward-declared here; implementation follows.
 typedef struct {
-    HANDLE event;
+    HANDLE semaphore;
+    HANDLE waiters_done;
+    CRITICAL_SECTION lock;
     volatile LONG waiters_count;
+    volatile BOOL was_broadcast;
 } cp_condition_t;
 #endif
 
@@ -219,72 +223,110 @@ static inline void cp_condition_destroy(cp_condition_t* cnd) {
 
 #else
 
-// Windows XP fallback using events (simplified implementation)
+// Windows XP fallback using events
+// Uses a semaphore-based approach to avoid the classic lost-wakeup race
+// that plagues event-based condition variable emulations.
+
 static inline int cp_condition_init(cp_condition_t* cnd) {
     if (!cnd) return CP_THREAD_ERROR;
-    cnd->event = CreateEvent(NULL, TRUE, FALSE, NULL); // Manual-reset event
+    cnd->semaphore = CreateSemaphore(NULL, 0, 0x7FFFFFFF, NULL);
+    cnd->waiters_done = CreateEvent(NULL, FALSE, FALSE, NULL); // Auto-reset
+    InitializeCriticalSection(&cnd->lock);
     cnd->waiters_count = 0;
-    return cnd->event ? CP_THREAD_SUCCESS : CP_THREAD_ERROR;
+    cnd->was_broadcast = FALSE;
+    return (cnd->semaphore && cnd->waiters_done) ? CP_THREAD_SUCCESS : CP_THREAD_ERROR;
 }
 
 static inline int cp_condition_signal(cp_condition_t* cnd) {
-    if (!cnd || !cnd->event) return CP_THREAD_ERROR;
-    if (cnd->waiters_count > 0) {
-        SetEvent(cnd->event);
+    if (!cnd) return CP_THREAD_ERROR;
+    EnterCriticalSection(&cnd->lock);
+    BOOL have_waiters = (cnd->waiters_count > 0);
+    LeaveCriticalSection(&cnd->lock);
+    if (have_waiters) {
+        ReleaseSemaphore(cnd->semaphore, 1, NULL);
     }
     return CP_THREAD_SUCCESS;
 }
 
 static inline int cp_condition_broadcast(cp_condition_t* cnd) {
-    if (!cnd || !cnd->event) return CP_THREAD_ERROR;
-    if (cnd->waiters_count > 0) {
-        SetEvent(cnd->event);
+    if (!cnd) return CP_THREAD_ERROR;
+    EnterCriticalSection(&cnd->lock);
+    BOOL have_waiters = (cnd->waiters_count > 0);
+    if (have_waiters) {
+        cnd->was_broadcast = TRUE;
+        ReleaseSemaphore(cnd->semaphore, cnd->waiters_count, NULL);
+        LeaveCriticalSection(&cnd->lock);
+        // Wait for all waiters to acquire the semaphore
+        WaitForSingleObject(cnd->waiters_done, INFINITE);
+        cnd->was_broadcast = FALSE;
+    } else {
+        LeaveCriticalSection(&cnd->lock);
     }
     return CP_THREAD_SUCCESS;
 }
 
 static inline int cp_condition_wait(cp_condition_t* cnd, cp_mutex_t* mtx) {
-    if (!cnd || !mtx || !cnd->event) return CP_THREAD_ERROR;
-    
-    InterlockedIncrement(&cnd->waiters_count);
+    if (!cnd || !mtx) return CP_THREAD_ERROR;
+
+    EnterCriticalSection(&cnd->lock);
+    cnd->waiters_count++;
+    LeaveCriticalSection(&cnd->lock);
+
+    // Atomically release the mutex and wait on the semaphore
     LeaveCriticalSection(mtx);
-    
-    DWORD result = WaitForSingleObject(cnd->event, INFINITE);
-    
-    InterlockedDecrement(&cnd->waiters_count);
-    if (cnd->waiters_count == 0) {
-        ResetEvent(cnd->event);
+    WaitForSingleObject(cnd->semaphore, INFINITE);
+
+    // Check if we're the last waiter after a broadcast
+    EnterCriticalSection(&cnd->lock);
+    cnd->waiters_count--;
+    BOOL last_waiter = (cnd->was_broadcast && cnd->waiters_count == 0);
+    LeaveCriticalSection(&cnd->lock);
+
+    if (last_waiter) {
+        SetEvent(cnd->waiters_done);
     }
-    
+
     EnterCriticalSection(mtx);
-    
-    return (result == WAIT_OBJECT_0) ? CP_THREAD_SUCCESS : CP_THREAD_ERROR;
+    return CP_THREAD_SUCCESS;
 }
 
 static inline int cp_condition_timedwait(cp_condition_t* cnd, cp_mutex_t* mtx, DWORD timeout_ms) {
-    if (!cnd || !mtx || !cnd->event) return CP_THREAD_ERROR;
-    
-    InterlockedIncrement(&cnd->waiters_count);
+    if (!cnd || !mtx) return CP_THREAD_ERROR;
+
+    EnterCriticalSection(&cnd->lock);
+    cnd->waiters_count++;
+    LeaveCriticalSection(&cnd->lock);
+
     LeaveCriticalSection(mtx);
-    
-    DWORD result = WaitForSingleObject(cnd->event, timeout_ms);
-    
-    InterlockedDecrement(&cnd->waiters_count);
-    if (cnd->waiters_count == 0) {
-        ResetEvent(cnd->event);
+    DWORD result = WaitForSingleObject(cnd->semaphore, timeout_ms);
+
+    EnterCriticalSection(&cnd->lock);
+    cnd->waiters_count--;
+    BOOL last_waiter = (cnd->was_broadcast && cnd->waiters_count == 0);
+    LeaveCriticalSection(&cnd->lock);
+
+    if (last_waiter) {
+        SetEvent(cnd->waiters_done);
     }
-    
+
     EnterCriticalSection(mtx);
-    
+
     if (result == WAIT_OBJECT_0) return CP_THREAD_SUCCESS;
     if (result == WAIT_TIMEOUT) return CP_THREAD_TIMEDOUT;
     return CP_THREAD_ERROR;
 }
 
 static inline void cp_condition_destroy(cp_condition_t* cnd) {
-    if (cnd && cnd->event) {
-        CloseHandle(cnd->event);
-        cnd->event = NULL;
+    if (cnd) {
+        if (cnd->semaphore) {
+            CloseHandle(cnd->semaphore);
+            cnd->semaphore = NULL;
+        }
+        if (cnd->waiters_done) {
+            CloseHandle(cnd->waiters_done);
+            cnd->waiters_done = NULL;
+        }
+        DeleteCriticalSection(&cnd->lock);
     }
 }
 
@@ -297,6 +339,8 @@ static inline void cp_condition_destroy(cp_condition_t* cnd) {
 ////////////////////////////////////////////////////////////////////////////////
 
 // Use with caution - requires proper scope management
+// WARNING: Do NOT use break, continue, return, or goto inside the guarded block.
+// These will bypass the unlock, causing a deadlock.
 #define CP_MUTEX_LOCK_GUARD(mtx) \
     for (int _lock_guard_done = (cp_mutex_lock(mtx), 0); \
          !_lock_guard_done; \

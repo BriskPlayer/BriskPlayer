@@ -107,6 +107,8 @@ typedef struct _CPs_NotifyChunk
 CP_HPLAYLIST CPL_CreatePlaylist(void)
 {
 	CPs_Playlist* pNewPlaylist = MALLOC_TYPE(CPs_Playlist);
+	if (!pNewPlaylist)
+		return NULL;
 	pNewPlaylist->m_hFirst = NULL;
 	pNewPlaylist->m_hLast = NULL;
 	pNewPlaylist->m_hCurrent = NULL;
@@ -2024,6 +2026,8 @@ void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char *pDir)
 		{
 			// Add to dirs list
 			CPs_FilenameLLItem* pNewItem = MALLOC_TYPE(CPs_FilenameLLItem);
+			if (!pNewItem)
+				continue;
 			pNewItem->m_pNextItem = m_pFirstDir;
 			STR_AllocSetString(&pNewItem->m_pcFilename, pcFullPath, FALSE);
 			m_pFirstDir = pNewItem;
@@ -2033,6 +2037,8 @@ void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char *pDir)
 		{
 			// Add to files list
 			CPs_FilenameLLItem* pNewItem = MALLOC_TYPE(CPs_FilenameLLItem);
+			if (!pNewItem)
+				continue;
 			pNewItem->m_pNextItem = m_pFirstFile;
 			STR_AllocSetString(&pNewItem->m_pcFilename, pcFullPath, FALSE);
 			m_pFirstFile = pNewItem;
@@ -2138,8 +2144,15 @@ void CPL_Stack_Append(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem)
 	
 	if ((pPlaylist->m_iTrackStackSize + 1) >= pPlaylist->m_iTrackStackBufferSize)
 	{
-		pPlaylist->m_iTrackStackBufferSize += CPC_TRACKSTACK_BUFFER_QUANTISATION;
-		pPlaylist->m_pTrackStack = realloc(pPlaylist->m_pTrackStack, pPlaylist->m_iTrackStackBufferSize * sizeof(CP_HPLAYLISTITEM));
+		int iNewSize = pPlaylist->m_iTrackStackBufferSize + CPC_TRACKSTACK_BUFFER_QUANTISATION;
+		void* pNewStack = realloc(pPlaylist->m_pTrackStack, iNewSize * sizeof(CP_HPLAYLISTITEM));
+		if (!pNewStack)
+		{
+			CP_TRACE0("CPL_Stack_Append: realloc failed");
+			return;
+		}
+		pPlaylist->m_pTrackStack = pNewStack;
+		pPlaylist->m_iTrackStackBufferSize = iNewSize;
 	}
 	
 	// Ensure cursor is rational
@@ -2455,8 +2468,15 @@ void CPL_Stack_PlayNext(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem)
 	
 	if ((pPlaylist->m_iTrackStackSize + 1) >= pPlaylist->m_iTrackStackBufferSize)
 	{
-		pPlaylist->m_iTrackStackBufferSize += CPC_TRACKSTACK_BUFFER_QUANTISATION;
-		pPlaylist->m_pTrackStack = realloc(pPlaylist->m_pTrackStack, pPlaylist->m_iTrackStackBufferSize * sizeof(CP_HPLAYLISTITEM));
+		int iNewSize = pPlaylist->m_iTrackStackBufferSize + CPC_TRACKSTACK_BUFFER_QUANTISATION;
+		void* pNewStack = realloc(pPlaylist->m_pTrackStack, iNewSize * sizeof(CP_HPLAYLISTITEM));
+		if (!pNewStack)
+		{
+			CP_TRACE0("CPL_Stack_Insert: realloc failed");
+			return;
+		}
+		pPlaylist->m_pTrackStack = pNewStack;
+		pPlaylist->m_iTrackStackBufferSize = iNewSize;
 	}
 	
 	// Shunt all items up one
@@ -2524,6 +2544,11 @@ DWORD WINAPI CPI_PlaylistWorkerThreadEP(void* pCookie)
 				if (!pPendingChunk)
 				{
 					pPendingChunk = MALLOC_TYPE(CPs_NotifyChunk);
+					if (!pPendingChunk)
+					{
+						CP_TRACE0("Playlist worker: Failed to allocate notify chunk");
+						continue;
+					}
 					pPendingChunk->m_iNumberInChunk = 0;
 				}
 				

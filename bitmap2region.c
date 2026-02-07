@@ -129,8 +129,16 @@ HRGN main_bitmap_to_region(HBITMAP hBmp, COLORREF cTransparentColor)
 					// Ensure that we have enough memory allocated
 					if (iLastRectIDX == iRGNDataSize_Rects)
 					{
-						iRGNDataSize_Rects += CPC_RECT_QUANTISE;
-						pRGNData = (RGNDATA*)realloc(pRGNData, sizeof(RGNDATAHEADER) + (iRGNDataSize_Rects * sizeof(RECT)));
+						int iNewSize = iRGNDataSize_Rects + CPC_RECT_QUANTISE;
+						RGNDATA* pNewData = (RGNDATA*)realloc(pRGNData, sizeof(RGNDATAHEADER) + (iNewSize * sizeof(RECT)));
+						if (!pNewData)
+						{
+							free(pRGNData);
+							free(pBitmapBits);
+							return NULL;
+						}
+						pRGNData = pNewData;
+						iRGNDataSize_Rects = iNewSize;
 					}
 					((RECT*)pRGNData->Buffer)[iLastRectIDX].left = iColIDX;
 					((RECT*)pRGNData->Buffer)[iLastRectIDX].top = iRowIDX;
@@ -269,8 +277,16 @@ HRGN main_bitmap_to_region_1bit(HBITMAP hBmp, COLORREF cTransparentColor)
 					// Ensure that we have enough memory allocated
 					if (iLastRectIDX == iRGNDataSize_Rects)
 					{
-						iRGNDataSize_Rects += CPC_RECT_QUANTISE;
-						pRGNData = (RGNDATA*)realloc(pRGNData, sizeof(RGNDATAHEADER) + (iRGNDataSize_Rects * sizeof(RECT)));
+						int iNewSize = iRGNDataSize_Rects + CPC_RECT_QUANTISE;
+						RGNDATA* pNewData = (RGNDATA*)realloc(pRGNData, sizeof(RGNDATAHEADER) + (iNewSize * sizeof(RECT)));
+						if (!pNewData)
+						{
+							free(pRGNData);
+							free(pBitmapBits);
+							return NULL;
+						}
+						pRGNData = pNewData;
+						iRGNDataSize_Rects = iNewSize;
 					}
 					((RECT*)pRGNData->Buffer)[iLastRectIDX].left = iColIDX;
 					((RECT*)pRGNData->Buffer)[iLastRectIDX].top = iRowIDX;

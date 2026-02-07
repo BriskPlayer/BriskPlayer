@@ -49,7 +49,7 @@ void    options_read(void)
 	int iColIDX;
 	
 	main_get_program_path(NULL, pathbuf, MAX_PATH);
-	strcat(pathbuf, "briskplayer.ini");
+	strcat_s(pathbuf, sizeof(pathbuf), "briskplayer.ini");
 	
 	for (iColIDX = PLAYLIST_first; iColIDX <= PLAYLIST_last; iColIDX++)
 	{

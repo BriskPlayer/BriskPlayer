@@ -57,6 +57,7 @@ typedef struct _CPs_BufferFillerContext
 	HWND m_hWndNotify;
 	DWORD m_dwIcyMetaInt;      // Metadata interval from server
 	DWORD m_dwAudioBytesRead;  // Audio bytes read since last metadata
+	DWORD m_dwTotalBytesRead;  // Total bytes read (for progress logging)
 	
 } CPs_BufferFillerContext;
 
@@ -286,6 +287,8 @@ char* ParsePLSPlaylist(const char* pcContent)
 {
 	char* pcStreamURL = NULL;
 	char* pcContentCopy = _strdup(pcContent); // Work with a copy since strtok_s modifies the string
+	if (!pcContentCopy)
+		return NULL;
 	char* pcContext = NULL;
 	char* pcLine = strtok_s(pcContentCopy, "\r\n", &pcContext);
 	
@@ -347,6 +350,8 @@ char* ParseM3UPlaylist(const char* pcContent)
 {
 	char* pcStreamURL = NULL;
 	char* pcContentCopy = _strdup(pcContent); // Work with a copy since strtok_s modifies the string
+	if (!pcContentCopy)
+		return NULL;
 	char* pcContext = NULL;
 	char* pcLine = strtok_s(pcContentCopy, "\r\n", &pcContext);
 	
@@ -617,8 +622,9 @@ unsigned int _stdcall EP_FillerThread(void* _pContext)
 		}
 		else
 		{
-			static DWORD dwTotalBytesRead = 0;
+			DWORD dwTotalBytesRead = pContext->m_dwTotalBytesRead;
 			dwTotalBytesRead += dwBytesRead;
+			pContext->m_dwTotalBytesRead = dwTotalBytesRead;
 			
 			pContext->m_pCircleBuffer->Write(pContext->m_pCircleBuffer,
 											 bReadBuffer,
@@ -692,6 +698,13 @@ CPs_InStream* CP_CreateInStream_Internet(const char* pcFlexiURL, HWND hWndOwner)
 	{
 		pNewStream = MALLOC_TYPE(CPs_InStream);
 		pContext = MALLOC_TYPE(CPs_InStream_Internet);
+		if (!pNewStream || !pContext)
+		{
+			free(pNewStream);
+			free(pContext);
+			free(pcActualURL);
+			return NULL;
+		}
 		
 		pNewStream->Uninitialise = CPSINET_Uninitialise;
 		pNewStream->Read = CPSINET_Read;
@@ -710,12 +723,22 @@ CPs_InStream* CP_CreateInStream_Internet(const char* pcFlexiURL, HWND hWndOwner)
 		
 		// Setup context
 		pBufferFillContext = MALLOC_TYPE(CPs_BufferFillerContext);
+		if (!pBufferFillContext)
+		{
+			CP_TRACE0("CP_CreateInStream_Internet: Failed to allocate filler context");
+			pContext->m_pCircleBuffer->Uninitialise(pContext->m_pCircleBuffer);
+			free(pContext);
+			free(pNewStream);
+			free(pcActualURL);
+			return NULL;
+		}
 		pBufferFillContext->m_pCircleBuffer = pContext->m_pCircleBuffer;
 		pBufferFillContext->m_bTerminate = FALSE;
 		STR_AllocSetString(&pBufferFillContext->m_pcFlexiURL, pcActualURL, FALSE); // Use the actual stream URL
 		pBufferFillContext->m_hWndNotify = hWndOwner;
 		pBufferFillContext->m_dwIcyMetaInt = 0;      // Will be set from server response
 		pBufferFillContext->m_dwAudioBytesRead = 0;  // Reset counter
+		pBufferFillContext->m_dwTotalBytesRead = 0;  // Reset total counter
 		
 		// Start thread
 		pContext->m_hFillerThread = (HANDLE)_beginthreadex(NULL, 0, EP_FillerThread, pBufferFillContext, 0, &uiThreadID);

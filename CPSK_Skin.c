@@ -499,6 +499,11 @@ void CPSK_ReadSkinCommand_AddVerb(CP_COMPOSITEFILE hComposite, CPs_CommandTarget
 	pNext = *ppCommandTarget;
 	
 	*ppCommandTarget = MALLOC_TYPE(CPs_CommandTarget);
+	if (!*ppCommandTarget)
+	{
+		*ppCommandTarget = pNext;
+		return;
+	}
 	(*ppCommandTarget)->m_pStateImage = CPIG_CreateStateImage(CPIG_CreateImage_FromSubFile(hComposite, cFile), iNumStates);
 	(*ppCommandTarget)->m_ptOffset = ptOffset;
 	(*ppCommandTarget)->m_dwAlign = dwAlignFlag;
@@ -538,6 +543,11 @@ void CPSK_ReadSkinCommand_AddIndicator(CP_COMPOSITEFILE hComposite, CPs_Skin* pS
 	// Load state image
 	pNext = pSkin->mpl_pIndicators;
 	pSkin->mpl_pIndicators = MALLOC_TYPE(CPs_Indicator);
+	if (!pSkin->mpl_pIndicators)
+	{
+		pSkin->mpl_pIndicators = pNext;
+		return;
+	}
 	pSkin->mpl_pIndicators->m_pNext = pNext;
 	pSkin->mpl_pIndicators->m_dwAlign = dwAlignFlag;
 	pSkin->mpl_pIndicators->m_rAlign = rOffset;

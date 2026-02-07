@@ -95,6 +95,11 @@ void CP_InitialiseCodec_WAV(CPs_CoDecModule* pCoDec)
 	
 	// Setup private data
 	pCoDec->m_pModuleCookie = malloc(sizeof(CPs_CoDec_Wave));
+	if (!pCoDec->m_pModuleCookie)
+	{
+		CP_TRACE0("Failed to allocate WAV codec context");
+		return;
+	}
 	pContext = (CPs_CoDec_Wave*)pCoDec->m_pModuleCookie;
 	pContext->m_hFile = INVALID_HANDLE_VALUE;
 	
@@ -207,6 +212,13 @@ BOOL CPP_OMWAV_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD 
 		
 		// Get the format data
 		pFormat = (PCMWAVEFORMAT*)malloc(chunk.m_dwLength);
+		if (!pFormat)
+		{
+			CP_TRACE0("Failed to allocate WAV format buffer");
+			CloseHandle(pContext->m_hFile);
+			pContext->m_hFile = INVALID_HANDLE_VALUE;
+			return FALSE;
+		}
 		
 		ReadFile(pContext->m_hFile, pFormat, chunk.m_dwLength, &dwBytesRead, NULL);
 		

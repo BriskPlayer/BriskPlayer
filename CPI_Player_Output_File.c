@@ -100,6 +100,11 @@ void CPP_OMFL_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInf
 	CPs_OutputContext_File* pContext;
 	CP_ASSERT(pModule->m_pModuleCookie == NULL);
 	pContext = MALLOC_TYPE(CPs_OutputContext_File);
+	if (!pContext)
+	{
+		CP_TRACE0("File out: Failed to allocate context");
+		return;
+	}
 	pModule->m_pModuleCookie = pContext;
 	CP_TRACE0("File out initialising");
 	
@@ -120,14 +125,14 @@ void CPP_OMFL_Uninitialise(CPs_OutputModule* pModule)
 {
 	CPs_OutputContext_File* pContext = (CPs_OutputContext_File*)pModule->m_pModuleCookie;
 	
-	// Safety check: if module was never initialized, cookie will be NULL or garbage
-	if (pContext == NULL || (uintptr_t)pContext == 0xffffffffffffffff || IsBadReadPtr(pContext, sizeof(CPs_OutputContext_File))) {
-		CP_TRACE0("File output module uninitialize called but was never initialized or has garbage pointer");
+	// Safety check: if module was never initialized, cookie will be NULL
+	if (pContext == NULL) {
+		CP_TRACE0("File output module uninitialize called but was never initialized");
 		return;
 	}
 	
 	CP_CHECKOBJECT(pContext);
-	CP_TRACE0("Wave out shutting down");
+	CP_TRACE0("File out shutting down");
 	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
 	
 	// If there is a File handle
@@ -137,8 +142,13 @@ void CPP_OMFL_Uninitialise(CPs_OutputModule* pModule)
 		// Stop any pending playing
 		fclose(pContext->m_hFile);
 		pContext->m_hFile = NULL;
-		// Clean up
+	}
+	
+	// Always close the event handle (it's always created in Initialise)
+	if (pModule->m_evtBlockFree)
+	{
 		CloseHandle(pModule->m_evtBlockFree);
+		pModule->m_evtBlockFree = NULL;
 	}
 	
 	free(pContext);
@@ -153,11 +163,18 @@ void CPP_OMFL_RefillBuffers(CPs_OutputModule* pModule)
 {
 	BOOL bMoreData;
 	DWORD dwBufferLength = CPC_OUTPUTBLOCKSIZE;
-	BYTE lpData[CPC_OUTPUTBLOCKSIZE];
+	BYTE* lpData;
 	
 	// Safety check: ensure module pointer is valid
-	if (pModule == NULL || IsBadReadPtr(pModule, sizeof(CPs_OutputModule))) {
+	if (pModule == NULL) {
 		CP_TRACE0("File output RefillBuffers called with invalid module pointer");
+		return;
+	}
+	
+	lpData = (BYTE*)malloc(CPC_OUTPUTBLOCKSIZE);
+	if (!lpData)
+	{
+		CP_TRACE0("File output RefillBuffers: failed to allocate buffer");
 		return;
 	}
 	
@@ -247,7 +264,10 @@ void CPP_OMFL_RefillBuffers(CPs_OutputModule* pModule)
 			free(pwcInitialDir);
 			
 			if (!returnval)
+			{
+				free(lpData);
 				return;
+			}
 			
 			// Convert back to ANSI for fopen_s
 			char selectedPath[MAX_PATH];
@@ -321,6 +341,8 @@ void CPP_OMFL_RefillBuffers(CPs_OutputModule* pModule)
 	
 	if (!pContext->m_bPaused)
 		SetEvent(pModule->m_evtBlockFree);
+	
+	free(lpData);
 }
 
 //

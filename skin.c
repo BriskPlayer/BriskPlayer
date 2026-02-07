@@ -732,16 +732,16 @@ void    main_skin_check_ini_value(char *textposition,
 			
 			if (path_is_relative(textposition + strlen(name) + 1))
 			{
-				strcpy(pathbuf, (char*)options.main_skin_file);
+				strcpy_s(pathbuf, sizeof(pathbuf), (char*)options.main_skin_file);
 				(void)path_remove_filespec(pathbuf);
-				strcat(pathbuf, textposition + strlen(name) + 1);
+				strcat_s(pathbuf, sizeof(pathbuf), textposition + strlen(name) + 1);
 			}
 			
 			else
-				strcpy(pathbuf, textposition + strlen(name) + 1);
+				strcpy_s(pathbuf, sizeof(pathbuf), textposition + strlen(name) + 1);
 				
 			if (!globals.playlist_bool_force_skin_from_options)
-				strcpy((char*)options.playlist_skin_file, pathbuf);
+				strcpy_s((char*)options.playlist_skin_file, sizeof(options.playlist_skin_file), pathbuf);
 		}
 		
 		if (stricmp(name, "transparentcolor") == 0)

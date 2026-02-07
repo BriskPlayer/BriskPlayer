@@ -49,6 +49,8 @@ void CPSYSICON_DrawCurrentFrame(CPs_SysIcon* pSysIconData);
 CP_HSYSICON CPSYSICON_Create(HWND hWnd)
 {
 	CPs_SysIcon* pSysIconData = MALLOC_TYPE(CPs_SysIcon);
+	if (!pSysIconData)
+		return NULL;
 	
 	pSysIconData->m_bmStrip = LoadBitmap(GetModuleHandle(NULL),
 										 MAKEINTRESOURCE(IDB_SYSICON));

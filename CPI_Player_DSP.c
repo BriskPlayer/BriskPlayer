@@ -228,7 +228,7 @@ static void CPDSP_ProbePlugin(const char* pcPluginPath)
     char* pLastSlash;
     
     // Open debug log file (append mode)
-    FILE* debugFile = fopen("K:\\msys64\\home\\wowza\\BriskPlayer\\build\\dsp_debug.txt", "a");
+    FILE* debugFile = fopen("dsp_debug.log", "a");
     if (debugFile) fprintf(debugFile, "Probing plugin: '%s'\n", pcPluginPath);
     
     // Extract the directory from the plugin path and add it to DLL search path
@@ -336,6 +336,16 @@ static void CPDSP_ProbePlugin(const char* pcPluginPath)
         
         // Copy the module name
         pInfo->m_pcModuleName = _strdup(pModule->description ? pModule->description : "Unknown Module");
+        
+        if (!pInfo->m_pcPluginPath || !pInfo->m_pcPluginName || !pInfo->m_pcModuleName)
+        {
+            free(pInfo->m_pcPluginPath);
+            free(pInfo->m_pcPluginName);
+            free(pInfo->m_pcModuleName);
+            free(pInfo);
+            if (debugFile) fprintf(debugFile, "  _strdup failed for plugin info strings\n");
+            break;
+        }
         
         // Store the module index
         pInfo->m_iModuleIndex = iModuleIndex;

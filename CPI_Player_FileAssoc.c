@@ -99,6 +99,7 @@ void CPFA_AddFileAssociation(CPs_CoDecModule* pCoDec, const char* pcExtension, D
 		if (stricmp(pcExtension, pCursor->m_pcExtension) == 0)
 		{
 			CP_TRACE1("** Extension \"%s\" already registered here", pcExtension);
+			free(pNewAssociation);
 			return;
 		}
 		
@@ -158,6 +159,11 @@ void CPFA_AssociateWithEXE(CPs_CoDecModule* pCoDec)
 		
 		// Build a string of the format .ext
 		pDotExt = (char*)malloc(strlen(pCursor->m_pcExtension) + 2);
+		if (!pDotExt)
+		{
+			pCursor = (CPs_FileAssociation*)pCursor->m_pNext;
+			continue;
+		}
 		pDotExt[0] = '.';
 		strcpy(pDotExt + 1, pCursor->m_pcExtension);
 		

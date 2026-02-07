@@ -116,6 +116,9 @@ char* DownloadPlaylistToTempFile(const char* pcPlaylistURL)
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		CP_LOG_ERROR("DownloadPlaylistToTempFile: CreateFileW failed\n");
+		InternetCloseHandle(hURL);
+		InternetCloseHandle(hInternet);
+		return NULL;
 	}
 	
 	// Download and write to file
@@ -735,8 +738,8 @@ CPs_CoDecModule* OpenCoDec(CPs_PlayerContext* pContext, const char* pcFilename)
 		CP_LOG_DEBUG("OpenCoDec: No extension found or no codec matched - trying fallback for streaming URL\n");
 		
 		// For streaming URLs, try codecs in order of likelihood
-		// Most internet streams are MP3, then AAC, then FLAC, then OGG
-		int iFallbackOrder[] = { CP_CODEC_MPEG, CP_CODEC_AAC, CP_CODEC_FFMPEG, CP_CODEC_FLAC, CP_CODEC_OGG, CP_CODEC_WINAMPPLUGIN };
+		// FFmpeg first as the universal codec, then specific codecs as fallback
+		int iFallbackOrder[] = { CP_CODEC_FFMPEG, CP_CODEC_MPEG, CP_CODEC_AAC, CP_CODEC_OGG, CP_CODEC_FLAC, CP_CODEC_WINAMPPLUGIN };
 		int iFallbackCount = sizeof(iFallbackOrder) / sizeof(iFallbackOrder[0]);
 		
 		for (int i = 0; i < iFallbackCount && !bOpenSucceeded; i++)

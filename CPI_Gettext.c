@@ -493,9 +493,10 @@ BOOL CPG_SetWindowsLocale(const char* languageCode)
 }
 
 // Get Unicode translation (for Windows APIs)
+// Uses thread-local storage to avoid data races if called from multiple threads
 wchar_t* CPG_GetTranslationW(const char* msgid)
 {
-    static wchar_t wideBuffer[512];
+    static __thread wchar_t wideBuffer[512];
     
     const char* translated = _(msgid);
     if (MultiByteToWideChar(CP_UTF8, 0, translated, -1, wideBuffer, 

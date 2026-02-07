@@ -1386,17 +1386,17 @@ void LVCB_ItemRightClick(CP_HLISTVIEW _hListData, const int iItemIDX, const int 
 			// Open the most specific MusicBrainz page available
 			if (pcTrackID)
 			{
-				sprintf(url, "https://musicbrainz.org/recording/%s", pcTrackID);
+				snprintf(url, sizeof(url), "https://musicbrainz.org/recording/%s", pcTrackID);
 				ShellExecuteA(windows.m_hWndPlaylist, "open", url, NULL, NULL, SW_SHOWNORMAL);
 			}
 			else if (pcReleaseID)
 			{
-				sprintf(url, "https://musicbrainz.org/release/%s", pcReleaseID);
+				snprintf(url, sizeof(url), "https://musicbrainz.org/release/%s", pcReleaseID);
 				ShellExecuteA(windows.m_hWndPlaylist, "open", url, NULL, NULL, SW_SHOWNORMAL);
 			}
 			else if (pcArtistID)
 			{
-				sprintf(url, "https://musicbrainz.org/artist/%s", pcArtistID);
+				snprintf(url, sizeof(url), "https://musicbrainz.org/artist/%s", pcArtistID);
 				ShellExecuteA(windows.m_hWndPlaylist, "open", url, NULL, NULL, SW_SHOWNORMAL);
 			}
 			break;

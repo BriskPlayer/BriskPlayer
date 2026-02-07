@@ -512,7 +512,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					HKEY    result;
 					DWORD   lpdwDisposition;
 					char    pathbuf[MAX_PATH];
-					char    stringval[MAX_PATH + 3];
+					char    stringval[MAX_PATH + 32];
 					
 					SAFE_PLAYER_CALL(CPI_Player__AssociateFileExtensions);
 					
@@ -566,7 +566,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
-					sprintf(stringval, "\"%s\" \"%%1\" -add", pathbuf);
+					snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\" -add", pathbuf);
 					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
 								  strlen(stringval) + 1);
 					RegCloseKey(result);
@@ -582,7 +582,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
-					sprintf(stringval, "\"%s\" \"%%1\"", pathbuf);
+					snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\"", pathbuf);
 					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
 								  strlen(stringval) + 1);
 					RegCloseKey(result);
@@ -616,7 +616,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
-					sprintf(stringval, "%s,%d", pathbuf, 2);
+					snprintf(stringval, sizeof(stringval), "%s,%d", pathbuf, 2);
 					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
 								  strlen(stringval) + 1);
 					RegCloseKey(result);
@@ -637,7 +637,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
-					sprintf(stringval, "\"%s\" \"%%1\"", pathbuf);
+					snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\"", pathbuf);
 					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
 								  strlen(stringval) + 1);
 					RegCloseKey(result);
@@ -653,7 +653,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
-					sprintf(stringval, "\"%s\" \"%%1\" -add", pathbuf);
+					snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\" -add", pathbuf);
 					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
 								  strlen(stringval) + 1);
 					RegCloseKey(result);
@@ -668,7 +668,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
-					sprintf(stringval, "\"%s\" \"%%1\"", pathbuf);
+					snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\"", pathbuf);
 					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
 								  strlen(stringval) + 1);
 					RegCloseKey(result);
@@ -685,7 +685,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
-					sprintf(stringval, "\"%s\" \"%%1\"", pathbuf);
+					snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\"", pathbuf);
 					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
 								  strlen(stringval) + 1);
 					RegCloseKey(result);
@@ -695,7 +695,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 								   0, NULL, REG_OPTION_NON_VOLATILE,
 								   KEY_ALL_ACCESS, NULL, &result,
 								   &lpdwDisposition);
-					sprintf(stringval, "\"%s\" \"%%1\" -add", pathbuf);
+					snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\" -add", pathbuf);
 					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
 								  strlen(stringval) + 1);
 					RegCloseKey(result);
@@ -733,7 +733,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					                           
 					SHGetPathFromIDList(ppidl, startmenu);
 					
-					sprintf(linkname, "%s\\BriskPlayer.lnk", startmenu);
+					snprintf(linkname, sizeof(linkname), "%s\\BriskPlayer.lnk", startmenu);
 					ExpandEnvironmentStrings(linkname, // pointer to string with environment variables
 											 linkname2, // pointer to string with expanded environment
 											 // variables
@@ -744,7 +744,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					
 					SHGetPathFromIDList(ppidl, startmenu);
 					
-					sprintf(linkname, "%s\\BriskPlayer.lnk", startmenu);
+					snprintf(linkname, sizeof(linkname), "%s\\BriskPlayer.lnk", startmenu);
 					ExpandEnvironmentStrings(linkname, // pointer to string with environment variables
 											 linkname2, // pointer to string with expanded environment
 											 // variables
