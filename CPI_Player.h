@@ -31,6 +31,7 @@ typedef enum CP_CodecType {
 	CP_CODEC_MPEG,
 	CP_CODEC_AAC,
 	CP_CODEC_FLAC,
+	CP_CODEC_OPUS,
 	CP_CODEC_FFMPEG,
 	
 	CP_CODEC_first = CP_CODEC_WINAMPPLUGIN,
@@ -45,9 +46,10 @@ typedef enum CP_OutputType {
 	CP_OUTPUT_FAUDIO,
 	CP_OUTPUT_DIRECTSOUND,
 	CP_OUTPUT_FILE,
+	CP_OUTPUT_WASAPI,
 	
 	CP_OUTPUT_first = CP_OUTPUT_WAVE,
-	CP_OUTPUT_last = CP_OUTPUT_FILE
+	CP_OUTPUT_last = CP_OUTPUT_WASAPI
 } CP_OutputType;
 static_assert(CP_OUTPUT_last < 8, "Output types should fit in 3 bits");
 
@@ -69,13 +71,14 @@ void CPI_Player__Destroy(CP_HPLAYER hPlayer);
 //
 // Player control verbs.  Seeks are floats between 0.0 and 1.0
 void CPI_Player__ReopenMixer(CP_HPLAYER hPlayer);
-void CPI_Player__OpenFile(CP_HPLAYER hPlayer, const char* pcFilename);
+void CPI_Player__OpenFile(CP_HPLAYER hPlayer, const char* pcFilename, float fReplayGainScale);
 void CPI_Player__Seek(CP_HPLAYER hPlayer, const int iSeekPercent_Numerator, const int iSeekPercent_Denominator);
 void CPI_Player__Play(CP_HPLAYER hPlayer);
 void CPI_Player__Stop(CP_HPLAYER hPlayer);
 void CPI_Player__Pause(CP_HPLAYER hPlayer);
 void CPI_Player__BlockMessagesUntilEndOfStream(CP_HPLAYER hPlayer);
 void CPI_Player__OnOutputDeviceChange(CP_HPLAYER hPlayer);
+void CPI_Player__SetNextFile(CP_HPLAYER hPlayer, const char* pcFilename, float fReplayGainScale);
 //
 //
 // Output control verbs.
@@ -118,6 +121,7 @@ void CPI_Player_cb_OnStreamInfo(CP_HPLAYER hPlayer, const CPs_FileInfo* pInfo);
 void CPI_Player_cb_OnStreamOffset_Secs(CP_HPLAYER hPlayer, const int iTrackElapsedSeconds);
 void CPI_Player_cb_OnStreamOffset_Range(CP_HPLAYER hPlayer, const int iTrackElapsed_Range);
 void CPI_Player_cb_OnPlayerState(CP_HPLAYER hPlayer, const CPe_PlayerState enPlayerState);
+void CPI_Player_cb_OnGaplessTransition(CP_HPLAYER hPlayer);
 void CPI_Player_cb_OnVolumeChange(CP_HPLAYER hPlayer, const int iNewVolume); // iNewVolume range is 0...100
 //
 // This notify is called as a result of a previous call to CPI_Player__EnumOutputDevices.  It

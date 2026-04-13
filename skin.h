@@ -18,6 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef SKIN_H
+#define SKIN_H
+
 // Built-in skin variants
 typedef enum BuiltinSkinVariant
 {
@@ -105,3 +108,5 @@ int main_set_default_skin(void);
 int main_set_eq_skin(void);
 int main_set_shade_skin(void);
 int main_set_next_builtin_skin(void);
+
+#endif /* SKIN_H */

@@ -156,49 +156,76 @@ void MainMenu_PopulateLanguages(void)
     g_LanguageCount = 0;
     
     // Get available languages from gettext system
-    LanguageInfo languages[16];
-    int languageCount = CPG_EnumerateLanguages(languages, 16);
+    LanguageInfo languages[32];
+    int languageCount = CPG_EnumerateLanguages(languages, 32);
     
-    const char* currentLang = CPG_GetCurrentLanguage();
-    
-    // Add menu items for each discovered language
+    const char* currentLang =
+        (strlen(options.preferred_language) > 0)
+            ? options.preferred_language
+            : CPG_GetCurrentLanguage();
+
+    // Pre-pass: find which position matches the current language.
+    int selectedIndex = 0;
+    for (int i = 0; i < languageCount && i < CPC_MAX_MENU_ITEMS; i++) {
+        if (strcmp(currentLang, languages[i].code) == 0) {
+            selectedIndex = i;
+            break;
+        }
+    }
+
+    // Insert every item with MFT_RADIOCHECK so Windows renders a bullet
+    // (instead of a tick) when the item is checked.
     for (int i = 0; i < languageCount && i < CPC_MAX_MENU_ITEMS; i++) {
         const LanguageInfo* lang = &languages[i];
-        
+
         // Store language code for lookup
         strncpy(g_LanguageCodes[i], lang->code, sizeof(g_LanguageCodes[i]) - 1);
         g_LanguageCodes[i][sizeof(g_LanguageCodes[i]) - 1] = '\0';
-        
+
         // Create display name
         wchar_t displayName[CPC_TITLE_BUFFER];
         char tempName[CPC_TITLE_BUFFER];
-        
+
         if (strlen(lang->region) > 0) {
             snprintf(tempName, sizeof(tempName), "%s (%s)", lang->name, lang->region);
         } else {
             strncpy(tempName, lang->name, sizeof(tempName) - 1);
             tempName[sizeof(tempName) - 1] = '\0';
         }
-        
+
         MultiByteToWideChar(CP_UTF8, 0, tempName, -1, displayName, CPC_TITLE_BUFFER);
-        
-        // Set flags
-        UINT flags = MF_STRING;
-        if (strcmp(currentLang, lang->code) == 0) {
-            flags |= MF_CHECKED;
-        }
-        
-        UINT menuId = MENU_LANGUAGE_BASE + i + 1;
-        AppendMenuW(languageMenu, flags, menuId, displayName);
+
+        MENUITEMINFOW mii = {0};
+        mii.cbSize     = sizeof(MENUITEMINFOW);
+        mii.fMask      = MIIM_ID | MIIM_FTYPE | MIIM_STATE | MIIM_STRING;
+        mii.fType      = MFT_STRING | MFT_RADIOCHECK;
+        mii.fState     = (i == selectedIndex) ? MFS_CHECKED : MFS_ENABLED;
+        mii.wID        = MENU_LANGUAGE_BASE + i + 1;
+        mii.dwTypeData = displayName;
+        InsertMenuItemW(languageMenu, i, TRUE, &mii);
         g_LanguageCount++;
     }
-    
+
     // Fallback if no languages found
     if (languageCount == 0) {
         strncpy(g_LanguageCodes[0], "en", sizeof(g_LanguageCodes[0]));
-        AppendMenuW(languageMenu, MF_STRING | MF_CHECKED, MENU_LANGUAGE_EN, L"English (Fallback)");
+        MENUITEMINFOW mii = {0};
+        mii.cbSize     = sizeof(MENUITEMINFOW);
+        mii.fMask      = MIIM_ID | MIIM_FTYPE | MIIM_STATE | MIIM_STRING;
+        mii.fType      = MFT_STRING | MFT_RADIOCHECK;
+        mii.fState     = MFS_CHECKED;
+        mii.wID        = MENU_LANGUAGE_EN;
+        mii.dwTypeData = L"English (Fallback)";
+        InsertMenuItemW(languageMenu, 0, TRUE, &mii);
         g_LanguageCount = 1;
+        languageCount   = 1;
+        selectedIndex   = 0;
     }
+
+    // Use CheckMenuRadioItem as a belt-and-suspenders to ensure Windows
+    // renders the bullet on exactly one item in the group.
+    CheckMenuRadioItem(languageMenu, 0, (UINT)(languageCount - 1),
+                       (UINT)selectedIndex, MF_BYPOSITION);
 }
 
 void MainMenu_SwitchLanguage(const char* languageCode)

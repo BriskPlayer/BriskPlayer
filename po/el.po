@@ -1,0 +1,348 @@
+# Greek translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Greek\n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – Αστραπιαία γρήγορος αναπαραγωγέας ήχου"
+
+msgid "BriskPlayer Audio file"
+msgstr "BriskPlayer Αρχείο ήχου"
+
+msgid "BriskPlayer Playlist"
+msgstr "BriskPlayer Λίστα αναπαραγωγής"
+
+msgid "Open File..."
+msgstr "Άνοιγμα αρχείου..."
+
+msgid "Open URL..."
+msgstr "Άνοιγμα URL..."
+
+msgid "Add Files..."
+msgstr "Προσθήκη αρχείων..."
+
+msgid "Playlist Editor"
+msgstr "Επεξεργαστής λίστας"
+
+msgid "Skin"
+msgstr "Θέμα"
+
+msgid "Default"
+msgstr "Προεπιλογή"
+
+msgid "Language"
+msgstr "Γλώσσα"
+
+msgid "English"
+msgstr "Αγγλικά"
+
+msgid "Deutsch"
+msgstr "Γερμανικά"
+
+msgid "Playback"
+msgstr "Αναπαραγωγή"
+
+msgid "Play"
+msgstr "Αναπαραγωγή"
+
+msgid "Stop"
+msgstr "Διακοπή"
+
+msgid "Pause"
+msgstr "Παύση"
+
+msgid "Next"
+msgstr "Επόμενο"
+
+msgid "Previous"
+msgstr "Προηγούμενο"
+
+msgid "Options..."
+msgstr "Επιλογές..."
+
+msgid "About"
+msgstr "Σχετικά"
+
+msgid "Exit"
+msgstr "Έξοδος"
+
+msgid "About BriskPlayer"
+msgstr "Σχετικά με το BriskPlayer"
+
+msgid "BriskPlayer Options"
+msgstr "Επιλογές BriskPlayer"
+
+msgid "Open URL"
+msgstr "Άνοιγμα URL"
+
+msgid "Quick Find"
+msgstr "Γρήγορη αναζήτηση"
+
+msgid "&About"
+msgstr "&Σχετικά"
+
+msgid "&Keyboard Shortcuts"
+msgstr "&Συντομεύσεις πληκτρολογίου"
+
+msgid "C&hanges"
+msgstr "&Αλλαγές"
+
+msgid "C&lose"
+msgstr "&Κλείσιμο"
+
+msgid "General"
+msgstr "Γενικά"
+
+msgid "Always on top"
+msgstr "Πάντα στην κορυφή"
+
+msgid "Exit after playing"
+msgstr "Έξοδος μετά την αναπαραγωγή"
+
+msgid "Rotate systemtray icon"
+msgstr "Περιστροφή εικονιδίου γραμμής συστήματος"
+
+msgid "Scroll Songtitle"
+msgstr "Κύλιση τίτλου τραγουδιού"
+
+msgid "Allow file once in playlist"
+msgstr "Να επιτρέπεται κάθε αρχείο μόνο μία φορά στη λίστα"
+
+msgid "Autoplay on startup"
+msgstr "Αυτόματη αναπαραγωγή κατά την εκκίνηση"
+
+msgid "Allow multiple instances"
+msgstr "Να επιτρέπονται πολλαπλές εκτελέσεις"
+
+msgid "Show remaining time"
+msgstr "Εμφάνιση υπολειπόμενου χρόνου"
+
+msgid "Show on taskbar"
+msgstr "Εμφάνιση στη γραμμή εργασιών"
+
+
+msgid "Sticky windows"
+msgstr "Κολλητικά παράθυρα"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "Καταχώριση τύπων αρχείων"
+
+msgid "Add to Start Menu"
+msgstr "Προσθήκη στο μενού Έναρξη"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "Ανάγνωση ετικέτας ID3 (εάν υπάρχει)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "Ανάγνωση ετικέτας ID3 επιλεγμένου"
+
+msgid "Support ID3v2"
+msgstr "Υποστήριξη ID3v2"
+
+msgid "Prefer native OGG tags"
+msgstr "Προτίμηση native ετικετών OGG"
+
+msgid "Load ID3 tags in background"
+msgstr "Φόρτωση ετικετών ID3 στο παρασκήνιο"
+
+msgid "Work out track lengths"
+msgstr "Υπολογισμός διάρκειας κομματιών"
+
+msgid "Easy move"
+msgstr "Εύκολη μετακίνηση"
+
+msgid "Remember playlist"
+msgstr "Αποθήκευση λίστας αναπαραγωγής"
+
+msgid "Remember last played"
+msgstr "Αποθήκευση τελευταίου αρχείου"
+
+msgid "Track Delay (sec)"
+msgstr "Καθυστέρηση κομματιού (δευτ)"
+
+msgid "Skinlist length"
+msgstr "Μήκος λίστας θεμάτων"
+
+msgid "Flush"
+msgstr "Εκκαθάριση"
+
+msgid "Output"
+msgstr "Έξοδος"
+
+msgid "Volume controls"
+msgstr "Έλεγχος έντασης"
+
+msgid "Player"
+msgstr "Αναπαραγωγέας"
+
+msgid "Open"
+msgstr "Άνοιγμα"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Ακύρωση"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"Πληκτρολογήστε το URL που θέλετε να αναπαράγετε. Τα υποστηριζόμενα formats "
+"είναι streaming MP3 και OGG και λίστες M3U."
+
+msgid "&URL:"
+msgstr "&URL:"
+
+msgid "Find Text"
+msgstr "Εύρεση κειμένου"
+
+msgid "Look in"
+msgstr "Αναζήτηση σε"
+
+msgid "&Titles"
+msgstr "&Τίτλοι"
+
+msgid "Artist &Names"
+msgstr "Ονόματα &καλλιτεχνών"
+
+msgid "&Album Names"
+msgstr "Ονόματα &άλμπουμ"
+
+msgid "System MASTER volume"
+msgstr "Κύρια ένταση συστήματος"
+
+msgid "System WAVE volume"
+msgstr "Ένταση WAVE συστήματος"
+
+msgid "Internal volume"
+msgstr "Εσωτερική ένταση"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"Οι τύποι αρχείων έχουν καταχωριστεί.\n"
+"Μπορείτε να κάνετε διπλό κλικ σε ένα υποστηριζόμενο αρχείο για να εκκινήσετε "
+"το BriskPlayer."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr ""
+"Ένα εικονίδιο για το BriskPlayer έχει δημιουργηθεί στο μενού Έναρξη και στην "
+"Επιφάνεια εργασίας."
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "Αρχεία αρχικοποίησης θέματος BriskPlayer (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "Όλα τα αρχεία (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "Ρυθμός μετάδοσης: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "Συχνότητα δειγματοληψίας: %.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "Βρέθηκε %d αρχείο"
+msgstr[1] "Βρέθηκαν %d αρχεία"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d δευτερόλεπτο"
+msgstr[1] "%d δευτερόλεπτα"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d λεπτό"
+msgstr[1] "%d λεπτά"
+
+msgid "Failed to initialize audio device"
+msgstr "Αποτυχία αρχικοποίησης συσκευής ήχου"
+
+msgid "Unable to load audio file"
+msgstr "Δεν είναι δυνατή η φόρτωση αρχείου ήχου"
+
+msgid "Invalid String ID"
+msgstr "Μη έγκυρο αναγνωριστικό συμβολοσειράς"
+
+msgid "Audio Error"
+msgstr "Σφάλμα ήχου"
+
+msgid "File Error"
+msgstr "Σφάλμα αρχείου"
+
+msgid "Processing audio..."
+msgstr "Επεξεργασία ήχου..."
+
+msgid "Loading..."
+msgstr "Φόρτωση..."
+
+msgid "Ready"
+msgstr "Έτοιμο"
+
+msgid "Rotate system tray icon"
+msgstr "Περιστροφή εικονιδίου γραμμής ειδοποιήσεων"
+
+msgid "Scroll title"
+msgstr "Κύλιση τίτλου"
+
+msgid "Only add file once to playlist"
+msgstr "Προσθήκη αρχείου στη λίστα αναπαραγωγής μόνο μία φορά"
+
+msgid "Read ID3 tags"
+msgstr "Ανάγνωση ετικετών ID3"
+
+msgid "Read ID3 for selected files"
+msgstr "Ανάγνωση ετικετών ID3 επιλεγμένων αρχείων"
+
+msgid "Read ID3 in background"
+msgstr "Ανάγνωση ετικετών ID3 στο παρασκήνιο"
+
+msgid "Calculate track lengths"
+msgstr "Υπολογισμός διάρκειας κομματιών"
+
+msgid "Easy move mode"
+msgstr "Εύκολη λειτουργία μετακίνησης"
+
+msgid "Register file types"
+msgstr "Καταχώριση τύπων αρχείων"
+
+msgid "Track delay (seconds)"
+msgstr "Καθυστέρηση κομματιού (δευτερόλεπτα)"
+
+msgid "Skin list length"
+msgstr "Μήκος λίστας θεμάτων"
+
+msgid "Open..."
+msgstr "Άνοιγμα..."
+
+
+msgid "DSP Plugins"
+msgstr "Πρόσθετα DSP"
+
+msgid "None (Disabled)"
+msgstr "Κανένα (Απενεργοποιημένο)"
+
+msgid "Configure..."
+msgstr "Ρύθμιση..."

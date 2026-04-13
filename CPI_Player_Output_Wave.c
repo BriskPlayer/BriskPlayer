@@ -29,6 +29,7 @@
 #include "CPI_Player_Output.h"
 #include "CPI_Equaliser.h"
 #include "CPI_Player_DSP.h"
+#include "CPI_ReplayGain.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -94,6 +95,7 @@ void CPI_Player_Output_Initialise_WaveMapper(CPs_OutputModule* pModule)
 	pModule->m_pcModuleName = "Cooler Wave mapper";
 	pModule->m_pCoDec = NULL;
 	pModule->m_pEqualiser = NULL;
+	pModule->m_fReplayGainScale = 1.0f;
 }
 
 //
@@ -157,7 +159,7 @@ void CPP_OMWV_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInf
 		mmErr = waveOutOpen(&pContext->m_hWaveOut,
 							WAVE_MAPPER,
 							&waveformatex,
-							(DWORD)pModule->m_evtBlockFree,
+							(DWORD_PTR)pModule->m_evtBlockFree,
 							0, CALLBACK_EVENT);
 		                    
 		// Trap error
@@ -288,6 +290,9 @@ void CPP_OMWV_RefillBuffers(CPs_OutputModule* pModule)
 				CPs_EqualiserModule* pEQModule = (CPs_EqualiserModule*)pModule->m_pEqualiser;
 				pEQModule->ApplyEQToBlock_Inplace(pEQModule, pOutputBlock->lpData, pOutputBlock->dwBufferLength);
 			}
+			
+			// Apply ReplayGain
+			CPRG_ApplyToBlock(pOutputBlock->lpData, pOutputBlock->dwBufferLength, pModule->m_fReplayGainScale);
 			
 			// Apply DSP plugin processing
 			if (pOutputBlock->dwBufferLength > 0 && CPDSP_IsActive())

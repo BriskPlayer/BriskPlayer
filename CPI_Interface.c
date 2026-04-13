@@ -26,6 +26,7 @@
 #include "resource.h"
 #include "WindowsOS.h"
 #include "CPI_InterfacePart.h"
+#include "CPI_DpiScale.h"
 
 
 
@@ -43,7 +44,7 @@
 
 
 
-#define CPC_SIZEBORDER   0x4
+#define CPC_SIZEBORDER   DPI_Scale(4)
 ////////////////////////////////////////////////////////////////////////////////
 //
 

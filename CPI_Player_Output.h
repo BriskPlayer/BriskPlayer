@@ -70,6 +70,7 @@ typedef struct _CPs_OutputModule
 	HANDLE m_evtBlockFree;
 	const char* m_pcModuleName;
 	CP_HEQUALISER m_pEqualiser;
+	float m_fReplayGainScale;   // Linear scale factor (1.0 = no change)
 	
 	// Private variables
 	void* m_pModuleCookie;  // This is a pointer to any private data the module may want to maintain
@@ -87,5 +88,6 @@ void CPI_Player_Output_Initialise_WaveMapper(CPs_OutputModule* pModule);
 void CPI_Player_Output_Initialise_DirectSound(CPs_OutputModule* pModule);
 void CPI_Player_Output_Initialise_File(CPs_OutputModule* pModule);
 void CPI_Player_Output_Initialise_FAudio(CPs_OutputModule* pModule);
+void CPI_Player_Output_Initialise_WASAPI(CPs_OutputModule* pModule);
 
 ////////////////////////////////////////////////////////////////////////////////

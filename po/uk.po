@@ -1,0 +1,349 @@
+# Ukrainian translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Ukrainian\n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – Блискавично швидкий аудіоплеєр"
+
+msgid "BriskPlayer Audio file"
+msgstr "Аудіофайл BriskPlayer"
+
+msgid "BriskPlayer Playlist"
+msgstr "Плейлист BriskPlayer"
+
+msgid "Open File..."
+msgstr "Відкрити файл..."
+
+msgid "Open URL..."
+msgstr "Відкрити URL..."
+
+msgid "Add Files..."
+msgstr "Додати файли..."
+
+msgid "Playlist Editor"
+msgstr "Редактор плейлиста"
+
+msgid "Skin"
+msgstr "Тема"
+
+msgid "Default"
+msgstr "За замовчуванням"
+
+msgid "Language"
+msgstr "Мова"
+
+msgid "English"
+msgstr "Англійська"
+
+msgid "Deutsch"
+msgstr "Німецька"
+
+msgid "Playback"
+msgstr "Відтворення"
+
+msgid "Play"
+msgstr "Відтворити"
+
+msgid "Stop"
+msgstr "Стоп"
+
+msgid "Pause"
+msgstr "Пауза"
+
+msgid "Next"
+msgstr "Наступний"
+
+msgid "Previous"
+msgstr "Попередній"
+
+msgid "Options..."
+msgstr "Параметри..."
+
+msgid "About"
+msgstr "Про програму"
+
+msgid "Exit"
+msgstr "Вихід"
+
+msgid "About BriskPlayer"
+msgstr "Про BriskPlayer"
+
+msgid "BriskPlayer Options"
+msgstr "Параметри BriskPlayer"
+
+msgid "Open URL"
+msgstr "Відкрити URL"
+
+msgid "Quick Find"
+msgstr "Швидкий пошук"
+
+msgid "&About"
+msgstr "&Про програму"
+
+msgid "&Keyboard Shortcuts"
+msgstr "&Гарячі клавіші"
+
+msgid "C&hanges"
+msgstr "&Зміни"
+
+msgid "C&lose"
+msgstr "&Закрити"
+
+msgid "General"
+msgstr "Загальні"
+
+msgid "Always on top"
+msgstr "Завжди поверх"
+
+msgid "Exit after playing"
+msgstr "Вийти після відтворення"
+
+msgid "Rotate systemtray icon"
+msgstr "Обертати значок у треї"
+
+msgid "Scroll Songtitle"
+msgstr "Прокручувати назву треку"
+
+msgid "Allow file once in playlist"
+msgstr "Дозволити файл лише один раз у плейлисті"
+
+msgid "Autoplay on startup"
+msgstr "Автовідтворення при запуску"
+
+msgid "Allow multiple instances"
+msgstr "Дозволити кілька примірників"
+
+msgid "Show remaining time"
+msgstr "Показувати час, що залишився"
+
+msgid "Show on taskbar"
+msgstr "Показувати на панелі завдань"
+
+
+msgid "Sticky windows"
+msgstr "Прилипаючі вікна"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "Зареєструвати типи файлів"
+
+msgid "Add to Start Menu"
+msgstr "Додати до меню Пуск"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "Читати тег ID3 (якщо є)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "Читати тег ID3 вибраного"
+
+msgid "Support ID3v2"
+msgstr "Підтримка ID3v2"
+
+msgid "Prefer native OGG tags"
+msgstr "Надавати перевагу нативним тегам OGG"
+
+msgid "Load ID3 tags in background"
+msgstr "Завантажувати теги ID3 у фоні"
+
+msgid "Work out track lengths"
+msgstr "Обчислити тривалість треків"
+
+msgid "Easy move"
+msgstr "Легке переміщення"
+
+msgid "Remember playlist"
+msgstr "Запам'ятати плейлист"
+
+msgid "Remember last played"
+msgstr "Запам'ятати останній трек"
+
+msgid "Track Delay (sec)"
+msgstr "Затримка між треками (сек)"
+
+msgid "Skinlist length"
+msgstr "Довжина списку тем"
+
+msgid "Flush"
+msgstr "Очистити"
+
+msgid "Output"
+msgstr "Вивід"
+
+msgid "Volume controls"
+msgstr "Керування гучністю"
+
+msgid "Player"
+msgstr "Плеєр"
+
+msgid "Open"
+msgstr "Відкрити"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Скасувати"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"Введіть URL для відтворення. Підтримуються потоки MP3 та OGG, а також "
+"плейлисти M3U."
+
+msgid "&URL:"
+msgstr "&URL:"
+
+msgid "Find Text"
+msgstr "Знайти текст"
+
+msgid "Look in"
+msgstr "Шукати в"
+
+msgid "&Titles"
+msgstr "&Назви"
+
+msgid "Artist &Names"
+msgstr "&Імена виконавців"
+
+msgid "&Album Names"
+msgstr "Назви &альбомів"
+
+msgid "System MASTER volume"
+msgstr "Системна гучність MASTER"
+
+msgid "System WAVE volume"
+msgstr "Системна гучність WAVE"
+
+msgid "Internal volume"
+msgstr "Внутрішня гучність"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"Типи файлів зареєстровано.\n"
+"Ви можете двічі клацнути підтримуваний файл, щоб запустити BriskPlayer."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr "Значок BriskPlayer створено в меню Пуск та на Робочому столі."
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "Файли ініціалізації теми BriskPlayer (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "Усі файли (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "Бітрейт: %d кбіт/с"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "Частота дискретизації: %.1f кГц"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "Знайдено %d файл"
+msgstr[1] "Знайдено %d файли"
+msgstr[2] "Знайдено %d файлів"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d секунда"
+msgstr[1] "%d секунди"
+msgstr[2] "%d секунд"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d хвилина"
+msgstr[1] "%d хвилини"
+msgstr[2] "%d хвилин"
+
+msgid "Failed to initialize audio device"
+msgstr "Не вдалося ініціалізувати аудіопристрій"
+
+msgid "Unable to load audio file"
+msgstr "Неможливо завантажити аудіофайл"
+
+msgid "Invalid String ID"
+msgstr "Неправильний ідентифікатор рядка"
+
+msgid "Audio Error"
+msgstr "Помилка аудіо"
+
+msgid "File Error"
+msgstr "Помилка файлу"
+
+msgid "Processing audio..."
+msgstr "Обробка аудіо..."
+
+msgid "Loading..."
+msgstr "Завантаження..."
+
+msgid "Ready"
+msgstr "Готово"
+
+msgid "Rotate system tray icon"
+msgstr "Обертати іконку в системному треї"
+
+msgid "Scroll title"
+msgstr "Прокручувати назву"
+
+msgid "Only add file once to playlist"
+msgstr "Додавати файл до списку лише один раз"
+
+msgid "Read ID3 tags"
+msgstr "Читати теги ID3"
+
+msgid "Read ID3 for selected files"
+msgstr "Читати теги ID3 вибраних файлів"
+
+msgid "Read ID3 in background"
+msgstr "Читати теги ID3 у фоні"
+
+msgid "Calculate track lengths"
+msgstr "Обчислювати тривалість треків"
+
+msgid "Easy move mode"
+msgstr "Простий режим переміщення"
+
+msgid "Register file types"
+msgstr "Зареєструвати типи файлів"
+
+msgid "Track delay (seconds)"
+msgstr "Затримка треку (секунди)"
+
+msgid "Skin list length"
+msgstr "Довжина списку скінів"
+
+msgid "Open..."
+msgstr "Відкрити..."
+
+
+msgid "DSP Plugins"
+msgstr "DSP-плагіни"
+
+msgid "None (Disabled)"
+msgstr "Немає (Вимкнено)"
+
+msgid "Configure..."
+msgstr "Налаштувати..."

@@ -99,6 +99,9 @@ void CPL_Stack_ClipFromItem(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem);
 void CPL_Stack_PlayNext(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem);
 void CPL_SyncLoadNextFile(CP_HPLAYLIST hPlaylist);
 void CPL_SetAutoActivateInitial(CP_HPLAYLIST hPlaylist, const BOOL bAutoActivateInitial);
+CP_HPLAYLISTITEM CPL_PeekNextItem(CP_HPLAYLIST hPlaylist);
+void CPL_AdvanceToNextItem(CP_HPLAYLIST hPlaylist);
+void CPL_QueueNextForGapless(CP_HPLAYLIST hPlaylist);
 //
 //
 CP_HPLAYLISTITEM CPL_GetFirstItem(CP_HPLAYLIST hPlaylist);

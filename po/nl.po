@@ -1,0 +1,347 @@
+# Dutch translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Dutch\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – Razendsnelle audiospeler"
+
+msgid "BriskPlayer Audio file"
+msgstr "BriskPlayer audiobestand"
+
+msgid "BriskPlayer Playlist"
+msgstr "BriskPlayer afspeellijst"
+
+msgid "Open File..."
+msgstr "Bestand openen..."
+
+msgid "Open URL..."
+msgstr "URL openen..."
+
+msgid "Add Files..."
+msgstr "Bestanden toevoegen..."
+
+msgid "Playlist Editor"
+msgstr "Afspeellijsteditor"
+
+msgid "Skin"
+msgstr "Uiterlijk"
+
+msgid "Default"
+msgstr "Standaard"
+
+msgid "Language"
+msgstr "Taal"
+
+msgid "English"
+msgstr "Engels"
+
+msgid "Deutsch"
+msgstr "Duits"
+
+msgid "Playback"
+msgstr "Afspelen"
+
+msgid "Play"
+msgstr "Afspelen"
+
+msgid "Stop"
+msgstr "Stoppen"
+
+msgid "Pause"
+msgstr "Pauzeren"
+
+msgid "Next"
+msgstr "Volgende"
+
+msgid "Previous"
+msgstr "Vorige"
+
+msgid "Options..."
+msgstr "Opties..."
+
+msgid "About"
+msgstr "Over"
+
+msgid "Exit"
+msgstr "Afsluiten"
+
+msgid "About BriskPlayer"
+msgstr "Over BriskPlayer"
+
+msgid "BriskPlayer Options"
+msgstr "BriskPlayer opties"
+
+msgid "Open URL"
+msgstr "URL openen"
+
+msgid "Quick Find"
+msgstr "Snel zoeken"
+
+msgid "&About"
+msgstr "&Over"
+
+msgid "&Keyboard Shortcuts"
+msgstr "&Sneltoetsen"
+
+msgid "C&hanges"
+msgstr "&Wijzigingen"
+
+msgid "C&lose"
+msgstr "&Sluiten"
+
+msgid "General"
+msgstr "Algemeen"
+
+msgid "Always on top"
+msgstr "Altijd bovenaan"
+
+msgid "Exit after playing"
+msgstr "Afsluiten na afspelen"
+
+msgid "Rotate systemtray icon"
+msgstr "Systeemvakpictogram roteren"
+
+msgid "Scroll Songtitle"
+msgstr "Liedtitel scrollen"
+
+msgid "Allow file once in playlist"
+msgstr "Elk bestand eenmalig in afspeellijst"
+
+msgid "Autoplay on startup"
+msgstr "Automatisch afspelen bij opstarten"
+
+msgid "Allow multiple instances"
+msgstr "Meerdere instanties toestaan"
+
+msgid "Show remaining time"
+msgstr "Resterende tijd weergeven"
+
+msgid "Show on taskbar"
+msgstr "Weergeven in taakbalk"
+
+
+msgid "Sticky windows"
+msgstr "Plakkende vensters"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "Bestandstypen registreren"
+
+msgid "Add to Start Menu"
+msgstr "Toevoegen aan Startmenu"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "ID3-tag lezen (indien aanwezig)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "ID3-tag van geselecteerde lezen"
+
+msgid "Support ID3v2"
+msgstr "ID3v2 ondersteunen"
+
+msgid "Prefer native OGG tags"
+msgstr "Voorkeur voor native OGG-tags"
+
+msgid "Load ID3 tags in background"
+msgstr "ID3-tags op achtergrond laden"
+
+msgid "Work out track lengths"
+msgstr "Nummerlengtes berekenen"
+
+msgid "Easy move"
+msgstr "Eenvoudig verplaatsen"
+
+msgid "Remember playlist"
+msgstr "Afspeellijst onthouden"
+
+msgid "Remember last played"
+msgstr "Laatste afgespeeld onthouden"
+
+msgid "Track Delay (sec)"
+msgstr "Nummervertraging (sec)"
+
+msgid "Skinlist length"
+msgstr "Lengte van uiterlijklijst"
+
+msgid "Flush"
+msgstr "Leegmaken"
+
+msgid "Output"
+msgstr "Uitvoer"
+
+msgid "Volume controls"
+msgstr "Volumeregeling"
+
+msgid "Player"
+msgstr "Speler"
+
+msgid "Open"
+msgstr "Openen"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Annuleren"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"Typ de URL die u wilt afspelen. Ondersteunde formaten zijn MP3- en OGG-"
+"streaming en M3U-afspeellijsten."
+
+msgid "&URL:"
+msgstr "&URL:"
+
+msgid "Find Text"
+msgstr "Tekst zoeken"
+
+msgid "Look in"
+msgstr "Zoeken in"
+
+msgid "&Titles"
+msgstr "&Titels"
+
+msgid "Artist &Names"
+msgstr "Artiest&namen"
+
+msgid "&Album Names"
+msgstr "&Albumnamen"
+
+msgid "System MASTER volume"
+msgstr "Systeem MASTER-volume"
+
+msgid "System WAVE volume"
+msgstr "Systeem WAVE-volume"
+
+msgid "Internal volume"
+msgstr "Intern volume"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"Bestandstypen zijn geregistreerd.\n"
+"U kunt dubbelklikken op een ondersteund bestand om BriskPlayer te starten."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr ""
+"Er is een pictogram voor BriskPlayer aangemaakt in het Startmenu en op het "
+"Bureaublad."
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "BriskPlayer uiterlijk initialisatiebestanden (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "Alle bestanden (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "Bitsnelheid: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "Samplefrequentie: %.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "%d bestand gevonden"
+msgstr[1] "%d bestanden gevonden"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d seconde"
+msgstr[1] "%d seconden"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d minuut"
+msgstr[1] "%d minuten"
+
+msgid "Failed to initialize audio device"
+msgstr "Audioapparaat initialiseren mislukt"
+
+msgid "Unable to load audio file"
+msgstr "Audiobestand kan niet worden geladen"
+
+msgid "Invalid String ID"
+msgstr "Ongeldige tekenreeks-ID"
+
+msgid "Audio Error"
+msgstr "Audiofout"
+
+msgid "File Error"
+msgstr "Bestandsfout"
+
+msgid "Processing audio..."
+msgstr "Audio verwerken..."
+
+msgid "Loading..."
+msgstr "Laden..."
+
+msgid "Ready"
+msgstr "Gereed"
+
+msgid "Rotate system tray icon"
+msgstr "Systeemvakpictogram draaien"
+
+msgid "Scroll title"
+msgstr "Titel scrollen"
+
+msgid "Only add file once to playlist"
+msgstr "Bestand slechts één keer aan afspeellijst toevoegen"
+
+msgid "Read ID3 tags"
+msgstr "ID3-tags lezen"
+
+msgid "Read ID3 for selected files"
+msgstr "ID3-tags van geselecteerde bestanden lezen"
+
+msgid "Read ID3 in background"
+msgstr "ID3-tags op de achtergrond lezen"
+
+msgid "Calculate track lengths"
+msgstr "Nummerduur berekenen"
+
+msgid "Easy move mode"
+msgstr "Eenvoudige verplaatsingsmodus"
+
+msgid "Register file types"
+msgstr "Bestandstypen registreren"
+
+msgid "Track delay (seconds)"
+msgstr "Nummerwachttijd (seconden)"
+
+msgid "Skin list length"
+msgstr "Lengte van de skin-lijst"
+
+msgid "Open..."
+msgstr "Openen..."
+
+
+msgid "DSP Plugins"
+msgstr "DSP-plugins"
+
+msgid "None (Disabled)"
+msgstr "Geen (Uitgeschakeld)"
+
+msgid "Configure..."
+msgstr "Configureren..."

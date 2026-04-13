@@ -17,6 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+#pragma once
+
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -50,7 +52,7 @@ struct _CPs_CoDecModule;
 typedef struct _CPs_CoDecModule* CP_HCODECMODULE;
 typedef void (*pfn_Uninitialise)(CP_HCODECMODULE hCoDec);
 //
-typedef BOOL (*pfn_OpenFile)(CP_HCODECMODULE hCoDec, const char* pcFilename, DWORD dwCookie, HWND hWndOwner);
+typedef BOOL (*pfn_OpenFile)(CP_HCODECMODULE hCoDec, const char* pcFilename, DWORD_PTR dwCookie, HWND hWndOwner);
 typedef void (*pfn_CloseFile)(CP_HCODECMODULE hCoDec);
 typedef void (*pfn_Seek)(CP_HCODECMODULE hCoDec, const int iNumerator, const int iDenominator);
 typedef void (*pfn_GetFileInfo)(CP_HCODECMODULE hCoDec, CPs_FileInfo* pInfo);
@@ -93,8 +95,8 @@ typedef struct _CPs_CoDecModule
 // File association helper functions
 void CPFA_InitialiseFileAssociations(CPs_CoDecModule* pCoDec);
 void CPFA_EmptyFileAssociations(CPs_CoDecModule* pCoDec);
-void CPFA_AddFileAssociation(CPs_CoDecModule* pCoDec, const char* pcExtension, DWORD dwCookie);
-BOOL CPFA_IsAssociated(CPs_CoDecModule* pCoDec, const char* pcExtension, DWORD* pdwCookie);
+void CPFA_AddFileAssociation(CPs_CoDecModule* pCoDec, const char* pcExtension, DWORD_PTR dwCookie);
+BOOL CPFA_IsAssociated(CPs_CoDecModule* pCoDec, const char* pcExtension, DWORD_PTR* pdwCookie);
 void CPFA_AssociateWithEXE(CPs_CoDecModule* pCoDec);
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -102,8 +104,16 @@ void CPFA_AssociateWithEXE(CPs_CoDecModule* pCoDec);
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoDec initialisers
-// Native MPEG/OGG/AAC/FLAC codecs have been removed - use FFmpeg instead
 void CP_InitialiseCodec_WAV(CPs_CoDecModule* pCoDec);
 void CP_InitialiseCodec_WinAmpPlugin(CPs_CoDecModule* pCoDec);
+#ifdef HAVE_FFMPEG_CODEC
 void CP_InitialiseCodec_FFmpeg(CPs_CoDecModule* pCoDec);
+#else
+// Native codec initialisers (used when FFmpeg is not available, e.g. MinGW builds)
+void CP_InitialiseCodec_MPEG(CPs_CoDecModule* pCoDec);
+void CP_InitialiseCodec_OGG(CPs_CoDecModule* pCoDec);
+void CP_InitialiseCodec_FLAC(CPs_CoDecModule* pCoDec);
+void CP_InitialiseCodec_AAC(CPs_CoDecModule* pCoDec);
+void CP_InitialiseCodec_OPUS(CPs_CoDecModule* pCoDec);
+#endif
 ////////////////////////////////////////////////////////////////////////////////

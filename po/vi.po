@@ -1,0 +1,342 @@
+# Vietnamese translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Vietnamese\n"
+"Language: vi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – Trình phát nhạc siêu nhanh"
+
+msgid "BriskPlayer Audio file"
+msgstr "BriskPlayer Tệp âm thanh"
+
+msgid "BriskPlayer Playlist"
+msgstr "BriskPlayer Danh sách phát"
+
+msgid "Open File..."
+msgstr "Mở tệp..."
+
+msgid "Open URL..."
+msgstr "Mở URL..."
+
+msgid "Add Files..."
+msgstr "Thêm tệp..."
+
+msgid "Playlist Editor"
+msgstr "Trình chỉnh sửa danh sách phát"
+
+msgid "Skin"
+msgstr "Giao diện"
+
+msgid "Default"
+msgstr "Mặc định"
+
+msgid "Language"
+msgstr "Ngôn ngữ"
+
+msgid "English"
+msgstr "Tiếng Anh"
+
+msgid "Deutsch"
+msgstr "Tiếng Đức"
+
+msgid "Playback"
+msgstr "Phát lại"
+
+msgid "Play"
+msgstr "Phát"
+
+msgid "Stop"
+msgstr "Dừng"
+
+msgid "Pause"
+msgstr "Tạm dừng"
+
+msgid "Next"
+msgstr "Tiếp theo"
+
+msgid "Previous"
+msgstr "Trước đó"
+
+msgid "Options..."
+msgstr "Tùy chọn..."
+
+msgid "About"
+msgstr "Giới thiệu"
+
+msgid "Exit"
+msgstr "Thoát"
+
+msgid "About BriskPlayer"
+msgstr "Giới thiệu BriskPlayer"
+
+msgid "BriskPlayer Options"
+msgstr "Tùy chọn BriskPlayer"
+
+msgid "Open URL"
+msgstr "Mở URL"
+
+msgid "Quick Find"
+msgstr "Tìm kiếm nhanh"
+
+msgid "&About"
+msgstr "&Giới thiệu"
+
+msgid "&Keyboard Shortcuts"
+msgstr "&Phím tắt bàn phím"
+
+msgid "C&hanges"
+msgstr "&Thay đổi"
+
+msgid "C&lose"
+msgstr "&Đóng"
+
+msgid "General"
+msgstr "Chung"
+
+msgid "Always on top"
+msgstr "Luôn hiển thị trên cùng"
+
+msgid "Exit after playing"
+msgstr "Thoát sau khi phát xong"
+
+msgid "Rotate systemtray icon"
+msgstr "Xoay biểu tượng khay hệ thống"
+
+msgid "Scroll Songtitle"
+msgstr "Cuộn tiêu đề bài hát"
+
+msgid "Allow file once in playlist"
+msgstr "Chỉ cho phép mỗi tệp xuất hiện một lần trong danh sách"
+
+msgid "Autoplay on startup"
+msgstr "Tự động phát khi khởi động"
+
+msgid "Allow multiple instances"
+msgstr "Cho phép nhiều phiên bản"
+
+msgid "Show remaining time"
+msgstr "Hiển thị thời gian còn lại"
+
+msgid "Show on taskbar"
+msgstr "Hiển thị trên thanh tác vụ"
+
+
+msgid "Sticky windows"
+msgstr "Cửa sổ dính"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "Đăng ký loại tệp"
+
+msgid "Add to Start Menu"
+msgstr "Thêm vào menu Bắt đầu"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "Đọc thẻ ID3 (nếu có)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "Đọc thẻ ID3 của mục đã chọn"
+
+msgid "Support ID3v2"
+msgstr "Hỗ trợ ID3v2"
+
+msgid "Prefer native OGG tags"
+msgstr "Ưu tiên thẻ OGG gốc"
+
+msgid "Load ID3 tags in background"
+msgstr "Tải thẻ ID3 ở nền"
+
+msgid "Work out track lengths"
+msgstr "Tính độ dài bản nhạc"
+
+msgid "Easy move"
+msgstr "Di chuyển dễ dàng"
+
+msgid "Remember playlist"
+msgstr "Ghi nhớ danh sách phát"
+
+msgid "Remember last played"
+msgstr "Ghi nhớ bài cuối đã phát"
+
+msgid "Track Delay (sec)"
+msgstr "Độ trễ bản nhạc (giây)"
+
+msgid "Skinlist length"
+msgstr "Độ dài danh sách giao diện"
+
+msgid "Flush"
+msgstr "Xóa sạch"
+
+msgid "Output"
+msgstr "Đầu ra"
+
+msgid "Volume controls"
+msgstr "Điều chỉnh âm lượng"
+
+msgid "Player"
+msgstr "Trình phát"
+
+msgid "Open"
+msgstr "Mở"
+
+msgid "OK"
+msgstr "Đồng ý"
+
+msgid "Cancel"
+msgstr "Hủy"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"Nhập URL bạn muốn phát. Các định dạng được hỗ trợ là phát trực tuyến MP3 và "
+"OGG, và danh sách phát M3U."
+
+msgid "&URL:"
+msgstr "&URL:"
+
+msgid "Find Text"
+msgstr "Tìm văn bản"
+
+msgid "Look in"
+msgstr "Tìm trong"
+
+msgid "&Titles"
+msgstr "&Tiêu đề"
+
+msgid "Artist &Names"
+msgstr "Tên &nghệ sĩ"
+
+msgid "&Album Names"
+msgstr "Tên &album"
+
+msgid "System MASTER volume"
+msgstr "Âm lượng CHÍNH của hệ thống"
+
+msgid "System WAVE volume"
+msgstr "Âm lượng WAVE của hệ thống"
+
+msgid "Internal volume"
+msgstr "Âm lượng nội bộ"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"Các loại tệp đã được đăng ký.\n"
+"Bạn có thể nhấp đúp vào tệp được hỗ trợ để chạy BriskPlayer."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr "Biểu tượng BriskPlayer đã được tạo trong menu Bắt đầu và Màn hình nền."
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "Tệp khởi tạo giao diện BriskPlayer (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "Tất cả tệp (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "Tốc độ bit: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "Tần số lấy mẫu: %.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "Tìm thấy %d tệp"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d giây"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d phút"
+
+msgid "Failed to initialize audio device"
+msgstr "Không thể khởi tạo thiết bị âm thanh"
+
+msgid "Unable to load audio file"
+msgstr "Không thể tải tệp âm thanh"
+
+msgid "Invalid String ID"
+msgstr "ID chuỗi không hợp lệ"
+
+msgid "Audio Error"
+msgstr "Lỗi âm thanh"
+
+msgid "File Error"
+msgstr "Lỗi tệp"
+
+msgid "Processing audio..."
+msgstr "Đang xử lý âm thanh..."
+
+msgid "Loading..."
+msgstr "Đang tải..."
+
+msgid "Ready"
+msgstr "Sẵn sàng"
+
+msgid "Rotate system tray icon"
+msgstr "Xoay biểu tượng khay hệ thống"
+
+msgid "Scroll title"
+msgstr "Cuộn tiêu đề"
+
+msgid "Only add file once to playlist"
+msgstr "Chỉ thêm tệp một lần vào danh sách phát"
+
+msgid "Read ID3 tags"
+msgstr "Đọc thẻ ID3"
+
+msgid "Read ID3 for selected files"
+msgstr "Đọc thẻ ID3 của tệp đã chọn"
+
+msgid "Read ID3 in background"
+msgstr "Đọc thẻ ID3 ở nền"
+
+msgid "Calculate track lengths"
+msgstr "Tính toán độ dài bản nhạc"
+
+msgid "Easy move mode"
+msgstr "Chế độ di chuyển dễ dàng"
+
+msgid "Register file types"
+msgstr "Đăng ký kiểu tệp"
+
+msgid "Track delay (seconds)"
+msgstr "Độ trễ bản nhạc (giây)"
+
+msgid "Skin list length"
+msgstr "Độ dài danh sách giao diện"
+
+msgid "Open..."
+msgstr "Mở..."
+
+
+msgid "DSP Plugins"
+msgstr "Plugin DSP"
+
+msgid "None (Disabled)"
+msgstr "Không có (Đã tắt)"
+
+msgid "Configure..."
+msgstr "Cấu hình..."

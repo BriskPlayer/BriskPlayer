@@ -1,0 +1,343 @@
+# Japanese translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – 超高速オーディオプレーヤー"
+
+msgid "BriskPlayer Audio file"
+msgstr "BriskPlayer オーディオファイル"
+
+msgid "BriskPlayer Playlist"
+msgstr "BriskPlayer プレイリスト"
+
+msgid "Open File..."
+msgstr "ファイルを開く..."
+
+msgid "Open URL..."
+msgstr "URLを開く..."
+
+msgid "Add Files..."
+msgstr "ファイルを追加..."
+
+msgid "Playlist Editor"
+msgstr "プレイリストエディタ"
+
+msgid "Skin"
+msgstr "スキン"
+
+msgid "Default"
+msgstr "デフォルト"
+
+msgid "Language"
+msgstr "言語"
+
+msgid "English"
+msgstr "英語"
+
+msgid "Deutsch"
+msgstr "ドイツ語"
+
+msgid "Playback"
+msgstr "再生"
+
+msgid "Play"
+msgstr "再生"
+
+msgid "Stop"
+msgstr "停止"
+
+msgid "Pause"
+msgstr "一時停止"
+
+msgid "Next"
+msgstr "次へ"
+
+msgid "Previous"
+msgstr "前へ"
+
+msgid "Options..."
+msgstr "オプション..."
+
+msgid "About"
+msgstr "バージョン情報"
+
+msgid "Exit"
+msgstr "終了"
+
+msgid "About BriskPlayer"
+msgstr "BriskPlayer について"
+
+msgid "BriskPlayer Options"
+msgstr "BriskPlayer オプション"
+
+msgid "Open URL"
+msgstr "URLを開く"
+
+msgid "Quick Find"
+msgstr "クイック検索"
+
+msgid "&About"
+msgstr "バージョン情報(&A)"
+
+msgid "&Keyboard Shortcuts"
+msgstr "キーボードショートカット(&K)"
+
+msgid "C&hanges"
+msgstr "変更履歴(&H)"
+
+msgid "C&lose"
+msgstr "閉じる(&L)"
+
+msgid "General"
+msgstr "一般"
+
+msgid "Always on top"
+msgstr "常に最前面"
+
+msgid "Exit after playing"
+msgstr "再生後に終了"
+
+msgid "Rotate systemtray icon"
+msgstr "システムトレイアイコンを回転"
+
+msgid "Scroll Songtitle"
+msgstr "曲名をスクロール"
+
+msgid "Allow file once in playlist"
+msgstr "各ファイルをプレイリストに1回のみ追加"
+
+msgid "Autoplay on startup"
+msgstr "起動時に自動再生"
+
+msgid "Allow multiple instances"
+msgstr "複数のインスタンスを許可"
+
+msgid "Show remaining time"
+msgstr "残り時間を表示"
+
+msgid "Show on taskbar"
+msgstr "タスクバーに表示"
+
+
+msgid "Sticky windows"
+msgstr "ウィンドウの吸着"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "ファイルタイプを登録"
+
+msgid "Add to Start Menu"
+msgstr "スタートメニューに追加"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "ID3タグを読む（あれば）"
+
+msgid "Read ID3 Tag of selected"
+msgstr "選択したファイルのID3タグを読む"
+
+msgid "Support ID3v2"
+msgstr "ID3v2をサポート"
+
+msgid "Prefer native OGG tags"
+msgstr "ネイティブOGGタグを優先"
+
+msgid "Load ID3 tags in background"
+msgstr "バックグラウンドでID3タグを読み込む"
+
+msgid "Work out track lengths"
+msgstr "トラック長を計算"
+
+msgid "Easy move"
+msgstr "簡単移動"
+
+msgid "Remember playlist"
+msgstr "プレイリストを記憶"
+
+msgid "Remember last played"
+msgstr "最後に再生したトラックを記憶"
+
+msgid "Track Delay (sec)"
+msgstr "トラック間の遅延（秒）"
+
+msgid "Skinlist length"
+msgstr "スキンリストの長さ"
+
+msgid "Flush"
+msgstr "フラッシュ"
+
+msgid "Output"
+msgstr "出力"
+
+msgid "Volume controls"
+msgstr "音量コントロール"
+
+msgid "Player"
+msgstr "プレーヤー"
+
+msgid "Open"
+msgstr "開く"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "キャンセル"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"再生するURLを入力してください。対応形式はMP3・OGGストリーミングとM3Uプレイリ"
+"ストです。"
+
+msgid "&URL:"
+msgstr "URL(&U):"
+
+msgid "Find Text"
+msgstr "テキストを検索"
+
+msgid "Look in"
+msgstr "検索対象"
+
+msgid "&Titles"
+msgstr "タイトル(&T)"
+
+msgid "Artist &Names"
+msgstr "アーティスト名(&N)"
+
+msgid "&Album Names"
+msgstr "アルバム名(&A)"
+
+msgid "System MASTER volume"
+msgstr "システムMASTER音量"
+
+msgid "System WAVE volume"
+msgstr "システムWAVE音量"
+
+msgid "Internal volume"
+msgstr "内部音量"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"ファイルタイプが登録されました。\n"
+"サポートされているファイルをダブルクリックするとBriskPlayerが起動します。"
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr ""
+"BriskPlayerのアイコンがスタートメニューとデスクトップに作成されました。"
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "BriskPlayer スキン初期化ファイル (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "すべてのファイル (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "ビットレート: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "サンプルレート: %.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "%d 個のファイルが見つかりました"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d 秒"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d 分"
+
+msgid "Failed to initialize audio device"
+msgstr "オーディオデバイスの初期化に失敗しました"
+
+msgid "Unable to load audio file"
+msgstr "オーディオファイルを読み込めません"
+
+msgid "Invalid String ID"
+msgstr "無効な文字列ID"
+
+msgid "Audio Error"
+msgstr "オーディオエラー"
+
+msgid "File Error"
+msgstr "ファイルエラー"
+
+msgid "Processing audio..."
+msgstr "オーディオを処理中..."
+
+msgid "Loading..."
+msgstr "読み込み中..."
+
+msgid "Ready"
+msgstr "準備完了"
+
+msgid "Rotate system tray icon"
+msgstr "システムトレイアイコンを回転"
+
+msgid "Scroll title"
+msgstr "タイトルをスクロール"
+
+msgid "Only add file once to playlist"
+msgstr "ファイルをプレイリストに一度だけ追加"
+
+msgid "Read ID3 tags"
+msgstr "ID3タグを読み込む"
+
+msgid "Read ID3 for selected files"
+msgstr "選択したファイルのID3タグを読み込む"
+
+msgid "Read ID3 in background"
+msgstr "バックグラウンドでID3タグを読み込む"
+
+msgid "Calculate track lengths"
+msgstr "トラックの長さを計算"
+
+msgid "Easy move mode"
+msgstr "イージームーブモード"
+
+msgid "Register file types"
+msgstr "ファイルの種類を登録"
+
+msgid "Track delay (seconds)"
+msgstr "トラックの遅延（秒）"
+
+msgid "Skin list length"
+msgstr "スキンリストの長さ"
+
+msgid "Open..."
+msgstr "開く..."
+
+
+msgid "DSP Plugins"
+msgstr "DSPプラグイン"
+
+msgid "None (Disabled)"
+msgstr "なし（無効）"
+
+msgid "Configure..."
+msgstr "設定..."

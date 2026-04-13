@@ -1,0 +1,346 @@
+# Norwegian Bokmål translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Norwegian Bokmål\n"
+"Language: nb\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – Lynrask lydspiller"
+
+msgid "BriskPlayer Audio file"
+msgstr "BriskPlayer-lydfil"
+
+msgid "BriskPlayer Playlist"
+msgstr "BriskPlayer-spilleliste"
+
+msgid "Open File..."
+msgstr "Åpne fil..."
+
+msgid "Open URL..."
+msgstr "Åpne URL..."
+
+msgid "Add Files..."
+msgstr "Legg til filer..."
+
+msgid "Playlist Editor"
+msgstr "Spillelisteredaktør"
+
+msgid "Skin"
+msgstr "Tema"
+
+msgid "Default"
+msgstr "Standard"
+
+msgid "Language"
+msgstr "Språk"
+
+msgid "English"
+msgstr "Engelsk"
+
+msgid "Deutsch"
+msgstr "Tysk"
+
+msgid "Playback"
+msgstr "Avspilling"
+
+msgid "Play"
+msgstr "Spill"
+
+msgid "Stop"
+msgstr "Stopp"
+
+msgid "Pause"
+msgstr "Pause"
+
+msgid "Next"
+msgstr "Neste"
+
+msgid "Previous"
+msgstr "Forrige"
+
+msgid "Options..."
+msgstr "Innstillinger..."
+
+msgid "About"
+msgstr "Om"
+
+msgid "Exit"
+msgstr "Avslutt"
+
+msgid "About BriskPlayer"
+msgstr "Om BriskPlayer"
+
+msgid "BriskPlayer Options"
+msgstr "BriskPlayer-innstillinger"
+
+msgid "Open URL"
+msgstr "Åpne URL"
+
+msgid "Quick Find"
+msgstr "Hurtigsøk"
+
+msgid "&About"
+msgstr "&Om"
+
+msgid "&Keyboard Shortcuts"
+msgstr "&Tastatursnarveier"
+
+msgid "C&hanges"
+msgstr "End&ringer"
+
+msgid "C&lose"
+msgstr "&Lukk"
+
+msgid "General"
+msgstr "Generelt"
+
+msgid "Always on top"
+msgstr "Alltid øverst"
+
+msgid "Exit after playing"
+msgstr "Avslutt etter avspilling"
+
+msgid "Rotate systemtray icon"
+msgstr "Roter systemstatusikon"
+
+msgid "Scroll Songtitle"
+msgstr "Rull sangtittel"
+
+msgid "Allow file once in playlist"
+msgstr "Tillat én fil én gang i spillelisten"
+
+msgid "Autoplay on startup"
+msgstr "Automatisk avspilling ved oppstart"
+
+msgid "Allow multiple instances"
+msgstr "Tillat flere forekomster"
+
+msgid "Show remaining time"
+msgstr "Vis gjenværende tid"
+
+msgid "Show on taskbar"
+msgstr "Vis på oppgavelinjen"
+
+
+msgid "Sticky windows"
+msgstr "Klebende vinduer"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "Registrer filtyper"
+
+msgid "Add to Start Menu"
+msgstr "Legg til i Start-menyen"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "Les ID3-kode (hvis noen)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "Les ID3-kode for valgt"
+
+msgid "Support ID3v2"
+msgstr "Støtt ID3v2"
+
+msgid "Prefer native OGG tags"
+msgstr "Foretrekk native OGG-koder"
+
+msgid "Load ID3 tags in background"
+msgstr "Last inn ID3-koder i bakgrunnen"
+
+msgid "Work out track lengths"
+msgstr "Beregn sporlengder"
+
+msgid "Easy move"
+msgstr "Enkel flytting"
+
+msgid "Remember playlist"
+msgstr "Husk spilleliste"
+
+msgid "Remember last played"
+msgstr "Husk sist spilt"
+
+msgid "Track Delay (sec)"
+msgstr "Sporforsinkelse (sek)"
+
+msgid "Skinlist length"
+msgstr "Temalistes lengde"
+
+msgid "Flush"
+msgstr "Tøm"
+
+msgid "Output"
+msgstr "Utgang"
+
+msgid "Volume controls"
+msgstr "Volumkontroller"
+
+msgid "Player"
+msgstr "Spiller"
+
+msgid "Open"
+msgstr "Åpne"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Avbryt"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"Skriv inn URL-en du vil spille. Støttede formater er MP3- og OGG-streaming "
+"og M3U-spillelister."
+
+msgid "&URL:"
+msgstr "&URL:"
+
+msgid "Find Text"
+msgstr "Finn tekst"
+
+msgid "Look in"
+msgstr "Søk i"
+
+msgid "&Titles"
+msgstr "&Titler"
+
+msgid "Artist &Names"
+msgstr "Artist&navn"
+
+msgid "&Album Names"
+msgstr "&Albumnavn"
+
+msgid "System MASTER volume"
+msgstr "System MASTER-volum"
+
+msgid "System WAVE volume"
+msgstr "System WAVE-volum"
+
+msgid "Internal volume"
+msgstr "Internt volum"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"Filtypene er registrert.\n"
+"Du kan dobbeltklikke på en støttet fil for å starte BriskPlayer."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr ""
+"Et ikon for BriskPlayer er opprettet i Start-menyen og på Skrivebordet."
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "BriskPlayer-temainitialisatorfiler (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "Alle filer (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "Bithastighet: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "Samplingsfrekvens: %.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "%d fil funnet"
+msgstr[1] "%d filer funnet"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d sekund"
+msgstr[1] "%d sekunder"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d minutt"
+msgstr[1] "%d minutter"
+
+msgid "Failed to initialize audio device"
+msgstr "Kunne ikke initialisere lydenheten"
+
+msgid "Unable to load audio file"
+msgstr "Kan ikke laste inn lydfilen"
+
+msgid "Invalid String ID"
+msgstr "Ugyldig streng-ID"
+
+msgid "Audio Error"
+msgstr "Lydfeil"
+
+msgid "File Error"
+msgstr "Filfeil"
+
+msgid "Processing audio..."
+msgstr "Behandler lyd..."
+
+msgid "Loading..."
+msgstr "Laster inn..."
+
+msgid "Ready"
+msgstr "Klar"
+
+msgid "Rotate system tray icon"
+msgstr "Roter systemstatusikon"
+
+msgid "Scroll title"
+msgstr "Bla gjennom tittel"
+
+msgid "Only add file once to playlist"
+msgstr "Legg til fil kun én gang i spilleliste"
+
+msgid "Read ID3 tags"
+msgstr "Les ID3-tagger"
+
+msgid "Read ID3 for selected files"
+msgstr "Les ID3-tagger for valgte filer"
+
+msgid "Read ID3 in background"
+msgstr "Les ID3-tagger i bakgrunnen"
+
+msgid "Calculate track lengths"
+msgstr "Beregn sporlengder"
+
+msgid "Easy move mode"
+msgstr "Enkel bevegelsesmodus"
+
+msgid "Register file types"
+msgstr "Registrer filtyper"
+
+msgid "Track delay (seconds)"
+msgstr "Sporsforsinkelse (sekunder)"
+
+msgid "Skin list length"
+msgstr "Skinn-listens lengde"
+
+msgid "Open..."
+msgstr "Åpne..."
+
+
+msgid "DSP Plugins"
+msgstr "DSP-programtillegg"
+
+msgid "None (Disabled)"
+msgstr "Ingen (Deaktivert)"
+
+msgid "Configure..."
+msgstr "Konfigurer..."

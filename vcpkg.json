@@ -1,0 +1,50 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "briskplayer",
+  "version": "3.0.2",
+  "builtin-baseline": "77df67cfff9c12ccfdb52284e07c87c75092f723",
+  "dependencies": [
+    "zlib",
+    "taglib",
+    "faudio",
+    "gettext-libintl",
+    {
+      "name": "gettext",
+      "host": true,
+      "features": ["tools"]
+    }
+  ],
+  "features": {
+    "ffmpeg": {
+      "description": "Use FFmpeg for audio decoding (default on MSVC)",
+      "dependencies": [
+        {
+          "name": "ffmpeg",
+          "default-features": false,
+          "features": ["avcodec", "avformat", "swresample"]
+        }
+      ]
+    },
+    "native-codecs": {
+      "description": "Use native codec libraries (libmad, vorbis, FLAC, fdk-aac, opusfile)",
+      "dependencies": [
+        "libmad",
+        "libogg",
+        "libvorbis",
+        "libflac",
+        "fdk-aac",
+        {
+          "name": "opusfile",
+          "default-features": false
+        }
+      ]
+    },
+    "discord-rpc": {
+      "description": "Discord Rich Presence integration (shows Now Playing in Discord)",
+      "dependencies": [
+        "discord-rpc"
+      ]
+    }
+  },
+  "default-features": ["native-codecs"]
+}

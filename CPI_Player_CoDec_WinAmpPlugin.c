@@ -42,7 +42,7 @@
 //
 // Module functions
 void CPP_OMAPLG_Uninitialise(CPs_CoDecModule* pModule);
-BOOL CPP_OMAPLG_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD dwCookie, HWND hWndOwner);
+BOOL CPP_OMAPLG_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD_PTR dwCookie, HWND hWndOwner);
 void CPP_OMAPLG_CloseFile(CPs_CoDecModule* pModule);
 void CPP_OMAPLG_Seek(CPs_CoDecModule* pModule, const int iNumerator, const int iDenominator);
 void CPP_OMAPLG_GetFileInfo(CPs_CoDecModule* pModule, CPs_FileInfo* pInfo);
@@ -297,20 +297,25 @@ int CP_OutPI_Write(char *buf, int len)
 {
 	// 0 on success. Len == bytes to write (<= 8192 always). buf is straight audio data.
 	// 1 returns not able to write (yet). Non-blocking, always.
-	if (len > CP_OutPI_CanWrite())
-		return 1;
-		
+	// Capacity check and write are performed under the same lock to avoid a
+	// TOCTOU race where another thread drains the buffer between the two.
 	EnterCriticalSection(&glb_OutputData.m_csGlobal);
-	
-	if (glb_OutputData.m_pCBuffer)
-		glb_OutputData.m_pCBuffer->Write(glb_OutputData.m_pCBuffer, buf, len);
+
+	if (glb_OutputData.m_pCBuffer == NULL ||
+	    (unsigned int)len > glb_OutputData.m_pCBuffer->GetFreeSize(glb_OutputData.m_pCBuffer))
+	{
+		LeaveCriticalSection(&glb_OutputData.m_csGlobal);
+		return 1;
+	}
+
+	glb_OutputData.m_pCBuffer->Write(glb_OutputData.m_pCBuffer, buf, len);
 		
 	// Update the current time
 	{
 		int iBytesPerSample = (glb_OutputData.m_FileInfo.m_bStereo ? 2 : 1)
 							  << (glb_OutputData.m_FileInfo.m_b16bit ? 1 : 0);
-		                      
-		glb_OutputData.m_iCurrentTime_ms += ((len / iBytesPerSample) * 1000) / glb_OutputData.m_FileInfo.m_iFreq_Hz;
+		if (iBytesPerSample > 0 && glb_OutputData.m_FileInfo.m_iFreq_Hz > 0)
+			glb_OutputData.m_iCurrentTime_ms += ((len / iBytesPerSample) * 1000) / glb_OutputData.m_FileInfo.m_iFreq_Hz;
 	}
 	
 	LeaveCriticalSection(&glb_OutputData.m_csGlobal);
@@ -444,7 +449,7 @@ void ProbeWinAmpModule(CPs_CoDecModule* pCoDec, const char* pcModulePath)
 						memcpy(pcExtensionCopy, pcLastExtensionStart, iExtensionLen);
 						pcExtensionCopy[iExtensionLen] = '\0';
 						
-						CPFA_AddFileAssociation(pCoDec, pcExtensionCopy, (DWORD)pNewPlugInModule);
+CPFA_AddFileAssociation(pCoDec, pcExtensionCopy, (DWORD_PTR)pNewPlugInModule);
 						
 						free(pcExtensionCopy);
 						pcLastExtensionStart = pcExtensionCursor + 1;
@@ -454,7 +459,7 @@ void ProbeWinAmpModule(CPs_CoDecModule* pCoDec, const char* pcModulePath)
 				// Add last extension
 				
 				if (*pcLastExtensionStart)
-					CPFA_AddFileAssociation(pCoDec, pcLastExtensionStart, (DWORD)pNewPlugInModule);
+					CPFA_AddFileAssociation(pCoDec, pcLastExtensionStart, (DWORD_PTR)pNewPlugInModule);
 			}
 			
 			// Move cursor to next extension set
@@ -476,7 +481,7 @@ void AddWinAmpModulesInPath(CPs_CoDecModule* pCoDec, const char* pcFileInPath)
 	char pcModuleDirectory[MAX_PATH];
 	char pcSearchWildcard[MAX_PATH];
 	
-	strcpy(pcModuleDirectory, pcFileInPath);
+	cp_strcpy_s(pcModuleDirectory, sizeof(pcModuleDirectory), pcFileInPath);
 	
 	// Work out the module directory
 	{
@@ -497,8 +502,8 @@ void AddWinAmpModulesInPath(CPs_CoDecModule* pCoDec, const char* pcFileInPath)
 	}
 	
 	// Setup wildcard
-	strcpy(pcSearchWildcard, pcModuleDirectory);
-	strcat(pcSearchWildcard, "in_*.dll");
+	cp_strcpy_s(pcSearchWildcard, sizeof(pcSearchWildcard), pcModuleDirectory);
+	cp_strcat_s(pcSearchWildcard, sizeof(pcSearchWildcard), "in_*.dll");
 	
 	// Load each module to find out the file extensions that it supports
 	// ProbeWinAmpModule will also produce a linked list of module names
@@ -510,8 +515,8 @@ void AddWinAmpModulesInPath(CPs_CoDecModule* pCoDec, const char* pcFileInPath)
 		do
 		{
 			char pcFullPath[MAX_PATH];
-			strcpy(pcFullPath, pcModuleDirectory);
-			strcat(pcFullPath, finddata.cFileName);
+			cp_strcpy_s(pcFullPath, sizeof(pcFullPath), pcModuleDirectory);
+			cp_strcat_s(pcFullPath, sizeof(pcFullPath), finddata.cFileName);
 			
 			ProbeWinAmpModule(pCoDec, pcFullPath);
 			
@@ -777,10 +782,10 @@ void SetupCurrentInputPluginModule(CPs_CoDec_WinAmpPlugin *pContext)
 //
 //
 //
-BOOL CPP_OMAPLG_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD dwCookie, HWND hWndOwner)
+BOOL CPP_OMAPLG_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD_PTR dwCookie, HWND hWndOwner)
 {
 	CPs_CoDec_WinAmpPlugin *pContext = (CPs_CoDec_WinAmpPlugin*)pModule->m_pModuleCookie;
-	CP_PlugInModule* pSelectedPlugInModule = (CP_PlugInModule*)dwCookie;
+	CP_PlugInModule* pSelectedPlugInModule = (CP_PlugInModule*)(void*)dwCookie;
 	int iError;
 	
 	(void)hWndOwner; // Suppress unused parameter warning

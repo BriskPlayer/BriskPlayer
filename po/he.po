@@ -1,0 +1,345 @@
+# Hebrew translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Hebrew\n"
+"Language: he\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – נגן מוזיקה מהיר כברק"
+
+msgid "BriskPlayer Audio file"
+msgstr "BriskPlayer קובץ שמע"
+
+msgid "BriskPlayer Playlist"
+msgstr "BriskPlayer רשימת השמעה"
+
+msgid "Open File..."
+msgstr "פתח קובץ..."
+
+msgid "Open URL..."
+msgstr "פתח כתובת URL..."
+
+msgid "Add Files..."
+msgstr "הוסף קבצים..."
+
+msgid "Playlist Editor"
+msgstr "עורך רשימת השמעה"
+
+msgid "Skin"
+msgstr "ערכת עיצוב"
+
+msgid "Default"
+msgstr "ברירת מחדל"
+
+msgid "Language"
+msgstr "שפה"
+
+msgid "English"
+msgstr "אנגלית"
+
+msgid "Deutsch"
+msgstr "גרמנית"
+
+msgid "Playback"
+msgstr "השמעה"
+
+msgid "Play"
+msgstr "השמע"
+
+msgid "Stop"
+msgstr "עצור"
+
+msgid "Pause"
+msgstr "השהה"
+
+msgid "Next"
+msgstr "הבא"
+
+msgid "Previous"
+msgstr "הקודם"
+
+msgid "Options..."
+msgstr "אפשרויות..."
+
+msgid "About"
+msgstr "אודות"
+
+msgid "Exit"
+msgstr "יציאה"
+
+msgid "About BriskPlayer"
+msgstr "אודות BriskPlayer"
+
+msgid "BriskPlayer Options"
+msgstr "אפשרויות BriskPlayer"
+
+msgid "Open URL"
+msgstr "פתח כתובת URL"
+
+msgid "Quick Find"
+msgstr "חיפוש מהיר"
+
+msgid "&About"
+msgstr "&אודות"
+
+msgid "&Keyboard Shortcuts"
+msgstr "&קיצורי מקלדת"
+
+msgid "C&hanges"
+msgstr "&שינויים"
+
+msgid "C&lose"
+msgstr "&סגור"
+
+msgid "General"
+msgstr "כללי"
+
+msgid "Always on top"
+msgstr "תמיד בחזית"
+
+msgid "Exit after playing"
+msgstr "צא לאחר ההשמעה"
+
+msgid "Rotate systemtray icon"
+msgstr "סובב אייקון מגש המערכת"
+
+msgid "Scroll Songtitle"
+msgstr "גלול כותרת שיר"
+
+msgid "Allow file once in playlist"
+msgstr "אפשר כל קובץ פעם אחת ברשימה"
+
+msgid "Autoplay on startup"
+msgstr "השמעה אוטומטית בהפעלה"
+
+msgid "Allow multiple instances"
+msgstr "אפשר מספר מופעים"
+
+msgid "Show remaining time"
+msgstr "הצג זמן שנותר"
+
+msgid "Show on taskbar"
+msgstr "הצג בשורת המשימות"
+
+
+msgid "Sticky windows"
+msgstr "חלונות דביקים"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "רשום סוגי קבצים"
+
+msgid "Add to Start Menu"
+msgstr "הוסף לתפריט התחלה"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "קרא תגית ID3 (אם קיימת)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "קרא תגית ID3 של הנבחר"
+
+msgid "Support ID3v2"
+msgstr "תמיכה ב-ID3v2"
+
+msgid "Prefer native OGG tags"
+msgstr "העדף תגיות OGG מקוריות"
+
+msgid "Load ID3 tags in background"
+msgstr "טען תגיות ID3 ברקע"
+
+msgid "Work out track lengths"
+msgstr "חשב אורכי רצועות"
+
+msgid "Easy move"
+msgstr "הזזה קלה"
+
+msgid "Remember playlist"
+msgstr "זכור רשימת השמעה"
+
+msgid "Remember last played"
+msgstr "זכור את האחרון שהושמע"
+
+msgid "Track Delay (sec)"
+msgstr "עיכוב רצועה (שנ)"
+
+msgid "Skinlist length"
+msgstr "אורך רשימת עיצובים"
+
+msgid "Flush"
+msgstr "נקה"
+
+msgid "Output"
+msgstr "פלט"
+
+msgid "Volume controls"
+msgstr "בקרות עוצמת קול"
+
+msgid "Player"
+msgstr "נגן"
+
+msgid "Open"
+msgstr "פתח"
+
+msgid "OK"
+msgstr "אישור"
+
+msgid "Cancel"
+msgstr "ביטול"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"הקלד את כתובת ה-URL שברצונך להפעיל. הפורמטים הנתמכים הם סטרימינג MP3 ו-OGG "
+"ורשימות השמעה M3U."
+
+msgid "&URL:"
+msgstr "&URL:"
+
+msgid "Find Text"
+msgstr "חפש טקסט"
+
+msgid "Look in"
+msgstr "חפש ב"
+
+msgid "&Titles"
+msgstr "&כותרות"
+
+msgid "Artist &Names"
+msgstr "שמות &אמנים"
+
+msgid "&Album Names"
+msgstr "שמות &אלבומים"
+
+msgid "System MASTER volume"
+msgstr "עוצמת קול ראשית של המערכת"
+
+msgid "System WAVE volume"
+msgstr "עוצמת קול WAVE של המערכת"
+
+msgid "Internal volume"
+msgstr "עוצמת קול פנימית"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"סוגי הקבצים רשומים.\n"
+"תוכל ללחוץ פעמיים על קובץ נתמך להפעלת BriskPlayer."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr "אייקון עבור BriskPlayer נוצר בתפריט התחלה ובשולחן העבודה."
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "קבצי אתחול ערכת עיצוב BriskPlayer (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "כל הקבצים (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "קצב סיביות: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "קצב דגימה: %.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "נמצא %d קובץ"
+msgstr[1] "נמצאו %d קבצים"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d שניה"
+msgstr[1] "%d שניות"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d דקה"
+msgstr[1] "%d דקות"
+
+msgid "Failed to initialize audio device"
+msgstr "כשל באתחול התקן השמע"
+
+msgid "Unable to load audio file"
+msgstr "לא ניתן לטעון קובץ שמע"
+
+msgid "Invalid String ID"
+msgstr "מזהה מחרוזת לא חוקי"
+
+msgid "Audio Error"
+msgstr "שגיאת שמע"
+
+msgid "File Error"
+msgstr "שגיאת קובץ"
+
+msgid "Processing audio..."
+msgstr "מעבד שמע..."
+
+msgid "Loading..."
+msgstr "טוען..."
+
+msgid "Ready"
+msgstr "מוכן"
+
+msgid "Rotate system tray icon"
+msgstr "סיבוב סמל מגש המערכת"
+
+msgid "Scroll title"
+msgstr "גלילת כותרת"
+
+msgid "Only add file once to playlist"
+msgstr "הוספת קובץ לרשימת ההשמעה פעם אחת בלבד"
+
+msgid "Read ID3 tags"
+msgstr "קריאת תגיות ID3"
+
+msgid "Read ID3 for selected files"
+msgstr "קריאת תגיות ID3 עבור הקבצים שנבחרו"
+
+msgid "Read ID3 in background"
+msgstr "קריאת תגיות ID3 ברקע"
+
+msgid "Calculate track lengths"
+msgstr "חישוב אורכי הרצועות"
+
+msgid "Easy move mode"
+msgstr "מצב הזזה קלה"
+
+msgid "Register file types"
+msgstr "רישום סוגי קבצים"
+
+msgid "Track delay (seconds)"
+msgstr "עיכוב רצועה (שניות)"
+
+msgid "Skin list length"
+msgstr "אורך רשימת הנושא"
+
+msgid "Open..."
+msgstr "פתיחה..."
+
+
+msgid "DSP Plugins"
+msgstr "תוספי DSP"
+
+msgid "None (Disabled)"
+msgstr "ללא (מושבת)"
+
+msgid "Configure..."
+msgstr "הגדרה..."

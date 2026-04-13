@@ -1,0 +1,345 @@
+# Finnish translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Finnish\n"
+"Language: fi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – Salamannopea mediasoitin"
+
+msgid "BriskPlayer Audio file"
+msgstr "BriskPlayer-äänitiedosto"
+
+msgid "BriskPlayer Playlist"
+msgstr "BriskPlayer-soittolista"
+
+msgid "Open File..."
+msgstr "Avaa tiedosto..."
+
+msgid "Open URL..."
+msgstr "Avaa URL..."
+
+msgid "Add Files..."
+msgstr "Lisää tiedostoja..."
+
+msgid "Playlist Editor"
+msgstr "Soittolistaeditori"
+
+msgid "Skin"
+msgstr "Teema"
+
+msgid "Default"
+msgstr "Oletus"
+
+msgid "Language"
+msgstr "Kieli"
+
+msgid "English"
+msgstr "Englanti"
+
+msgid "Deutsch"
+msgstr "Saksa"
+
+msgid "Playback"
+msgstr "Toisto"
+
+msgid "Play"
+msgstr "Toista"
+
+msgid "Stop"
+msgstr "Pysäytä"
+
+msgid "Pause"
+msgstr "Tauko"
+
+msgid "Next"
+msgstr "Seuraava"
+
+msgid "Previous"
+msgstr "Edellinen"
+
+msgid "Options..."
+msgstr "Asetukset..."
+
+msgid "About"
+msgstr "Tietoja"
+
+msgid "Exit"
+msgstr "Lopeta"
+
+msgid "About BriskPlayer"
+msgstr "Tietoja BriskPlayerista"
+
+msgid "BriskPlayer Options"
+msgstr "BriskPlayer-asetukset"
+
+msgid "Open URL"
+msgstr "Avaa URL"
+
+msgid "Quick Find"
+msgstr "Pikahaku"
+
+msgid "&About"
+msgstr "&Tietoja"
+
+msgid "&Keyboard Shortcuts"
+msgstr "&Pikanäppäimet"
+
+msgid "C&hanges"
+msgstr "&Muutokset"
+
+msgid "C&lose"
+msgstr "&Sulje"
+
+msgid "General"
+msgstr "Yleiset"
+
+msgid "Always on top"
+msgstr "Aina päällimmäisenä"
+
+msgid "Exit after playing"
+msgstr "Lopeta toiston jälkeen"
+
+msgid "Rotate systemtray icon"
+msgstr "Pyöritä järjestelmäpalkin kuvaketta"
+
+msgid "Scroll Songtitle"
+msgstr "Vieritä kappaleen nimeä"
+
+msgid "Allow file once in playlist"
+msgstr "Salli tiedosto vain kerran soittolistalla"
+
+msgid "Autoplay on startup"
+msgstr "Automaattinen toisto käynnistettäessä"
+
+msgid "Allow multiple instances"
+msgstr "Salli useita instansseja"
+
+msgid "Show remaining time"
+msgstr "Näytä jäljellä oleva aika"
+
+msgid "Show on taskbar"
+msgstr "Näytä tehtäväpalkissa"
+
+
+msgid "Sticky windows"
+msgstr "Tarttuvat ikkunat"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "Rekisteröi tiedostotyypit"
+
+msgid "Add to Start Menu"
+msgstr "Lisää Käynnistä-valikkoon"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "Lue ID3-tunniste (jos sellainen on)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "Lue ID3-tunniste valitusta"
+
+msgid "Support ID3v2"
+msgstr "Tue ID3v2:ta"
+
+msgid "Prefer native OGG tags"
+msgstr "Suosi natiiveja OGG-tunnisteita"
+
+msgid "Load ID3 tags in background"
+msgstr "Lataa ID3-tunnisteet taustalla"
+
+msgid "Work out track lengths"
+msgstr "Laske kappaleiden pituudet"
+
+msgid "Easy move"
+msgstr "Helppo siirto"
+
+msgid "Remember playlist"
+msgstr "Muista soittolista"
+
+msgid "Remember last played"
+msgstr "Muista viimeksi toistettu"
+
+msgid "Track Delay (sec)"
+msgstr "Kappaleen viive (sek)"
+
+msgid "Skinlist length"
+msgstr "Teemalistauksen pituus"
+
+msgid "Flush"
+msgstr "Tyhjennä"
+
+msgid "Output"
+msgstr "Lähtö"
+
+msgid "Volume controls"
+msgstr "Äänenvoimakkuuden säätimet"
+
+msgid "Player"
+msgstr "Soitin"
+
+msgid "Open"
+msgstr "Avaa"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Peruuta"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"Kirjoita toistettava URL. Tuettuja muotoja ovat MP3- ja OGG-suoratoisto sekä "
+"M3U-soittolistat."
+
+msgid "&URL:"
+msgstr "&URL:"
+
+msgid "Find Text"
+msgstr "Etsi tekstiä"
+
+msgid "Look in"
+msgstr "Etsi kohteesta"
+
+msgid "&Titles"
+msgstr "&Otsikot"
+
+msgid "Artist &Names"
+msgstr "Esittäjä&nimet"
+
+msgid "&Album Names"
+msgstr "&Albuminimet"
+
+msgid "System MASTER volume"
+msgstr "Järjestelmän MASTER-äänenvoimakkuus"
+
+msgid "System WAVE volume"
+msgstr "Järjestelmän WAVE-äänenvoimakkuus"
+
+msgid "Internal volume"
+msgstr "Sisäinen äänenvoimakkuus"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"Tiedostotyypit on rekisteröity.\n"
+"Voit käynnistää BriskPlayerin kaksoisnapsauttamalla tuettua tiedostoa."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr "BriskPlayer-kuvake on luotu Käynnistä-valikkoon ja Työpöydälle."
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "BriskPlayer-teeman alustustiedostot (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "Kaikki tiedostot (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "Bittinopeus: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "Näytteenottotaajuus: %.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "Löydettiin %d tiedosto"
+msgstr[1] "Löydettiin %d tiedostoa"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d sekunti"
+msgstr[1] "%d sekuntia"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d minuutti"
+msgstr[1] "%d minuuttia"
+
+msgid "Failed to initialize audio device"
+msgstr "Äänilaitteen alustus epäonnistui"
+
+msgid "Unable to load audio file"
+msgstr "Äänitiedostoa ei voida ladata"
+
+msgid "Invalid String ID"
+msgstr "Virheellinen merkkijono-ID"
+
+msgid "Audio Error"
+msgstr "Äänivirhe"
+
+msgid "File Error"
+msgstr "Tiedostovirhe"
+
+msgid "Processing audio..."
+msgstr "Käsitellään ääntä..."
+
+msgid "Loading..."
+msgstr "Ladataan..."
+
+msgid "Ready"
+msgstr "Valmis"
+
+msgid "Rotate system tray icon"
+msgstr "Animoi tehtäväpalkkikuvake"
+
+msgid "Scroll title"
+msgstr "Vieritä kappalenimeä"
+
+msgid "Only add file once to playlist"
+msgstr "Lisää tiedosto soittolistalle vain kerran"
+
+msgid "Read ID3 tags"
+msgstr "Lue ID3-tunnisteet"
+
+msgid "Read ID3 for selected files"
+msgstr "Lue ID3-tunnisteet valituille tiedostoille"
+
+msgid "Read ID3 in background"
+msgstr "Lue ID3-tunnisteet taustalla"
+
+msgid "Calculate track lengths"
+msgstr "Laske kappaleiden pituudet"
+
+msgid "Easy move mode"
+msgstr "Helppo siirtotila"
+
+msgid "Register file types"
+msgstr "Rekisteröi tiedostotyypit"
+
+msgid "Track delay (seconds)"
+msgstr "Kappaleviive (sekuntia)"
+
+msgid "Skin list length"
+msgstr "Skin-listan pituus"
+
+msgid "Open..."
+msgstr "Avaa..."
+
+
+msgid "DSP Plugins"
+msgstr "DSP-laajennukset"
+
+msgid "None (Disabled)"
+msgstr "Ei mitään (Poistettu käytöstä)"
+
+msgid "Configure..."
+msgstr "Määritä..."

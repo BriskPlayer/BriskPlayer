@@ -1,0 +1,360 @@
+# German translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: German\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. Context: Application name and description
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – Blitzschneller Audioplayer"
+
+msgid "BriskPlayer Audio file"
+msgstr "BriskPlayer-Audiodatei"
+
+msgid "BriskPlayer Playlist"
+msgstr "BriskPlayer-Wiedergabeliste"
+
+#. Context: Menu items
+msgid "Open File..."
+msgstr "Datei öffnen..."
+
+msgid "Open URL..."
+msgstr "URL öffnen..."
+
+msgid "Add Files..."
+msgstr "Dateien hinzufügen..."
+
+msgid "Playlist Editor"
+msgstr "Wiedergabelisten-Editor"
+
+msgid "Skin"
+msgstr "Design"
+
+msgid "Default"
+msgstr "Standard"
+
+msgid "Language"
+msgstr "Sprache"
+
+msgid "English"
+msgstr "Englisch"
+
+msgid "Deutsch"
+msgstr "Deutsch"
+
+msgid "Playback"
+msgstr "Wiedergabe"
+
+msgid "Play"
+msgstr "Abspielen"
+
+msgid "Stop"
+msgstr "Stop"
+
+msgid "Pause"
+msgstr "Pause"
+
+msgid "Next"
+msgstr "Weiter"
+
+msgid "Previous"
+msgstr "Zurück"
+
+msgid "Options..."
+msgstr "Optionen..."
+
+msgid "About"
+msgstr "Info"
+
+msgid "Exit"
+msgstr "Beenden"
+
+#. Context: Dialog titles
+msgid "About BriskPlayer"
+msgstr "Info zu BriskPlayer"
+
+msgid "BriskPlayer Options"
+msgstr "BriskPlayer-Optionen"
+
+msgid "Open URL"
+msgstr "URL öffnen"
+
+msgid "Quick Find"
+msgstr "Schnellsuche"
+
+#. Context: About dialog
+msgid "&About"
+msgstr "&Info"
+
+msgid "&Keyboard Shortcuts"
+msgstr "&Tastenkürzel"
+
+msgid "C&hanges"
+msgstr "Ä&nderungen"
+
+msgid "C&lose"
+msgstr "S&chließen"
+
+#. Context: Options dialog
+msgid "General"
+msgstr "Allgemein"
+
+msgid "Always on top"
+msgstr "Immer im Vordergrund"
+
+msgid "Exit after playing"
+msgstr "Nach Wiedergabe beenden"
+
+msgid "Rotate systemtray icon"
+msgstr "Infobereich-Symbol drehen"
+
+msgid "Scroll Songtitle"
+msgstr "Liedtitel scrollen"
+
+msgid "Allow file once in playlist"
+msgstr "Datei nur einmal in Wiedergabeliste"
+
+msgid "Autoplay on startup"
+msgstr "Automatisch abspielen beim Start"
+
+msgid "Allow multiple instances"
+msgstr "Mehrere Instanzen erlauben"
+
+msgid "Show remaining time"
+msgstr "Restzeit anzeigen"
+
+msgid "Show on taskbar"
+msgstr "In Taskleiste anzeigen"
+
+
+msgid "Sticky windows"
+msgstr "Magnetische Fenster"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "Dateitypen registrieren"
+
+msgid "Add to Start Menu"
+msgstr "Zum Startmenü hinzufügen"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "ID3-Tag lesen (falls vorhanden)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "ID3-Tag des Ausgewählten lesen"
+
+msgid "Support ID3v2"
+msgstr "ID3v2 unterstützen"
+
+msgid "Prefer native OGG tags"
+msgstr "Native OGG-Tags bevorzugen"
+
+msgid "Load ID3 tags in background"
+msgstr "ID3-Tags im Hintergrund laden"
+
+msgid "Work out track lengths"
+msgstr "Titellängen berechnen"
+
+msgid "Easy move"
+msgstr "Einfaches Verschieben"
+
+msgid "Remember playlist"
+msgstr "Wiedergabeliste merken"
+
+msgid "Remember last played"
+msgstr "Zuletzt gespielten Titel merken"
+
+msgid "Track Delay (sec)"
+msgstr "Titelversatz (Sek.)"
+
+msgid "Skinlist length"
+msgstr "Designlisten-Länge"
+
+msgid "Flush"
+msgstr "Leeren"
+
+msgid "Output"
+msgstr "Ausgabe"
+
+msgid "Volume controls"
+msgstr "Lautstärkeregelung"
+
+msgid "Player"
+msgstr "Player"
+
+msgid "Open"
+msgstr "Öffnen"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#. Context: URL dialog
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"Geben Sie die URL ein, die Sie abspielen möchten. Unterstützte Formate sind "
+"MP3 und OGG-Streaming sowie M3U-Wiedergabelisten."
+
+msgid "&URL:"
+msgstr "&URL:"
+
+#. Context: Quick Find dialog
+msgid "Find Text"
+msgstr "Text suchen"
+
+msgid "Look in"
+msgstr "Suchen in"
+
+msgid "&Titles"
+msgstr "&Titel"
+
+msgid "Artist &Names"
+msgstr "Künstler&namen"
+
+msgid "&Album Names"
+msgstr "&Albumnamen"
+
+#. Context: Volume control options
+msgid "System MASTER volume"
+msgstr "System MASTER-Lautstärke"
+
+msgid "System WAVE volume"
+msgstr "System WAVE-Lautstärke"
+
+msgid "Internal volume"
+msgstr "Interne Lautstärke"
+
+#. Context: Status messages
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"Dateitypen sind registriert.\n"
+"Sie können eine unterstützte Datei doppelklicken, um BriskPlayer zu starten."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr ""
+"Ein Symbol für BriskPlayer wurde im Startmenü und auf dem Desktop erstellt."
+
+#. Context: File filters
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "BriskPlayer-Design-Initialisierungsdateien (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "Alle Dateien (*.*)"
+
+#. Context: Audio format strings
+msgid "Bitrate: %d kbps"
+msgstr "Bitrate: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "Abtastrate: %.1f kHz"
+
+#. Context: Time format (plural forms)
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "%d Datei gefunden"
+msgstr[1] "%d Dateien gefunden"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d Sekunde"
+msgstr[1] "%d Sekunden"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d Minute"
+msgstr[1] "%d Minuten"
+
+#. Context: Error messages
+msgid "Failed to initialize audio device"
+msgstr "Fehler beim Initialisieren des Audiogeräts"
+
+msgid "Unable to load audio file"
+msgstr "Audiodatei konnte nicht geladen werden"
+
+msgid "Invalid String ID"
+msgstr "Ungültige Zeichenketten-ID"
+
+msgid "Audio Error"
+msgstr "Audiofehler"
+
+msgid "File Error"
+msgstr "Dateifehler"
+
+#. Context: Processing messages
+msgid "Processing audio..."
+msgstr "Audio wird verarbeitet..."
+
+msgid "Loading..."
+msgstr "Wird geladen..."
+
+msgid "Ready"
+msgstr "Bereit"
+
+msgid "Rotate system tray icon"
+msgstr "Systemtray-Symbol drehen"
+
+msgid "Scroll title"
+msgstr "Titel scrollen"
+
+msgid "Only add file once to playlist"
+msgstr "Datei nur einmal in Wiedergabeliste"
+
+msgid "Read ID3 tags"
+msgstr "ID3-Tags lesen"
+
+msgid "Read ID3 for selected files"
+msgstr "ID3-Tags der Auswahl lesen"
+
+msgid "Read ID3 in background"
+msgstr "ID3-Tags im Hintergrund lesen"
+
+msgid "Calculate track lengths"
+msgstr "Titellängen ermitteln"
+
+msgid "Easy move mode"
+msgstr "Einfacher Verschiebemodus"
+
+msgid "Register file types"
+msgstr "Dateitypen registrieren"
+
+msgid "Track delay (seconds)"
+msgstr "Titelwechselverzögerung (Sekunden)"
+
+msgid "Skin list length"
+msgstr "Skin-Listenlänge"
+
+msgid "Open..."
+msgstr "Öffnen..."
+
+
+msgid "DSP Plugins"
+msgstr "DSP-Plugins"
+
+msgid "None (Disabled)"
+msgstr "Keines (Deaktiviert)"
+
+msgid "Configure..."
+msgstr "Konfigurieren..."

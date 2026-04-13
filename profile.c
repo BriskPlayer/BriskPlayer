@@ -189,6 +189,18 @@ void    options_read(void)
 	options.sticky_windows =
 		GetPrivateProfileInt("Misc", "StickyWindows", 1, pathbuf);
 	    
+	options.discord_rpc_enabled =
+		GetPrivateProfileInt("Misc", "DiscordRPC", 0, pathbuf);
+	    
+	options.replaygain_mode =
+		GetPrivateProfileInt("Misc", "ReplayGainMode", 0, pathbuf);
+	options.replaygain_preamp_db =
+		GetPrivateProfileInt("Misc", "ReplayGainPreamp", 0, pathbuf);
+	options.replaygain_prevent_clipping =
+		GetPrivateProfileInt("Misc", "ReplayGainNoClip", 1, pathbuf);
+	options.gapless_playback =
+		GetPrivateProfileInt("Misc", "GaplessPlayback", 1, pathbuf);
+
 	GetPrivateProfileString("Misc", // points to section name
 							"RememberLastSong", // points to key name
 							"", // points to default string
@@ -470,7 +482,18 @@ void    options_write(void)
 	WritePrivateProfileString("Misc", "Scrolltitle",
 							  intbuf, pathbuf);	_itoa_s(options.sticky_windows, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "StickyWindows",
-						  intbuf, pathbuf);	_itoa_s(options.show_playlist, intbuf, sizeof(intbuf), 10);
+						  intbuf, pathbuf);	_itoa_s(options.discord_rpc_enabled, intbuf, sizeof(intbuf), 10);
+	WritePrivateProfileString("Misc", "DiscordRPC",
+						  intbuf, pathbuf);
+	_itoa_s(options.replaygain_mode, intbuf, sizeof(intbuf), 10);
+	WritePrivateProfileString("Misc", "ReplayGainMode", intbuf, pathbuf);
+	_itoa_s(options.replaygain_preamp_db, intbuf, sizeof(intbuf), 10);
+	WritePrivateProfileString("Misc", "ReplayGainPreamp", intbuf, pathbuf);
+	_itoa_s(options.replaygain_prevent_clipping, intbuf, sizeof(intbuf), 10);
+	WritePrivateProfileString("Misc", "ReplayGainNoClip", intbuf, pathbuf);
+	_itoa_s(options.gapless_playback, intbuf, sizeof(intbuf), 10);
+	WritePrivateProfileString("Misc", "GaplessPlayback", intbuf, pathbuf);
+	_itoa_s(options.show_playlist, intbuf, sizeof(intbuf), 10);
 	WritePrivateProfileString("Misc", "ShowPlaylist",
 							  intbuf,
 							  pathbuf);

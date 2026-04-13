@@ -1,5 +1,106 @@
 cmake_minimum_required(VERSION 3.20)
 
+# ---------------------------------------------------------------------------
+# vcpkg toolchain autodetection
+# Must be set BEFORE project() so vcpkg can inject its find_package overrides.
+#
+# The VS-bundled vcpkg in C:\Program Files is marked readonly:true and cannot
+# acquire the .vcpkg-root filesystem lock in a non-admin process, causing an
+# infinite "waiting to take filesystem lock" loop.  We therefore require a
+# standalone (writable) vcpkg installation.
+#
+# Priority:
+#   1. Explicit -DCMAKE_TOOLCHAIN_FILE=... on the cmake command-line
+#   2. VCPKG_ROOT environment variable
+#   3. Common standalone installation paths
+#   4. Fatal error with install instructions
+# ---------------------------------------------------------------------------
+
+# Helper: return TRUE in <out_var> if the vcpkg at <root> is NOT readonly.
+function(_vcpkg_is_writable root out_var)
+    set(${out_var} TRUE PARENT_SCOPE)
+    if(EXISTS "${root}/vcpkg-bundle.json")
+        file(READ "${root}/vcpkg-bundle.json" _bundle)
+        if(_bundle MATCHES "\"readonly\"[ \t\r\n]*:[ \t\r\n]*[Tt]rue")
+            set(${out_var} FALSE PARENT_SCOPE)
+        endif()
+    endif()
+endfunction()
+
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE OR NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
+    set(_vcpkg_root "")
+
+    # 1. VCPKG_ROOT env var
+    if(DEFINED ENV{VCPKG_ROOT} AND EXISTS "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+        _vcpkg_is_writable("$ENV{VCPKG_ROOT}" _writable)
+        if(_writable)
+            set(_vcpkg_root "$ENV{VCPKG_ROOT}")
+            message(STATUS "vcpkg: using VCPKG_ROOT env: ${_vcpkg_root}")
+        else()
+            message(WARNING "vcpkg: VCPKG_ROOT points to a readonly VS-bundled installation ($ENV{VCPKG_ROOT}); ignoring it. Install standalone vcpkg and update VCPKG_ROOT.")
+        endif()
+    endif()
+
+    # 2. Common standalone installation paths (user-writable, not in Program Files)
+    if(NOT _vcpkg_root)
+        set(_standalone_candidates
+            "C:/vcpkg"
+            "$ENV{USERPROFILE}/vcpkg"
+            "$ENV{USERPROFILE}/source/vcpkg"
+            "$ENV{USERPROFILE}/source/repos/vcpkg"
+            "$ENV{LOCALAPPDATA}/vcpkg/standalone"
+        )
+        foreach(_candidate IN LISTS _standalone_candidates)
+            if(EXISTS "${_candidate}/scripts/buildsystems/vcpkg.cmake")
+                _vcpkg_is_writable("${_candidate}" _writable)
+                if(_writable)
+                    set(_vcpkg_root "${_candidate}")
+                    message(STATUS "vcpkg: found standalone installation: ${_vcpkg_root}")
+                    break()
+                endif()
+            endif()
+        endforeach()
+    endif()
+
+    # 3. No writable vcpkg found — fatal with clear install instructions
+    if(NOT _vcpkg_root)
+        message(FATAL_ERROR
+            "No writable vcpkg installation found.\n"
+            "The VS-bundled vcpkg in 'C:\\Program Files' is read-only and cannot be used from the CLI.\n\n"
+            "To fix, install standalone vcpkg:\n"
+            "  git clone https://github.com/microsoft/vcpkg.git C:\\vcpkg\n"
+            "  C:\\vcpkg\\bootstrap-vcpkg.bat\n"
+            "Then either:\n"
+            "  a) Set the VCPKG_ROOT environment variable:  \$env:VCPKG_ROOT = 'C:\\vcpkg'\n"
+            "  b) Pass it on the cmake command line:  -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake\n"
+        )
+    endif()
+
+    set(CMAKE_TOOLCHAIN_FILE "${_vcpkg_root}/scripts/buildsystems/vcpkg.cmake"
+        CACHE FILEPATH "vcpkg toolchain" FORCE)
+    unset(_vcpkg_root)
+    unset(_standalone_candidates)
+    unset(_writable)
+endif()
+
+# ---------------------------------------------------------------------------
+# vcpkg manifest feature selection
+# Map CMake option flags to vcpkg features BEFORE project() so that vcpkg
+# installs the right set of packages during the initial configure.
+# ---------------------------------------------------------------------------
+if(NOT DEFINED VCPKG_MANIFEST_FEATURES)
+    set(VCPKG_MANIFEST_FEATURES "")
+endif()
+if(NOT ENABLE_FFMPEG)
+    list(APPEND VCPKG_MANIFEST_FEATURES "native-codecs")
+else()
+    list(APPEND VCPKG_MANIFEST_FEATURES "ffmpeg")
+endif()
+if(ENABLE_DISCORD_RPC)
+    list(APPEND VCPKG_MANIFEST_FEATURES "discord-rpc")
+endif()
+set(VCPKG_MANIFEST_FEATURES "${VCPKG_MANIFEST_FEATURES}" CACHE STRING "" FORCE)
+
 # Note: CXX language is required because TagLib (even tag_c.lib) is a C++ library
 # Your source code is pure C, but we need C++ runtime to link against TagLib
 project(briskplayer VERSION 3.0.2 LANGUAGES C CXX)
@@ -44,11 +145,11 @@ endif()
 
 # Platform-specific settings
 if(MSVC)
-    add_compile_options(/W3 /utf-8)
+    add_compile_options(/W3 /utf-8 /std:c17 /experimental:c11atomics)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS WIN32 _WINDOWS)
     
-    # Windows XP compatibility
-    add_compile_definitions(_WIN32_WINNT=0x0501 WINVER=0x0501)
+    # Windows Vista as minimum version (FAudio and FFmpeg 8 require Vista+)
+    add_compile_definitions(_WIN32_WINNT=0x0600 WINVER=0x0600)
     
     # Disable vectorized string operations that require newer runtime symbols
     # This avoids the ___std_find_*_trivial_pos symbols that may not be available
@@ -79,7 +180,18 @@ else()
     
     # GCC/Clang
     add_compile_options(-Wall -Wextra)
-    
+
+    # Size optimization: let linker discard unused sections
+    add_compile_options(-ffunction-sections -fdata-sections)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections")
+
+    # In Release builds, prefer -Os (size) over -O2 (speed) and strip symbols
+    if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
+        string(REPLACE "-O2" "-Os" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+        string(REPLACE "-O2" "-Os" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s")
+    endif()
+
     # Static linking for MinGW
     if(BUILD_STATIC AND MINGW)
         if(CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
@@ -102,7 +214,9 @@ set(BRISK_SOURCES
     CLV_ListView.c
     CompositeFile.c
     CPI_CircleBuffer.c
+    CPI_DpiScale.c
     CPI_Equaliser_Basic.c
+    CPI_ReplayGain.c
     CPI_TagLib.c
     CPI_AlbumArtTooltip.c
     CPI_Image.c
@@ -116,7 +230,6 @@ set(BRISK_SOURCES
     CPI_Player_Callbacks.c
     CPI_Player_CoDec_WAV.c
     CPI_Player_CoDec_WinAmpPlugin.c
-    CPI_Player_CoDec_FFmpeg.c
     CPI_Player_DSP.c
     CPI_Player_Engine.c
     CPI_Player_FileAssoc.c
@@ -124,6 +237,7 @@ set(BRISK_SOURCES
     CPI_Player_Output_FAudio.c
     CPI_Player_Output_File.c
     CPI_Player_Output_Wave.c
+    CPI_Player_Output_WASAPI.c
     CPI_Playlist.c
     CPI_Playlist_Callbacks.c
     CPI_PlaylistItem.c
@@ -131,6 +245,7 @@ set(BRISK_SOURCES
     CPI_Stream.c
     CPI_Stream_Internet.c
     CPI_Stream_LocalFile.c
+    CPI_TaskbarIntegration.c
     CPI_Translation.c
     CPI_Gettext.c
     CPString.c
@@ -153,93 +268,98 @@ set(BRISK_SOURCES
     CP_Config.c
 )
 
+# Discord RPC (optional)
+if(ENABLE_DISCORD_RPC)
+    list(APPEND BRISK_SOURCES CPI_DiscordRPC.c)
+endif()
+
 # Resource file
 set(BRISK_RC briskplayer.rc)
 
-# Find required libraries - expect them to be installed in system paths
+# ---------------------------------------------------------------------------
+# Codec selection: FFmpeg vs native libs (libmad/vorbis/FLAC/opus/fdk-aac)
+# Native codecs are the default. Use -DENABLE_FFMPEG=ON to use FFmpeg instead.
+# When using FFmpeg, install with: vcpkg install briskplayer[ffmpeg]
+# ---------------------------------------------------------------------------
+option(ENABLE_FFMPEG "Use FFmpeg for audio decoding" OFF)
+
+# ---------------------------------------------------------------------------
+# Discord Rich Presence (optional)
+# Shows "Now Playing" info in the user's Discord profile.
+# Install with: vcpkg install briskplayer[discord-rpc]
+# ---------------------------------------------------------------------------
+option(ENABLE_DISCORD_RPC "Enable Discord Rich Presence integration" OFF)
+
+if(ENABLE_FFMPEG)
+    message(STATUS "Codec backend: FFmpeg")
+    list(APPEND BRISK_SOURCES CPI_Player_CoDec_FFmpeg.c)
+else()
+    message(STATUS "Codec backend: native (libmad/vorbis/FLAC/opus/aac)")
+    list(APPEND BRISK_SOURCES
+        CPI_Player_CoDec_MPEG.c
+        CPI_Player_CoDec_OGG.c
+        CPI_Player_CoDec_FLAC.c
+        CPI_Player_CoDec_AAC.c
+        CPI_Player_CoDec_OPUS.c
+    )
+endif()
+
+# Find required libraries via vcpkg-provided CMake config files.
+# In manifest mode vcpkg installs all packages listed in vcpkg.json before
+# CMake's find_package calls are reached, so CONFIG-mode finds are reliable.
 find_package(ZLIB REQUIRED)
 
-# Find TagLib C interface - try pkg-config first, then fall back to manual detection
-# Note that tag_c depends on tag (C++ library)
-find_package(PkgConfig)
-if(PKG_CONFIG_FOUND)
-    pkg_check_modules(TAGLIB taglib_c)
-    if(NOT TAGLIB_FOUND)
-        pkg_check_modules(TAGLIB taglib)
+# TagLib — exports TagLib::TagLib (C++) and, in recent versions, TagLib::tag_c
+find_package(taglib CONFIG REQUIRED)
+if(TARGET TagLib::tag_c)
+    set(TAGLIB_TARGETS TagLib::tag_c TagLib::TagLib)
+else()
+    # Older taglib releases merged tag_c into the main target; find the .lib directly
+    find_library(TAGLIB_C_LIBRARY NAMES tag_c REQUIRED)
+    set(TAGLIB_TARGETS ${TAGLIB_C_LIBRARY} TagLib::TagLib)
+endif()
+
+if(ENABLE_FFMPEG)
+    # FFmpeg — vcpkg adds its FindFFmpeg.cmake module to CMAKE_MODULE_PATH via the
+    # toolchain, so MODULE-mode find_package works without pkg-config.
+    find_package(FFMPEG REQUIRED COMPONENTS avcodec avformat avutil swresample)
+else()
+    # Native codec libraries
+    find_package(mad CONFIG QUIET)
+    if(NOT mad_FOUND)
+        find_library(MAD_LIBRARY NAMES mad REQUIRED)
+        add_library(mad::mad UNKNOWN IMPORTED)
+        set_target_properties(mad::mad PROPERTIES IMPORTED_LOCATION "${MAD_LIBRARY}")
+        find_path(MAD_INCLUDE_DIR mad.h REQUIRED)
+        set_target_properties(mad::mad PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${MAD_INCLUDE_DIR}")
     endif()
+
+    find_package(Ogg CONFIG REQUIRED)
+    find_package(Vorbis CONFIG REQUIRED)
+    find_package(FLAC CONFIG REQUIRED)
+    find_package(fdk-aac CONFIG REQUIRED)
+    find_package(opusfile CONFIG REQUIRED)
 endif()
 
-if(NOT TAGLIB_FOUND)
-    # Fallback to manual detection for vcpkg or other installations
-    find_library(TAGLIB_C_LIBRARY NAMES tag_c)
-    find_library(TAGLIB_LIBRARY NAMES tag)
-    find_path(TAGLIB_INCLUDE_DIR NAMES tag_c.h PATH_SUFFIXES taglib)
-    
-    if(TAGLIB_C_LIBRARY AND TAGLIB_LIBRARY AND TAGLIB_INCLUDE_DIR)
-        set(TAGLIB_FOUND TRUE)
-        set(TAGLIB_LIBRARIES ${TAGLIB_C_LIBRARY} ${TAGLIB_LIBRARY})
-        set(TAGLIB_INCLUDE_DIRS ${TAGLIB_INCLUDE_DIR})
-        message(STATUS "Found TagLib (manual detection): ${TAGLIB_LIBRARIES}")
-    else()
-        message(FATAL_ERROR "TagLib is required but not found. Please install TagLib development libraries.")
-    endif()
-endif()
+# FAudio — vcpkg installs a CMake config file
+find_package(FAudio CONFIG REQUIRED)
 
-# FFmpeg components - try pkg-config first, then fall back to find_package
-find_package(PkgConfig)
-if(PKG_CONFIG_FOUND)
-    pkg_check_modules(FFMPEG libavcodec libavformat libavutil libswresample)
-endif()
-
-if(NOT FFMPEG_FOUND)
-    # Fallback to find_package for vcpkg or other CMake-based installations
-    find_package(FFMPEG QUIET)
-endif()
-
-if(NOT FFMPEG_FOUND)
-    # Last resort: try to find libraries manually
-    find_library(AVCODEC_LIBRARY NAMES avcodec)
-    find_library(AVFORMAT_LIBRARY NAMES avformat)
-    find_library(AVUTIL_LIBRARY NAMES avutil)
-    find_library(SWRESAMPLE_LIBRARY NAMES swresample)
-    find_path(FFMPEG_INCLUDE_DIR NAMES libavcodec/avcodec.h)
-    
-    if(AVCODEC_LIBRARY AND AVFORMAT_LIBRARY AND AVUTIL_LIBRARY AND SWRESAMPLE_LIBRARY AND FFMPEG_INCLUDE_DIR)
-        set(FFMPEG_FOUND TRUE)
-        set(FFMPEG_LIBRARIES ${AVCODEC_LIBRARY} ${AVFORMAT_LIBRARY} ${AVUTIL_LIBRARY} ${SWRESAMPLE_LIBRARY})
-        set(FFMPEG_INCLUDE_DIRS ${FFMPEG_INCLUDE_DIR})
-        message(STATUS "Found FFmpeg (manual detection): ${FFMPEG_LIBRARIES}")
-    else()
-        message(FATAL_ERROR "FFmpeg is required but not found. Please install FFmpeg development libraries.")
-    endif()
-endif()
-
-# FAudio - try pkg-config first, then CONFIG, then manual detection
-if(PKG_CONFIG_FOUND)
-    pkg_check_modules(FAUDIO FAudio)
-endif()
-
-if(NOT FAUDIO_FOUND)
-    # Try CMake config file (vcpkg provides this)
-    find_package(FAudio CONFIG QUIET)
-    if(FAudio_FOUND)
-        set(FAUDIO_FOUND TRUE)
-    endif()
-endif()
-
-if(NOT FAUDIO_FOUND)
-    # Manual detection as last resort
-    find_library(FAUDIO_LIBRARY NAMES FAudio)
-    find_path(FAUDIO_INCLUDE_DIR NAMES FAudio.h)
-    
-    if(FAUDIO_LIBRARY AND FAUDIO_INCLUDE_DIR)
-        set(FAUDIO_FOUND TRUE)
-        set(FAUDIO_LIBRARIES ${FAUDIO_LIBRARY})
-        set(FAUDIO_INCLUDE_DIRS ${FAUDIO_INCLUDE_DIR})
-        message(STATUS "Found FAudio (manual detection): ${FAUDIO_LIBRARY}")
-    else()
-        message(FATAL_ERROR "FAudio is required but not found. Please install FAudio development libraries.")
-    endif()
+# Discord RPC (optional)
+if(ENABLE_DISCORD_RPC)
+    find_path(DISCORD_RPC_INCLUDE_DIR discord_rpc.h REQUIRED)
+    # Multi-config generators (Visual Studio) need separate Release/Debug libraries
+    # to avoid _ITERATOR_DEBUG_LEVEL / RuntimeLibrary mismatches.
+    find_library(DISCORD_RPC_LIBRARY_RELEASE NAMES discord-rpc
+        PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib" NO_DEFAULT_PATH REQUIRED)
+    find_library(DISCORD_RPC_LIBRARY_DEBUG NAMES discord-rpc
+        PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib" NO_DEFAULT_PATH REQUIRED)
+    add_library(discord-rpc::discord-rpc STATIC IMPORTED)
+    set_target_properties(discord-rpc::discord-rpc PROPERTIES
+        IMPORTED_LOCATION "${DISCORD_RPC_LIBRARY_RELEASE}"
+        IMPORTED_LOCATION_DEBUG "${DISCORD_RPC_LIBRARY_DEBUG}"
+        IMPORTED_LOCATION_RELEASE "${DISCORD_RPC_LIBRARY_RELEASE}"
+        INTERFACE_INCLUDE_DIRECTORIES "${DISCORD_RPC_INCLUDE_DIR}"
+    )
 endif()
 
 # Windows system libraries
@@ -253,6 +373,9 @@ set(WINDOWS_LIBRARIES
     propsys
     mfuuid
     mfreadwrite
+    windowscodecs
+    uuid
+    ole32
 )
 
 # Add MSVC-specific libraries for C++ runtime symbols
@@ -260,23 +383,45 @@ if(MSVC)
     list(APPEND WINDOWS_LIBRARIES
         legacy_stdio_definitions
         oldnames
-        vcruntime
     )
 endif()
 
 # Gettext support (optional)
 if(ENABLE_NLS)
+    # Hint CMake to the vcpkg host-tools directory where gettext installs
+    # msgfmt/msgmerge/xgettext (host deps go to x64-windows, not the target triplet)
+    if(DEFINED VCPKG_INSTALLED_DIR)
+        set(_vcpkg_host_triplet "${VCPKG_HOST_TRIPLET}")
+        if(NOT _vcpkg_host_triplet)
+            set(_vcpkg_host_triplet "x64-windows")
+        endif()
+        list(APPEND CMAKE_PROGRAM_PATH
+            "${VCPKG_INSTALLED_DIR}/${_vcpkg_host_triplet}/tools/gettext/bin")
+    endif()
+
     find_package(Intl)
-    if(Intl_FOUND)
+    find_package(Gettext)
+
+    if(Intl_FOUND AND GETTEXT_FOUND)
         add_compile_definitions(ENABLE_NLS=1)
-        message(STATUS "Internationalization support: enabled")
+        message(STATUS "Internationalization support: enabled (libintl + tools found)")
+    elseif(Intl_FOUND)
+        add_compile_definitions(ENABLE_NLS=1)
+        message(STATUS "Internationalization support: enabled (libintl found, tools missing – .mo files won't be built)")
     else()
-        message(STATUS "Internationalization support: disabled (gettext not found)")
+        message(STATUS "Internationalization support: disabled (gettext-libintl not found)")
     endif()
 endif()
 
-# FFmpeg codec enabled
-add_compile_definitions(HAVE_FFMPEG_CODEC=1)
+# Codec compile-time flag
+if(ENABLE_FFMPEG)
+    add_compile_definitions(HAVE_FFMPEG_CODEC=1)
+endif()
+
+# Discord RPC compile-time flag
+if(ENABLE_DISCORD_RPC)
+    add_compile_definitions(ENABLE_DISCORD_RPC=1)
+endif()
 
 # Create executable
 if(MSVC)
@@ -345,12 +490,15 @@ else()
 endif()
 
 # Include directories
+# TagLib and FAudio include dirs are propagated automatically via their
+# imported targets; only FFMPEG still uses plain variables.
 target_include_directories(briskplayer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${TAGLIB_INCLUDE_DIRS}
-    ${FFMPEG_INCLUDE_DIRS}
-    ${FAUDIO_INCLUDE_DIRS}
 )
+
+if(ENABLE_FFMPEG AND DEFINED FFMPEG_INCLUDE_DIRS)
+    target_include_directories(briskplayer PRIVATE ${FFMPEG_INCLUDE_DIRS})
+endif()
 
 if(Intl_FOUND)
     target_include_directories(briskplayer PRIVATE ${Intl_INCLUDE_DIRS})
@@ -361,46 +509,39 @@ target_link_libraries(briskplayer PRIVATE
     ZLIB::ZLIB
 )
 
-# Link TagLib libraries
-if(TAGLIB_FOUND)
-    if(TAGLIB_LINK_LIBRARIES)
-        # pkg-config provides TAGLIB_LINK_LIBRARIES
-        target_link_libraries(briskplayer PRIVATE ${TAGLIB_LINK_LIBRARIES})
-    else()
-        # Manual detection provides individual library variables
-        target_link_libraries(briskplayer PRIVATE ${TAGLIB_LIBRARIES})
-    endif()
+# Link TagLib libraries (targets set above based on what taglib exports)
+target_link_libraries(briskplayer PRIVATE ${TAGLIB_TARGETS})
+
+# Link FAudio — the CONFIG-mode target handles static vs shared automatically
+if(TARGET FAudio::FAudio)
+    target_link_libraries(briskplayer PRIVATE FAudio::FAudio)
 endif()
 
-# Link FAudio libraries
-if(FAUDIO_FOUND)
-    if(BUILD_STATIC AND TARGET FAudio::FAudio-static)
-        # Prefer static library when BUILD_STATIC is enabled
-        target_link_libraries(briskplayer PRIVATE FAudio::FAudio-static)
-    elseif(TARGET FAudio::FAudio)
-        # Fall back to shared library target
-        target_link_libraries(briskplayer PRIVATE FAudio::FAudio)
-    elseif(TARGET FAudio::FAudio-static)
-        # CMake CONFIG provides the static target
-        target_link_libraries(briskplayer PRIVATE FAudio::FAudio-static)
-    elseif(FAUDIO_LINK_LIBRARIES)
-        # pkg-config provides FAUDIO_LINK_LIBRARIES
-        target_link_libraries(briskplayer PRIVATE ${FAUDIO_LINK_LIBRARIES})
-    else()
-        # Manual detection
-        target_link_libraries(briskplayer PRIVATE ${FAUDIO_LIBRARIES})
-    endif()
+# Link Discord RPC (optional)
+if(ENABLE_DISCORD_RPC)
+    target_link_libraries(briskplayer PRIVATE discord-rpc::discord-rpc)
 endif()
 
-# Link FFmpeg libraries
-if(FFMPEG_FOUND)
-    if(FFMPEG_LINK_LIBRARIES)
-        # pkg-config provides FFMPEG_LINK_LIBRARIES
-        target_link_libraries(briskplayer PRIVATE ${FFMPEG_LINK_LIBRARIES})
-    else()
-        # Manual or find_package detection
+# Link FFmpeg or native codec libraries depending on ENABLE_FFMPEG
+if(ENABLE_FFMPEG)
+    if(FFMPEG_FOUND)
         target_link_libraries(briskplayer PRIVATE ${FFMPEG_LIBRARIES})
     endif()
+else()
+    # Native codec libraries
+    if(TARGET mad::mad)
+        target_link_libraries(briskplayer PRIVATE mad::mad)
+    elseif(DEFINED MAD_LIBRARY)
+        target_link_libraries(briskplayer PRIVATE ${MAD_LIBRARY})
+    endif()
+    target_link_libraries(briskplayer PRIVATE
+        Ogg::ogg
+        Vorbis::vorbis
+        Vorbis::vorbisfile
+        FLAC::FLAC
+        FDK-AAC::fdk-aac
+        OpusFile::opusfile
+    )
 endif()
 
 # Link Windows system libraries (after FAudio/FFmpeg which need them)

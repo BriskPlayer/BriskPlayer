@@ -1,0 +1,346 @@
+# Indonesian translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Indonesian\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – Pemutar audio secepat kilat"
+
+msgid "BriskPlayer Audio file"
+msgstr "BriskPlayer Berkas audio"
+
+msgid "BriskPlayer Playlist"
+msgstr "BriskPlayer Daftar putar"
+
+msgid "Open File..."
+msgstr "Buka berkas..."
+
+msgid "Open URL..."
+msgstr "Buka URL..."
+
+msgid "Add Files..."
+msgstr "Tambah berkas..."
+
+msgid "Playlist Editor"
+msgstr "Editor daftar putar"
+
+msgid "Skin"
+msgstr "Tampilan"
+
+msgid "Default"
+msgstr "Bawaan"
+
+msgid "Language"
+msgstr "Bahasa"
+
+msgid "English"
+msgstr "Inggris"
+
+msgid "Deutsch"
+msgstr "Jerman"
+
+msgid "Playback"
+msgstr "Pemutaran"
+
+msgid "Play"
+msgstr "Putar"
+
+msgid "Stop"
+msgstr "Berhenti"
+
+msgid "Pause"
+msgstr "Jeda"
+
+msgid "Next"
+msgstr "Berikutnya"
+
+msgid "Previous"
+msgstr "Sebelumnya"
+
+msgid "Options..."
+msgstr "Opsi..."
+
+msgid "About"
+msgstr "Tentang"
+
+msgid "Exit"
+msgstr "Keluar"
+
+msgid "About BriskPlayer"
+msgstr "Tentang BriskPlayer"
+
+msgid "BriskPlayer Options"
+msgstr "Opsi BriskPlayer"
+
+msgid "Open URL"
+msgstr "Buka URL"
+
+msgid "Quick Find"
+msgstr "Temukan cepat"
+
+msgid "&About"
+msgstr "&Tentang"
+
+msgid "&Keyboard Shortcuts"
+msgstr "&Pintasan keyboard"
+
+msgid "C&hanges"
+msgstr "&Perubahan"
+
+msgid "C&lose"
+msgstr "&Tutup"
+
+msgid "General"
+msgstr "Umum"
+
+msgid "Always on top"
+msgstr "Selalu di atas"
+
+msgid "Exit after playing"
+msgstr "Keluar setelah diputar"
+
+msgid "Rotate systemtray icon"
+msgstr "Putar ikon baki sistem"
+
+msgid "Scroll Songtitle"
+msgstr "Gulir judul lagu"
+
+msgid "Allow file once in playlist"
+msgstr "Izinkan setiap berkas satu kali dalam daftar"
+
+msgid "Autoplay on startup"
+msgstr "Putar otomatis saat mulai"
+
+msgid "Allow multiple instances"
+msgstr "Izinkan beberapa instans"
+
+msgid "Show remaining time"
+msgstr "Tampilkan waktu tersisa"
+
+msgid "Show on taskbar"
+msgstr "Tampilkan di bilah tugas"
+
+
+msgid "Sticky windows"
+msgstr "Jendela menempel"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "Daftarkan jenis berkas"
+
+msgid "Add to Start Menu"
+msgstr "Tambahkan ke Menu Mulai"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "Baca tag ID3 (jika ada)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "Baca tag ID3 yang dipilih"
+
+msgid "Support ID3v2"
+msgstr "Dukungan ID3v2"
+
+msgid "Prefer native OGG tags"
+msgstr "Utamakan tag OGG asli"
+
+msgid "Load ID3 tags in background"
+msgstr "Muat tag ID3 di latar belakang"
+
+msgid "Work out track lengths"
+msgstr "Hitung panjang trek"
+
+msgid "Easy move"
+msgstr "Pindah mudah"
+
+msgid "Remember playlist"
+msgstr "Ingat daftar putar"
+
+msgid "Remember last played"
+msgstr "Ingat yang terakhir diputar"
+
+msgid "Track Delay (sec)"
+msgstr "Penundaan trek (dtk)"
+
+msgid "Skinlist length"
+msgstr "Panjang daftar tampilan"
+
+msgid "Flush"
+msgstr "Hapus"
+
+msgid "Output"
+msgstr "Keluaran"
+
+msgid "Volume controls"
+msgstr "Kontrol volume"
+
+msgid "Player"
+msgstr "Pemutar"
+
+msgid "Open"
+msgstr "Buka"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Batal"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"Ketik URL yang ingin Anda putar. Format yang didukung adalah streaming MP3 "
+"dan OGG, serta daftar putar M3U."
+
+msgid "&URL:"
+msgstr "&URL:"
+
+msgid "Find Text"
+msgstr "Cari teks"
+
+msgid "Look in"
+msgstr "Cari di"
+
+msgid "&Titles"
+msgstr "&Judul"
+
+msgid "Artist &Names"
+msgstr "Nama &artis"
+
+msgid "&Album Names"
+msgstr "Nama &album"
+
+msgid "System MASTER volume"
+msgstr "Volume UTAMA sistem"
+
+msgid "System WAVE volume"
+msgstr "Volume WAVE sistem"
+
+msgid "Internal volume"
+msgstr "Volume internal"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"Jenis berkas telah didaftarkan.\n"
+"Anda dapat mengklik dua kali berkas yang didukung untuk menjalankan "
+"BriskPlayer."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr "Ikon untuk BriskPlayer telah dibuat di Menu Mulai dan Desktop."
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "Berkas inisialisasi tampilan BriskPlayer (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "Semua berkas (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "Kecepatan bit: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "Frekuensi sampling: %.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "Ditemukan %d berkas"
+msgstr[1] "Ditemukan %d berkas"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d detik"
+msgstr[1] "%d detik"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d menit"
+msgstr[1] "%d menit"
+
+msgid "Failed to initialize audio device"
+msgstr "Gagal menginisialisasi perangkat audio"
+
+msgid "Unable to load audio file"
+msgstr "Tidak dapat memuat berkas audio"
+
+msgid "Invalid String ID"
+msgstr "ID string tidak valid"
+
+msgid "Audio Error"
+msgstr "Kesalahan audio"
+
+msgid "File Error"
+msgstr "Kesalahan berkas"
+
+msgid "Processing audio..."
+msgstr "Memproses audio..."
+
+msgid "Loading..."
+msgstr "Memuat..."
+
+msgid "Ready"
+msgstr "Siap"
+
+msgid "Rotate system tray icon"
+msgstr "Putar ikon baki sistem"
+
+msgid "Scroll title"
+msgstr "Gulir judul"
+
+msgid "Only add file once to playlist"
+msgstr "Hanya tambahkan file satu kali ke daftar putar"
+
+msgid "Read ID3 tags"
+msgstr "Baca tag ID3"
+
+msgid "Read ID3 for selected files"
+msgstr "Baca tag ID3 file yang dipilih"
+
+msgid "Read ID3 in background"
+msgstr "Baca tag ID3 di latar belakang"
+
+msgid "Calculate track lengths"
+msgstr "Hitung panjang lagu"
+
+msgid "Easy move mode"
+msgstr "Mode perpindahan mudah"
+
+msgid "Register file types"
+msgstr "Daftarkan jenis file"
+
+msgid "Track delay (seconds)"
+msgstr "Penundaan lagu (detik)"
+
+msgid "Skin list length"
+msgstr "Panjang daftar tema"
+
+msgid "Open..."
+msgstr "Buka..."
+
+
+msgid "DSP Plugins"
+msgstr "Plugin DSP"
+
+msgid "None (Disabled)"
+msgstr "Tidak Ada (Nonaktif)"
+
+msgid "Configure..."
+msgstr "Konfigurasi..."

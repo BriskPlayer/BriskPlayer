@@ -6,9 +6,9 @@
 
 //#define _WIN32_IE 0x600
 
-// Define Windows XP as minimum version for compatibility
+// Windows 7 as minimum version (ITaskbarList3 requires Win7+)
 #ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
+#define _WIN32_WINNT 0x0601
 #endif
 
 #include <windows.h>

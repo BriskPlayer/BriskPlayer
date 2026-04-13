@@ -25,6 +25,7 @@
 #include "resource.h"
 #include "CPI_Gettext.h"
 #include "WinModern.h"
+#include "CPI_DpiScale.h"
 
 // Forward declarations for CPSK functions
 void CPSK_DestroySkin(CPs_Skin* pSkin);
@@ -175,6 +176,7 @@ int main_set_default_skin(void)
 	globals.main_bool_skin_next_is_default = TRUE;
 	globals.builtin_skin_variant = BUILTIN_SKIN_NORMAL;
 	
+	DPI_ApplySkinScaling();
 	main_update_title_text();
 	main_skin_select_menu("Default");
 	
@@ -282,6 +284,7 @@ int main_set_shade_skin(void)
 	globals.main_bool_skin_next_is_default = TRUE;
 	globals.builtin_skin_variant = BUILTIN_SKIN_SHADE;
 	
+	DPI_ApplySkinScaling();
 	main_update_title_text();
 	main_skin_select_menu("Default");
 	
@@ -386,6 +389,7 @@ int main_set_eq_skin(void)
 	globals.main_bool_skin_next_is_default = TRUE;
 	globals.builtin_skin_variant = BUILTIN_SKIN_EQ;
 	
+	DPI_ApplySkinScaling();
 	main_update_title_text();
 	main_skin_select_menu("Default");
 	
@@ -691,6 +695,7 @@ int     main_skin_open(char *name)
 				  positionpercentage);
 	}
 	
+	DPI_ApplySkinScaling();
 	main_update_title_text();
 	
 	return 1;

@@ -25,6 +25,9 @@
 #include "CPI_Playlist.h"
 #include "CPI_Translation.h"
 #include "CPI_Gettext.h"
+#ifdef ENABLE_DISCORD_RPC
+#include "CPI_DiscordRPC.h"
+#endif
 
 // Helper function to translate static text controls that have ID -1
 static void TranslateStaticControls(HWND hwndDlg)
@@ -51,6 +54,15 @@ static void TranslateStaticControls(HWND hwndDlg)
         }
         else if (strcmp(buffer, "Skin") == 0) {
             SetWindowTextA(hChild, T(STR_OPTIONS_SKIN));
+        }
+        else if (strcmp(buffer, "ReplayGain") == 0) {
+            SetWindowTextA(hChild, T("ReplayGain"));
+        }
+        else if (strcmp(buffer, "Mode") == 0) {
+            SetWindowTextA(hChild, T("Mode"));
+        }
+        else if (strcmp(buffer, "Preamp (dB)") == 0) {
+            SetWindowTextA(hChild, T("Preamp (dB)"));
         }
         
         // Move to next child window
@@ -139,6 +151,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			SetDlgItemText(hwndDlg, IDC_REMAINING, T(STR_OPTIONS_SHOW_REMAINING_TIME));
 			SetDlgItemText(hwndDlg, IDC_TASKBAR, T(STR_OPTIONS_SHOW_ON_TASKBAR));
 			SetDlgItemText(hwndDlg, IDC_STICKYWINDOWS, T(STR_OPTIONS_STICKY_WINDOWS));
+			SetDlgItemText(hwndDlg, IDC_DISCORDRPC, T(STR_OPTIONS_DISCORD_RPC));
 			SetDlgItemText(hwndDlg, IDC_REGFILETYPE, T(STR_OPTIONS_REGISTER_FILETYPES));
 			SetDlgItemText(hwndDlg, IDC_ADDICONS, T(STR_OPTIONS_ADD_START_MENU));
 			SetDlgItemText(hwndDlg, IDC_READTAG, T(STR_OPTIONS_READ_ID3_TAG));
@@ -223,6 +236,22 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			SendDlgItemMessage(hwndDlg, IDC_STICKYWINDOWS, BM_SETCHECK,
 							   options.sticky_windows, 0);
 			                   
+			SendDlgItemMessage(hwndDlg, IDC_DISCORDRPC, BM_SETCHECK,
+							   options.discord_rpc_enabled, 0);
+			                   
+			// ReplayGain controls
+			SendDlgItemMessage(hwndDlg, IDC_REPLAYGAIN_MODE, CB_ADDSTRING, 0, (LPARAM)T(STR_REPLAYGAIN_OFF));
+			SendDlgItemMessage(hwndDlg, IDC_REPLAYGAIN_MODE, CB_ADDSTRING, 0, (LPARAM)T(STR_REPLAYGAIN_TRACK));
+			SendDlgItemMessage(hwndDlg, IDC_REPLAYGAIN_MODE, CB_ADDSTRING, 0, (LPARAM)T(STR_REPLAYGAIN_ALBUM));
+			SendDlgItemMessage(hwndDlg, IDC_REPLAYGAIN_MODE, CB_SETCURSEL, options.replaygain_mode, 0);
+			SendDlgItemMessage(hwndDlg, IDC_REPLAYGAIN_PREAMP_SPIN, UDM_SETRANGE, 0, MAKELONG(12, -12));
+			SetDlgItemInt(hwndDlg, IDC_REPLAYGAIN_PREAMP_VAL, options.replaygain_preamp_db, TRUE);
+			SendDlgItemMessage(hwndDlg, IDC_REPLAYGAIN_NOCLIP, BM_SETCHECK, options.replaygain_prevent_clipping, 0);
+			SetDlgItemText(hwndDlg, IDC_REPLAYGAIN_NOCLIP, T(STR_REPLAYGAIN_PREVENT_CLIPPING));
+			
+			SendDlgItemMessage(hwndDlg, IDC_GAPLESS, BM_SETCHECK, options.gapless_playback, 0);
+			SetDlgItemText(hwndDlg, IDC_GAPLESS, T(STR_GAPLESS_PLAYBACK));
+
 			SendDlgItemMessage(hwndDlg, IDC_REMEMBERSKIN, UDM_SETRANGE,
 							   0, MAKELONG(50, 1));
 			                   
@@ -400,6 +429,22 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 					options.sticky_windows =
 						(BOOL)SendDlgItemMessage(hwndDlg, IDC_STICKYWINDOWS, BM_GETCHECK,
 										   0, 0);
+					{
+						BOOL bWasEnabled = options.discord_rpc_enabled;
+						options.discord_rpc_enabled =
+							(BOOL)SendDlgItemMessage(hwndDlg, IDC_DISCORDRPC, BM_GETCHECK,
+											   0, 0);
+#ifdef ENABLE_DISCORD_RPC
+						// Start or stop Discord RPC based on toggle
+						if (options.discord_rpc_enabled && !bWasEnabled)
+							CPI_DiscordRPC_Init();
+						else if (!options.discord_rpc_enabled && bWasEnabled)
+						{
+							CPI_DiscordRPC_Clear();
+							CPI_DiscordRPC_Shutdown();
+						}
+#endif
+					}
 					                       
 					if (options.show_on_taskbar)
 					{
@@ -464,6 +509,14 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 						SAFE_PLAYER_CALL(CPI_Player__OnOutputDeviceChange);
 					}
 					
+					// ReplayGain settings
+					options.replaygain_mode = (int)SendDlgItemMessage(hwndDlg, IDC_REPLAYGAIN_MODE, CB_GETCURSEL, 0, 0);
+					options.replaygain_preamp_db = (int)GetDlgItemInt(hwndDlg, IDC_REPLAYGAIN_PREAMP_VAL, NULL, TRUE);
+					options.replaygain_prevent_clipping = (BOOL)SendDlgItemMessage(hwndDlg, IDC_REPLAYGAIN_NOCLIP, BM_GETCHECK, 0, 0);
+					
+					// Gapless playback
+					options.gapless_playback = (BOOL)SendDlgItemMessage(hwndDlg, IDC_GAPLESS, BM_GETCHECK, 0, 0);
+
 					// Mixer control
 					{
 						int iMixerSelection;

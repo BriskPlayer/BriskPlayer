@@ -196,7 +196,7 @@ static void ffmpeg_Uninitialise(CP_HCODECMODULE hModule) {
 }
 
 static BOOL ffmpeg_OpenFile(CP_HCODECMODULE hModule, const char* pcFilename, 
-                           DWORD dwCookie, HWND hWndOwner) {
+                           DWORD_PTR dwCookie, HWND hWndOwner) {
     (void)dwCookie;
     (void)hWndOwner;
     

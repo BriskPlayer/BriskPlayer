@@ -22,6 +22,10 @@
 # ifndef CP_GLOBALS_H
 # define CP_GLOBALS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct _CPs_DrawContext
 {
 	HDC m_dcDraw;
@@ -75,9 +79,9 @@ typedef void* CP_HSYSICON;
 #define CIC_FTPHEADER					"ftp://"
 
 #ifdef _DEBUG
-#define CLC_BRISKPLAYER_MUTEX			"BRISKPLAYER-045FA840-B10D-2G3-3436-006067709674D"
+#define CLC_BRISKPLAYER_MUTEX			"BRISKPLAYER-045FA840-B10D-2E3E-3436-006067709674D"
 #else
-#define CLC_BRISKPLAYER_MUTEX			"BRISKPLAYER-045FA840-B10D-2G3-3436-006067709674"
+#define CLC_BRISKPLAYER_MUTEX			"BRISKPLAYER-045FA840-B10D-2E3E-3436-006067709674"
 #endif
 
 #define WM_NOTIFYICON					WM_USER
@@ -409,7 +413,12 @@ typedef struct
 	BOOL    show_on_taskbar;
 	BOOL    shuffle_play;
 	BOOL    sticky_windows;
+	BOOL    discord_rpc_enabled;
 	BOOL    use_default_skin;
+	int     replaygain_mode;        // 0=off, 1=track, 2=album
+	int     replaygain_preamp_db;   // -12 to +12
+	BOOL    replaygain_prevent_clipping;
+	BOOL    gapless_playback;
 	BOOL    use_playlist_skin;
 	char    last_used_directory[MAX_PATH];
 	char initial_file[MAX_PATH];
@@ -488,5 +497,9 @@ static_assert(sizeof(globals_t) < 16384, "Globals structure should remain reason
 extern globals_t globals;
 
 extern CoolSkin Skin;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

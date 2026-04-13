@@ -110,9 +110,16 @@
 #define IDC_QFND_ARTISTS                1060
 #define IDC_RADIO1                      1061
 #define IDC_STICKYWINDOWS               1065
+#define IDC_DISCORDRPC                  1066
 #define IDC_URL_STATIC                  1062
 #define IDC_URL_ICON                    1063
 #define IDC_URL_DESCRIPTION             1064
+#define IDC_REPLAYGAIN_MODE             1067
+#define IDC_REPLAYGAIN_PREAMP           1068
+#define IDC_REPLAYGAIN_PREAMP_SPIN      1069
+#define IDC_REPLAYGAIN_NOCLIP           1070
+#define IDC_REPLAYGAIN_PREAMP_VAL       1071
+#define IDC_GAPLESS                     1072
 #define MENU_SKIN_DEFAULT               5000
 #define MENU_ADDFILE                    40039
 #define MENU_OPENFILE                   40001

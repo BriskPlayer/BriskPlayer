@@ -20,6 +20,9 @@
 
 #include "stdafx.h"
 #include "CPI_Translation.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 /*
  * Simple translation wrapper
@@ -32,10 +35,24 @@
 // Initialize the translation system
 BOOL Translation_Initialize(void)
 {
-    // Initialize gettext with default configuration
+    // Build locale path relative to the executable so it works regardless
+    // of the working directory (F5 from VS Code, double-click, etc.)
+    char localeDir[MAX_PATH] = "./locale";
+#ifdef _WIN32
+    char exePath[MAX_PATH];
+    if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
+        // Trim filename to get the exe's directory
+        char* lastSep = strrchr(exePath, '\\');
+        if (lastSep) {
+            lastSep[1] = '\0';
+            snprintf(localeDir, sizeof(localeDir), "%slocale", exePath);
+        }
+    }
+#endif
+
     const GetTextConfig config = {
         .domain = BRISKPLAYER_DOMAIN,
-        .directory = "./locale",
+        .directory = localeDir,
         .locale_category = "LC_ALL",
         .use_utf8 = true,
         .fallback_enabled = true

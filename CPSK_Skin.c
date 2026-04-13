@@ -25,6 +25,7 @@
 #include "globals.h"
 #include "resource.h"
 #include "CompositeFile.h"
+#include "CPI_DpiScale.h"
 
 
 void CPSK_DestroySkin(CPs_Skin* pSkin);
@@ -34,6 +35,10 @@ CPs_Skin* glb_pSkin = NULL;
 //
 //
 //
+static void CPSK_ScaleImage(CPs_Image* pImage);
+static void CPSK_ScaleStateImage(CPs_Image_WithState* pIS);
+static void CPSK_ApplyDpiScaling(CPs_Skin* pSkin);
+
 void CPSK_Initialise(void)
 {
 	char* pcSkinFile;
@@ -46,6 +51,8 @@ void CPSK_Initialise(void)
 	
 	CF_GetSubFile(hComposite, "Skin.def", (void **) &pcSkinFile, &iFileSize);
 	glb_pSkin = CPSK_LoadSkin(hComposite, pcSkinFile, iFileSize);
+	
+	CPSK_ApplyDpiScaling(glb_pSkin);
 	
 	free(pcSkinFile);
 	CF_Destroy(hComposite);
@@ -166,7 +173,7 @@ void CPSK_ReadSkinCommand_Define(CP_COMPOSITEFILE hComposite, CPs_Skin* pSkin, c
 		if (pSkin->mpl_hfFont)
 			DeleteObject(pSkin->mpl_hfFont);
 			
-		pSkin->mpl_hfFont = CreateFont(-12, 0, 0, 0, FW_NORMAL,
+		pSkin->mpl_hfFont = CreateFont(-DPI_Scale(12), 0, 0, 0, FW_NORMAL,
 									   FALSE, FALSE, FALSE,
 									   ANSI_CHARSET,
 									   OUT_TT_PRECIS,
@@ -637,6 +644,109 @@ CPs_Skin* CPSK_LoadSkin(CP_COMPOSITEFILE hComposite, const char* pcSkinFile, con
 	}
 	
 	return pNewSkin;
+}
+
+// Scale a CPs_Image bitmap for DPI
+static void CPSK_ScaleImage(CPs_Image* pImage)
+{
+	if (!pImage || !pImage->m_hbmImage)
+		return;
+	pImage->m_hbmImage = DPI_ScaleBitmap(pImage->m_hbmImage);
+	pImage->m_szSize.cx = DPI_Scale(pImage->m_szSize.cx);
+	pImage->m_szSize.cy = DPI_Scale(pImage->m_szSize.cy);
+}
+
+// Scale a CPs_Image_WithState for DPI
+static void CPSK_ScaleStateImage(CPs_Image_WithState* pIS)
+{
+	if (!pIS || !pIS->m_pImage)
+		return;
+	CPSK_ScaleImage(pIS->m_pImage);
+	pIS->m_iStateHeight = DPI_Scale(pIS->m_iStateHeight);
+	for (int i = 0; i <= igsLast; i++)
+	{
+		pIS->m_ptSource[i].x = DPI_Scale(pIS->m_ptSource[i].x);
+		pIS->m_ptSource[i].y = DPI_Scale(pIS->m_ptSource[i].y);
+	}
+}
+
+static void CPSK_ApplyDpiScaling(CPs_Skin* pSkin)
+{
+	if (!pSkin || DPI_GetDPI() == 96)
+		return;
+
+	// Scale list borders and min window size
+	pSkin->mpl_rList_Border.left   = DPI_Scale(pSkin->mpl_rList_Border.left);
+	pSkin->mpl_rList_Border.top    = DPI_Scale(pSkin->mpl_rList_Border.top);
+	pSkin->mpl_rList_Border.right  = DPI_Scale(pSkin->mpl_rList_Border.right);
+	pSkin->mpl_rList_Border.bottom = DPI_Scale(pSkin->mpl_rList_Border.bottom);
+	pSkin->mpl_szMinWindow.cx = DPI_Scale(pSkin->mpl_szMinWindow.cx);
+	pSkin->mpl_szMinWindow.cy = DPI_Scale(pSkin->mpl_szMinWindow.cy);
+
+	// Scale tile border rects BEFORE scaling images, because the rect's
+	// right/bottom are stored as (image_width - right_border) and we need
+	// the original image dimensions to recover the border widths.
+	// After scaling: left/top = DPI_Scale(border), right/bottom recomputed
+	// from the SOON-TO-BE-SCALED image dimensions.
+	#define SCALE_TILE_RECT(rect, img) do { \
+		if (img) { \
+			int orig_right_border = (img)->m_szSize.cx - (rect).right; \
+			int orig_bottom_border = (img)->m_szSize.cy - (rect).bottom; \
+			(rect).left   = DPI_Scale((rect).left); \
+			(rect).top    = DPI_Scale((rect).top); \
+			(rect).right  = DPI_Scale((img)->m_szSize.cx) - DPI_Scale(orig_right_border); \
+			(rect).bottom = DPI_Scale((img)->m_szSize.cy) - DPI_Scale(orig_bottom_border); \
+		} \
+	} while(0)
+
+	SCALE_TILE_RECT(pSkin->mpl_rBackground_SourceTile, pSkin->mpl_pBackground);
+	SCALE_TILE_RECT(pSkin->mpl_rListBackground_SourceTile, pSkin->mpl_pListBackground);
+	SCALE_TILE_RECT(pSkin->mpl_rListHeader_SourceTile, pSkin->mpl_pListHeader_Up);
+	SCALE_TILE_RECT(pSkin->mpl_rSelection_Tile, pSkin->mpl_pSelection);
+	SCALE_TILE_RECT(pSkin->mpl_rFocus_Tile, pSkin->mpl_pFocus);
+	SCALE_TILE_RECT(pSkin->mpl_rHScrollBar_Bk_Tile, pSkin->mpl_pHScrollBar_Bk);
+	SCALE_TILE_RECT(pSkin->mpl_rHScrollBar_Track_Tile, pSkin->mpl_pHScrollBar_TrackUp);
+	SCALE_TILE_RECT(pSkin->mpl_rVScrollBar_Bk_Tile, pSkin->mpl_pVScrollBar_Bk);
+	SCALE_TILE_RECT(pSkin->mpl_rVScrollBar_Track_Tile, pSkin->mpl_pVScrollBar_TrackUp);
+
+	#undef SCALE_TILE_RECT
+
+	// NOW scale all playlist images
+	CPSK_ScaleImage(pSkin->mpl_pBackground);
+	CPSK_ScaleImage(pSkin->mpl_pListBackground);
+	CPSK_ScaleImage(pSkin->mpl_pListHeader_Up);
+	CPSK_ScaleImage(pSkin->mpl_pListHeader_Down);
+	CPSK_ScaleImage(pSkin->mpl_pHScrollBar_Bk);
+	CPSK_ScaleImage(pSkin->mpl_pHScrollBar_TrackUp);
+	CPSK_ScaleImage(pSkin->mpl_pHScrollBar_TrackDn);
+	CPSK_ScaleImage(pSkin->mpl_pVScrollBar_Bk);
+	CPSK_ScaleImage(pSkin->mpl_pVScrollBar_TrackUp);
+	CPSK_ScaleImage(pSkin->mpl_pVScrollBar_TrackDn);
+	CPSK_ScaleImage(pSkin->mpl_pSelection);
+	CPSK_ScaleImage(pSkin->mpl_pFocus);
+
+	// Scale state images (scrollbar buttons)
+	CPSK_ScaleStateImage(pSkin->mpl_pHScrollBar_Left);
+	CPSK_ScaleStateImage(pSkin->mpl_pHScrollBar_Right);
+	CPSK_ScaleStateImage(pSkin->mpl_pVScrollBar_Up);
+	CPSK_ScaleStateImage(pSkin->mpl_pVScrollBar_Down);
+
+	// Scale command target state images
+	for (CPs_CommandTarget* pCT = pSkin->mpl_pCommandTargets; pCT; pCT = (CPs_CommandTarget*)pCT->m_pNext)
+	{
+		CPSK_ScaleStateImage(pCT->m_pStateImage);
+		pCT->m_ptOffset.x = DPI_Scale(pCT->m_ptOffset.x);
+		pCT->m_ptOffset.y = DPI_Scale(pCT->m_ptOffset.y);
+	}
+
+	// Scale indicator offset rects
+	for (CPs_Indicator* pInd = pSkin->mpl_pIndicators; pInd; pInd = (CPs_Indicator*)pInd->m_pNext)
+	{
+		pInd->m_rAlign.left   = DPI_Scale(pInd->m_rAlign.left);
+		pInd->m_rAlign.top    = DPI_Scale(pInd->m_rAlign.top);
+		pInd->m_rAlign.right  = DPI_Scale(pInd->m_rAlign.right);
+		pInd->m_rAlign.bottom = DPI_Scale(pInd->m_rAlign.bottom);
+	}
 }
 
 //

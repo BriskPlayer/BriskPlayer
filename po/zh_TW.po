@@ -1,0 +1,340 @@
+# Traditional Chinese translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Traditional Chinese\n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – 超快速音訊播放器"
+
+msgid "BriskPlayer Audio file"
+msgstr "BriskPlayer 音訊檔案"
+
+msgid "BriskPlayer Playlist"
+msgstr "BriskPlayer 播放清單"
+
+msgid "Open File..."
+msgstr "開啟檔案..."
+
+msgid "Open URL..."
+msgstr "開啟網址..."
+
+msgid "Add Files..."
+msgstr "新增檔案..."
+
+msgid "Playlist Editor"
+msgstr "播放清單編輯器"
+
+msgid "Skin"
+msgstr "佈景主題"
+
+msgid "Default"
+msgstr "預設"
+
+msgid "Language"
+msgstr "語言"
+
+msgid "English"
+msgstr "英文"
+
+msgid "Deutsch"
+msgstr "德文"
+
+msgid "Playback"
+msgstr "播放"
+
+msgid "Play"
+msgstr "播放"
+
+msgid "Stop"
+msgstr "停止"
+
+msgid "Pause"
+msgstr "暫停"
+
+msgid "Next"
+msgstr "下一首"
+
+msgid "Previous"
+msgstr "上一首"
+
+msgid "Options..."
+msgstr "選項..."
+
+msgid "About"
+msgstr "關於"
+
+msgid "Exit"
+msgstr "結束"
+
+msgid "About BriskPlayer"
+msgstr "關於 BriskPlayer"
+
+msgid "BriskPlayer Options"
+msgstr "BriskPlayer 選項"
+
+msgid "Open URL"
+msgstr "開啟網址"
+
+msgid "Quick Find"
+msgstr "快速尋找"
+
+msgid "&About"
+msgstr "關於(&A)"
+
+msgid "&Keyboard Shortcuts"
+msgstr "鍵盤快速鍵(&K)"
+
+msgid "C&hanges"
+msgstr "變更記錄(&H)"
+
+msgid "C&lose"
+msgstr "關閉(&L)"
+
+msgid "General"
+msgstr "一般"
+
+msgid "Always on top"
+msgstr "永遠在最上層"
+
+msgid "Exit after playing"
+msgstr "播放後結束"
+
+msgid "Rotate systemtray icon"
+msgstr "旋轉系統匣圖示"
+
+msgid "Scroll Songtitle"
+msgstr "捲動歌曲標題"
+
+msgid "Allow file once in playlist"
+msgstr "每個檔案在播放清單中只出現一次"
+
+msgid "Autoplay on startup"
+msgstr "啟動時自動播放"
+
+msgid "Allow multiple instances"
+msgstr "允許多個執行個體"
+
+msgid "Show remaining time"
+msgstr "顯示剩餘時間"
+
+msgid "Show on taskbar"
+msgstr "在工作列顯示"
+
+
+msgid "Sticky windows"
+msgstr "視窗吸附"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "登錄檔案類型"
+
+msgid "Add to Start Menu"
+msgstr "新增至開始功能表"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "讀取 ID3 標籤（若有）"
+
+msgid "Read ID3 Tag of selected"
+msgstr "讀取已選取的 ID3 標籤"
+
+msgid "Support ID3v2"
+msgstr "支援 ID3v2"
+
+msgid "Prefer native OGG tags"
+msgstr "偏好原生 OGG 標籤"
+
+msgid "Load ID3 tags in background"
+msgstr "在背景載入 ID3 標籤"
+
+msgid "Work out track lengths"
+msgstr "計算曲目長度"
+
+msgid "Easy move"
+msgstr "輕鬆移動"
+
+msgid "Remember playlist"
+msgstr "記住播放清單"
+
+msgid "Remember last played"
+msgstr "記住上次播放的曲目"
+
+msgid "Track Delay (sec)"
+msgstr "曲目延遲（秒）"
+
+msgid "Skinlist length"
+msgstr "佈景主題清單長度"
+
+msgid "Flush"
+msgstr "清空"
+
+msgid "Output"
+msgstr "輸出"
+
+msgid "Volume controls"
+msgstr "音量控制"
+
+msgid "Player"
+msgstr "播放器"
+
+msgid "Open"
+msgstr "開啟"
+
+msgid "OK"
+msgstr "確定"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr "請輸入要播放的網址。支援的格式包括 MP3 和 OGG 串流以及 M3U 播放清單。"
+
+msgid "&URL:"
+msgstr "網址(&U):"
+
+msgid "Find Text"
+msgstr "尋找文字"
+
+msgid "Look in"
+msgstr "搜尋範圍"
+
+msgid "&Titles"
+msgstr "標題(&T)"
+
+msgid "Artist &Names"
+msgstr "藝術家名稱(&N)"
+
+msgid "&Album Names"
+msgstr "專輯名稱(&A)"
+
+msgid "System MASTER volume"
+msgstr "系統 MASTER 音量"
+
+msgid "System WAVE volume"
+msgstr "系統 WAVE 音量"
+
+msgid "Internal volume"
+msgstr "內部音量"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"檔案類型已登錄。\n"
+"您可以按兩下支援的檔案以啟動 BriskPlayer。"
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr "BriskPlayer 圖示已新增至開始功能表和桌面。"
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "BriskPlayer 佈景主題初始化檔案 (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "所有檔案 (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "位元率：%d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "取樣率：%.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "找到 %d 個檔案"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d 秒"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d 分鐘"
+
+msgid "Failed to initialize audio device"
+msgstr "音訊裝置初始化失敗"
+
+msgid "Unable to load audio file"
+msgstr "無法載入音訊檔案"
+
+msgid "Invalid String ID"
+msgstr "無效的字串 ID"
+
+msgid "Audio Error"
+msgstr "音訊錯誤"
+
+msgid "File Error"
+msgstr "檔案錯誤"
+
+msgid "Processing audio..."
+msgstr "正在處理音訊..."
+
+msgid "Loading..."
+msgstr "載入中..."
+
+msgid "Ready"
+msgstr "就緒"
+
+msgid "Rotate system tray icon"
+msgstr "旋轉系統匣圖示"
+
+msgid "Scroll title"
+msgstr "捲動標題"
+
+msgid "Only add file once to playlist"
+msgstr "每首曲目只加入一次到播放清單"
+
+msgid "Read ID3 tags"
+msgstr "讀取 ID3 標籤"
+
+msgid "Read ID3 for selected files"
+msgstr "讀取選取檔案的 ID3 標籤"
+
+msgid "Read ID3 in background"
+msgstr "在背景讀取 ID3 標籤"
+
+msgid "Calculate track lengths"
+msgstr "計算曲目時長"
+
+msgid "Easy move mode"
+msgstr "輕鬆移動模式"
+
+msgid "Register file types"
+msgstr "登錄檔案類型"
+
+msgid "Track delay (seconds)"
+msgstr "曲目延遲（秒）"
+
+msgid "Skin list length"
+msgstr "外觀清單長度"
+
+msgid "Open..."
+msgstr "開啟..."
+
+
+msgid "DSP Plugins"
+msgstr "DSP 外掛程式"
+
+msgid "None (Disabled)"
+msgstr "無（已停用）"
+
+msgid "Configure..."
+msgstr "設定..."

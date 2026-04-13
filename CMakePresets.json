@@ -1,0 +1,146 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 20, "patch": 0 },
+
+  "configurePresets": [
+    {
+      "name": "_base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/triplets",
+        "VCPKG_MANIFEST_INSTALL": "ON",
+        "VCPKG_INSTALLED_DIR": "${sourceDir}/build/${presetName}/vcpkg_installed"
+      }
+    },
+
+    {
+      "name": "_msvc-base",
+      "hidden": true,
+      "inherits": "_base",
+      "generator": "Visual Studio 18 2026"
+    },
+
+    {
+      "name": "_mingw-base",
+      "hidden": true,
+      "inherits": "_base",
+      "generator": "Ninja"
+    },
+
+    {
+      "name": "msvc-x86-static",
+      "displayName": "MSVC x86 — static (/MT)",
+      "description": "Visual Studio 32-bit, x86-windows-static triplet",
+      "inherits": "_msvc-base",
+      "architecture": { "value": "Win32", "strategy": "set" },
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x86-windows-static",
+        "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+      }
+    },
+
+    {
+      "name": "msvc-x64-static",
+      "displayName": "MSVC x64 — static (/MT)",
+      "description": "Visual Studio 64-bit, x64-windows-static triplet",
+      "inherits": "_msvc-base",
+      "architecture": { "value": "x64", "strategy": "set" },
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static",
+        "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+      }
+    },
+
+    {
+      "name": "mingw-x64-static-release",
+      "displayName": "MinGW x64 — static, Release",
+      "description": "MinGW-w64 64-bit, x64-mingw-static triplet (static CRT), Release",
+      "inherits": "_mingw-base",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-static",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+
+    {
+      "name": "mingw-x64-static-debug",
+      "displayName": "MinGW x64 — static, Debug",
+      "description": "MinGW-w64 64-bit, x64-mingw-static triplet (static CRT), Debug",
+      "inherits": "_mingw-base",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-static",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+
+    {
+      "name": "mingw-x86-static-release",
+      "displayName": "MinGW x86 — static, Release",
+      "description": "MinGW-w64 32-bit, x86-mingw-static triplet (static CRT), Release",
+      "inherits": "_mingw-base",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x86-mingw-static",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+
+    {
+      "name": "mingw-x86-static-debug",
+      "displayName": "MinGW x86 — static, Debug",
+      "description": "MinGW-w64 32-bit, x86-mingw-static triplet (static CRT), Debug",
+      "inherits": "_mingw-base",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x86-mingw-static",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    }
+  ],
+
+  "buildPresets": [
+    {
+      "name": "msvc-x86-static-debug",
+      "displayName": "MSVC x86 Debug",
+      "configurePreset": "msvc-x86-static",
+      "configuration": "Debug"
+    },
+    {
+      "name": "msvc-x86-static-release",
+      "displayName": "MSVC x86 Release",
+      "configurePreset": "msvc-x86-static",
+      "configuration": "Release"
+    },
+    {
+      "name": "msvc-x64-static-debug",
+      "displayName": "MSVC x64 Debug",
+      "configurePreset": "msvc-x64-static",
+      "configuration": "Debug"
+    },
+    {
+      "name": "msvc-x64-static-release",
+      "displayName": "MSVC x64 Release",
+      "configurePreset": "msvc-x64-static",
+      "configuration": "Release"
+    },
+    {
+      "name": "mingw-x64-static-release",
+      "displayName": "MinGW x64 Release",
+      "configurePreset": "mingw-x64-static-release"
+    },
+    {
+      "name": "mingw-x64-static-debug",
+      "displayName": "MinGW x64 Debug",
+      "configurePreset": "mingw-x64-static-debug"
+    },
+    {
+      "name": "mingw-x86-static-release",
+      "displayName": "MinGW x86 Release",
+      "configurePreset": "mingw-x86-static-release"
+    },
+    {
+      "name": "mingw-x86-static-debug",
+      "displayName": "MinGW x86 Debug",
+      "configurePreset": "mingw-x86-static-debug"
+    }
+  ]
+}

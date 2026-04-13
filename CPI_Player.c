@@ -109,8 +109,11 @@ void CPI_Player__Destroy(CP_HPLAYER hPlayer)
 	// Only terminate if the thread didn't exit gracefully
 	if (dwWaitResult == WAIT_TIMEOUT)
 	{
-		CP_TRACE0("Player thread did not exit gracefully, forcing termination");
-		TerminateThread(pPlayEngine->m_hThread, 0);
+		// TerminateThread is intentionally avoided here: it does not release
+		// critical sections, unwind COM, or flush buffers and can corrupt the
+		// process heap.  Log the problem and let the OS clean up on exit.
+		CP_TRACE0("Player thread did not exit within timeout; leaking thread handle to avoid heap corruption");
+		return;
 	}
 	
 	// Cleanup
@@ -163,15 +166,19 @@ void CPI_Player__ReopenMixer(CP_HPLAYER hPlayer)
 		}
 		waveformatex.nAvgBytesPerSec = avgBytesPerSec;
 		waveformatex.cbSize = 0;
-		waveOutOpen(&hWaveOut,
+		if (waveOutOpen(&hWaveOut,
 					WAVE_MAPPER,
 					&waveformatex,
 					0,
-					0, CALLBACK_NULL);
+					0, CALLBACK_NULL) != MMSYSERR_NOERROR)
+		{
+			CP_TRACE0("Mixer: Failed to open waveOut device");
+			return;
+		}
 		            
 		// Create a mixer control for volume (if we can)
 		
-		if (mixerOpen(&pPlayEngine->m_hVolumeMixer, (UINT)hWaveOut, (DWORD)pPlayEngine->m_hWndNotify, 0, CALLBACK_WINDOW | MIXER_OBJECTF_HWAVEOUT) == MMSYSERR_NOERROR)
+		if (mixerOpen(&pPlayEngine->m_hVolumeMixer, (UINT)(UINT_PTR)hWaveOut, (DWORD_PTR)pPlayEngine->m_hWndNotify, 0, CALLBACK_WINDOW | MIXER_OBJECTF_HWAVEOUT) == MMSYSERR_NOERROR)
 		{
 			MIXERCAPS mixercaps;
 			DWORD dwLineID;
@@ -180,7 +187,7 @@ void CPI_Player__ReopenMixer(CP_HPLAYER hPlayer)
 			MIXERCONTROL mixercontrol;
 			
 			// Get the destination lineID for the speakers of the first wave out device
-			mixerGetDevCaps((UINT)pPlayEngine->m_hVolumeMixer, &mixercaps, sizeof(mixercaps));
+			mixerGetDevCaps((UINT)(UINT_PTR)pPlayEngine->m_hVolumeMixer, &mixercaps, sizeof(mixercaps));
 			
 			{
 				MIXERLINE mixerline;
@@ -253,17 +260,21 @@ void CPI_Player__ReopenMixer(CP_HPLAYER hPlayer)
 //
 //
 //
-void CPI_Player__OpenFile(CP_HPLAYER hPlayer, const char* pcFilename)
+void CPI_Player__OpenFile(CP_HPLAYER hPlayer, const char* pcFilename, float fReplayGainScale)
 {
 	char* pcStringCopy;
+	DWORD dwGainBits;
 	CPs_PlayEngine* pPlayEngine = (CPs_PlayEngine*)hPlayer;
 	CP_CHECKOBJECT(pPlayEngine);
 	
 	// Make copy of string data
 	STR_AllocSetString(&pcStringCopy, pcFilename, FALSE);
 	
+	// Pack float into LPARAM bits
+	memcpy(&dwGainBits, &fReplayGainScale, sizeof(float));
+	
 	// Send message (callee will free string)
-	PostThreadMessage(pPlayEngine->m_dwThreadID, CPTM_OPENFILE, (WPARAM)pcStringCopy, 0);
+	PostThreadMessage(pPlayEngine->m_dwThreadID, CPTM_OPENFILE, (WPARAM)pcStringCopy, (LPARAM)dwGainBits);
 }
 
 //
@@ -428,6 +439,22 @@ void CPI_Player__EnumOutputDevices(CP_HPLAYER hPlayer)
 //
 //
 //
+void CPI_Player__SetNextFile(CP_HPLAYER hPlayer, const char* pcFilename, float fReplayGainScale)
+{
+	char* pcStringCopy;
+	DWORD dwGainBits;
+	CPs_PlayEngine* pPlayEngine = (CPs_PlayEngine*)hPlayer;
+	CP_CHECKOBJECT(pPlayEngine);
+	
+	STR_AllocSetString(&pcStringCopy, pcFilename, FALSE);
+	memcpy(&dwGainBits, &fReplayGainScale, sizeof(float));
+	PostThreadMessage(pPlayEngine->m_dwThreadID, CPTM_SETNEXTFILE,
+		(WPARAM)pcStringCopy, (LPARAM)dwGainBits);
+}
+
+//
+//
+//
 void CPI_Player__SendSyncCookie(CP_HPLAYER hPlayer, const int iCookie)
 {
 	CPs_PlayEngine* pPlayEngine = (CPs_PlayEngine*)hPlayer;
@@ -521,6 +548,10 @@ BOOL CPI_Player__HandleNotifyMessages(CP_HPLAYER hPlayer, UINT uiMessage, WPARAM
 		
 		case CPNM_SETSTREAMINGSTATE:
 			CPI_Player_cb_OnStreamStateChange(hPlayer, (BOOL)wParam, (int)lParam);
+			break;
+			
+		case CPNM_GAPLESS_TRANSITION:
+			CPI_Player_cb_OnGaplessTransition(hPlayer);
 			break;
 			
 		case MM_MIXM_CONTROL_CHANGE:

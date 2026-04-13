@@ -379,7 +379,7 @@ static void cleanup(CPs_CoDec_MPEG *context)
 
 // Module functions
 void CPP_OMMP3_Uninitialise(CPs_CoDecModule* pModule);
-BOOL CPP_OMMP3_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD dwCookie, HWND hWndOwner);
+BOOL CPP_OMMP3_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD_PTR dwCookie, HWND hWndOwner);
 void CPP_OMMP3_CloseFile(CPs_CoDecModule* pModule);
 void CPP_OMMP3_Seek(CPs_CoDecModule* pModule, const int iNumerator, const int iDenominator);
 void CPP_OMMP3_GetFileInfo(CPs_CoDecModule* pModule, CPs_FileInfo* pInfo);
@@ -447,7 +447,7 @@ void CPP_OMMP3_Uninitialise(CPs_CoDecModule* pModule)
  * NAME:  codec->OpenFile()
  * DESCRIPTION: open a new MPEG audio stream
  */
-BOOL CPP_OMMP3_OpenFile(CPs_CoDecModule* pModule, char const *path, DWORD dwCookie, HWND hWndOwner)
+BOOL CPP_OMMP3_OpenFile(CPs_CoDecModule* pModule, char const *path, DWORD_PTR dwCookie, HWND hWndOwner)
 {
 	(void)dwCookie;  // Suppress unused parameter warning
 	CPs_CoDec_MPEG *context = (CPs_CoDec_MPEG *)pModule->m_pModuleCookie;

@@ -38,6 +38,11 @@
 #include "MainMenu.h"
 #include "CP_Config.h"
 #include "CPI_Player_DSP.h"
+#include "CPI_DpiScale.h"
+#include "CPI_TaskbarIntegration.h"
+#ifdef ENABLE_DISCORD_RPC
+#include "CPI_DiscordRPC.h"
+#endif
 
 // Forward declarations
 void main_translate_menu(void);
@@ -59,45 +64,83 @@ void main_populate_language_menu(void)
     }
     
     // Get available languages from gettext system
-    LanguageInfo languages[16];  // Support up to 16 languages
-    int languageCount = CPG_EnumerateLanguages(languages, 16);
+    LanguageInfo languages[32];  // Support up to 32 languages
+    int languageCount = CPG_EnumerateLanguages(languages, 32);
     
-    const char* currentLang = CPG_GetCurrentLanguage();
-    
-    // Add menu items for each discovered language
+    // options.preferred_language is updated on every switch and persisted to
+    // disk, making it the most reliable record of the user's selection.
+    // CPG_GetCurrentLanguage() can lag if the gettext state and our tracking
+    // variable diverge (e.g. on first-launch system locale auto-detection).
+    const char* currentLang =
+        (strlen(options.preferred_language) > 0)
+            ? options.preferred_language
+            : CPG_GetCurrentLanguage();
+
+    // Pre-pass: find which position matches the current language.
+    int selectedIndex = 0;
+    for (int i = 0; i < languageCount; i++) {
+        if (strcmp(currentLang, languages[i].code) == 0) {
+            selectedIndex = i;
+            break;
+        }
+    }
+
+#ifdef _DEBUG
+    {
+        char dbg[128];
+        snprintf(dbg, sizeof(dbg),
+            "populate_language_menu: pref='%s' curr='%s' selected=%d/%d\n",
+            options.preferred_language, CPG_GetCurrentLanguage(),
+            selectedIndex, languageCount);
+        OutputDebugStringA(dbg);
+    }
+#endif
+
+    // Insert every item with MFT_RADIOCHECK so Windows renders a bullet
+    // (instead of a tick) when the item is checked.
     for (int i = 0; i < languageCount; i++) {
         const LanguageInfo* lang = &languages[i];
-        
-        // Create display name with native name and region
+
         wchar_t displayName[128];
         char tempName[128];
-        
+
         if (strlen(lang->region) > 0) {
             snprintf(tempName, sizeof(tempName), "%s (%s)", lang->name, lang->region);
         } else {
             strncpy(tempName, lang->name, sizeof(tempName) - 1);
             tempName[sizeof(tempName) - 1] = '\0';
         }
-        
-        // Convert to wide string for menu
+
         MultiByteToWideChar(CP_UTF8, 0, tempName, -1, displayName, 128);
-        
-        // Determine if this language is currently selected
-        UINT flags = MF_STRING;
-        if (strcmp(currentLang, lang->code) == 0) {
-            flags |= MF_CHECKED;
-        }
-        
-        // Use dynamic menu ID based on language index
-        UINT menuId = MENU_LANGUAGE_BASE + i + 1;
-        AppendMenuW(languageMenu, flags, menuId, displayName);
+
+        MENUITEMINFOW mii = {0};
+        mii.cbSize     = sizeof(MENUITEMINFOW);
+        mii.fMask      = MIIM_ID | MIIM_FTYPE | MIIM_STATE | MIIM_STRING;
+        mii.fType      = MFT_STRING | MFT_RADIOCHECK;
+        mii.fState     = (i == selectedIndex) ? MFS_CHECKED : MFS_ENABLED;
+        mii.wID        = MENU_LANGUAGE_BASE + i + 1;
+        mii.dwTypeData = displayName;
+        InsertMenuItemW(languageMenu, i, TRUE, &mii);
     }
-    
+
     // If no languages were found, add English as fallback
     if (languageCount == 0) {
-        UINT flags = MF_STRING | MF_CHECKED;  // Default to checked since it's the only option
-        AppendMenuW(languageMenu, flags, MENU_LANGUAGE_EN, L"English (Fallback)");
+        MENUITEMINFOW mii = {0};
+        mii.cbSize     = sizeof(MENUITEMINFOW);
+        mii.fMask      = MIIM_ID | MIIM_FTYPE | MIIM_STATE | MIIM_STRING;
+        mii.fType      = MFT_STRING | MFT_RADIOCHECK;
+        mii.fState     = MFS_CHECKED;
+        mii.wID        = MENU_LANGUAGE_EN;
+        mii.dwTypeData = L"English (Fallback)";
+        InsertMenuItemW(languageMenu, 0, TRUE, &mii);
+        selectedIndex = 0;
+        languageCount = 1;
     }
+
+    // Use CheckMenuRadioItem as a belt-and-suspenders to ensure Windows
+    // renders the bullet on exactly one item in the group.
+    CheckMenuRadioItem(languageMenu, 0, (UINT)(languageCount - 1),
+                       (UINT)selectedIndex, MF_BYPOSITION);
 }
 
 // Function to handle language switching
@@ -1288,8 +1331,8 @@ void    main_menuproc(HWND hWnd, LPPOINT points)
 				int langIndex = retval - MENU_LANGUAGE_BASE - 1;
 				
 				// Get available languages
-				LanguageInfo languages[16];
-				int languageCount = CPG_EnumerateLanguages(languages, 16);
+				LanguageInfo languages[32];
+				int languageCount = CPG_EnumerateLanguages(languages, 32);
 				
 				if (langIndex >= 0 && langIndex < languageCount) {
 					main_switch_language(languages[langIndex].code);
@@ -1315,8 +1358,8 @@ void    main_menuproc(HWND hWnd, LPPOINT points)
 				int langIndex = retval - MENU_LANGUAGE_BASE - 1;
 				
 				// Get available languages
-				LanguageInfo languages[16];
-				int languageCount = CPG_EnumerateLanguages(languages, 16);
+				LanguageInfo languages[32];
+				int languageCount = CPG_EnumerateLanguages(languages, 32);
 				
 				if (langIndex >= 0 && langIndex < languageCount) {
 					main_switch_language(languages[langIndex].code);
@@ -1359,6 +1402,10 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return lResult;
 	}
 	
+	// Handle dynamically registered TaskbarButtonCreated message
+	if (CPI_Taskbar_HandleMessage(hWnd, message))
+		return 0;
+	
 	switch (message)
 	{
 			POINTS  cursorpos;
@@ -1389,6 +1436,10 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			else if (wParam == CPC_TIMERID_ROTATINGSMILY)
 			{
 				CPSYSICON_AdvanceFrame(globals.m_hSysIcon);
+#ifdef ENABLE_DISCORD_RPC
+				if (options.discord_rpc_enabled)
+					CPI_DiscordRPC_Update();
+#endif
 			}
 			
 			break;
@@ -1509,6 +1560,10 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				
 			SetTimer(hWnd, CPC_TIMERID_ROTATINGSMILY, 100, NULL);
 			
+#ifdef ENABLE_DISCORD_RPC
+			if (options.discord_rpc_enabled)
+				CPI_DiscordRPC_Init();
+#endif
 			break;
 			
 		case WM_RBUTTONDOWN:
@@ -1779,6 +1834,12 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return TRUE;
 		}
 		
+		case WM_DPICHANGED:
+			DPI_OnChanged(hWnd, wParam, lParam);
+			SAFE_PLAYER_CALL1(CPI_Player__SetPositionRange,
+				Skin.Object[PositionSlider].maxw ? Skin.Object[PositionSlider].h : Skin.Object[PositionSlider].w);
+			return 0;
+		
 		case WM_WINDOWPOSCHANGED:
 		{
 			// Handle moving docked windows after the main window has moved
@@ -1819,6 +1880,11 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		
 		case WM_DESTROY:
 		
+			CPI_Taskbar_Uninit();
+#ifdef ENABLE_DISCORD_RPC
+			if (options.discord_rpc_enabled)
+				CPI_DiscordRPC_Shutdown();
+#endif
 			if (options.remember_playlist == TRUE)
 				playlist_write_default();
 				
@@ -1910,6 +1976,10 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_INITMENUPOPUP:
 		{
 			CheckMenuItem(globals.main_menu_popup, MENU_PLAYLIST, MF_BYCOMMAND | (options.show_playlist ? MF_CHECKED : 0));
+
+			// Always refresh the language submenu radio state before any
+			// submenu is shown — avoids stale state from previous calls.
+			main_populate_language_menu();
 			return 0;
 		}
 		
@@ -2365,16 +2435,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	options_read();
 	
-	// Initialize translation system with saved language preference
+	// Initialize translation system first so the locale directory is set up,
+	// then apply the saved language preference so it overrides auto-detection.
+	CPT_Initialize();
 	if (strlen(options.preferred_language) > 0) {
 		CPT_SetDefaultLanguage(options.preferred_language);
 	}
-	CPT_Initialize();
 	
 	#ifdef _DEBUG
 	OutputDebugStringA("BriskPlayer: Translation system initialized...\n");
 	#endif
 	
+	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 	CreateMutex(NULL, FALSE, CLC_BRISKPLAYER_MUTEX);
 	bAlreadyRuning = (GetLastError() == ERROR_ALREADY_EXISTS
 					  || GetLastError() == ERROR_ACCESS_DENIED);
@@ -2473,6 +2545,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	globals.playlist_last_add_time = 0;
 	globals.m_hSysIcon = NULL;
 	
+	DPI_Init();
 	CPSK_Initialise();
 	
 	hpopup = LoadMenu(NULL, MAKEINTRESOURCE(IDR_MENU1));
@@ -2589,7 +2662,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				SetWindowLongPtr(hWnd, GWL_STYLE,
 							  GetWindowLongPtr(hWnd,
 											GWL_STYLE) | WS_SYSMENU);
-			}				drawables.dc_main = GetDC(hWnd);
+			}
+
+				// Initialize taskbar thumbnail toolbar (prev/play-pause/next buttons)
+				CPI_Taskbar_Init();
+
+				drawables.dc_main = GetDC(hWnd);
 				
 				drawables.dc_memory =
 					CreateCompatibleDC(drawables.dc_main);
@@ -2717,6 +2795,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				CPSK_Uninitialise();
 				IF_ProcessDeInit();
 				CPT_Cleanup();  // Cleanup translation system
+				CoUninitialize();
 				
 				return (int)msg.wParam;
 			}

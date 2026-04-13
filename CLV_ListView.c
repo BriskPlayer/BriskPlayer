@@ -25,6 +25,7 @@
 #include "globals.h"
 #include "resource.h"
 #include "CPI_AlbumArtTooltip.h"
+#include "CPI_DpiScale.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -148,16 +149,16 @@ typedef struct _CIs_ListViewData
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#define CPC_HEADERCOLLAPSETHRESHOLD  8
-#define CPC_HEADERDRAGDISTANCE   16
+#define CPC_HEADERCOLLAPSETHRESHOLD  DPI_Scale(8)
+#define CPC_HEADERDRAGDISTANCE   DPI_Scale(16)
 #define CPC_BUFFERQUANTISATION   128
-#define CPC_HEADERDRAG_HTWIDTH   8
-#define CPC_HEADERDRAG_DEFAULTWIDTH  100
-#define CPC_SCROLLBAR_HORIZ_LINESIZE 10
-#define CPC_SCROLLBAR_HORIZ_PAGESIZE 100
+#define CPC_HEADERDRAG_HTWIDTH   DPI_Scale(8)
+#define CPC_HEADERDRAG_DEFAULTWIDTH  DPI_Scale(100)
+#define CPC_SCROLLBAR_HORIZ_LINESIZE DPI_Scale(10)
+#define CPC_SCROLLBAR_HORIZ_PAGESIZE DPI_Scale(100)
 #define CPC_SCROLLBAR_MOUSEWHEELAMOUNT 5
 #define CPC_TIMERID_AUTOREPEAT   1
-#define CPC_LISTDRAGDISTANCE   4
+#define CPC_LISTDRAGDISTANCE   DPI_Scale(4)
 LRESULT CALLBACK exp_ListViewWindowProc(HWND hWnd, UINT uiMessage, WPARAM wParam, LPARAM lParam);
 #define CLC_BRISKPLAYER_LISTVIEW_WINDOWCLASSNAME "BriskPlayer_ListView"
 ////////////////////////////////////////////////////////////////////////////////
@@ -332,7 +333,7 @@ void CLV_DrawText(CPs_DrawContext* pDC, const char* pcString, const RECT* _prTar
 	else if (enAlign == lcaRight)
 	{
 		uiFlags = DT_RIGHT;
-		rDraw.right -= 5;
+		rDraw.right -= DPI_Scale(5);
 		
 		if (rDraw.right < rDraw.left)
 			rDraw.right = rDraw.left;
@@ -785,7 +786,7 @@ void CLV_Handle_WM_PAINT(CIs_ListViewData* pListData)
 			if ((pListData->m_enWindowMode == wmHeader_Click || pListData->m_enWindowMode == wmHeader_ChangeOrder)
 					&& iColumnIDX == pListData->m_iActiveHeaderCol)
 			{
-				iTextOffset = 1;
+				iTextOffset = DPI_Scale(1);
 				CPIG_TiledFill(&drawcontext, &rHeaderItem, &glb_pSkin->mpl_rListHeader_SourceTile, glb_pSkin->mpl_pListHeader_Down, CIC_TILEDFILOPTIONS_NONE);
 			}
 			

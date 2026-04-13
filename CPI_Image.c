@@ -39,8 +39,8 @@ CPs_Image* CPIG_CreateImage_FromFile(const char* pcFilename)
 	wchar_t wcFilename[MAX_PATH];
 	int width, height;
 	
-	strcpy(cFilename, "P:\\Skin\\");
-	strcat(cFilename, pcFilename);
+	cp_strcpy_s(cFilename, sizeof(cFilename), "P:\\Skin\\");
+	cp_strcat_s(cFilename, sizeof(cFilename), pcFilename);
 	
 	// Convert to wide char and load via WIC (supports PNG, JPEG, GIF, BMP, etc.)
 	MultiByteToWideChar(CP_UTF8, 0, cFilename, -1, wcFilename, MAX_PATH);

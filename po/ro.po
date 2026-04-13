@@ -1,0 +1,350 @@
+# Romanian translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Romanian\n"
+"Language: ro\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
+"20)) ? 1 : 2);\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – Player audio fulgerător de rapid"
+
+msgid "BriskPlayer Audio file"
+msgstr "BriskPlayer Fișier audio"
+
+msgid "BriskPlayer Playlist"
+msgstr "BriskPlayer Listă de redare"
+
+msgid "Open File..."
+msgstr "Deschide fișier..."
+
+msgid "Open URL..."
+msgstr "Deschide URL..."
+
+msgid "Add Files..."
+msgstr "Adaugă fișiere..."
+
+msgid "Playlist Editor"
+msgstr "Editor listă de redare"
+
+msgid "Skin"
+msgstr "Temă"
+
+msgid "Default"
+msgstr "Implicit"
+
+msgid "Language"
+msgstr "Limbă"
+
+msgid "English"
+msgstr "Engleză"
+
+msgid "Deutsch"
+msgstr "Germană"
+
+msgid "Playback"
+msgstr "Redare"
+
+msgid "Play"
+msgstr "Redă"
+
+msgid "Stop"
+msgstr "Oprește"
+
+msgid "Pause"
+msgstr "Pauză"
+
+msgid "Next"
+msgstr "Următor"
+
+msgid "Previous"
+msgstr "Anterior"
+
+msgid "Options..."
+msgstr "Opțiuni..."
+
+msgid "About"
+msgstr "Despre"
+
+msgid "Exit"
+msgstr "Ieșire"
+
+msgid "About BriskPlayer"
+msgstr "Despre BriskPlayer"
+
+msgid "BriskPlayer Options"
+msgstr "Opțiuni BriskPlayer"
+
+msgid "Open URL"
+msgstr "Deschide URL"
+
+msgid "Quick Find"
+msgstr "Căutare rapidă"
+
+msgid "&About"
+msgstr "&Despre"
+
+msgid "&Keyboard Shortcuts"
+msgstr "&Comenzi rapide tastatură"
+
+msgid "C&hanges"
+msgstr "&Modificări"
+
+msgid "C&lose"
+msgstr "Î&nchide"
+
+msgid "General"
+msgstr "General"
+
+msgid "Always on top"
+msgstr "Mereu deasupra"
+
+msgid "Exit after playing"
+msgstr "Ieșire după redare"
+
+msgid "Rotate systemtray icon"
+msgstr "Rotire pictogramă tavă sistem"
+
+msgid "Scroll Songtitle"
+msgstr "Derulare titlu cântec"
+
+msgid "Allow file once in playlist"
+msgstr "Permite fiecare fișier o singură dată în listă"
+
+msgid "Autoplay on startup"
+msgstr "Redare automată la pornire"
+
+msgid "Allow multiple instances"
+msgstr "Permite mai multe instanțe"
+
+msgid "Show remaining time"
+msgstr "Afișează timpul rămas"
+
+msgid "Show on taskbar"
+msgstr "Afișează în bara de activități"
+
+
+msgid "Sticky windows"
+msgstr "Ferestre lipicioase"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "Înregistrează tipuri de fișiere"
+
+msgid "Add to Start Menu"
+msgstr "Adaugă în meniul Start"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "Citește eticheta ID3 (dacă există)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "Citește eticheta ID3 a selectat"
+
+msgid "Support ID3v2"
+msgstr "Suport ID3v2"
+
+msgid "Prefer native OGG tags"
+msgstr "Preferă etichetele OGG native"
+
+msgid "Load ID3 tags in background"
+msgstr "Încarcă etichetele ID3 în fundal"
+
+msgid "Work out track lengths"
+msgstr "Calculează lungimile pistelor"
+
+msgid "Easy move"
+msgstr "Mutare ușoară"
+
+msgid "Remember playlist"
+msgstr "Reține lista de redare"
+
+msgid "Remember last played"
+msgstr "Reține ultima piesă redată"
+
+msgid "Track Delay (sec)"
+msgstr "Întârziere pistă (sec)"
+
+msgid "Skinlist length"
+msgstr "Lungime listă teme"
+
+msgid "Flush"
+msgstr "Golire"
+
+msgid "Output"
+msgstr "Ieșire"
+
+msgid "Volume controls"
+msgstr "Controale volum"
+
+msgid "Player"
+msgstr "Player"
+
+msgid "Open"
+msgstr "Deschide"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Anulare"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"Introduceți URL-ul pe care doriți să îl redați. Formatele acceptate sunt "
+"streaming MP3 și OGG, și liste de redare M3U."
+
+msgid "&URL:"
+msgstr "&URL:"
+
+msgid "Find Text"
+msgstr "Găsește text"
+
+msgid "Look in"
+msgstr "Caută în"
+
+msgid "&Titles"
+msgstr "&Titluri"
+
+msgid "Artist &Names"
+msgstr "Nume &artiști"
+
+msgid "&Album Names"
+msgstr "Nume &albume"
+
+msgid "System MASTER volume"
+msgstr "Volum PRINCIPAL sistem"
+
+msgid "System WAVE volume"
+msgstr "Volum WAVE sistem"
+
+msgid "Internal volume"
+msgstr "Volum intern"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"Tipurile de fișiere sunt înregistrate.\n"
+"Puteți face dublu clic pe un fișier acceptat pentru a porni BriskPlayer."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr ""
+"O pictogramă pentru BriskPlayer a fost creată în meniul Start și pe Desktop."
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "Fișiere inițializare temă BriskPlayer (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "Toate fișierele (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "Rată de biți: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "Rată de eșantionare: %.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "Găsit %d fișier"
+msgstr[1] "Găsite %d fișiere"
+msgstr[2] "Găsite %d de fișiere"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d secundă"
+msgstr[1] "%d secunde"
+msgstr[2] "%d de secunde"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d minut"
+msgstr[1] "%d minute"
+msgstr[2] "%d de minute"
+
+msgid "Failed to initialize audio device"
+msgstr "Nu s-a putut inițializa dispozitivul audio"
+
+msgid "Unable to load audio file"
+msgstr "Nu se poate încărca fișierul audio"
+
+msgid "Invalid String ID"
+msgstr "ID șir de caractere invalid"
+
+msgid "Audio Error"
+msgstr "Eroare audio"
+
+msgid "File Error"
+msgstr "Eroare fișier"
+
+msgid "Processing audio..."
+msgstr "Se procesează audio..."
+
+msgid "Loading..."
+msgstr "Se încarcă..."
+
+msgid "Ready"
+msgstr "Pregătit"
+
+msgid "Rotate system tray icon"
+msgstr "Rotire pictogramă tavă sistem"
+
+msgid "Scroll title"
+msgstr "Derulare titlu"
+
+msgid "Only add file once to playlist"
+msgstr "Adăugare fișier o singură dată în playlist"
+
+msgid "Read ID3 tags"
+msgstr "Citire etichete ID3"
+
+msgid "Read ID3 for selected files"
+msgstr "Citire etichete ID3 pentru fișierele selectate"
+
+msgid "Read ID3 in background"
+msgstr "Citire etichete ID3 în fundal"
+
+msgid "Calculate track lengths"
+msgstr "Calcul durate piste"
+
+msgid "Easy move mode"
+msgstr "Modul de mutare ușoară"
+
+msgid "Register file types"
+msgstr "Înregistrare tipuri de fișiere"
+
+msgid "Track delay (seconds)"
+msgstr "Întârziere pistă (secunde)"
+
+msgid "Skin list length"
+msgstr "Lungimea listei de aspecte"
+
+msgid "Open..."
+msgstr "Deschide..."
+
+
+msgid "DSP Plugins"
+msgstr "Module DSP"
+
+msgid "None (Disabled)"
+msgstr "Niciunul (Dezactivat)"
+
+msgid "Configure..."
+msgstr "Configurare..."

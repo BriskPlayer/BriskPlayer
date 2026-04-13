@@ -1,0 +1,348 @@
+# Czech translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Czech\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – Bleskově rychlý hudební přehrávač"
+
+msgid "BriskPlayer Audio file"
+msgstr "Zvukový soubor BriskPlayer"
+
+msgid "BriskPlayer Playlist"
+msgstr "Playlist BriskPlayer"
+
+msgid "Open File..."
+msgstr "Otevřít soubor..."
+
+msgid "Open URL..."
+msgstr "Otevřít URL..."
+
+msgid "Add Files..."
+msgstr "Přidat soubory..."
+
+msgid "Playlist Editor"
+msgstr "Editor playlistu"
+
+msgid "Skin"
+msgstr "Motiv"
+
+msgid "Default"
+msgstr "Výchozí"
+
+msgid "Language"
+msgstr "Jazyk"
+
+msgid "English"
+msgstr "Angličtina"
+
+msgid "Deutsch"
+msgstr "Němčina"
+
+msgid "Playback"
+msgstr "Přehrávání"
+
+msgid "Play"
+msgstr "Přehrát"
+
+msgid "Stop"
+msgstr "Zastavit"
+
+msgid "Pause"
+msgstr "Pozastavit"
+
+msgid "Next"
+msgstr "Další"
+
+msgid "Previous"
+msgstr "Předchozí"
+
+msgid "Options..."
+msgstr "Možnosti..."
+
+msgid "About"
+msgstr "O aplikaci"
+
+msgid "Exit"
+msgstr "Konec"
+
+msgid "About BriskPlayer"
+msgstr "O aplikaci BriskPlayer"
+
+msgid "BriskPlayer Options"
+msgstr "Možnosti BriskPlayer"
+
+msgid "Open URL"
+msgstr "Otevřít URL"
+
+msgid "Quick Find"
+msgstr "Rychlé hledání"
+
+msgid "&About"
+msgstr "&O aplikaci"
+
+msgid "&Keyboard Shortcuts"
+msgstr "&Klávesové zkratky"
+
+msgid "C&hanges"
+msgstr "&Změny"
+
+msgid "C&lose"
+msgstr "&Zavřít"
+
+msgid "General"
+msgstr "Obecné"
+
+msgid "Always on top"
+msgstr "Vždy nahoře"
+
+msgid "Exit after playing"
+msgstr "Ukončit po přehrání"
+
+msgid "Rotate systemtray icon"
+msgstr "Otáčet ikonu v oznamovací oblasti"
+
+msgid "Scroll Songtitle"
+msgstr "Posouvat název skladby"
+
+msgid "Allow file once in playlist"
+msgstr "Povolit soubor jen jednou v playlistu"
+
+msgid "Autoplay on startup"
+msgstr "Automaticky přehrávat při spuštění"
+
+msgid "Allow multiple instances"
+msgstr "Povolit více instancí"
+
+msgid "Show remaining time"
+msgstr "Zobrazit zbývající čas"
+
+msgid "Show on taskbar"
+msgstr "Zobrazit na hlavním panelu"
+
+
+msgid "Sticky windows"
+msgstr "Přilepující se okna"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "Zaregistrovat typy souborů"
+
+msgid "Add to Start Menu"
+msgstr "Přidat do nabídky Start"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "Číst ID3 tag (pokud existuje)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "Číst ID3 tag vybraného"
+
+msgid "Support ID3v2"
+msgstr "Podpora ID3v2"
+
+msgid "Prefer native OGG tags"
+msgstr "Preferovat nativní OGG tagy"
+
+msgid "Load ID3 tags in background"
+msgstr "Načítat ID3 tagy na pozadí"
+
+msgid "Work out track lengths"
+msgstr "Vypočítat délky skladeb"
+
+msgid "Easy move"
+msgstr "Snadné přesouvání"
+
+msgid "Remember playlist"
+msgstr "Zapamatovat playlist"
+
+msgid "Remember last played"
+msgstr "Zapamatovat naposledy přehrané"
+
+msgid "Track Delay (sec)"
+msgstr "Prodleva mezi skladbami (sek)"
+
+msgid "Skinlist length"
+msgstr "Délka seznamu motivů"
+
+msgid "Flush"
+msgstr "Vyprázdnit"
+
+msgid "Output"
+msgstr "Výstup"
+
+msgid "Volume controls"
+msgstr "Ovládání hlasitosti"
+
+msgid "Player"
+msgstr "Přehrávač"
+
+msgid "Open"
+msgstr "Otevřít"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Zrušit"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"Zadejte URL, kterou chcete přehrát. Podporované formáty jsou streaming MP3 a "
+"OGG a playlisty M3U."
+
+msgid "&URL:"
+msgstr "&URL:"
+
+msgid "Find Text"
+msgstr "Najít text"
+
+msgid "Look in"
+msgstr "Hledat v"
+
+msgid "&Titles"
+msgstr "&Názvy"
+
+msgid "Artist &Names"
+msgstr "&Jména umělců"
+
+msgid "&Album Names"
+msgstr "Názvy &alb"
+
+msgid "System MASTER volume"
+msgstr "Systémová MASTER hlasitost"
+
+msgid "System WAVE volume"
+msgstr "Systémová WAVE hlasitost"
+
+msgid "Internal volume"
+msgstr "Interní hlasitost"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"Typy souborů jsou zaregistrovány.\n"
+"Můžete poklepat na podporovaný soubor a spustit BriskPlayer."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr "Zástupce BriskPlayer byl vytvořen v nabídce Start a na ploše."
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "Inicializační soubory motivu BriskPlayer (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "Všechny soubory (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "Datový tok: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "Vzorkovací frekvence: %.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "Nalezen %d soubor"
+msgstr[1] "Nalezeny %d soubory"
+msgstr[2] "Nalezeno %d souborů"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d sekunda"
+msgstr[1] "%d sekundy"
+msgstr[2] "%d sekund"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d minuta"
+msgstr[1] "%d minuty"
+msgstr[2] "%d minut"
+
+msgid "Failed to initialize audio device"
+msgstr "Nepodařilo se inicializovat zvukové zařízení"
+
+msgid "Unable to load audio file"
+msgstr "Nelze načíst zvukový soubor"
+
+msgid "Invalid String ID"
+msgstr "Neplatné ID řetězce"
+
+msgid "Audio Error"
+msgstr "Chyba zvuku"
+
+msgid "File Error"
+msgstr "Chyba souboru"
+
+msgid "Processing audio..."
+msgstr "Zpracování zvuku..."
+
+msgid "Loading..."
+msgstr "Načítání..."
+
+msgid "Ready"
+msgstr "Připraven"
+
+msgid "Rotate system tray icon"
+msgstr "Otáčet ikonu v systémové liště"
+
+msgid "Scroll title"
+msgstr "Posouvat název"
+
+msgid "Only add file once to playlist"
+msgstr "Přidat soubor do seznamu jen jednou"
+
+msgid "Read ID3 tags"
+msgstr "Číst ID3 tagy"
+
+msgid "Read ID3 for selected files"
+msgstr "Číst ID3 tagy vybraných souborů"
+
+msgid "Read ID3 in background"
+msgstr "Číst ID3 tagy na pozadí"
+
+msgid "Calculate track lengths"
+msgstr "Vypočítat délky skladeb"
+
+msgid "Easy move mode"
+msgstr "Snadný režim přesouvání"
+
+msgid "Register file types"
+msgstr "Registrovat typy souborů"
+
+msgid "Track delay (seconds)"
+msgstr "Zpoždění skladby (sekundy)"
+
+msgid "Skin list length"
+msgstr "Délka seznamu vzhledů"
+
+msgid "Open..."
+msgstr "Otevřít..."
+
+
+msgid "DSP Plugins"
+msgstr "DSP zásuvné moduly"
+
+msgid "None (Disabled)"
+msgstr "Žádný (Zakázáno)"
+
+msgid "Configure..."
+msgstr "Konfigurovat..."

@@ -1,0 +1,342 @@
+# Korean translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Korean\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – 초고속 오디오 플레이어"
+
+msgid "BriskPlayer Audio file"
+msgstr "BriskPlayer 오디오 파일"
+
+msgid "BriskPlayer Playlist"
+msgstr "BriskPlayer 재생 목록"
+
+msgid "Open File..."
+msgstr "파일 열기..."
+
+msgid "Open URL..."
+msgstr "URL 열기..."
+
+msgid "Add Files..."
+msgstr "파일 추가..."
+
+msgid "Playlist Editor"
+msgstr "재생 목록 편집기"
+
+msgid "Skin"
+msgstr "스킨"
+
+msgid "Default"
+msgstr "기본값"
+
+msgid "Language"
+msgstr "언어"
+
+msgid "English"
+msgstr "영어"
+
+msgid "Deutsch"
+msgstr "독일어"
+
+msgid "Playback"
+msgstr "재생"
+
+msgid "Play"
+msgstr "재생"
+
+msgid "Stop"
+msgstr "정지"
+
+msgid "Pause"
+msgstr "일시 정지"
+
+msgid "Next"
+msgstr "다음"
+
+msgid "Previous"
+msgstr "이전"
+
+msgid "Options..."
+msgstr "옵션..."
+
+msgid "About"
+msgstr "정보"
+
+msgid "Exit"
+msgstr "종료"
+
+msgid "About BriskPlayer"
+msgstr "BriskPlayer 정보"
+
+msgid "BriskPlayer Options"
+msgstr "BriskPlayer 옵션"
+
+msgid "Open URL"
+msgstr "URL 열기"
+
+msgid "Quick Find"
+msgstr "빠른 찾기"
+
+msgid "&About"
+msgstr "정보(&A)"
+
+msgid "&Keyboard Shortcuts"
+msgstr "키보드 단축키(&K)"
+
+msgid "C&hanges"
+msgstr "변경 사항(&H)"
+
+msgid "C&lose"
+msgstr "닫기(&L)"
+
+msgid "General"
+msgstr "일반"
+
+msgid "Always on top"
+msgstr "항상 위"
+
+msgid "Exit after playing"
+msgstr "재생 후 종료"
+
+msgid "Rotate systemtray icon"
+msgstr "시스템 트레이 아이콘 회전"
+
+msgid "Scroll Songtitle"
+msgstr "곡 제목 스크롤"
+
+msgid "Allow file once in playlist"
+msgstr "재생 목록에 각 파일 한 번만 허용"
+
+msgid "Autoplay on startup"
+msgstr "시작 시 자동 재생"
+
+msgid "Allow multiple instances"
+msgstr "여러 인스턴스 허용"
+
+msgid "Show remaining time"
+msgstr "남은 시간 표시"
+
+msgid "Show on taskbar"
+msgstr "작업 표시줄에 표시"
+
+
+msgid "Sticky windows"
+msgstr "창 자석 효과"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "파일 형식 등록"
+
+msgid "Add to Start Menu"
+msgstr "시작 메뉴에 추가"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "ID3 태그 읽기 (있는 경우)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "선택한 항목의 ID3 태그 읽기"
+
+msgid "Support ID3v2"
+msgstr "ID3v2 지원"
+
+msgid "Prefer native OGG tags"
+msgstr "기본 OGG 태그 선호"
+
+msgid "Load ID3 tags in background"
+msgstr "백그라운드에서 ID3 태그 로드"
+
+msgid "Work out track lengths"
+msgstr "트랙 길이 계산"
+
+msgid "Easy move"
+msgstr "쉬운 이동"
+
+msgid "Remember playlist"
+msgstr "재생 목록 기억"
+
+msgid "Remember last played"
+msgstr "마지막 재생 기억"
+
+msgid "Track Delay (sec)"
+msgstr "트랙 지연 (초)"
+
+msgid "Skinlist length"
+msgstr "스킨 목록 길이"
+
+msgid "Flush"
+msgstr "비우기"
+
+msgid "Output"
+msgstr "출력"
+
+msgid "Volume controls"
+msgstr "볼륨 조절"
+
+msgid "Player"
+msgstr "플레이어"
+
+msgid "Open"
+msgstr "열기"
+
+msgid "OK"
+msgstr "확인"
+
+msgid "Cancel"
+msgstr "취소"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"재생할 URL을 입력하세요. 지원 형식은 MP3 및 OGG 스트리밍과 M3U 재생 목록입니"
+"다."
+
+msgid "&URL:"
+msgstr "URL(&U):"
+
+msgid "Find Text"
+msgstr "텍스트 찾기"
+
+msgid "Look in"
+msgstr "검색 위치"
+
+msgid "&Titles"
+msgstr "제목(&T)"
+
+msgid "Artist &Names"
+msgstr "아티스트 이름(&N)"
+
+msgid "&Album Names"
+msgstr "앨범 이름(&A)"
+
+msgid "System MASTER volume"
+msgstr "시스템 MASTER 볼륨"
+
+msgid "System WAVE volume"
+msgstr "시스템 WAVE 볼륨"
+
+msgid "Internal volume"
+msgstr "내부 볼륨"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"파일 형식이 등록되었습니다.\n"
+"지원되는 파일을 더블 클릭하면 BriskPlayer가 실행됩니다."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr "BriskPlayer 아이콘이 시작 메뉴와 바탕 화면에 생성되었습니다."
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "BriskPlayer 스킨 초기화 파일 (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "모든 파일 (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "비트레이트: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "샘플레이트: %.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "파일 %d개 찾음"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d초"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d분"
+
+msgid "Failed to initialize audio device"
+msgstr "오디오 장치 초기화 실패"
+
+msgid "Unable to load audio file"
+msgstr "오디오 파일을 로드할 수 없음"
+
+msgid "Invalid String ID"
+msgstr "잘못된 문자열 ID"
+
+msgid "Audio Error"
+msgstr "오디오 오류"
+
+msgid "File Error"
+msgstr "파일 오류"
+
+msgid "Processing audio..."
+msgstr "오디오 처리 중..."
+
+msgid "Loading..."
+msgstr "로딩 중..."
+
+msgid "Ready"
+msgstr "준비완료"
+
+msgid "Rotate system tray icon"
+msgstr "시스템 트레이 아이콘 회전"
+
+msgid "Scroll title"
+msgstr "제목 스크롤"
+
+msgid "Only add file once to playlist"
+msgstr "파일을 재생목록에 한 번만 추가"
+
+msgid "Read ID3 tags"
+msgstr "ID3 태그 읽기"
+
+msgid "Read ID3 for selected files"
+msgstr "선택한 파일의 ID3 태그 읽기"
+
+msgid "Read ID3 in background"
+msgstr "백그라운드에서 ID3 태그 읽기"
+
+msgid "Calculate track lengths"
+msgstr "트랙 길이 계산"
+
+msgid "Easy move mode"
+msgstr "간편 이동 모드"
+
+msgid "Register file types"
+msgstr "파일 형식 등록"
+
+msgid "Track delay (seconds)"
+msgstr "트랙 지연 (초)"
+
+msgid "Skin list length"
+msgstr "스킨 목록 길이"
+
+msgid "Open..."
+msgstr "열기..."
+
+
+msgid "DSP Plugins"
+msgstr "DSP 플러그인"
+
+msgid "None (Disabled)"
+msgstr "없음 (비활성화)"
+
+msgid "Configure..."
+msgstr "구성..."

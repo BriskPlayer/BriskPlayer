@@ -30,6 +30,7 @@
 #include "CPI_Player_Engine.h"
 #include "CPString.h"
 #include "CPI_Gettext.h"
+#include "CPI_ReplayGain.h"
 
 #define CPC_TRACKSTACK_BUFFER_QUANTISATION 32
 typedef int (__cdecl *wp_SortFN)(const void *elem1, const void *elem2);
@@ -416,7 +417,7 @@ void CPL_AddSingleFile(CP_HPLAYLIST hPlaylist, const char* pcPath, const char* p
 		BOOL valid = FALSE;
 		CPs_PlayEngine* player = (CPs_PlayEngine*)globals.m_hPlayer;
 		CPs_PlayerContext* pContext = (CPs_PlayerContext*)player->m_pContext;
-		DWORD tempcookie;
+		DWORD_PTR tempcookie;
 		char *extension = NULL;
 
 		{
@@ -611,7 +612,15 @@ void CPL_PlayActiveItem(CP_HPLAYLIST hPlaylist, const BOOL bStopFirst)
 	// Start playing
 	if (pPlaylist->m_hCurrent)
 	{
-		CPI_Player__OpenFile(globals.m_hPlayer, CPLI_GetPath(pPlaylist->m_hCurrent));
+		float fScale = CPRG_ComputeScale(
+			(CPe_ReplayGainMode)options.replaygain_mode,
+			CPLI_GetReplayGain_Track_Gain(pPlaylist->m_hCurrent),
+			CPLI_GetReplayGain_Track_Peak(pPlaylist->m_hCurrent),
+			CPLI_GetReplayGain_Album_Gain(pPlaylist->m_hCurrent),
+			CPLI_GetReplayGain_Album_Peak(pPlaylist->m_hCurrent),
+			(float)options.replaygain_preamp_db,
+			options.replaygain_prevent_clipping);
+		CPI_Player__OpenFile(globals.m_hPlayer, CPLI_GetPath(pPlaylist->m_hCurrent), fScale);
 		CPI_Player__Play(globals.m_hPlayer);
 	}
 }
@@ -2641,3 +2650,100 @@ void CPL_SetAutoActivateInitial(CP_HPLAYLIST hPlaylist, const BOOL bAutoActivate
 //
 //
 //
+CP_HPLAYLISTITEM CPL_PeekNextItem(CP_HPLAYLIST hPlaylist)
+{
+	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
+	CP_CHECKOBJECT(pPlaylist);
+	
+	// If current is not at stack cursor position, next would be stack[cursor]
+	if (pPlaylist->m_hCurrent
+			&& pPlaylist->m_iTrackStackCursor < pPlaylist->m_iTrackStackSize
+			&& pPlaylist->m_hCurrent != pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackCursor])
+	{
+		return pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackCursor];
+	}
+	
+	// Next would be stack[cursor+1]
+	{
+		unsigned int nextCursor = pPlaylist->m_iTrackStackCursor + 1;
+		if (nextCursor < pPlaylist->m_iTrackStackSize)
+			return pPlaylist->m_pTrackStack[nextCursor];
+	}
+	
+	// Wrap around if repeat is enabled
+	if (options.repeat_playlist && pPlaylist->m_iTrackStackSize > 0)
+		return pPlaylist->m_pTrackStack[0];
+	
+	return NULL;
+}
+
+//
+//
+//
+void CPL_AdvanceToNextItem(CP_HPLAYLIST hPlaylist)
+{
+	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
+	CP_HPLAYLISTITEM hNextItem;
+	CP_CHECKOBJECT(pPlaylist);
+	
+	// Resolve the next item using the same logic as CPL_PlayItem(pmNextItem)
+	// but without triggering any player commands
+	hNextItem = CPL_PeekNextItem(hPlaylist);
+	
+	if (hNextItem)
+	{
+		// Advance the track stack cursor (same logic as CPL_PlayItem pmNextItem)
+		if (pPlaylist->m_hCurrent
+				&& pPlaylist->m_iTrackStackCursor < pPlaylist->m_iTrackStackSize
+				&& pPlaylist->m_hCurrent != pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackCursor])
+		{
+			// Current was behind cursor — cursor stays
+		}
+		else
+		{
+			if (pPlaylist->m_iTrackStackCursor < pPlaylist->m_iTrackStackSize)
+				pPlaylist->m_iTrackStackCursor++;
+			
+			// Wrapped around
+			if (pPlaylist->m_iTrackStackCursor >= pPlaylist->m_iTrackStackSize
+					&& options.repeat_playlist && pPlaylist->m_iTrackStackSize > 0)
+			{
+				if (options.shuffle_play)
+					CPL_Stack_Shuffle(hPlaylist, FALSE);
+				pPlaylist->m_iTrackStackCursor = 0;
+			}
+		}
+		
+		CPL_SetActiveItem(hPlaylist, hNextItem);
+		
+		// Update initial_file for remember-last-played
+		if (hNextItem)
+			strncpy(options.initial_file, CPLI_GetPath(hNextItem), sizeof(options.initial_file));
+	}
+}
+
+//
+//
+//
+void CPL_QueueNextForGapless(CP_HPLAYLIST hPlaylist)
+{
+	CP_HPLAYLISTITEM hNext;
+	
+	if (!options.gapless_playback)
+		return;
+	
+	hNext = CPL_PeekNextItem(hPlaylist);
+	
+	if (hNext)
+	{
+		float fScale = CPRG_ComputeScale(
+			(CPe_ReplayGainMode)options.replaygain_mode,
+			CPLI_GetReplayGain_Track_Gain(hNext),
+			CPLI_GetReplayGain_Track_Peak(hNext),
+			CPLI_GetReplayGain_Album_Gain(hNext),
+			CPLI_GetReplayGain_Album_Peak(hNext),
+			(float)options.replaygain_preamp_db,
+			options.replaygain_prevent_clipping);
+		CPI_Player__SetNextFile(globals.m_hPlayer, CPLI_GetPath(hNext), fScale);
+	}
+}

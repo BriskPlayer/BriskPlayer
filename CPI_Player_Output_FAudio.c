@@ -26,6 +26,7 @@
 #include "CPI_Player_Output.h"
 #include "CPI_Equaliser.h"
 #include "CPI_Player_DSP.h"
+#include "CPI_ReplayGain.h"
 
 #include <FAudio.h>
 
@@ -118,6 +119,7 @@ void CPI_Player_Output_Initialise_FAudio(CPs_OutputModule* pModule)
 	pModule->m_pcModuleName = "FAudio Output";
 	pModule->m_pCoDec = NULL;
 	pModule->m_pEqualiser = NULL;
+	pModule->m_fReplayGainScale = 1.0f;
 }
 
 void CPP_OMFA_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInfo, CP_HEQUALISER hEqualiser)
@@ -407,6 +409,10 @@ void CPP_OMFA_RefillBuffers(CPs_OutputModule* pModule)
 			pContext->m_pEqualiser->ApplyEQToBlock_Inplace(pContext->m_pEqualiser, pContext->m_pBuffers[bufferIndex], dwBytesRead);
 		}
 		
+		// Apply ReplayGain
+		if (dwBytesRead > 0)
+			CPRG_ApplyToBlock(pContext->m_pBuffers[bufferIndex], dwBytesRead, pModule->m_fReplayGainScale);
+
 		// Apply DSP plugin processing
 		if (dwBytesRead > 0 && CPDSP_IsActive())
 		{

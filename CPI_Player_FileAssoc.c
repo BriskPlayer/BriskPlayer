@@ -42,7 +42,7 @@
 typedef struct _CPs_FileAssociation
 {
 	char* m_pcExtension;
-	DWORD m_dwCookie;
+	DWORD_PTR m_dwCookie;
 	void* m_pNext;
 	
 } CPs_FileAssociation;
@@ -85,7 +85,7 @@ void CPFA_EmptyFileAssociations(CPs_CoDecModule* pCoDec)
 //
 //
 //
-void CPFA_AddFileAssociation(CPs_CoDecModule* pCoDec, const char* pcExtension, DWORD dwCookie)
+void CPFA_AddFileAssociation(CPs_CoDecModule* pCoDec, const char* pcExtension, DWORD_PTR dwCookie)
 {
 	CPs_FileAssociation* pNewAssociation = (CPs_FileAssociation*)SAFE_MALLOC(sizeof(CPs_FileAssociation));
 	if (!pNewAssociation)
@@ -121,7 +121,7 @@ void CPFA_AddFileAssociation(CPs_CoDecModule* pCoDec, const char* pcExtension, D
 //
 //
 //
-BOOL CPFA_IsAssociated(CPs_CoDecModule* pCoDec, const char* pcExtension, DWORD* pdwCookie)
+BOOL CPFA_IsAssociated(CPs_CoDecModule* pCoDec, const char* pcExtension, DWORD_PTR* pdwCookie)
 {
 	// Walk list looking for the extension
 	CPs_FileAssociation* pCursor = (CPs_FileAssociation*)pCoDec->m_pFileAssociationCookie;

@@ -1,0 +1,345 @@
+# Hungarian translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Hungarian\n"
+"Language: hu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – Villámgyors médialejátszó"
+
+msgid "BriskPlayer Audio file"
+msgstr "BriskPlayer Hangfájl"
+
+msgid "BriskPlayer Playlist"
+msgstr "BriskPlayer Lejátszási lista"
+
+msgid "Open File..."
+msgstr "Fájl megnyitása..."
+
+msgid "Open URL..."
+msgstr "URL megnyitása..."
+
+msgid "Add Files..."
+msgstr "Fájlok hozzáadása..."
+
+msgid "Playlist Editor"
+msgstr "Lejátszási lista szerkesztő"
+
+msgid "Skin"
+msgstr "Téma"
+
+msgid "Default"
+msgstr "Alapértelmezett"
+
+msgid "Language"
+msgstr "Nyelv"
+
+msgid "English"
+msgstr "Angol"
+
+msgid "Deutsch"
+msgstr "Német"
+
+msgid "Playback"
+msgstr "Lejátszás"
+
+msgid "Play"
+msgstr "Lejátszás"
+
+msgid "Stop"
+msgstr "Leállítás"
+
+msgid "Pause"
+msgstr "Szünet"
+
+msgid "Next"
+msgstr "Következő"
+
+msgid "Previous"
+msgstr "Előző"
+
+msgid "Options..."
+msgstr "Beállítások..."
+
+msgid "About"
+msgstr "Névjegy"
+
+msgid "Exit"
+msgstr "Kilépés"
+
+msgid "About BriskPlayer"
+msgstr "A BriskPlayer névjegye"
+
+msgid "BriskPlayer Options"
+msgstr "BriskPlayer beállítások"
+
+msgid "Open URL"
+msgstr "URL megnyitása"
+
+msgid "Quick Find"
+msgstr "Gyorskeresés"
+
+msgid "&About"
+msgstr "&Névjegy"
+
+msgid "&Keyboard Shortcuts"
+msgstr "&Billentyűparancsok"
+
+msgid "C&hanges"
+msgstr "&Változások"
+
+msgid "C&lose"
+msgstr "&Bezárás"
+
+msgid "General"
+msgstr "Általános"
+
+msgid "Always on top"
+msgstr "Mindig felül"
+
+msgid "Exit after playing"
+msgstr "Kilépés lejátszás után"
+
+msgid "Rotate systemtray icon"
+msgstr "Rendszertálca ikon forgatása"
+
+msgid "Scroll Songtitle"
+msgstr "Dalocím görgetése"
+
+msgid "Allow file once in playlist"
+msgstr "Minden fájl csak egyszer szerepelhet a listában"
+
+msgid "Autoplay on startup"
+msgstr "Automatikus lejátszás indításkor"
+
+msgid "Allow multiple instances"
+msgstr "Több példány engedélyezése"
+
+msgid "Show remaining time"
+msgstr "Hátralévő idő megjelenítése"
+
+msgid "Show on taskbar"
+msgstr "Megjelenítés a tálcán"
+
+
+msgid "Sticky windows"
+msgstr "Ragadós ablakok"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "Fájltípusok regisztrálása"
+
+msgid "Add to Start Menu"
+msgstr "Hozzáadás a Start menühöz"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "ID3 tag olvasása (ha van)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "Kijelölt ID3 tagjának olvasása"
+
+msgid "Support ID3v2"
+msgstr "ID3v2 támogatás"
+
+msgid "Prefer native OGG tags"
+msgstr "Natív OGG tagek előnyben részesítése"
+
+msgid "Load ID3 tags in background"
+msgstr "ID3 tagek háttérben való betöltése"
+
+msgid "Work out track lengths"
+msgstr "Számhosszak kiszámítása"
+
+msgid "Easy move"
+msgstr "Könnyű mozgatás"
+
+msgid "Remember playlist"
+msgstr "Lejátszási lista megjegyzése"
+
+msgid "Remember last played"
+msgstr "Utoljára lejátszott megjegyzése"
+
+msgid "Track Delay (sec)"
+msgstr "Szám késleltetés (mp)"
+
+msgid "Skinlist length"
+msgstr "Témalista hossza"
+
+msgid "Flush"
+msgstr "Törlés"
+
+msgid "Output"
+msgstr "Kimenet"
+
+msgid "Volume controls"
+msgstr "Hangerő vezérlők"
+
+msgid "Player"
+msgstr "Lejátszó"
+
+msgid "Open"
+msgstr "Megnyitás"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Mégse"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"Írja be a lejátszani kívánt URL-t. Támogatott formátumok: MP3 és OGG "
+"streaming, valamint M3U lejátszási listák."
+
+msgid "&URL:"
+msgstr "&URL:"
+
+msgid "Find Text"
+msgstr "Szöveg keresése"
+
+msgid "Look in"
+msgstr "Keresés itt"
+
+msgid "&Titles"
+msgstr "&Címek"
+
+msgid "Artist &Names"
+msgstr "Előadó &nevek"
+
+msgid "&Album Names"
+msgstr "&Album nevek"
+
+msgid "System MASTER volume"
+msgstr "Rendszer FŐHANGERŐ"
+
+msgid "System WAVE volume"
+msgstr "Rendszer WAVE hangerő"
+
+msgid "Internal volume"
+msgstr "Belső hangerő"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"A fájltípusok regisztrálva vannak.\n"
+"Kattintson duplán egy támogatott fájlra a BriskPlayer indításához."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr "A BriskPlayer ikonja létrejött a Start menüben és az Asztalon."
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "BriskPlayer Téma inicializálási fájlok (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "Minden fájl (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "Bitsebességr: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "Mintavételi frekvencia: %.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "Találat: %d fájl"
+msgstr[1] "Találat: %d fájl"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d másodperc"
+msgstr[1] "%d másodperc"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d perc"
+msgstr[1] "%d perc"
+
+msgid "Failed to initialize audio device"
+msgstr "Nem sikerült inicializálni a hangeszközt"
+
+msgid "Unable to load audio file"
+msgstr "Nem sikerült betölteni a hangfájlt"
+
+msgid "Invalid String ID"
+msgstr "Érvénytelen karakterlánc-azonosító"
+
+msgid "Audio Error"
+msgstr "Hanghiba"
+
+msgid "File Error"
+msgstr "Fájlhiba"
+
+msgid "Processing audio..."
+msgstr "Hang feldolgozása..."
+
+msgid "Loading..."
+msgstr "Betöltés..."
+
+msgid "Ready"
+msgstr "Kész"
+
+msgid "Rotate system tray icon"
+msgstr "Tálcaikon forgatása"
+
+msgid "Scroll title"
+msgstr "Cím gördítése"
+
+msgid "Only add file once to playlist"
+msgstr "Fájl csak egyszer kerüljön a lejátszási listára"
+
+msgid "Read ID3 tags"
+msgstr "ID3 címkék olvasása"
+
+msgid "Read ID3 for selected files"
+msgstr "Kijelölt fájlok ID3 címkéinek olvasása"
+
+msgid "Read ID3 in background"
+msgstr "ID3 címkék olvasása a háttérben"
+
+msgid "Calculate track lengths"
+msgstr "Műsorszám hosszak kiszámítása"
+
+msgid "Easy move mode"
+msgstr "Egyszerű mozgatás módja"
+
+msgid "Register file types"
+msgstr "Fájltípusok regisztrálása"
+
+msgid "Track delay (seconds)"
+msgstr "Műsor késleltetése (másodpercek)"
+
+msgid "Skin list length"
+msgstr "Megjelenés lista hossza"
+
+msgid "Open..."
+msgstr "Megnyitás..."
+
+
+msgid "DSP Plugins"
+msgstr "DSP bővítmények"
+
+msgid "None (Disabled)"
+msgstr "Nincs (Letiltva)"
+
+msgid "Configure..."
+msgstr "Beállítás..."

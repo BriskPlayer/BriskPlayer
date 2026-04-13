@@ -1,0 +1,357 @@
+# Arabic translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Arabic\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – مشغّل صوت فائق السرعة"
+
+msgid "BriskPlayer Audio file"
+msgstr "BriskPlayer ملف صوتي"
+
+msgid "BriskPlayer Playlist"
+msgstr "BriskPlayer قائمة التشغيل"
+
+msgid "Open File..."
+msgstr "فتح ملف..."
+
+msgid "Open URL..."
+msgstr "فتح رابط..."
+
+msgid "Add Files..."
+msgstr "إضافة ملفات..."
+
+msgid "Playlist Editor"
+msgstr "محرر قائمة التشغيل"
+
+msgid "Skin"
+msgstr "مظهر"
+
+msgid "Default"
+msgstr "افتراضي"
+
+msgid "Language"
+msgstr "اللغة"
+
+msgid "English"
+msgstr "الإنجليزية"
+
+msgid "Deutsch"
+msgstr "الألمانية"
+
+msgid "Playback"
+msgstr "تشغيل"
+
+msgid "Play"
+msgstr "تشغيل"
+
+msgid "Stop"
+msgstr "إيقاف"
+
+msgid "Pause"
+msgstr "إيقاف مؤقت"
+
+msgid "Next"
+msgstr "التالي"
+
+msgid "Previous"
+msgstr "السابق"
+
+msgid "Options..."
+msgstr "خيارات..."
+
+msgid "About"
+msgstr "حول"
+
+msgid "Exit"
+msgstr "خروج"
+
+msgid "About BriskPlayer"
+msgstr "حول BriskPlayer"
+
+msgid "BriskPlayer Options"
+msgstr "خيارات BriskPlayer"
+
+msgid "Open URL"
+msgstr "فتح رابط"
+
+msgid "Quick Find"
+msgstr "بحث سريع"
+
+msgid "&About"
+msgstr "&حول"
+
+msgid "&Keyboard Shortcuts"
+msgstr "&اختصارات لوحة المفاتيح"
+
+msgid "C&hanges"
+msgstr "&التغييرات"
+
+msgid "C&lose"
+msgstr "&إغلاق"
+
+msgid "General"
+msgstr "عام"
+
+msgid "Always on top"
+msgstr "دائمًا في الأعلى"
+
+msgid "Exit after playing"
+msgstr "الخروج بعد التشغيل"
+
+msgid "Rotate systemtray icon"
+msgstr "تدوير أيقونة شريط النظام"
+
+msgid "Scroll Songtitle"
+msgstr "تمرير عنوان الأغنية"
+
+msgid "Allow file once in playlist"
+msgstr "السماح بكل ملف مرة واحدة فقط في القائمة"
+
+msgid "Autoplay on startup"
+msgstr "تشغيل تلقائي عند البدء"
+
+msgid "Allow multiple instances"
+msgstr "السماح بنسخ متعددة"
+
+msgid "Show remaining time"
+msgstr "إظهار الوقت المتبقي"
+
+msgid "Show on taskbar"
+msgstr "إظهار في شريط المهام"
+
+
+msgid "Sticky windows"
+msgstr "النوافذ اللاصقة"
+
+msgid "Discord Rich Presence"
+msgstr "حالة Discord الغنية"
+
+msgid "Register Filetypes"
+msgstr "تسجيل أنواع الملفات"
+
+msgid "Add to Start Menu"
+msgstr "إضافة إلى قائمة ابدأ"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "قراءة وسم ID3 (إن وُجد)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "قراءة وسم ID3 للمحدد"
+
+msgid "Support ID3v2"
+msgstr "دعم ID3v2"
+
+msgid "Prefer native OGG tags"
+msgstr "تفضيل وسوم OGG الأصلية"
+
+msgid "Load ID3 tags in background"
+msgstr "تحميل وسوم ID3 في الخلفية"
+
+msgid "Work out track lengths"
+msgstr "حساب مدة المقطوعات"
+
+msgid "Easy move"
+msgstr "تحريك سهل"
+
+msgid "Remember playlist"
+msgstr "تذكر قائمة التشغيل"
+
+msgid "Remember last played"
+msgstr "تذكر آخر ما شُغِّل"
+
+msgid "Track Delay (sec)"
+msgstr "تأخير المقطوعة (ث)"
+
+msgid "Skinlist length"
+msgstr "طول قائمة المظاهر"
+
+msgid "Flush"
+msgstr "مسح"
+
+msgid "Output"
+msgstr "إخراج"
+
+msgid "Volume controls"
+msgstr "أدوات التحكم في الصوت"
+
+msgid "Player"
+msgstr "المشغّل"
+
+msgid "Open"
+msgstr "فتح"
+
+msgid "OK"
+msgstr "موافق"
+
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"أدخل الرابط الذي تريد تشغيله. الصيغ المدعومة هي بث MP3 وOGG وقوائم تشغيل M3U."
+
+msgid "&URL:"
+msgstr "&URL:"
+
+msgid "Find Text"
+msgstr "البحث عن نص"
+
+msgid "Look in"
+msgstr "البحث في"
+
+msgid "&Titles"
+msgstr "&العناوين"
+
+msgid "Artist &Names"
+msgstr "أسماء &الفنانين"
+
+msgid "&Album Names"
+msgstr "أسماء &الألبومات"
+
+msgid "System MASTER volume"
+msgstr "مستوى الصوت الرئيسي للنظام"
+
+msgid "System WAVE volume"
+msgstr "مستوى صوت WAVE للنظام"
+
+msgid "Internal volume"
+msgstr "مستوى الصوت الداخلي"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"تم تسجيل أنواع الملفات.\n"
+"يمكنك النقر المزدوج على ملف مدعوم لتشغيل BriskPlayer."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr "تم إنشاء أيقونة BriskPlayer في قائمة ابدأ وسطح المكتب."
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "ملفات تهيئة مظهر BriskPlayer (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "جميع الملفات (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "معدل البت: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "معدل أخذ العينات: %.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "لم يُعثر على ملفات"
+msgstr[1] "عُثر على ملف واحد"
+msgstr[2] "عُثر على ملفين"
+msgstr[3] "عُثر على %d ملفات"
+msgstr[4] "عُثر على %d ملفًا"
+msgstr[5] "عُثر على %d ملف"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "صفر ثوانٍ"
+msgstr[1] "ثانية واحدة"
+msgstr[2] "ثانيتان"
+msgstr[3] "%d ثوانٍ"
+msgstr[4] "%d ثانية"
+msgstr[5] "%d ثانية"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "صفر دقائق"
+msgstr[1] "دقيقة واحدة"
+msgstr[2] "دقيقتان"
+msgstr[3] "%d دقائق"
+msgstr[4] "%d دقيقة"
+msgstr[5] "%d دقيقة"
+
+msgid "Failed to initialize audio device"
+msgstr "فشل تهيئة جهاز الصوت"
+
+msgid "Unable to load audio file"
+msgstr "تعذّر تحميل الملف الصوتي"
+
+msgid "Invalid String ID"
+msgstr "معرّف سلسلة غير صالح"
+
+msgid "Audio Error"
+msgstr "خطأ صوتي"
+
+msgid "File Error"
+msgstr "خطأ في الملف"
+
+msgid "Processing audio..."
+msgstr "جارٍ معالجة الصوت..."
+
+msgid "Loading..."
+msgstr "جارٍ التحميل..."
+
+msgid "Ready"
+msgstr "جاهز"
+
+msgid "Rotate system tray icon"
+msgstr "تدوير أيقونة شريط الإشعارات"
+
+msgid "Scroll title"
+msgstr "تمرير العنوان"
+
+msgid "Only add file once to playlist"
+msgstr "إضافة الملف إلى قائمة التشغيل مرة واحدة فقط"
+
+msgid "Read ID3 tags"
+msgstr "قراءة وسوم ID3"
+
+msgid "Read ID3 for selected files"
+msgstr "قراءة وسوم ID3 للملفات المحددة"
+
+msgid "Read ID3 in background"
+msgstr "قراءة وسوم ID3 في الخلفية"
+
+msgid "Calculate track lengths"
+msgstr "حساب أطوال المسارات"
+
+msgid "Easy move mode"
+msgstr "وضع التحريك السهل"
+
+msgid "Register file types"
+msgstr "تسجيل أنواع الملفات"
+
+msgid "Track delay (seconds)"
+msgstr "تأخير المسار (بالثانية)"
+
+msgid "Skin list length"
+msgstr "طول قائمة الواجهة"
+
+msgid "Open..."
+msgstr "فتح..."
+
+
+msgid "DSP Plugins"
+msgstr "إضافات DSP"
+
+msgid "None (Disabled)"
+msgstr "لا شيء (معطّل)"
+
+msgid "Configure..."
+msgstr "إعداد..."

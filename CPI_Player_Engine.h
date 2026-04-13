@@ -49,6 +49,10 @@ typedef struct __CPs_PlayerContext
 	
 	CPs_EqualiserModule m_Equaliser;
 	
+	// Gapless playback: pre-cued next file
+	char* m_pcNextFile;
+	float m_fNextReplayGainScale;
+	
 } CPs_PlayerContext;
 
 //

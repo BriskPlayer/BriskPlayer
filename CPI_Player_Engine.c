@@ -1,4 +1,4 @@
-/*
+﻿/*
  * CoolPlayer - Blazing fast audio player.
  * Copyright (C) 2000-2001 Niek Albers
  * Copyright (C) 2025 Zach Bacon
@@ -181,17 +181,26 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 	CP_TRACE0("Cooler Engine Startup");
 		
 	// Initialise CoDecs
-	// Native MPEG/OGG/AAC/FLAC codecs removed - using FFmpeg for all modern formats
-	// Initialize disabled codec slots as empty
+	CP_InitialiseCodec_WAV(&playercontext.m_CoDecs[CP_CODEC_WAV]);
+	CP_InitialiseCodec_WinAmpPlugin(&playercontext.m_CoDecs[CP_CODEC_WINAMPPLUGIN]);
+
+#ifdef HAVE_FFMPEG_CODEC
+	// FFmpeg handles all modern formats (MP3, AAC, OGG, FLAC, ...)
 	memset(&playercontext.m_CoDecs[CP_CODEC_MPEG], 0, sizeof(CPs_CoDecModule));
 	memset(&playercontext.m_CoDecs[CP_CODEC_OGG], 0, sizeof(CPs_CoDecModule));
 	memset(&playercontext.m_CoDecs[CP_CODEC_AAC], 0, sizeof(CPs_CoDecModule));
 	memset(&playercontext.m_CoDecs[CP_CODEC_FLAC], 0, sizeof(CPs_CoDecModule));
-	
-	// Active codecs: WAV (basic PCM), WinAmp plugins, and FFmpeg (primary)
-	CP_InitialiseCodec_WAV(&playercontext.m_CoDecs[CP_CODEC_WAV]);
-	CP_InitialiseCodec_WinAmpPlugin(&playercontext.m_CoDecs[CP_CODEC_WINAMPPLUGIN]);
+	memset(&playercontext.m_CoDecs[CP_CODEC_OPUS], 0, sizeof(CPs_CoDecModule));
 	CP_InitialiseCodec_FFmpeg(&playercontext.m_CoDecs[CP_CODEC_FFMPEG]);
+#else
+	// Native codec path (MinGW builds without FFmpeg)
+	memset(&playercontext.m_CoDecs[CP_CODEC_FFMPEG], 0, sizeof(CPs_CoDecModule));
+	CP_InitialiseCodec_MPEG(&playercontext.m_CoDecs[CP_CODEC_MPEG]);
+	CP_InitialiseCodec_OGG(&playercontext.m_CoDecs[CP_CODEC_OGG]);
+	CP_InitialiseCodec_FLAC(&playercontext.m_CoDecs[CP_CODEC_FLAC]);
+	CP_InitialiseCodec_AAC(&playercontext.m_CoDecs[CP_CODEC_AAC]);
+	CP_InitialiseCodec_OPUS(&playercontext.m_CoDecs[CP_CODEC_OPUS]);
+#endif
 	
 	// Initialise output module
 	
@@ -204,6 +213,7 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 	CPI_Player_Output_Initialise_DirectSound(&playercontext.m_OutputModules[CP_OUTPUT_DIRECTSOUND]);
 	CPI_Player_Output_Initialise_File(&playercontext.m_OutputModules[CP_OUTPUT_FILE]);
 	CPI_Player_Output_Initialise_FAudio(&playercontext.m_OutputModules[CP_OUTPUT_FAUDIO]);
+	CPI_Player_Output_Initialise_WASAPI(&playercontext.m_OutputModules[CP_OUTPUT_WASAPI]);
 	
 	playercontext.m_pCurrentOutputModule = &playercontext.m_OutputModules[playercontext.m_dwCurrentOutputModule];
 	
@@ -251,6 +261,14 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 				case CPTM_OPENFILE:
 				{
 					char* pcFilename = (char*)msg.wParam;
+					
+					// Extract ReplayGain scale from lParam
+					{
+						DWORD dwGainBits = (DWORD)msg.lParam;
+						float fScale;
+						memcpy(&fScale, &dwGainBits, sizeof(float));
+						playercontext.m_pCurrentOutputModule->m_fReplayGainScale = fScale;
+					}
 					
 					// If there is another pending openfile then ignore this one
 					// This helps when this thread is non responsive (on an http connect for example)
@@ -372,7 +390,7 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 							bForceRefill = TRUE;
 						}
 					}
-					// FALLTHROUGH - to let coolplayer know playing has resumed (bugfix from seeking when paused)  */
+					FALLTHROUGH; /* to let coolplayer know playing has resumed (bugfix from seeking when paused) */
 					
 				case CPTM_PLAY:
 					if (playercontext.m_pCurrentOutputModule->m_pCoDec)
@@ -401,6 +419,13 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 						if (playercontext.m_pCurrentOutputModule->m_pCoDec->CloseFile)
 							playercontext.m_pCurrentOutputModule->m_pCoDec->CloseFile(playercontext.m_pCurrentOutputModule->m_pCoDec);
 						playercontext.m_pCurrentOutputModule->m_pCoDec = NULL;
+					}
+					
+					// Clear any queued gapless next file
+					if (playercontext.m_pcNextFile)
+					{
+						free(playercontext.m_pcNextFile);
+						playercontext.m_pcNextFile = NULL;
 					}
 					
 					if (playercontext.m_bOutputActive == TRUE)
@@ -486,6 +511,19 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 						playercontext.m_pCurrentOutputModule->SetInternalVolume(playercontext.m_pCurrentOutputModule, playercontext.m_iInternalVolume);
 						
 					break;
+					
+				case CPTM_SETNEXTFILE:
+				{
+					// Free any previously queued next file
+					if (playercontext.m_pcNextFile)
+						free(playercontext.m_pcNextFile);
+					playercontext.m_pcNextFile = (char*)msg.wParam;
+					{
+						DWORD dwGainBits = (DWORD)msg.lParam;
+						memcpy(&playercontext.m_fNextReplayGainScale, &dwGainBits, sizeof(float));
+					}
+				}
+				break;
 			}
 		}
 		
@@ -515,8 +553,58 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 					
 					if (playercontext.m_pCurrentOutputModule->m_pCoDec == NULL)
 					{
-						// Tell UI that we need another file to play
-						PostMessage(playercontext.m_pBaseEngineParams->m_hWndNotify, CPNM_PLAYERSTATE, (WPARAM)cppsEndOfStream, 0);
+						// Codec exhausted — attempt gapless transition
+						BOOL bGaplessDone = FALSE;
+						
+						if (options.gapless_playback && playercontext.m_pcNextFile)
+						{
+							CPs_CoDecModule* pNextCoDec = OpenCoDec(&playercontext, playercontext.m_pcNextFile);
+							
+							if (pNextCoDec)
+							{
+								CPs_FileInfo NextFileInfo;
+								pNextCoDec->GetFileInfo(pNextCoDec, &NextFileInfo);
+								
+								// Only gapless if audio format matches (same sample rate, channels, bit depth)
+								if (NextFileInfo.m_iFreq_Hz == playercontext.m_iOpenDevice_Freq_Hz
+										&& NextFileInfo.m_bStereo == playercontext.m_bOpenDevice_Stereo
+										&& NextFileInfo.m_b16bit == playercontext.m_bOpenDevice_16bit)
+								{
+									// Seamless codec swap — no output teardown
+									playercontext.m_pCurrentOutputModule->m_pCoDec = pNextCoDec;
+									playercontext.m_pCurrentOutputModule->m_fReplayGainScale = playercontext.m_fNextReplayGainScale;
+									
+									free(playercontext.m_pcNextFile);
+									playercontext.m_pcNextFile = NULL;
+									
+									// Notify UI so it can advance playlist and queue next-next file
+									PostMessage(playercontext.m_pBaseEngineParams->m_hWndNotify, CPNM_GAPLESS_TRANSITION, 0, 0);
+									
+									playercontext.m_iLastSentTime_Secs = -1;
+									playercontext.m_iLastSentTime_Proportion = -1;
+									UpdateProgress(&playercontext);
+									bGaplessDone = TRUE;
+								}
+								else
+								{
+									// Format mismatch — close the pre-opened codec
+									pNextCoDec->CloseFile(pNextCoDec);
+								}
+							}
+							
+							// If gapless open failed, clean up queued file
+							if (!bGaplessDone)
+							{
+								free(playercontext.m_pcNextFile);
+								playercontext.m_pcNextFile = NULL;
+							}
+						}
+						
+						if (!bGaplessDone)
+						{
+							// Fall back to normal end-of-stream: UI round-trip
+							PostMessage(playercontext.m_pBaseEngineParams->m_hWndNotify, CPNM_PLAYERSTATE, (WPARAM)cppsEndOfStream, 0);
+						}
 					}
 					
 					else
@@ -551,6 +639,13 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 	
 	if (playercontext.m_bOutputActive == TRUE)
 		playercontext.m_pCurrentOutputModule->Uninitialise(playercontext.m_pCurrentOutputModule);
+	
+	// Clean up queued gapless next file
+	if (playercontext.m_pcNextFile)
+	{
+		free(playercontext.m_pcNextFile);
+		playercontext.m_pcNextFile = NULL;
+	}
 		
 	// Clean up modules
 	playercontext.m_Equaliser.Uninitialise(&playercontext.m_Equaliser);
@@ -682,7 +777,7 @@ CPs_CoDecModule* OpenCoDec(CPs_PlayerContext* pContext, const char* pcFilename)
 	// const char* pcLastDot = NULL;
 	int iCoDecIDX = 0;
 	BOOL bOpenSucceeded = FALSE;
-	DWORD dwCookie = 0;
+	DWORD_PTR dwCookie = 0;
 	
 	CP_LOG_DEBUG("OpenCoDec: Attempting to open file: %s\n", pcFilename);
 	
@@ -738,8 +833,11 @@ CPs_CoDecModule* OpenCoDec(CPs_PlayerContext* pContext, const char* pcFilename)
 		CP_LOG_DEBUG("OpenCoDec: No extension found or no codec matched - trying fallback for streaming URL\n");
 		
 		// For streaming URLs, try codecs in order of likelihood
-		// FFmpeg first as the universal codec, then specific codecs as fallback
-		int iFallbackOrder[] = { CP_CODEC_FFMPEG, CP_CODEC_MPEG, CP_CODEC_AAC, CP_CODEC_OGG, CP_CODEC_FLAC, CP_CODEC_WINAMPPLUGIN };
+#ifdef HAVE_FFMPEG_CODEC
+		int iFallbackOrder[] = { CP_CODEC_FFMPEG, CP_CODEC_WINAMPPLUGIN };
+#else
+		int iFallbackOrder[] = { CP_CODEC_MPEG, CP_CODEC_AAC, CP_CODEC_OGG, CP_CODEC_FLAC, CP_CODEC_OPUS, CP_CODEC_WINAMPPLUGIN };
+#endif
 		int iFallbackCount = sizeof(iFallbackOrder) / sizeof(iFallbackOrder[0]);
 		
 		for (int i = 0; i < iFallbackCount && !bOpenSucceeded; i++)

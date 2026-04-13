@@ -26,6 +26,10 @@
 #include "CPI_Player.h"
 #include "CPI_Playlist.h"
 #include "CPI_PlaylistItem.h"
+#include "CPI_TaskbarIntegration.h"
+#ifdef ENABLE_DISCORD_RPC
+#include "CPI_DiscordRPC.h"
+#endif
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -143,6 +147,7 @@ void CPI_Player_cb_OnPlayerState(CP_HPLAYER hPlayer, const CPe_PlayerState enPla
 		{
 			globals.m_enPlayerState = enPlayerState;
 			main_draw_controls_all(windows.wnd_main);
+			CPI_Taskbar_UpdateButtons();
 			
 			// Prefetch next track's extended metadata for smoother transitions
 			// This is done synchronously but is fast due to lazy loading optimization
@@ -157,12 +162,29 @@ void CPI_Player_cb_OnPlayerState(CP_HPLAYER hPlayer, const CPe_PlayerState enPla
 					CPLI_EnsureExtendedMetadataLoaded(hNext);
 				}
 			}
+
+#ifdef ENABLE_DISCORD_RPC
+			// Update Discord presence with now-playing info
+			if (options.discord_rpc_enabled && hCurrent)
+				CPI_DiscordRPC_SetPlaying(hCurrent, globals.main_long_track_duration);
+#endif
+			
+			// Queue next file for gapless playback
+			CPL_QueueNextForGapless(globals.m_hPlaylist);
 		}
 		break;
 		
 		case cppsPaused:
 			globals.m_enPlayerState = enPlayerState;
 			main_draw_controls_all(windows.wnd_main);
+			CPI_Taskbar_UpdateButtons();
+#ifdef ENABLE_DISCORD_RPC
+			if (options.discord_rpc_enabled)
+			{
+				CP_HPLAYLISTITEM hCurrent = CPL_GetActiveItem(globals.m_hPlaylist);
+				CPI_DiscordRPC_SetPaused(hCurrent);
+			}
+#endif
 			break;
 			
 		case cppsStopped:
@@ -180,6 +202,11 @@ void CPI_Player_cb_OnPlayerState(CP_HPLAYER hPlayer, const CPe_PlayerState enPla
 			main_draw_vu_from_value(windows.wnd_main, PositionSlider, globals.main_int_track_position);
 			
 			main_draw_controls_all(windows.wnd_main);
+			CPI_Taskbar_UpdateButtons();
+#ifdef ENABLE_DISCORD_RPC
+			if (options.discord_rpc_enabled)
+				CPI_DiscordRPC_Clear();
+#endif
 			break;
 			
 		case cppsUndefined:
@@ -222,6 +249,41 @@ void CPI_Player_cb_OnStreamStateChange(CP_HPLAYER hPlayer, const BOOL bStreaming
 		globals.m_iStreamingPortion = 0;
 		
 	main_draw_vu_from_value(windows.wnd_main, PositionSlider, globals.m_iStreamingPortion);
+}
+
+//
+//
+//
+void CPI_Player_cb_OnGaplessTransition(CP_HPLAYER hPlayer)
+{
+	(void)hPlayer;
+	
+	// Engine has seamlessly switched to the next codec.
+	// Advance the playlist to the next item and queue the next-next file.
+	CPL_AdvanceToNextItem(globals.m_hPlaylist);
+	
+	// Update UI state (title bar, track info display, etc.)
+	globals.m_enPlayerState = cppsPlaying;
+	main_draw_controls_all(windows.wnd_main);
+	
+	// Prefetch metadata for next track
+	{
+		CP_HPLAYLISTITEM hCurrent = CPL_GetActiveItem(globals.m_hPlaylist);
+		if (hCurrent)
+		{
+			CP_HPLAYLISTITEM hNext = CPLI_Next(hCurrent);
+			if (hNext && !CPLI_IsExtendedMetadataLoaded(hNext))
+				CPLI_EnsureExtendedMetadataLoaded(hNext);
+		}
+		
+#ifdef ENABLE_DISCORD_RPC
+		if (options.discord_rpc_enabled && hCurrent)
+			CPI_DiscordRPC_SetPlaying(hCurrent, globals.main_long_track_duration);
+#endif
+	}
+	
+	// Queue the next-next file for continuing gapless playback
+	CPL_QueueNextForGapless(globals.m_hPlaylist);
 }
 
 //

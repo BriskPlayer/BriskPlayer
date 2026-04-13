@@ -1,0 +1,342 @@
+# Turkish translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Turkish\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – Yıldırım hızında ses çalar"
+
+msgid "BriskPlayer Audio file"
+msgstr "BriskPlayer Ses dosyası"
+
+msgid "BriskPlayer Playlist"
+msgstr "BriskPlayer Çalma listesi"
+
+msgid "Open File..."
+msgstr "Dosya aç..."
+
+msgid "Open URL..."
+msgstr "URL aç..."
+
+msgid "Add Files..."
+msgstr "Dosya ekle..."
+
+msgid "Playlist Editor"
+msgstr "Çalma listesi düzenleyici"
+
+msgid "Skin"
+msgstr "Tema"
+
+msgid "Default"
+msgstr "Varsayılan"
+
+msgid "Language"
+msgstr "Dil"
+
+msgid "English"
+msgstr "İngilizce"
+
+msgid "Deutsch"
+msgstr "Almanca"
+
+msgid "Playback"
+msgstr "Oynatma"
+
+msgid "Play"
+msgstr "Oynat"
+
+msgid "Stop"
+msgstr "Durdur"
+
+msgid "Pause"
+msgstr "Duraklat"
+
+msgid "Next"
+msgstr "Sonraki"
+
+msgid "Previous"
+msgstr "Önceki"
+
+msgid "Options..."
+msgstr "Seçenekler..."
+
+msgid "About"
+msgstr "Hakkında"
+
+msgid "Exit"
+msgstr "Çıkış"
+
+msgid "About BriskPlayer"
+msgstr "BriskPlayer Hakkında"
+
+msgid "BriskPlayer Options"
+msgstr "BriskPlayer Seçenekleri"
+
+msgid "Open URL"
+msgstr "URL Aç"
+
+msgid "Quick Find"
+msgstr "Hızlı Bul"
+
+msgid "&About"
+msgstr "&Hakkında"
+
+msgid "&Keyboard Shortcuts"
+msgstr "&Klavye Kısayolları"
+
+msgid "C&hanges"
+msgstr "&Değişiklikler"
+
+msgid "C&lose"
+msgstr "&Kapat"
+
+msgid "General"
+msgstr "Genel"
+
+msgid "Always on top"
+msgstr "Her zaman üstte"
+
+msgid "Exit after playing"
+msgstr "Çalma bittikten sonra çık"
+
+msgid "Rotate systemtray icon"
+msgstr "Sistem tepsisi simgesini döndür"
+
+msgid "Scroll Songtitle"
+msgstr "Şarkı başlığını kaydır"
+
+msgid "Allow file once in playlist"
+msgstr "Her dosyayı çalma listesinde yalnızca bir kez izin ver"
+
+msgid "Autoplay on startup"
+msgstr "Başlangıçta otomatik çal"
+
+msgid "Allow multiple instances"
+msgstr "Birden fazla örneğe izin ver"
+
+msgid "Show remaining time"
+msgstr "Kalan süreyi göster"
+
+msgid "Show on taskbar"
+msgstr "Görev çubuğunda göster"
+
+
+msgid "Sticky windows"
+msgstr "Yapışkan pencereler"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "Dosya türlerini kaydet"
+
+msgid "Add to Start Menu"
+msgstr "Başlat menüsüne ekle"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "ID3 etiketini oku (varsa)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "Seçili dosyanın ID3 etiketini oku"
+
+msgid "Support ID3v2"
+msgstr "ID3v2 desteği"
+
+msgid "Prefer native OGG tags"
+msgstr "Yerel OGG etiketlerini tercih et"
+
+msgid "Load ID3 tags in background"
+msgstr "Arka planda ID3 etiketlerini yükle"
+
+msgid "Work out track lengths"
+msgstr "Parça uzunluklarını hesapla"
+
+msgid "Easy move"
+msgstr "Kolay taşı"
+
+msgid "Remember playlist"
+msgstr "Çalma listesini hatırla"
+
+msgid "Remember last played"
+msgstr "Son çalınanı hatırla"
+
+msgid "Track Delay (sec)"
+msgstr "Parça gecikmesi (sn)"
+
+msgid "Skinlist length"
+msgstr "Tema listesi uzunluğu"
+
+msgid "Flush"
+msgstr "Temizle"
+
+msgid "Output"
+msgstr "Çıktı"
+
+msgid "Volume controls"
+msgstr "Ses kontrolleri"
+
+msgid "Player"
+msgstr "Oynatıcı"
+
+msgid "Open"
+msgstr "Aç"
+
+msgid "OK"
+msgstr "Tamam"
+
+msgid "Cancel"
+msgstr "İptal"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"Oynatmak istediğiniz URL'yi girin. Desteklenen formatlar MP3 ve OGG akışı "
+"ile M3U çalma listeleridir."
+
+msgid "&URL:"
+msgstr "&URL:"
+
+msgid "Find Text"
+msgstr "Metin Bul"
+
+msgid "Look in"
+msgstr "Şurada ara"
+
+msgid "&Titles"
+msgstr "&Başlıklar"
+
+msgid "Artist &Names"
+msgstr "Sanatçı &Adları"
+
+msgid "&Album Names"
+msgstr "&Albüm Adları"
+
+msgid "System MASTER volume"
+msgstr "Sistem ANA ses düzeyi"
+
+msgid "System WAVE volume"
+msgstr "Sistem WAVE ses düzeyi"
+
+msgid "Internal volume"
+msgstr "Dahili ses düzeyi"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"Dosya türleri kaydedildi.\n"
+"BriskPlayer'ı başlatmak için desteklenen bir dosyaya çift tıklayabilirsiniz."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr "BriskPlayer için Başlat menüsüne ve Masaüstüne simge oluşturuldu."
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "BriskPlayer Tema Başlatma Dosyaları (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "Tüm Dosyalar (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "Bit hızı: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "Örnekleme hızı: %.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "%d dosya bulundu"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d saniye"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d dakika"
+
+msgid "Failed to initialize audio device"
+msgstr "Ses aygıtı başlatılamadı"
+
+msgid "Unable to load audio file"
+msgstr "Ses dosyası yüklenemiyor"
+
+msgid "Invalid String ID"
+msgstr "Geçersiz dize kimliği"
+
+msgid "Audio Error"
+msgstr "Ses hatası"
+
+msgid "File Error"
+msgstr "Dosya hatası"
+
+msgid "Processing audio..."
+msgstr "Ses işleniyor..."
+
+msgid "Loading..."
+msgstr "Yükleniyor..."
+
+msgid "Ready"
+msgstr "Hazır"
+
+msgid "Rotate system tray icon"
+msgstr "Sistem tepsisi simgesini döndür"
+
+msgid "Scroll title"
+msgstr "Başlığı kaydır"
+
+msgid "Only add file once to playlist"
+msgstr "Çalma listesine dosyayı yalnızca bir kez ekle"
+
+msgid "Read ID3 tags"
+msgstr "ID3 etiketlerini oku"
+
+msgid "Read ID3 for selected files"
+msgstr "Seçili dosyaların ID3 etiketlerini oku"
+
+msgid "Read ID3 in background"
+msgstr "ID3 etiketlerini arka planda oku"
+
+msgid "Calculate track lengths"
+msgstr "Parça sürelerini hesapla"
+
+msgid "Easy move mode"
+msgstr "Kolay taşıma modu"
+
+msgid "Register file types"
+msgstr "Dosya türlerini kaydet"
+
+msgid "Track delay (seconds)"
+msgstr "Parça gecikmesi (saniye)"
+
+msgid "Skin list length"
+msgstr "Tema listesi uzunluğu"
+
+msgid "Open..."
+msgstr "Aç..."
+
+
+msgid "DSP Plugins"
+msgstr "DSP Eklentileri"
+
+msgid "None (Disabled)"
+msgstr "Hiçbiri (Devre Dışı)"
+
+msgid "Configure..."
+msgstr "Yapılandır..."

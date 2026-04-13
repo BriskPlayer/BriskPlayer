@@ -184,6 +184,46 @@ msgid "Show on taskbar"
 msgstr ""
 
 msgctxt "options"
+msgid "Sticky windows"
+msgstr ""
+
+msgctxt "options"
+msgid "Discord Rich Presence"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Off"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Track"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Album"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Prevent clipping"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "ReplayGain"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Mode"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Preamp (dB)"
+msgstr ""
+
+msgctxt "playback"
+msgid "Gapless playback"
+msgstr ""
+
+msgctxt "options"
 msgid "Register Filetypes"
 msgstr ""
 

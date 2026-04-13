@@ -28,6 +28,7 @@
 #include "CPI_Player_CoDec.h"
 #include "CPI_Player_Output.h"
 #include "CPI_Equaliser.h"
+#include "CPI_ReplayGain.h"
 #include "CPI_Playlist.h"
 #include "CPI_PlaylistItem.h"
 ////////////////////////////////////////////////////////////////////////////////
@@ -83,6 +84,7 @@ void CPI_Player_Output_Initialise_File(CPs_OutputModule* pModule)
 	pModule->m_pcModuleName = "WAV File Writer";
 	pModule->m_pCoDec = NULL;
 	pModule->m_pEqualiser = NULL;
+	pModule->m_fReplayGainScale = 1.0f;
 }
 
 //
@@ -205,23 +207,21 @@ void CPP_OMFL_RefillBuffers(CPs_OutputModule* pModule)
 		if (_strnicmp(pathname, CIC_HTTPHEADER, strlen(CIC_HTTPHEADER)) == 0 ||
 		    _strnicmp(pathname, CIC_ICYHEADER, strlen(CIC_ICYHEADER)) == 0)
 		{
-			strcpy(newpath, "Stream.wav");
-			pFileInfo.m_iFileLength_Secs = 0xffffffff;
-		}
-		
-		else
-		{
-			// replace the extension with .wav
-			strcpy(newpath, pathname);
-			dot = strrchr(newpath, '.');
+				cp_strcpy_s(newpath, MAX_PATH, "Stream.wav");
+				pFileInfo.m_iFileLength_Secs = 0xffffffff;
+			}
 			
-			if (dot)
-				*dot = '\0';
-			
-			strcat(newpath, ".wav");
-		}
-		
-		// Trap error
+			else
+			{
+				// replace the extension with .wav
+				cp_strcpy_s(newpath, MAX_PATH, pathname);
+				dot = strrchr(newpath, '.');
+				
+				if (dot)
+					*dot = '\0';
+				
+				cp_strcat_s(newpath, MAX_PATH, ".wav");
+			}
 		
 		while (!pContext->m_hFile)
 		{
@@ -324,6 +324,9 @@ void CPP_OMFL_RefillBuffers(CPs_OutputModule* pModule)
 		pEQModule->ApplyEQToBlock_Inplace(pEQModule, lpData, dwBufferLength);
 	}
 	
+	// Apply ReplayGain
+	CPRG_ApplyToBlock(lpData, dwBufferLength, pModule->m_fReplayGainScale);
+
 	if (dwBufferLength > 0)
 		fwrite(lpData, dwBufferLength, 1, pContext->m_hFile);
 		

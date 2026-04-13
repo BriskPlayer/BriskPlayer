@@ -523,11 +523,18 @@ char* CPLI_ID3v2_DecodeString(const BYTE* pSourceText, const int iTagDataSize)
 {
 	int iStringLength;
 	char* pcDestString;
-	
+
+	if (!pSourceText || iTagDataSize <= 0)
+		return NULL;
+
 	if (pSourceText[0] == '\0')
 	{
 		iStringLength = iTagDataSize - 1;
+		if (iStringLength <= 0)
+			return NULL;
 		pcDestString = CALLOC_TYPE(char, iStringLength + 1);
+		if (!pcDestString)
+			return NULL;
 		memcpy(pcDestString, pSourceText + 1, iStringLength);
 		pcDestString[iStringLength] = 0;
 	}
@@ -567,13 +574,15 @@ void CPLI_DecodeLength(CPs_PlaylistItem* pItem, unsigned int iNewLength)
 	if (iHours > 0)
 	{
 		pItem->m_pcTrackLength_AsText = CALLOC_TYPE(char, 9);
-		sprintf_s(pItem->m_pcTrackLength_AsText, 9, "%02d:%02d:%02d", iHours, iMins, iSecs);
+		if (pItem->m_pcTrackLength_AsText)
+			sprintf_s(pItem->m_pcTrackLength_AsText, 9, "%02d:%02d:%02d", iHours, iMins, iSecs);
 	}
 	
 	else
 	{
 		pItem->m_pcTrackLength_AsText = CALLOC_TYPE(char, 6);
-		sprintf_s(pItem->m_pcTrackLength_AsText, 6, "%02d:%02d", iMins, iSecs);
+		if (pItem->m_pcTrackLength_AsText)
+			sprintf_s(pItem->m_pcTrackLength_AsText, 6, "%02d:%02d", iMins, iSecs);
 	}
 }
 

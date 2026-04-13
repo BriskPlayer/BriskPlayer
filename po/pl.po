@@ -1,0 +1,349 @@
+# Polish translation for BriskPlayer
+# Copyright (C) 2025 Zach Bacon
+# This file is distributed under the same license as the BriskPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BriskPlayer 3.0.0\n"
+"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
+"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"PO-Revision-Date: 2025-11-03 12:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Polish\n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+
+msgid "BriskPlayer"
+msgstr "BriskPlayer"
+
+msgid "BriskPlayer - Blazing fast audio player"
+msgstr "BriskPlayer – Błyskawicznie szybki odtwarzacz audio"
+
+msgid "BriskPlayer Audio file"
+msgstr "Plik audio BriskPlayer"
+
+msgid "BriskPlayer Playlist"
+msgstr "Lista odtwarzania BriskPlayer"
+
+msgid "Open File..."
+msgstr "Otwórz plik..."
+
+msgid "Open URL..."
+msgstr "Otwórz URL..."
+
+msgid "Add Files..."
+msgstr "Dodaj pliki..."
+
+msgid "Playlist Editor"
+msgstr "Edytor listy odtwarzania"
+
+msgid "Skin"
+msgstr "Motyw"
+
+msgid "Default"
+msgstr "Domyślny"
+
+msgid "Language"
+msgstr "Język"
+
+msgid "English"
+msgstr "Angielski"
+
+msgid "Deutsch"
+msgstr "Niemiecki"
+
+msgid "Playback"
+msgstr "Odtwarzanie"
+
+msgid "Play"
+msgstr "Odtwórz"
+
+msgid "Stop"
+msgstr "Stop"
+
+msgid "Pause"
+msgstr "Pauza"
+
+msgid "Next"
+msgstr "Następny"
+
+msgid "Previous"
+msgstr "Poprzedni"
+
+msgid "Options..."
+msgstr "Opcje..."
+
+msgid "About"
+msgstr "O programie"
+
+msgid "Exit"
+msgstr "Wyjdź"
+
+msgid "About BriskPlayer"
+msgstr "O programie BriskPlayer"
+
+msgid "BriskPlayer Options"
+msgstr "Opcje BriskPlayer"
+
+msgid "Open URL"
+msgstr "Otwórz URL"
+
+msgid "Quick Find"
+msgstr "Szybkie wyszukiwanie"
+
+msgid "&About"
+msgstr "&O programie"
+
+msgid "&Keyboard Shortcuts"
+msgstr "&Skróty klawiaturowe"
+
+msgid "C&hanges"
+msgstr "&Zmiany"
+
+msgid "C&lose"
+msgstr "&Zamknij"
+
+msgid "General"
+msgstr "Ogólne"
+
+msgid "Always on top"
+msgstr "Zawsze na wierzchu"
+
+msgid "Exit after playing"
+msgstr "Wyjdź po odtworzeniu"
+
+msgid "Rotate systemtray icon"
+msgstr "Obracaj ikonę w zasobniku systemowym"
+
+msgid "Scroll Songtitle"
+msgstr "Przewijaj tytuł utworu"
+
+msgid "Allow file once in playlist"
+msgstr "Zezwól na jeden plik raz na liście"
+
+msgid "Autoplay on startup"
+msgstr "Automatyczne odtwarzanie przy starcie"
+
+msgid "Allow multiple instances"
+msgstr "Zezwól na wiele instancji"
+
+msgid "Show remaining time"
+msgstr "Pokaż pozostały czas"
+
+msgid "Show on taskbar"
+msgstr "Pokaż na pasku zadań"
+
+
+msgid "Sticky windows"
+msgstr "Przyciąganie okien"
+
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+msgid "Register Filetypes"
+msgstr "Zarejestruj typy plików"
+
+msgid "Add to Start Menu"
+msgstr "Dodaj do menu Start"
+
+msgid "Read ID3 Tag (if any)"
+msgstr "Czytaj tag ID3 (jeśli jest)"
+
+msgid "Read ID3 Tag of selected"
+msgstr "Czytaj tag ID3 wybranego"
+
+msgid "Support ID3v2"
+msgstr "Obsługa ID3v2"
+
+msgid "Prefer native OGG tags"
+msgstr "Preferuj natywne tagi OGG"
+
+msgid "Load ID3 tags in background"
+msgstr "Wczytuj tagi ID3 w tle"
+
+msgid "Work out track lengths"
+msgstr "Oblicz długości ścieżek"
+
+msgid "Easy move"
+msgstr "Łatwe przesuwanie"
+
+msgid "Remember playlist"
+msgstr "Zapamiętaj listę odtwarzania"
+
+msgid "Remember last played"
+msgstr "Zapamiętaj ostatnio odtwarzany"
+
+msgid "Track Delay (sec)"
+msgstr "Opóźnienie między ścieżkami (sek)"
+
+msgid "Skinlist length"
+msgstr "Długość listy motywów"
+
+msgid "Flush"
+msgstr "Opróżnij"
+
+msgid "Output"
+msgstr "Wyjście"
+
+msgid "Volume controls"
+msgstr "Kontrola głośności"
+
+msgid "Player"
+msgstr "Odtwarzacz"
+
+msgid "Open"
+msgstr "Otwórz"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Anuluj"
+
+msgid ""
+"Type the URL you would like to play. Supported formats are MP3 and OGG "
+"streaming, and M3U playlists."
+msgstr ""
+"Wpisz URL do odtworzenia. Obsługiwane formaty to streaming MP3 i OGG oraz "
+"listy odtwarzania M3U."
+
+msgid "&URL:"
+msgstr "&URL:"
+
+msgid "Find Text"
+msgstr "Znajdź tekst"
+
+msgid "Look in"
+msgstr "Szukaj w"
+
+msgid "&Titles"
+msgstr "&Tytuły"
+
+msgid "Artist &Names"
+msgstr "&Nazwy wykonawców"
+
+msgid "&Album Names"
+msgstr "Nazwy &albumów"
+
+msgid "System MASTER volume"
+msgstr "Systemowa głośność MASTER"
+
+msgid "System WAVE volume"
+msgstr "Systemowa głośność WAVE"
+
+msgid "Internal volume"
+msgstr "Wewnętrzna głośność"
+
+msgid ""
+"Filetypes are registered.\n"
+"You can doubleclick a supported file to run BriskPlayer."
+msgstr ""
+"Typy plików zostały zarejestrowane.\n"
+"Możesz dwukrotnie kliknąć obsługiwany plik, aby uruchomić BriskPlayer."
+
+msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+msgstr "Ikona BriskPlayer została utworzona w menu Start i na Pulpicie."
+
+msgid "BriskPlayer Skin Initialization Files (*.ini)"
+msgstr "Pliki inicjalizacyjne motywu BriskPlayer (*.ini)"
+
+msgid "All Files (*.*)"
+msgstr "Wszystkie pliki (*.*)"
+
+msgid "Bitrate: %d kbps"
+msgstr "Bitrate: %d kbps"
+
+msgid "Sample rate: %.1f kHz"
+msgstr "Częstotliwość próbkowania: %.1f kHz"
+
+msgid "Found %d file"
+msgid_plural "Found %d files"
+msgstr[0] "Znaleziono %d plik"
+msgstr[1] "Znaleziono %d pliki"
+msgstr[2] "Znaleziono %d plików"
+
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] "%d sekunda"
+msgstr[1] "%d sekundy"
+msgstr[2] "%d sekund"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "%d minuta"
+msgstr[1] "%d minuty"
+msgstr[2] "%d minut"
+
+msgid "Failed to initialize audio device"
+msgstr "Nie udało się zainicjować urządzenia audio"
+
+msgid "Unable to load audio file"
+msgstr "Nie można wczytać pliku audio"
+
+msgid "Invalid String ID"
+msgstr "Nieprawidłowe ID ciągu"
+
+msgid "Audio Error"
+msgstr "Błąd audio"
+
+msgid "File Error"
+msgstr "Błąd pliku"
+
+msgid "Processing audio..."
+msgstr "Przetwarzanie dźwięku..."
+
+msgid "Loading..."
+msgstr "Ładowanie..."
+
+msgid "Ready"
+msgstr "Gotowy"
+
+msgid "Rotate system tray icon"
+msgstr "Obracaj ikonę w zasobniku systemowym"
+
+msgid "Scroll title"
+msgstr "Przewijaj tytuł"
+
+msgid "Only add file once to playlist"
+msgstr "Dodawaj plik do listy tylko raz"
+
+msgid "Read ID3 tags"
+msgstr "Czytaj tagi ID3"
+
+msgid "Read ID3 for selected files"
+msgstr "Czytaj tagi ID3 wybranych plików"
+
+msgid "Read ID3 in background"
+msgstr "Czytaj tagi ID3 w tle"
+
+msgid "Calculate track lengths"
+msgstr "Obliczaj długości utworów"
+
+msgid "Easy move mode"
+msgstr "Tryb łatwego przesuwania"
+
+msgid "Register file types"
+msgstr "Zarejestruj typy plików"
+
+msgid "Track delay (seconds)"
+msgstr "Opóźnienie ścieżki (sekundy)"
+
+msgid "Skin list length"
+msgstr "Długość listy skórek"
+
+msgid "Open..."
+msgstr "Otwórz..."
+
+
+msgid "DSP Plugins"
+msgstr "Wtyczki DSP"
+
+msgid "None (Disabled)"
+msgstr "Brak (Wyłączone)"
+
+msgid "Configure..."
+msgstr "Konfiguruj..."

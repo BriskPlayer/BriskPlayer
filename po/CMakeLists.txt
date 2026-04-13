@@ -12,7 +12,7 @@ if(NOT GETTEXT_FOUND)
 endif()
 
 # Languages currently supported
-set(LANGUAGES de en)
+set(LANGUAGES ar bg cs da de el es fi fr he hu id it ja ko nb nl pl pt pt_BR ro ru sk sv tr uk vi zh_CN zh_TW)
 
 # Gettext domain
 set(GETTEXT_DOMAIN "briskplayer")
@@ -66,12 +66,17 @@ foreach(lang ${LANGUAGES})
     
     # Check if PO file exists
     if(EXISTS ${PO_FILE})
-        # Compile PO to MO
+        # Compile PO to MO and deploy to the runtime locale directory
         add_custom_command(
             OUTPUT ${MO_FILE}
             COMMAND ${GETTEXT_MSGFMT_EXECUTABLE}
                 --output-file=${MO_FILE}
                 ${PO_FILE}
+            COMMAND ${CMAKE_COMMAND} -E make_directory
+                "$<TARGET_FILE_DIR:briskplayer>/locale/${lang}/LC_MESSAGES"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${MO_FILE}"
+                "$<TARGET_FILE_DIR:briskplayer>/locale/${lang}/LC_MESSAGES/${GETTEXT_DOMAIN}.mo"
             DEPENDS ${PO_FILE}
             COMMENT "Compiling ${lang} translation"
             VERBATIM

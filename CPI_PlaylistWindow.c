@@ -35,6 +35,7 @@
 #include "CPI_Indicators.h"
 #include "CPI_Gettext.h"
 #include "CPI_AlbumArtTooltip.h"
+#include "CPI_DpiScale.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -71,7 +72,7 @@ struct _CPs_PlaylistWindowState
 #define IDC_PL_FLOATINGCOMBO 0x0102
 #define CPPLM_CREATEINPLACE   (WM_APP+0x001)
 #define CPPLM_DESTROYINPLACE  (WM_APP+0x002)
-#define CPC_SIZEBORDER   0x4
+#define CPC_SIZEBORDER   DPI_Scale(4)
 //
 #define IDC_CMDTS_CLEARSTACK  0x1
 #define IDC_CMDTS_RESTACKALL  0x2
@@ -771,7 +772,7 @@ void CPlaylistWindow_CreateIPEdit(const int iItem, const int iSubItem)
 		// int iRectHeight = rSubItem.bottom-rSubItem.top;
 		// int iListHeight = iRectHeight<<3;
 		
-		InflateRect(&rSubItem, 2, 2);
+		InflateRect(&rSubItem, DPI_Scale(2), DPI_Scale(2));
 		pcClass = "COMBOBOX";
 		uiControlID = IDC_PL_FLOATINGCOMBO;
 		dwStyle = CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL;
@@ -781,7 +782,7 @@ void CPlaylistWindow_CreateIPEdit(const int iItem, const int iSubItem)
 	
 	else
 	{
-		InflateRect(&rSubItem, 2, 2);
+		InflateRect(&rSubItem, DPI_Scale(2), DPI_Scale(2));
 		pcClass = "EDIT";
 		dwStyle = ES_AUTOHSCROLL;
 		uiControlID = IDC_PL_FLOATINGEDIT;
@@ -802,7 +803,7 @@ void CPlaylistWindow_CreateIPEdit(const int iItem, const int iSubItem)
 								  rSubItem.left, rSubItem.top,
 								  rSubItem.right - rSubItem.left, rSubItem.bottom - rSubItem.top,
 								  IF_GetHWnd(windows.m_hifPlaylist),
-								  (HMENU)uiControlID,
+								  (HMENU)(UINT_PTR)uiControlID,
 								  GetModuleHandle(NULL), NULL);
 	                              
 	SetWindowPos(windows.wnd_playlist_IPEdit, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
@@ -1186,8 +1187,8 @@ void LVCB_DrawBackgroundRect(CPs_DrawContext* pDC)
 	DeleteObject(hBrush);
 	
 	// Expand slightly to cover edge cases
-	rClient.right += 2;
-	rClient.bottom += 2;
+	rClient.right += DPI_Scale(2);
+	rClient.bottom += DPI_Scale(2);
 	
 	// Draw the window background with proper tiling
 	CPIG_TiledFill(pDC, &rClient, &glb_pSkin->mpl_rBackground_SourceTile, glb_pSkin->mpl_pBackground, CIC_TILEDFILOPTIONS_NONE);
@@ -1478,8 +1479,8 @@ void CPlaylistWindow_CB_onDraw(CP_HINTERFACE hInterface, CPs_DrawContext* pConte
 	DeleteObject(hBrush);
 	
 	// Expand the rectangle slightly to ensure we cover all edge cases
-	rClient.right += 2;
-	rClient.bottom += 2;
+	rClient.right += DPI_Scale(2);
+	rClient.bottom += DPI_Scale(2);
 	
 	// Then draw the tiled skin background
 	CPIG_TiledFill(pContext, &rClient, &glb_pSkin->mpl_rBackground_SourceTile, glb_pSkin->mpl_pBackground, CIC_TILEDFILOPTIONS_NONE);

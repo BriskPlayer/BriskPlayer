@@ -30,18 +30,19 @@
     #include <winnls.h>
 #endif
 
+// Compile-time constants
+#define TRANSLATION_BUFFER_SIZE 1024
+#define MAX_DOMAIN_NAME 64
+
 // Global state with C23 initialization
 static bool g_initialized = false;
 static char g_current_language[16] = "en";
 static char g_locale_directory[MAX_PATH] = "./locale";
+static char g_domain[MAX_DOMAIN_NAME] = BRISKPLAYER_DOMAIN;
 
 // Thread-local storage for translation buffers
 _Thread_local char* tl_translation_buffer = NULL;
 _Thread_local size_t tl_buffer_size = 0;
-
-// Compile-time constants
-#define TRANSLATION_BUFFER_SIZE 1024
-#define MAX_DOMAIN_NAME 64
 
 // Initialize gettext system with C23 features
 BOOL CPG_Initialize(const GetTextConfig* config)
@@ -57,6 +58,10 @@ BOOL CPG_Initialize(const GetTextConfig* config)
     // Set locale directory
     strncpy(g_locale_directory, actualConfig->directory, sizeof(g_locale_directory) - 1);
     g_locale_directory[sizeof(g_locale_directory) - 1] = '\0';
+
+    // Store domain name
+    strncpy(g_domain, actualConfig->domain, sizeof(g_domain) - 1);
+    g_domain[sizeof(g_domain) - 1] = '\0';
     
 #ifdef ENABLE_NLS
     // Set locale to user's environment
@@ -126,22 +131,27 @@ void CPG_SetLanguage(const char* language)
     g_current_language[copyLen] = '\0';
     
 #ifdef ENABLE_NLS
-    // Create locale string (e.g., "de_DE.UTF-8")
-    char locale_string[32];
-    snprintf(locale_string, sizeof(locale_string), "%s.UTF-8", language);
-    
-    // Try to set the locale
-    if (setlocale(LC_ALL, locale_string) == NULL) {
-        // Fallback to language code only
-        if (setlocale(LC_ALL, language) == NULL) {
-            // Final fallback to POSIX
-            setlocale(LC_ALL, "POSIX");
-        }
-    }
+    // Set LANGUAGE in the Windows environment block (not just the CRT env).
+    // libintl on Windows uses GetEnvironmentVariableW internally, so only
+    // SetEnvironmentVariableA/W is visible to it; _putenv_s is not enough.
+#ifdef _WIN32
+    SetEnvironmentVariableA("LANGUAGE", language);
+    // Also update CRT env for any code that uses getenv()
+    _putenv_s("LANGUAGE", language);
+#else
+    setenv("LANGUAGE", language, 1);
+#endif
+    // libintl_setlocale (aliased as setlocale) re-evaluates LANGUAGE and
+    // flushes the cached catalog so the next gettext() call loads the new .mo.
+    setlocale(LC_ALL, "");
+    // Re-bind the domain to force libintl to re-scan the locale directory
+    // for the new language — required for reliable runtime switching on Windows.
+    bindtextdomain(g_domain, g_locale_directory);
+    textdomain(g_domain);
 #endif
 
 #ifdef _WIN32
-    // Update Windows locale
+    // Update Windows thread locale (for Win32 API string formatting)
     CPG_SetWindowsLocale(language);
 #endif
 }
@@ -309,6 +319,54 @@ int CPG_EnumerateLanguages(LanguageInfo* languages, int maxLanguages)
                     } else if (strcmp(findData.cFileName, "pl") == 0) {
                         strcpy(lang->name, "Polski");
                         strcpy(lang->region, "PL");
+                    } else if (strcmp(findData.cFileName, "cs") == 0) {
+                        strcpy(lang->name, "Čeština");
+                        strcpy(lang->region, "CZ");
+                    } else if (strcmp(findData.cFileName, "sk") == 0) {
+                        strcpy(lang->name, "Slovenčina");
+                        strcpy(lang->region, "SK");
+                    } else if (strcmp(findData.cFileName, "hu") == 0) {
+                        strcpy(lang->name, "Magyar");
+                        strcpy(lang->region, "HU");
+                    } else if (strcmp(findData.cFileName, "ro") == 0) {
+                        strcpy(lang->name, "Română");
+                        strcpy(lang->region, "RO");
+                    } else if (strcmp(findData.cFileName, "bg") == 0) {
+                        strcpy(lang->name, "Български");
+                        strcpy(lang->region, "BG");
+                    } else if (strcmp(findData.cFileName, "el") == 0) {
+                        strcpy(lang->name, "Ελληνικά");
+                        strcpy(lang->region, "GR");
+                    } else if (strcmp(findData.cFileName, "uk") == 0) {
+                        strcpy(lang->name, "Українська");
+                        strcpy(lang->region, "UA");
+                    } else if (strcmp(findData.cFileName, "tr") == 0) {
+                        strcpy(lang->name, "Türkçe");
+                        strcpy(lang->region, "TR");
+                    } else if (strcmp(findData.cFileName, "ar") == 0) {
+                        strcpy(lang->name, "العربية");
+                        strcpy(lang->region, "AR");
+                    } else if (strcmp(findData.cFileName, "he") == 0) {
+                        strcpy(lang->name, "עברית");
+                        strcpy(lang->region, "IL");
+                    } else if (strcmp(findData.cFileName, "vi") == 0) {
+                        strcpy(lang->name, "Tiếng Việt");
+                        strcpy(lang->region, "VN");
+                    } else if (strcmp(findData.cFileName, "id") == 0) {
+                        strcpy(lang->name, "Indonesia");
+                        strcpy(lang->region, "ID");
+                    } else if (strcmp(findData.cFileName, "nb") == 0) {
+                        strcpy(lang->name, "Norsk");
+                        strcpy(lang->region, "NO");
+                    } else if (strcmp(findData.cFileName, "pt_BR") == 0) {
+                        strcpy(lang->name, "Português");
+                        strcpy(lang->region, "BR");
+                    } else if (strcmp(findData.cFileName, "zh_CN") == 0) {
+                        strcpy(lang->name, "中文");
+                        strcpy(lang->region, "CN");
+                    } else if (strcmp(findData.cFileName, "zh_TW") == 0) {
+                        strcpy(lang->name, "中文");
+                        strcpy(lang->region, "TW");
                     } else {
                         // Generic fallback - capitalize first letter
                         strncpy(lang->name, findData.cFileName, sizeof(lang->name) - 1);
@@ -496,7 +554,11 @@ BOOL CPG_SetWindowsLocale(const char* languageCode)
 // Uses thread-local storage to avoid data races if called from multiple threads
 wchar_t* CPG_GetTranslationW(const char* msgid)
 {
+    #ifdef _MSC_VER
+    static __declspec(thread) wchar_t wideBuffer[512];
+    #else
     static __thread wchar_t wideBuffer[512];
+    #endif
     
     const char* translated = _(msgid);
     if (MultiByteToWideChar(CP_UTF8, 0, translated, -1, wideBuffer, 

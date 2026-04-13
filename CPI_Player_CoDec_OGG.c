@@ -198,7 +198,7 @@ static void CPP_OMOGG_Uninitialise(CPs_CoDecModule* module)
 // Open file with enhanced initialization
 static BOOL CPP_OMOGG_OpenFile(CPs_CoDecModule* module,
                                const char* filename, 
-                               DWORD cookie, 
+                               DWORD_PTR cookie, 
                                HWND owner)
 {
     (void)cookie; (void)owner;  // Unused parameters

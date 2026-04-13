@@ -28,6 +28,7 @@
 #include "CPI_Player_Output.h"
 #include "CPI_Equaliser.h"
 #include "CPI_Player_DSP.h"
+#include "CPI_ReplayGain.h"
 #define DIRECTSOUND_VERSION 0x0500  /* Version 5.0 */
 #include <dsound.h>
 #include <math.h>
@@ -97,6 +98,7 @@ void CPI_Player_Output_Initialise_DirectSound(CPs_OutputModule* pModule)
 	pModule->m_pcModuleName = "DirectSound Plugout";
 	pModule->m_pCoDec = NULL;
 	pModule->m_pEqualiser = NULL;
+	pModule->m_fReplayGainScale = 1.0f;
 }
 
 //
@@ -390,6 +392,10 @@ void CPP_OMDS_RefillBuffers(CPs_OutputModule* pModule)
 				pEQModule->ApplyEQToBlock_Inplace(pEQModule, pbData + pContext->m_WriteCursor, RealLength);
 		}
 		
+		// Apply ReplayGain
+		if (RealLength)
+			CPRG_ApplyToBlock(pbData + pContext->m_WriteCursor, RealLength, pModule->m_fReplayGainScale);
+
 		// Apply DSP plugin processing
 		if (RealLength && CPDSP_IsActive())
 		{

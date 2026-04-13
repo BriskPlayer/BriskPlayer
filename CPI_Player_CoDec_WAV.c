@@ -41,7 +41,7 @@
 //
 // Module functions
 void CPP_OMWAV_Uninitialise(CPs_CoDecModule* pModule);
-BOOL CPP_OMWAV_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD dwCookie, HWND hWndOwner);
+BOOL CPP_OMWAV_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD_PTR dwCookie, HWND hWndOwner);
 void CPP_OMWAV_CloseFile(CPs_CoDecModule* pModule);
 void CPP_OMWAV_Seek(CPs_CoDecModule* pModule, const int iNumerator, const int iDenominator);
 void CPP_OMWAV_GetFileInfo(CPs_CoDecModule* pModule, CPs_FileInfo* pInfo);
@@ -123,7 +123,7 @@ void CPP_OMWAV_Uninitialise(CPs_CoDecModule* pModule)
 //
 //
 //
-BOOL CPP_OMWAV_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD dwCookie, HWND hWndOwner)
+BOOL CPP_OMWAV_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD_PTR dwCookie, HWND hWndOwner)
 {
 	CPs_CoDec_Wave *pContext = (CPs_CoDec_Wave*)pModule->m_pModuleCookie;
 	

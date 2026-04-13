@@ -63,6 +63,7 @@ extern DWORD WINAPI CPI_Player__EngineEP(void* pCookie);
 #define CPTM_ONOUTPUTMODULECHANGE			(WM_APP+0x00D)
 #define CPTM_ASSOCIATEFILEEXTENSIONS		(WM_APP+0x00E)
 #define CPTM_SETINTERNALVOLUME				(WM_APP+0x00F)
+#define CPTM_SETNEXTFILE					(WM_APP+0x010)
 
 
 // Notifies
@@ -75,7 +76,8 @@ extern DWORD WINAPI CPI_Player__EngineEP(void* pCookie);
 #define CPNM_SYNCCOOKIE						(WM_APP+0x105)
 #define CPNM_FOUNDOUTPUTDEVICE				(WM_APP+0x106)
 #define CPNM_SETSTREAMINGSTATE				(WM_APP+0x107)
+#define CPNM_GAPLESS_TRANSITION				(WM_APP+0x108)
 // ..
 // ..
 //
-#define CPNM_last							(WM_APP+0x107)
+#define CPNM_last							(WM_APP+0x108)

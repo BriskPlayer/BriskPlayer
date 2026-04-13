@@ -27,7 +27,6 @@
 
 #define FLAC__NO_DLL  // Static linking with FLAC library
 #include "CPI_Player_CoDec_C23.h"
-#include "CPI_Stream.h"
 #include "threading_compat.h"  // Consolidated threading support
 #include <FLAC/stream_decoder.h>
 #include <string.h>
@@ -50,8 +49,9 @@ typedef struct FlacContext {
     // FLAC decoder instance
     alignas(16) FLAC__StreamDecoder* decoder;
     
-    // Stream interface
-    CPs_InStream* stream;
+    // File path (libFLAC owns the FILE* when using init_file)
+    char file_path[MAX_PATH];
+    uint64_t file_size_bytes;  // For bitrate estimation
     
     // Audio format information (enhanced with C23 types)
     uint32_t sample_rate;
@@ -63,8 +63,6 @@ typedef struct FlacContext {
     // State management
     FlacDecoderState state;
     bool end_of_stream;
-    bool just_seeked; // Flag to track recent seek operations
-    uint8_t frames_to_skip; // Number of frames to skip after seeking
     
     // PCM buffer management with enhanced alignment
     alignas(16) int32_t* pcm_buffer;
@@ -78,10 +76,6 @@ typedef struct FlacContext {
     // Error handling
     char error_message[256];
     FLAC__StreamDecoderErrorStatus last_error;
-    
-    // Working buffer (removed thread_local to fix compilation)
-    int16_t* conversion_buffer;
-    size_t conversion_buffer_size;
 } FlacContext;
 
 // C23 constexpr configuration
@@ -91,42 +85,6 @@ typedef struct FlacContext {
 
 ////////////////////////////////////////////////////////////////////////////////
 // C23 Enhanced FLAC Callbacks with Improved Error Handling
-
-// Read callback with enhanced error reporting
-static FLAC__StreamDecoderReadStatus flac_read_callback_c23(
-    const FLAC__StreamDecoder* decoder,
-    FLAC__byte buffer[],
-    size_t* bytes,
-    void* client_data)
-{
-    (void)decoder;  // Suppress unused parameter warning
-    FlacContext* context = (FlacContext*)client_data;
-    
-    if (!context || !context->stream) {
-        *bytes = 0;
-        return FLAC__STREAM_DECODER_READ_STATUS_ABORT;
-    }
-    
-    // Enhanced bounds checking
-    if (*bytes > FLAC_BUFFER_SIZE) {
-        *bytes = FLAC_BUFFER_SIZE;
-    }
-    
-    size_t bytes_read = 0;
-    context->stream->Read(context->stream, buffer, *bytes, &bytes_read);
-    *bytes = bytes_read;
-    
-    if (bytes_read == 0) {
-        // Check if we're at end of stream
-        UINT current_pos = context->stream->Tell(context->stream);
-        UINT stream_length = context->stream->GetLength(context->stream);
-        return (current_pos >= stream_length) ? 
-               FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM :
-               FLAC__STREAM_DECODER_READ_STATUS_ABORT;
-    }
-    
-    return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
-}
 
 // Write callback with C23 enhanced sample processing
 static FLAC__StreamDecoderWriteStatus flac_write_callback_c23(
@@ -140,17 +98,6 @@ static FLAC__StreamDecoderWriteStatus flac_write_callback_c23(
     
     if (!context || !frame || !buffer) {
         return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
-    }
-    
-    // Skip frames immediately after seeking to prevent distortion
-    if (context->just_seeked && context->frames_to_skip > 0) {
-        context->frames_to_skip--;
-        if (context->frames_to_skip == 0) {
-            context->just_seeked = false; // Done skipping frames
-        }
-        // Update position but don't store audio data
-        context->current_sample = frame->header.number.sample_number;
-        return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
     }
     
     // Validate frame parameters with enhanced checking
@@ -188,8 +135,16 @@ static FLAC__StreamDecoderWriteStatus flac_write_callback_c23(
     // Update context state
     context->samples_in_buffer = samples_needed;
     context->buffer_position = 0;
-    // Update current_sample to reflect the start of this frame
-    context->current_sample = frame->header.number.sample_number;
+    // FLAC frames carry either a sample number (variable block size) or a frame
+    // number (fixed block size, the default for most files).  Reading the wrong
+    // union member produces a tiny frame count instead of a real sample position,
+    // which breaks position tracking and the Seek range optimisation.
+    if (frame->header.number_type == FLAC__FRAME_NUMBER_TYPE_SAMPLE_NUMBER) {
+        context->current_sample = frame->header.number.sample_number;
+    } else {
+        context->current_sample =
+            (uint64_t)frame->header.number.frame_number * frame->header.blocksize;
+    }
     
     return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 }
@@ -232,14 +187,17 @@ static void flac_error_callback_c23(
     FLAC__StreamDecoderErrorStatus status,
     void* client_data)
 {
-    (void)decoder;  // Suppress unused parameter warning
+    (void)decoder;
     FlacContext* context = (FlacContext*)client_data;
     
     if (context) {
+        // Record the error but do NOT change context->state here.  This callback
+        // fires with LOST_SYNC during seek_absolute's binary search, which is
+        // completely normal.  Changing state to ERROR here causes GetPCMBlock to
+        // think the decoder is broken even after a successful seek.  The actual
+        // libFLAC decoder state is queried directly via
+        // FLAC__stream_decoder_get_state() wherever recovery decisions are made.
         context->last_error = status;
-        context->state = FLAC_STATE_ERROR;
-        
-        // Enhanced error message formatting
         snprintf(context->error_message, sizeof(context->error_message),
                 "FLAC decode error: %s", FLAC__StreamDecoderErrorStatusString[status]);
     }
@@ -248,6 +206,28 @@ static void flac_error_callback_c23(
 ////////////////////////////////////////////////////////////////////////////////
 // C23 Enhanced FLAC Module Implementation
 
+// CloseFile — release the current file but keep the module alive.
+// The engine calls this when the stream ends (GetPCMBlock returns FALSE).
+static void CPP_OMFLAC_CloseFile(CPs_CoDecModule* module)
+{
+    if (!module || !module->m_pModuleCookie) return;
+    
+    FlacContext* context = (FlacContext*)module->m_pModuleCookie;
+    
+    if (context->decoder) {
+        FLAC__stream_decoder_finish(context->decoder);
+        FLAC__stream_decoder_delete(context->decoder);
+        context->decoder = NULL;
+    }
+    
+    _aligned_free(context->pcm_buffer);
+    context->pcm_buffer = NULL;
+    context->buffer_size = 0;
+    context->samples_in_buffer = 0;
+    context->buffer_position = 0;
+    context->state = FLAC_STATE_UNINITIALIZED;
+}
+
 // Initialize FLAC decoder with C23 enhancements
 static void CPP_OMFLAC_Uninitialise(CPs_CoDecModule* module)
 {
@@ -255,20 +235,18 @@ static void CPP_OMFLAC_Uninitialise(CPs_CoDecModule* module)
     
     FlacContext* context = (FlacContext*)module->m_pModuleCookie;
     
-    // Cleanup FLAC decoder
+    // Cleanup FLAC decoder (finish closes libFLAC's internal FILE*)
     if (context->decoder) {
         FLAC__stream_decoder_finish(context->decoder);
         FLAC__stream_decoder_delete(context->decoder);
     }
     
-    // Free buffers
+    // Free PCM buffer
     _aligned_free(context->pcm_buffer);
     
     // Destroy mutex
     mtx_destroy(&context->context_mutex);
     
-    // Clear sensitive data
-    memset(context, 0, sizeof(FlacContext));
     _aligned_free(context);
     
     module->m_pModuleCookie = NULL;
@@ -277,86 +255,72 @@ static void CPP_OMFLAC_Uninitialise(CPs_CoDecModule* module)
 // Open file with enhanced error handling
 static BOOL CPP_OMFLAC_OpenFile(CPs_CoDecModule* module, 
                                 const char* filename,
-                                DWORD cookie,
+                                DWORD_PTR cookie,
                                 HWND owner)
 {
     (void)cookie; (void)owner;  // Unused parameters
     if (!module || !filename) return FALSE;
     
-    // Create enhanced context
     FlacContext* context = (FlacContext*)_aligned_malloc(sizeof(FlacContext), 16);
     if (!context) return FALSE;
+    memset(context, 0, sizeof(FlacContext));
     
-    // Open stream from filename
-    CPs_InStream* stream = CP_CreateInStream(filename, NULL);
-    if (!stream) {
-        _aligned_free(context);
-        return FALSE;
+    // Store path for error messages; truncate gracefully if too long
+    strncpy(context->file_path, filename, MAX_PATH - 1);
+    context->file_path[MAX_PATH - 1] = '\0';
+    
+    // Get file size for bitrate estimation
+    WIN32_FILE_ATTRIBUTE_DATA fa;
+    if (GetFileAttributesExA(filename, GetFileExInfoStandard, &fa)) {
+        context->file_size_bytes =
+            ((uint64_t)fa.nFileSizeHigh << 32) | fa.nFileSizeLow;
     }
     
-    // Initialize with designated initializers
-    *context = (FlacContext){
-        .decoder = NULL,
-        .stream = stream,
-        .state = FLAC_STATE_UNINITIALIZED,
-        .end_of_stream = false,
-        .just_seeked = false,
-        .frames_to_skip = 0,
-        .pcm_buffer = NULL,
-        .buffer_size = 0,
-        .buffer_position = 0,
-        .samples_in_buffer = 0,
-        .error_message = {0},
-        .last_error = FLAC__STREAM_DECODER_ERROR_STATUS_LOST_SYNC
-    };
+    context->last_error = FLAC__STREAM_DECODER_ERROR_STATUS_LOST_SYNC;
     
-    // Initialize mutex for thread safety
     if (mtx_init(&context->context_mutex, mtx_plain) != thrd_success) {
-        stream->Uninitialise(stream);
         _aligned_free(context);
         return FALSE;
     }
     
-    // Create FLAC decoder
     context->decoder = FLAC__stream_decoder_new();
     if (!context->decoder) {
         mtx_destroy(&context->context_mutex);
-        stream->Uninitialise(stream);
         _aligned_free(context);
         return FALSE;
     }
     
-    // Initialize decoder with callbacks
-    FLAC__StreamDecoderInitStatus init_status = 
-        FLAC__stream_decoder_init_stream(context->decoder,
-                                         flac_read_callback_c23,
-                                         NULL, // seek_callback
-                                         NULL, // tell_callback  
-                                         NULL, // length_callback
-                                         NULL, // eof_callback
-                                         flac_write_callback_c23,
-                                         flac_metadata_callback_c23,
-                                         flac_error_callback_c23,
-                                         context);
+    // Use libFLAC's built-in file I/O (fopen/fseek/fread) so that
+    // seek_absolute has complete, consistent control over the FILE*.
+    // This avoids all seek/tell/eof callback complexity and is how
+    // libFLAC's own example players are written.
+    FLAC__StreamDecoderInitStatus init_status =
+        FLAC__stream_decoder_init_file(context->decoder,
+                                       filename,
+                                       flac_write_callback_c23,
+                                       flac_metadata_callback_c23,
+                                       flac_error_callback_c23,
+                                       context);
     
     if (init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK) {
-        stream->Uninitialise(stream);
+        FLAC__stream_decoder_delete(context->decoder);
+        mtx_destroy(&context->context_mutex);
         _aligned_free(context);
         return FALSE;
     }
     
-    // Process metadata
     if (!FLAC__stream_decoder_process_until_end_of_metadata(context->decoder)) {
+        FLAC__stream_decoder_finish(context->decoder);
         FLAC__stream_decoder_delete(context->decoder);
-        stream->Uninitialise(stream);
+        mtx_destroy(&context->context_mutex);
         _aligned_free(context);
         return FALSE;
     }
     
-    // Verify successful initialization
     if (context->state != FLAC_STATE_READY) {
+        FLAC__stream_decoder_finish(context->decoder);
         FLAC__stream_decoder_delete(context->decoder);
-        stream->Uninitialise(stream);
+        mtx_destroy(&context->context_mutex);
         _aligned_free(context);
         return FALSE;
     }
@@ -365,7 +329,28 @@ static BOOL CPP_OMFLAC_OpenFile(CPs_CoDecModule* module,
     return TRUE;
 }
 
-// Enhanced PCM block processing with C23 features
+// Helper: convert int32 FLAC samples to int16 PCM and write to output buffer.
+// Returns the number of int16 values written.
+static size_t flac_convert_samples(const int32_t* src, int16_t* dst,
+                                   size_t count, int bits_per_sample)
+{
+    int shift = 0;
+    if (bits_per_sample > 16)
+        shift = bits_per_sample - 16;
+    else if (bits_per_sample < 16)
+        shift = -(16 - bits_per_sample);
+    
+    for (size_t i = 0; i < count; ++i) {
+        int32_t s = src[i];
+        if (shift > 0)      s >>= shift;
+        else if (shift < 0) s <<= (-shift);
+        dst[i] = (int16_t)(s > 32767 ? 32767 : s < -32768 ? -32768 : s);
+    }
+    return count;
+}
+
+// GetPCMBlock — fill loop modelled on the FFmpeg and OGG decoders.
+// Keeps decoding frames until the full requested buffer is filled or EOF.
 static BOOL CPP_OMFLAC_GetPCMBlock(CPs_CoDecModule* module, 
                                    void* block,
                                    DWORD* block_size)
@@ -374,116 +359,84 @@ static BOOL CPP_OMFLAC_GetPCMBlock(CPs_CoDecModule* module,
     
     FlacContext* context = (FlacContext*)module->m_pModuleCookie;
     
-    // Lock for thread safety
     if (mtx_lock(&context->context_mutex) != thrd_success) {
         *block_size = 0;
         return FALSE;
     }
     
-    // Check for end of stream
     if (context->end_of_stream || context->state == FLAC_STATE_END_OF_STREAM) {
         mtx_unlock(&context->context_mutex);
         *block_size = 0;
         return FALSE;
     }
     
-    DWORD requested_size = *block_size;
+    const DWORD requested = *block_size;            // bytes requested
+    DWORD       bytes_written = 0;                  // bytes produced so far
+    int16_t*    out = (int16_t*)block;
     
-    // Process more frames if buffer is empty or if we're still skipping frames after a seek
-    if (context->buffer_position >= context->samples_in_buffer || 
-        (context->just_seeked && context->frames_to_skip > 0)) {
-        // Quick decoder state check for performance
-        FLAC__StreamDecoderState decoder_state = 
-            FLAC__stream_decoder_get_state(context->decoder);
+    while (bytes_written < requested) {
+        // ---- serve data already sitting in pcm_buffer -----------------------
+        if (context->buffer_position < context->samples_in_buffer) {
+            size_t avail  = context->samples_in_buffer - context->buffer_position;
+            size_t room   = (requested - bytes_written) / sizeof(int16_t);
+            size_t to_copy = (avail < room) ? avail : room;
             
-        // Only handle critical error states to maintain seek fluidity
-        if (decoder_state == FLAC__STREAM_DECODER_ABORTED ||
-            decoder_state == FLAC__STREAM_DECODER_MEMORY_ALLOCATION_ERROR) {
-            // Try to reset and continue
+            flac_convert_samples(
+                &context->pcm_buffer[context->buffer_position],
+                out + (bytes_written / sizeof(int16_t)),
+                to_copy,
+                context->bits_per_sample);
+            
+            bytes_written += (DWORD)(to_copy * sizeof(int16_t));
+            context->buffer_position += to_copy;
+            continue;
+        }
+        
+        // ---- pcm_buffer exhausted — decode one more FLAC frame ----------------
+        // Check libFLAC state BEFORE calling process_single.
+        FLAC__StreamDecoderState ds =
+            FLAC__stream_decoder_get_state(context->decoder);
+        
+        if (ds == FLAC__STREAM_DECODER_END_OF_STREAM) {
+            context->end_of_stream = true;
+            context->state = FLAC_STATE_END_OF_STREAM;
+            break;
+        }
+        
+        if (ds == FLAC__STREAM_DECODER_SEEK_ERROR) {
+            if (!FLAC__stream_decoder_reset(context->decoder) ||
+                !FLAC__stream_decoder_process_until_end_of_metadata(context->decoder)) {
+                context->state = FLAC_STATE_ERROR;
+                break;
+            }
+            context->state = FLAC_STATE_READY;
+        } else if (ds == FLAC__STREAM_DECODER_ABORTED ||
+                   ds == FLAC__STREAM_DECODER_MEMORY_ALLOCATION_ERROR) {
             if (!FLAC__stream_decoder_reset(context->decoder)) {
                 context->state = FLAC_STATE_ERROR;
-                *block_size = 0;
-                mtx_unlock(&context->context_mutex);
-                return FALSE;
+                break;
             }
             context->state = FLAC_STATE_READY;
         }
         
-        // Process frames until we get valid audio data (not skipped frames)
-        int attempts = 0;
-        while ((context->buffer_position >= context->samples_in_buffer || 
-                (context->just_seeked && context->frames_to_skip > 0)) && 
-               attempts < 10) { // Limit attempts to prevent infinite loop
-            
-            if (!FLAC__stream_decoder_process_single(context->decoder)) {
-                // Don't treat all decode failures as critical errors
-                // This improves seek responsiveness
-                decoder_state = FLAC__stream_decoder_get_state(context->decoder);
-                
-                if (decoder_state == FLAC__STREAM_DECODER_END_OF_STREAM) {
-                    context->end_of_stream = true;
-                    context->state = FLAC_STATE_END_OF_STREAM;
-                    *block_size = 0;
-                    mtx_unlock(&context->context_mutex);
-                    return FALSE;
-                }
-                
-                // For other errors, try to continue for better seek performance
-                context->state = FLAC_STATE_ERROR;
-                *block_size = 0;
-                mtx_unlock(&context->context_mutex);
-                return FALSE;
+        // Decode a single FLAC frame → fires write_callback → fills pcm_buffer.
+        if (!FLAC__stream_decoder_process_single(context->decoder)) {
+            ds = FLAC__stream_decoder_get_state(context->decoder);
+            if (ds == FLAC__STREAM_DECODER_END_OF_STREAM) {
+                context->end_of_stream = true;
+                context->state = FLAC_STATE_END_OF_STREAM;
             }
-            attempts++;
+            break;   // stop filling — whatever we have so far will be returned
         }
     }
     
-    // Calculate bytes available and copy
-    size_t samples_available = context->samples_in_buffer - context->buffer_position;
-    size_t bytes_per_sample = 2; // 16-bit = 2 bytes per individual sample
-    size_t bytes_available = samples_available * bytes_per_sample;
-    
-    if (bytes_available > requested_size) {
-        bytes_available = requested_size;
-        samples_available = bytes_available / bytes_per_sample;
-    }
-    
-    // Enhanced sample conversion with proper bit depth scaling
-    const int32_t* src = &context->pcm_buffer[context->buffer_position];
-    int16_t* dst = (int16_t*)block;
-    
-    // Calculate scaling factor based on source bit depth
-    int shift_amount = 0;
-    if (context->bits_per_sample > 16) {
-        shift_amount = context->bits_per_sample - 16;
-    } else if (context->bits_per_sample < 16) {
-        shift_amount = -(16 - context->bits_per_sample);
-    }
-    
-    for (size_t i = 0; i < samples_available; ++i) {
-        int32_t sample = src[i];
-        
-        // Scale sample to 16-bit range
-        if (shift_amount > 0) {
-            sample >>= shift_amount;  // Scale down for higher bit depths
-        } else if (shift_amount < 0) {
-            sample <<= (-shift_amount);  // Scale up for lower bit depths
-        }
-        
-        // Clamp to 16-bit range
-        dst[i] = (int16_t)((sample > 32767) ? 32767 : 
-                          (sample < -32768) ? -32768 : sample);
-    }
-    
-    // Update context and return actual bytes copied
-    context->buffer_position += samples_available;
-    *block_size = (DWORD)bytes_available;
-    
+    *block_size = bytes_written;
     mtx_unlock(&context->context_mutex);
-    return TRUE;
+    return (bytes_written > 0) ? TRUE : FALSE;
 }
 
-// Enhanced seek operation with optimized performance
+// Seek — modelled on the FFmpeg decoder: seek, flush, clear buffer.
+// All subsequent decoding is handled by GetPCMBlock's fill loop.
 static void CPP_OMFLAC_Seek(CPs_CoDecModule* module, const int iNumerator, const int iDenominator)
 {
     if (!module || !module->m_pModuleCookie || iDenominator == 0) return;
@@ -492,60 +445,39 @@ static void CPP_OMFLAC_Seek(CPs_CoDecModule* module, const int iNumerator, const
     
     if (!context->decoder || context->total_samples == 0) return;
     
-    // Calculate sample position with enhanced precision
     double seek_ratio = (double)iNumerator / (double)iDenominator;
-    uint64_t sample_position = (uint64_t)(seek_ratio * context->total_samples);
+    uint64_t sample_position = (uint64_t)(seek_ratio * (double)context->total_samples);
     
-    // Clamp to valid range
-    if (sample_position >= context->total_samples) {
+    if (sample_position >= context->total_samples)
         sample_position = context->total_samples - 1;
+    
+    if (mtx_lock(&context->context_mutex) != thrd_success) return;
+    
+    // Flush the decoder's internal input buffer (equivalent of avcodec_flush_buffers).
+    // This discards any partially-read data and sets state to SEARCH_FOR_FRAME_SYNC.
+    FLAC__stream_decoder_flush(context->decoder);
+    
+    // Perform the sample-accurate seek.
+    if (FLAC__stream_decoder_seek_absolute(context->decoder, sample_position)) {
+        context->current_sample = sample_position;
+        context->state = FLAC_STATE_READY;
+    } else {
+        // seek_absolute failed — recover via full reset.
+        if (FLAC__stream_decoder_reset(context->decoder) &&
+            FLAC__stream_decoder_process_until_end_of_metadata(context->decoder)) {
+            context->state = FLAC_STATE_READY;
+        } else {
+            context->state = FLAC_STATE_ERROR;
+        }
     }
     
-    // Quick lock to check if this is a small seek that we can optimize
-    if (mtx_lock(&context->context_mutex) != thrd_success) {
-        return;
-    }
-    
-    // Small seek optimization - if seeking within current buffer, just adjust position
-    uint64_t current_frame_start = context->current_sample;
-    uint64_t current_frame_end = current_frame_start + (context->samples_in_buffer / context->channels);
-    
-    if (sample_position >= current_frame_start && sample_position < current_frame_end) {
-        // Seek within current buffer - just adjust buffer position
-        uint64_t samples_into_frame = sample_position - current_frame_start;
-        context->buffer_position = (size_t)(samples_into_frame * context->channels);
-        // Don't change current_sample since we're still in the same frame
-        // Reset seek flags since this is a fast seek without distortion
-        context->just_seeked = false;
-        context->frames_to_skip = 0;
-        mtx_unlock(&context->context_mutex);
-        return; // Fast seek completed
-    }
-    
-    // Update position immediately for responsive UI
-    context->current_sample = sample_position;
+    // Discard any data that write_callback may have deposited during the
+    // seek's binary search.  GetPCMBlock's fill loop will decode fresh frames.
     context->buffer_position = 0;
     context->samples_in_buffer = 0;
     context->end_of_stream = false;
-    context->state = FLAC_STATE_READY;
-    context->just_seeked = true;
-    context->frames_to_skip = 2; // Skip first 2 frames after seeking to prevent distortion
     
     mtx_unlock(&context->context_mutex);
-    
-    // Perform actual seek operation outside of mutex for better performance
-    // This allows UI to remain responsive during seek
-    if (!FLAC__stream_decoder_seek_absolute(context->decoder, sample_position)) {
-        // If seek failed, mark error state
-        if (mtx_lock(&context->context_mutex) == thrd_success) {
-            context->state = FLAC_STATE_ERROR;
-            mtx_unlock(&context->context_mutex);
-        }
-        return;
-    }
-    
-    // Don't process frame immediately - let next GetPCMBlock handle it
-    // This reduces seek latency and improves fluidity
 }
 
 // Get file information
@@ -570,11 +502,11 @@ static void CPP_OMFLAC_GetFileInfo(CPs_CoDecModule* module, CPs_FileInfo* info)
     }
     
     // Estimate bitrate (FLAC is variable bitrate)
-    if (info->m_iFileLength_Secs > 0 && context->stream) {
+    if (info->m_iFileLength_Secs > 0 && context->file_size_bytes > 0) {
         // Try to get file size for bitrate estimation
-        const uint64_t file_size = context->stream->GetLength(context->stream);
-        if (file_size > 0) {
-            info->m_iBitRate_Kbs = (UINT)((file_size * 8) / (info->m_iFileLength_Secs * 1000));
+        if (context->file_size_bytes > 0) {
+            info->m_iBitRate_Kbs = (UINT)((context->file_size_bytes * 8) /
+                                          (info->m_iFileLength_Secs * 1000));
         } else {
             info->m_iBitRate_Kbs = 0;
         }
@@ -641,7 +573,7 @@ CPs_CoDecModule* CPP_OMFLAC_Create(void)
     // Enhanced initialization with C23 functions
     module->Uninitialise = CPP_OMFLAC_Uninitialise;
     module->OpenFile = CPP_OMFLAC_OpenFile;
-    module->CloseFile = NULL;  // Handled by Uninitialise
+    module->CloseFile = CPP_OMFLAC_CloseFile;
     module->Seek = CPP_OMFLAC_Seek;
     module->GetFileInfo = NULL;  // TODO: Implement enhanced file info
     module->GetPCMBlock = CPP_OMFLAC_GetPCMBlock;
@@ -657,7 +589,7 @@ void CP_InitialiseCodec_FLAC(CPs_CoDecModule* codec)
     // Initialize function pointers
     codec->Uninitialise = CPP_OMFLAC_Uninitialise;
     codec->OpenFile = CPP_OMFLAC_OpenFile;
-    codec->CloseFile = NULL;  // Handled by Uninitialise
+    codec->CloseFile = CPP_OMFLAC_CloseFile;
     codec->Seek = CPP_OMFLAC_Seek;
     codec->GetFileInfo = CPP_OMFLAC_GetFileInfo;
     codec->GetPCMBlock = CPP_OMFLAC_GetPCMBlock;
