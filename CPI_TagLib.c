@@ -1170,7 +1170,6 @@ BOOL CPTL_ReadExtendedTags(const char* pcFilePath,
         if (fileRef.isNull() || !fileRef.tag())
             return FALSE;
             
-        TagLib::Tag* tag = fileRef.tag();
         TagLib::PropertyMap properties = fileRef.file()->properties();
         
         // Extract Composer (TCOM in ID3v2, COMPOSER in Vorbis/APE)
@@ -1324,7 +1323,7 @@ BOOL CPTL_WriteExtendedTags(const char* pcFilePath,
         if (iDiscNumber > 0)
         {
             char discStr[16];
-            sprintf(discStr, "%u", iDiscNumber);
+            snprintf(discStr, sizeof(discStr), "%u", iDiscNumber);
             properties.replace("DISCNUMBER", TagLib::String(discStr, TagLib::String::UTF8));
         }
         
@@ -1332,7 +1331,7 @@ BOOL CPTL_WriteExtendedTags(const char* pcFilePath,
         if (iBPM > 0)
         {
             char bpmStr[16];
-            sprintf(bpmStr, "%u", iBPM);
+            snprintf(bpmStr, sizeof(bpmStr), "%u", iBPM);
             properties.replace("BPM", TagLib::String(bpmStr, TagLib::String::UTF8));
         }
         
@@ -1450,7 +1449,7 @@ BOOL CPTL_WriteReplayGain(const char* pcFilePath,
         if (fTrackGain != 0.0f)
         {
             char gainStr[32];
-            sprintf(gainStr, "%.2f dB", fTrackGain);
+            snprintf(gainStr, sizeof(gainStr), "%.2f dB", fTrackGain);
             properties.replace("REPLAYGAIN_TRACK_GAIN", TagLib::String(gainStr, TagLib::String::UTF8));
         }
         
@@ -1458,7 +1457,7 @@ BOOL CPTL_WriteReplayGain(const char* pcFilePath,
         if (fTrackPeak != 0.0f)
         {
             char peakStr[32];
-            sprintf(peakStr, "%.6f", fTrackPeak);
+            snprintf(peakStr, sizeof(peakStr), "%.6f", fTrackPeak);
             properties.replace("REPLAYGAIN_TRACK_PEAK", TagLib::String(peakStr, TagLib::String::UTF8));
         }
         
@@ -1466,7 +1465,7 @@ BOOL CPTL_WriteReplayGain(const char* pcFilePath,
         if (fAlbumGain != 0.0f)
         {
             char gainStr[32];
-            sprintf(gainStr, "%.2f dB", fAlbumGain);
+            snprintf(gainStr, sizeof(gainStr), "%.2f dB", fAlbumGain);
             properties.replace("REPLAYGAIN_ALBUM_GAIN", TagLib::String(gainStr, TagLib::String::UTF8));
         }
         
@@ -1474,7 +1473,7 @@ BOOL CPTL_WriteReplayGain(const char* pcFilePath,
         if (fAlbumPeak != 0.0f)
         {
             char peakStr[32];
-            sprintf(peakStr, "%.6f", fAlbumPeak);
+            snprintf(peakStr, sizeof(peakStr), "%.6f", fAlbumPeak);
             properties.replace("REPLAYGAIN_ALBUM_PEAK", TagLib::String(peakStr, TagLib::String::UTF8));
         }
         
@@ -1536,7 +1535,6 @@ BOOL CPTL_ReadAudioProperties(const char* pcFilePath,
             TagLib::MPEG::File* mpegFile = dynamic_cast<TagLib::MPEG::File*>(file);
             if (mpegFile && mpegFile->audioProperties())
             {
-                TagLib::MPEG::Properties* mpegProps = mpegFile->audioProperties();
                 // Note: TagLib doesn't provide direct VBR detection for MP3
                 // We can estimate: if the file has XING/VBRI header, it's VBR
                 bitrateMode = "CBR";  // Default assumption

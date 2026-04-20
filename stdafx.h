@@ -35,28 +35,9 @@
 #include <shellapi.h>
 #include <io.h>
 
-// Safe sprintf replacement using snprintf
-// NOTE: wsprintf does NOT support floating-point (%f, %e, %g) format specifiers.
-// We use _snprintf instead, which supports all C format specifiers.
-// The buffer size is inferred via a wrapper - callers must ensure adequate buffer size.
-#ifndef sprintf
-#define sprintf cp_sprintf_wrapper
-#endif
-
-// cp_sprintf_wrapper: drop-in replacement for sprintf that is safer than wsprintf
-// Supports floating-point format specifiers unlike wsprintf
-// NOTE: Buffer size cannot be inferred from sprintf signature. This uses a
-// conservative maximum. Prefer snprintf(buf, sizeof(buf), ...) for new code.
-static inline int cp_sprintf_wrapper(char* buffer, const char* format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    int result = _vsnprintf(buffer, 2048, format, args);
-    if (result < 0)
-        buffer[2047] = '\0'; // Ensure null-termination on truncation
-    va_end(args);
-    return result;
-}
+// sprintf is NOT safe - all code must use snprintf(buf, sizeof(buf), ...)
+// The unsafe cp_sprintf_wrapper has been removed. Any remaining sprintf usage
+// will use the CRT function. For new code, always use snprintf() or cp_snprintf().
 
 // String function macros - legacy compatibility layer
 // NOTE: These macros map to Windows lstr* functions for compatibility.

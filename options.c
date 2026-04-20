@@ -430,7 +430,9 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 						(BOOL)SendDlgItemMessage(hwndDlg, IDC_STICKYWINDOWS, BM_GETCHECK,
 										   0, 0);
 					{
+#ifdef ENABLE_DISCORD_RPC
 						BOOL bWasEnabled = options.discord_rpc_enabled;
+#endif
 						options.discord_rpc_enabled =
 							(BOOL)SendDlgItemMessage(hwndDlg, IDC_DISCORDRPC, BM_GETCHECK,
 											   0, 0);

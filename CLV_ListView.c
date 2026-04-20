@@ -168,7 +168,6 @@ LRESULT CALLBACK exp_ListViewWindowProc(HWND hWnd, UINT uiMessage, WPARAM wParam
 CP_HLISTVIEW CLV_Create(HWND hWndParent, const int iX, const int iY, const int iWidth, const int iHeight)
 {
 	WNDCLASS wcPlaylist;
-	HWND hWndWindow;
 	CIs_ListViewData* pListData;
 	
 	wcPlaylist.style = CS_DBLCLKS;
@@ -219,7 +218,7 @@ CP_HLISTVIEW CLV_Create(HWND hWndParent, const int iX, const int iY, const int i
 	pListData->m_hndlr_ColHeaderClick = NULL;
 	pListData->m_hndlr_UnhandledKeyPress = NULL;
 	
-	hWndWindow = CreateWindowEx(WS_EX_ACCEPTFILES,
+	(void)CreateWindowEx(WS_EX_ACCEPTFILES,
 								CLC_BRISKPLAYER_LISTVIEW_WINDOWCLASSNAME,
 								"",
 								WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE,

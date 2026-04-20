@@ -560,7 +560,6 @@ void CPP_OMMP3_Seek(CPs_CoDecModule* pModule, int const numer, int const denom)
 {
 	CPs_CoDec_MPEG *context = (CPs_CoDec_MPEG *)pModule->m_pModuleCookie;
 	double fraction;
-	unsigned long position;
 	
 	CP_CHECKOBJECT(context);
 	CP_ASSERT(context->m_pInStream);
@@ -572,38 +571,42 @@ void CPP_OMMP3_Seek(CPs_CoDecModule* pModule, int const numer, int const denom)
 		
 	fraction = (double) numer / denom;
 	
-	position = (unsigned long)(fraction * context->size);
-	
-	if (context->xing.flags & XING_TOC)
 	{
-		/* use Xing TOC to get file offset */
-		int percent, p1, p2;
-		double d1, d2, d;
+		unsigned long position = (unsigned long)(fraction * context->size);
 		
-		percent = (int)(fraction * 100);
-		
-		if (percent == 0)
-			position = 0;
-		else if (percent == 100)
-			position = context->size;
-		else
+		if (context->xing.flags & XING_TOC)
 		{
-			p1 = percent;
+			/* use Xing TOC to get file offset */
+			int percent, p1, p2;
+			double d1, d2, d;
 			
-			if (percent < 99)
-				p2 = percent + 1;
+			percent = (int)(fraction * 100);
+			
+			if (percent == 0)
+				position = 0;
+			else if (percent == 100)
+				position = context->size;
 			else
 			{
-				p1 = percent - 1;
-				p2 = percent;
+				p1 = percent;
+				
+				if (percent < 99)
+					p2 = percent + 1;
+				else
+				{
+					p1 = percent - 1;
+					p2 = percent;
+				}
+				
+				d1 = context->xing.toc[p1] / 256.0;
+				d2 = context->xing.toc[p2] / 256.0;
+				d = d1 + (d2 - d1) * (fraction * 100 - p1);
+				
+				position = (unsigned long)(d * context->size);
 			}
-			
-			d1 = context->xing.toc[p1] / 256.0;
-			d2 = context->xing.toc[p2] / 256.0;
-			d = d1 + (d2 - d1) * (fraction * 100 - p1);
-			
-			position = (unsigned long)(d * context->size);
 		}
+		
+		context->m_pInStream->Seek(context->m_pInStream, (LONG)position);
 	}
 	
 	context->timer = context->length;
@@ -612,8 +615,6 @@ void CPP_OMMP3_Seek(CPs_CoDecModule* pModule, int const numer, int const denom)
 	if (denom > 1) {
 		context->timer = mad_timer_divide_int(context->timer, denom);
 	}
-	
-	context->m_pInStream->Seek(context->m_pInStream, (LONG)(context->size * fraction));
 	
 	if (context->m_pInStream->Read(context->m_pInStream, context->buffer, sizeof(context->buffer), &context->buflen) == FALSE)
 		context->buflen = 0;

@@ -177,6 +177,68 @@ char* STR_AllocConvertFromUnicode(const WCHAR* pwcSource)
 }
 
 //
+// Validate that a string is a valid MusicBrainz ID (UUID format)
+// Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (36 chars, hex + dashes)
+//
+BOOL STR_IsValidMusicBrainzID(const char* pcID)
+{
+	int i;
+	if (!pcID)
+		return FALSE;
+	
+	// Must be exactly 36 characters
+	if (strlen(pcID) != 36)
+		return FALSE;
+	
+	for (i = 0; i < 36; i++)
+	{
+		char c = pcID[i];
+		if (i == 8 || i == 13 || i == 18 || i == 23)
+		{
+			if (c != '-') return FALSE;
+		}
+		else
+		{
+			if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
+				return FALSE;
+		}
+	}
+	
+	return TRUE;
+}
+
+BOOL STR_OpenMusicBrainzPage(HWND hWndOwner, const char* pcTrackID,
+                              const char* pcReleaseID, const char* pcArtistID)
+{
+	char url[512];
+	const char* pcID = NULL;
+	const char* pcType = NULL;
+
+	if (pcTrackID && STR_IsValidMusicBrainzID(pcTrackID))
+	{
+		pcID = pcTrackID;
+		pcType = "recording";
+	}
+	else if (pcReleaseID && STR_IsValidMusicBrainzID(pcReleaseID))
+	{
+		pcID = pcReleaseID;
+		pcType = "release";
+	}
+	else if (pcArtistID && STR_IsValidMusicBrainzID(pcArtistID))
+	{
+		pcID = pcArtistID;
+		pcType = "artist";
+	}
+
+	if (!pcID)
+		return FALSE;
+
+	snprintf(url, sizeof(url), "https://musicbrainz.org/%s/%s", pcType, pcID);
+	ShellExecuteA(hWndOwner, "open", url, NULL, NULL, SW_SHOWNORMAL);
+	return TRUE;
+}
+
+//
 //
 //
 

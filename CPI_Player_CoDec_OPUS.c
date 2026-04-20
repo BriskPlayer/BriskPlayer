@@ -67,36 +67,15 @@ static int opus_read_cb(void* stream, unsigned char* ptr, int nbytes)
 static int opus_seek_cb(void* stream, opus_int64 offset, int whence)
 {
     OpusContext* ctx = (OpusContext*)stream;
-    if (!ctx || !ctx->input_stream) return -1;
-    if (!ctx->input_stream->IsSeekable(ctx->input_stream)) return -1;
-
-    uint64_t new_pos;
-    switch (whence) {
-        case SEEK_SET:
-            new_pos = (uint64_t)offset;
-            break;
-        case SEEK_CUR:
-            new_pos = ctx->input_stream->Tell(ctx->input_stream) + offset;
-            break;
-        case SEEK_END:
-            new_pos = ctx->input_stream->GetLength(ctx->input_stream) + offset;
-            break;
-        default:
-            return -1;
-    }
-
-    if (new_pos > ctx->input_stream->GetLength(ctx->input_stream))
-        return -1;
-
-    ctx->input_stream->Seek(ctx->input_stream, new_pos);
-    return 0;
+    if (!ctx) return -1;
+    return CP_StreamSeek(ctx->input_stream, (long long)offset, whence);
 }
 
 static opus_int64 opus_tell_cb(void* stream)
 {
     OpusContext* ctx = (OpusContext*)stream;
-    if (!ctx || !ctx->input_stream) return -1;
-    return (opus_int64)ctx->input_stream->Tell(ctx->input_stream);
+    if (!ctx) return -1;
+    return (opus_int64)CP_StreamTell(ctx->input_stream);
 }
 
 static int opus_close_cb(void* stream)
@@ -115,23 +94,15 @@ static const OpusFileCallbacks opus_callbacks = {
 ////////////////////////////////////////////////////////////////////////////////
 // Module functions
 
+static void CPP_OMOPUS_CloseFile(CPs_CoDecModule* module);
+
 static void CPP_OMOPUS_Uninitialise(CPs_CoDecModule* module)
 {
     if (!module || !module->m_pModuleCookie) return;
 
-    OpusContext* ctx = (OpusContext*)module->m_pModuleCookie;
+    CPP_OMOPUS_CloseFile(module);
 
-    if (ctx->opus_file) {
-        op_free(ctx->opus_file);
-        ctx->opus_file = NULL;
-    }
-
-    if (ctx->input_stream) {
-        ctx->input_stream->Uninitialise(ctx->input_stream);
-        ctx->input_stream = NULL;
-    }
-
-    free(ctx);
+    free(module->m_pModuleCookie);
     module->m_pModuleCookie = NULL;
 
     CPFA_EmptyFileAssociations(module);

@@ -71,7 +71,7 @@ static BOOL CALLBACK CPDSP_EnumWindowsCallback(HWND hwnd, LPARAM lParam);
 
 static BOOL CALLBACK CPDSP_EnumWindowsCallback(HWND hwnd, LPARAM lParam)
 {
-    HMODULE hPluginModule = (HMODULE)lParam;
+    (void)lParam;
     DWORD dwProcessId = 0;
     
     GetWindowThreadProcessId(hwnd, &dwProcessId);
@@ -148,6 +148,17 @@ void CPDSP_Uninitialize(void)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Debug Log Helper
+////////////////////////////////////////////////////////////////////////////////
+
+static FILE* CPDSP_OpenDebugLog(const char* pcMode)
+{
+    char pcPath[MAX_PATH];
+    main_get_program_file_path("dsp_debug.log", pcPath, MAX_PATH);
+    return fopen(pcPath, pcMode);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Plugin Discovery
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -165,8 +176,8 @@ void CPDSP_ScanForPlugins(void)
     // Free any existing plugin list
     CPDSP_FreePluginList();
     
-    // Open debug log file
-    debugFile = fopen("dsp_debug.log", "w");
+    // Open debug log file in application directory (absolute path)
+    debugFile = CPDSP_OpenDebugLog("w");
     if (debugFile) fprintf(debugFile, "DSP Plugin Scan Starting...\n");
     
     // Get the application directory
@@ -224,28 +235,16 @@ static void CPDSP_ProbePlugin(const char* pcPluginPath)
     winampDSPGetHeaderType pfnGetHeader;
     winampDSPHeader* pHeader;
     int iModuleIndex;
-    char szDirectory[MAX_PATH];
-    char* pLastSlash;
+    FILE* debugFile;
     
-    // Open debug log file (append mode)
-    FILE* debugFile = fopen("dsp_debug.log", "a");
+    // Open debug log file in application directory (absolute path, append mode)
+    debugFile = CPDSP_OpenDebugLog("a");
     if (debugFile) fprintf(debugFile, "Probing plugin: '%s'\n", pcPluginPath);
     
-    // Extract the directory from the plugin path and add it to DLL search path
-    strncpy(szDirectory, pcPluginPath, MAX_PATH - 1);
-    szDirectory[MAX_PATH - 1] = '\0';
-    pLastSlash = strrchr(szDirectory, '\\');
-    if (!pLastSlash) pLastSlash = strrchr(szDirectory, '/');
-    if (pLastSlash) *pLastSlash = '\0';
-    
-    if (debugFile) fprintf(debugFile, "  Setting DLL directory to: '%s'\n", szDirectory);
-    SetDllDirectoryA(szDirectory);
+    if (debugFile) fprintf(debugFile, "  Setting DLL directory to plugin dir\n");
     
     // Load the DLL
-    hModule = LoadLibraryA(pcPluginPath);
-    
-    // Reset DLL directory
-    SetDllDirectoryA(NULL);
+    hModule = LoadLibrarySafeA(pcPluginPath);
     
     if (!hModule)
     {
@@ -456,8 +455,8 @@ BOOL CPDSP_ActivatePlugin(int iPluginIndex)
         return FALSE;
     }
     
-    // Load the DLL
-    hModule = LoadLibrary(pInfo->m_pcPluginPath);
+    // Load the DLL - restrict DLL search path to plugin's directory
+    hModule = LoadLibrarySafeA(pInfo->m_pcPluginPath);
     if (!hModule)
     {
         CP_TRACE1("Failed to load DSP plugin: %s", pInfo->m_pcPluginPath);

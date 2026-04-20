@@ -276,7 +276,6 @@ void Properties_OnUpdateFromMusicBrainz(HWND hWnd, CP_HPLAYLISTITEM hItem)
 {
 	const char* pcTrackID;
 	const char* pcReleaseID;
-	char url[512];
 	
 	// Get MusicBrainz IDs
 	pcTrackID = CPLI_GetMusicBrainz_TrackID(hItem);
@@ -293,16 +292,7 @@ void Properties_OnUpdateFromMusicBrainz(HWND hWnd, CP_HPLAYLISTITEM hItem)
 	}
 	
 	// For now, just open the MusicBrainz page for the recording or release
-	if (pcTrackID)
-	{
-		snprintf(url, sizeof(url), "https://musicbrainz.org/recording/%s", pcTrackID);
-		ShellExecuteA(hWnd, "open", url, NULL, NULL, SW_SHOWNORMAL);
-	}
-	else if (pcReleaseID)
-	{
-		snprintf(url, sizeof(url), "https://musicbrainz.org/release/%s", pcReleaseID);
-		ShellExecuteA(hWnd, "open", url, NULL, NULL, SW_SHOWNORMAL);
-	}
+	STR_OpenMusicBrainzPage(hWnd, pcTrackID, pcReleaseID, NULL);
 	
 	// TODO: In the future, this could use the MusicBrainz web service API
 	// to fetch metadata and automatically update the tags

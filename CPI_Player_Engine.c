@@ -74,11 +74,17 @@ char* DownloadPlaylistToTempFile(const char* pcPlaylistURL)
 	}
 	
 	// Generate temp filename (Unicode)
+	// GetTempFileNameW with uUnique=0 atomically creates a zero-byte file.
+	// We delete it immediately and create a new file with the proper extension
+	// to avoid TOCTOU race conditions and orphaned temp files.
 	if (GetTempFileNameW(szTempDir, L"BRP", 0, szTempFile) == 0)
 	{
 		CP_LOG_ERROR("DownloadPlaylistToTempFile: GetTempFileNameW failed\n");
 		return NULL;
 	}
+	
+	// Delete the zero-byte file created by GetTempFileNameW
+	DeleteFileW(szTempFile);
 	
 	// Determine file extension from URL and append (Unicode)
 	const WCHAR* pwcExt = L".tmp";
@@ -111,8 +117,8 @@ char* DownloadPlaylistToTempFile(const char* pcPlaylistURL)
 		return NULL;
 	}
 	
-	// Create temp file with Unicode filename for international character support
-	hFile = CreateFileW(szTempFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY, NULL);
+	// Create temp file - use CREATE_NEW to fail if file already exists (prevents symlink attacks)
+	hFile = CreateFileW(szTempFile, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_TEMPORARY, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		CP_LOG_ERROR("DownloadPlaylistToTempFile: CreateFileW failed\n");

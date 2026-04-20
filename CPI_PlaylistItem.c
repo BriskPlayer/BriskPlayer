@@ -884,7 +884,12 @@ void CPLI_SetTrackNum_AsText(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
 	if (pcNewValue[0] == '\0')
 		pItem->m_cTrackNum = CIC_INVALIDTRACKNUM;
 	else
-		pItem->m_cTrackNum = (unsigned char)atoi(pcNewValue);
+	{
+		int iVal = atoi(pcNewValue);
+		if (iVal < 0 || iVal > 255)
+			iVal = CIC_INVALIDTRACKNUM;
+		pItem->m_cTrackNum = (unsigned char)iVal;
+	}
 		
 	if (pItem->m_pcTrackNum_AsText)
 		free(pItem->m_pcTrackNum_AsText);
@@ -1868,10 +1873,7 @@ void CPLI_SetPath(CPs_PlaylistItem* pItem, const char* pcPath)
 		
 		
 	// Store the full path to the file if this isn't a stream
-	if (_strnicmp(CIC_HTTPHEADER, pcPath, 5) != 0
-			&& _strnicmp(CIC_ICYHEADER, pcPath, 4) != 0
-			&& _strnicmp(CIC_HTTPSHEADER, pcPath, 6) != 0
-			&& _strnicmp(CIC_FTPHEADER, pcPath, 4) != 0)
+	if (!CP_IsURL(pcPath))
 	{
 		_fullpath(cFullPath, pcPath, MAX_PATH);
 		uPathSize = STR_AllocSetString(&pItem->m_pcPath, cFullPath, FALSE);

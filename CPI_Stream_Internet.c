@@ -97,6 +97,9 @@ BOOL ReadStreamData(HINTERNET hURLStream, CPs_BufferFillerContext* pContext, BYT
 		return InternetReadFile(hURLStream, pBuffer, dwRequestedBytes, pdwBytesRead);
 	}
 	
+	// Loop to skip metadata blocks and deliver audio data (avoids recursion)
+	for (;;)
+	{
 	// Calculate how many audio bytes we can read before hitting metadata
 	DWORD dwBytesUntilMeta = pContext->m_dwIcyMetaInt - pContext->m_dwAudioBytesRead;
 	DWORD dwBytesToRead = min(dwRequestedBytes, dwBytesUntilMeta);
@@ -136,7 +139,7 @@ BOOL ReadStreamData(HINTERNET hURLStream, CPs_BufferFillerContext* pContext, BYT
 					return FALSE;
 			}
 			pContext->m_dwAudioBytesRead = 0;
-			return ReadStreamData(hURLStream, pContext, pBuffer, dwRequestedBytes, pdwBytesRead);
+			continue; // Loop back to try reading audio data
 		}
 		
 		CP_TRACE1("EP_FillerThread::Reading metadata block of %lu bytes", dwMetaDataSize);
@@ -168,12 +171,11 @@ BOOL ReadStreamData(HINTERNET hURLStream, CPs_BufferFillerContext* pContext, BYT
 			}
 		}
 		
-		// Reset audio byte counter
+		// Reset audio byte counter and loop to read audio data
 		pContext->m_dwAudioBytesRead = 0;
-		
-		// Now try to read audio data again
-		return ReadStreamData(hURLStream, pContext, pBuffer, dwRequestedBytes, pdwBytesRead);
+		continue;
 	}
+	} // end for(;;)
 }
 
 //
@@ -580,9 +582,20 @@ unsigned int _stdcall EP_FillerThread(void* _pContext)
 				if (_strnicmp(szBuffer, "icy-metaint:", 12) == 0)
 				{
 					char* pcValue = szBuffer + 12;
+					long lMetaInt;
 					while (*pcValue == ' ' || *pcValue == '\t') pcValue++; // Skip whitespace
-					pContext->m_dwIcyMetaInt = atol(pcValue);
-					CP_TRACE1("EP_FillerThread::Found icy-metaint: %lu", pContext->m_dwIcyMetaInt);
+					lMetaInt = atol(pcValue);
+					// Validate: must be positive and reasonable (at least 256 bytes, at most 1MB)
+					if (lMetaInt >= 256 && lMetaInt <= 1048576)
+					{
+						pContext->m_dwIcyMetaInt = (DWORD)lMetaInt;
+						CP_TRACE1("EP_FillerThread::Found icy-metaint: %lu", pContext->m_dwIcyMetaInt);
+					}
+					else
+					{
+						CP_TRACE1("EP_FillerThread::Ignoring invalid icy-metaint: %ld", lMetaInt);
+						pContext->m_dwIcyMetaInt = 0;
+					}
 					break;
 				}
 				dwBufferSize = sizeof(szBuffer);

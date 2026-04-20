@@ -78,6 +78,8 @@ typedef void* CP_HSYSICON;
 #define CIC_ICYHEADER					"icy://"
 #define CIC_FTPHEADER					"ftp://"
 
+BOOL    CP_IsURL(const char* pcPath);
+
 #ifdef _DEBUG
 #define CLC_BRISKPLAYER_MUTEX			"BRISKPLAYER-045FA840-B10D-2E3E-3436-006067709674D"
 #else
@@ -328,6 +330,8 @@ char   *str_delete_substr(char *strbuf, char *strtodel);
 char   *str_trim(char *string);
 DWORD   main_get_program_path(HINSTANCE hInst, LPTSTR pszBuffer,
 							  DWORD dwSize);
+DWORD   main_get_program_file_path(const char* pcFilename, char* pszBuffer, DWORD dwSize);
+HMODULE LoadLibrarySafeA(const char* pcDllPath);
 NODISCARD HBITMAP systray_rotate_bmp(HBITMAP hBitmap, float radians,
 						   COLORREF clrBack);
 HRESULT path_create_link(LPCSTR lpszPathObj, LPSTR lpszPathLink,

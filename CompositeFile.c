@@ -35,6 +35,7 @@
 //
 #define CPC_PKFILE_METHOD_STORED  0x0
 #define CPC_PKFILE_METHOD_DEFLATED  0x8
+#define CPC_PKFILE_MAX_UNCOMPRESSED  0x02000000  // 32MB max decompressed size per entry
 ////////////////////////////////////////////////////////////////////////////////
 //
 #pragma pack(push, 1)
@@ -99,13 +100,6 @@ typedef struct _CPs_CompositeContext
 ////////////////////////////////////////////////////////////////////////////////
 
 
-////////////////////////////////////////////////////////////////////////////////
-// Some helper macros
-//
-#define CPM_GET_BYTE(offset) (*(BYTE*)(pContext->m_pFileBase + (offset++) ))
-#define CPM_GET_WORD(offset) (*(WORD*)(pContext->m_pFileBase + (offset+=2) - 2))
-#define CPM_GET_DWORD(offset) (*(DWORD*)(pContext->m_pFileBase + (offset+=4) - 4))
-//
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -276,7 +270,14 @@ BOOL CF_GetSubFile(CP_COMPOSITEFILE hComposite, const char* pcSubfilename, void*
 		return FALSE;
 	}
 	
-	// Create dest block
+	// Create dest block - reject unreasonably large decompressed sizes (ZIP bomb protection)
+	if (pSubFile->m_iUncompressedSize > CPC_PKFILE_MAX_UNCOMPRESSED)
+	{
+		*ppSubFile_Uncompressed = NULL;
+		*piSubFile_Length = 0;
+		return FALSE;
+	}
+	
 	*ppSubFile_Uncompressed = malloc(pSubFile->m_iUncompressedSize);
 	if (!*ppSubFile_Uncompressed)
 	{
@@ -286,8 +287,25 @@ BOOL CF_GetSubFile(CP_COMPOSITEFILE hComposite, const char* pcSubfilename, void*
 	
 	*piSubFile_Length = pSubFile->m_iUncompressedSize;
 	
+	// Validate that the compressed data region is within the mapped file
+	if (pSubFile->m_iFileOffset + pSubFile->m_iCompressedSize < pSubFile->m_iFileOffset
+			|| pSubFile->m_iFileOffset + pSubFile->m_iCompressedSize > pContext->m_dwFileSize)
+	{
+		free(*ppSubFile_Uncompressed);
+		*ppSubFile_Uncompressed = NULL;
+		*piSubFile_Length = 0;
+		return FALSE;
+	}
+	
 	if (pSubFile->m_wMethod == CPC_PKFILE_METHOD_STORED)
 	{
+		if (pSubFile->m_iCompressedSize != pSubFile->m_iUncompressedSize)
+		{
+			free(*ppSubFile_Uncompressed);
+			*ppSubFile_Uncompressed = NULL;
+			*piSubFile_Length = 0;
+			return FALSE;
+		}
 		memcpy(*ppSubFile_Uncompressed, pContext->m_pFileBase + pSubFile->m_iFileOffset, *piSubFile_Length);
 	}
 	
@@ -342,11 +360,12 @@ BOOL CP_BuildDirectory(CP_COMPOSITEFILE hComposite)
 	// Scan the composite for the file headers (ignore the end directory stuff)
 	iOffset = 0;
 	
-	while (((iOffset + sizeof(CPs_PKFILE_HEADER)) < pContext->m_dwFileSize)
+	while (((iOffset + sizeof(CPs_PKFILE_HEADER)) <= pContext->m_dwFileSize)
 			&& *(DWORD*)(pContext->m_pFileBase + iOffset) != CPC_PKFILE_DIRMAGIC)
 	{
 		CPs_PKFILE_HEADER* pHeader = (CPs_PKFILE_HEADER*)(pContext->m_pFileBase + iOffset);
 		CPs_SubFile* pNewSubFile;
+		unsigned int iEntrySize;
 		
 		if (pHeader->m_dwSig != CPC_PKFILE_MAGIC
 				|| (pHeader->m_wBITs & CPC_PKFILE_BITS_ENCRYPTED)
@@ -354,6 +373,21 @@ BOOL CP_BuildDirectory(CP_COMPOSITEFILE hComposite)
 				|| (pHeader->m_wMethod != CPC_PKFILE_METHOD_STORED && pHeader->m_wMethod != CPC_PKFILE_METHOD_DEFLATED))
 		{
 			CP_TRACE0("ZIP format not understood");
+			return FALSE;
+		}
+		
+		// Validate that all header-referenced regions fall within the mapped file
+		iEntrySize = (unsigned int)sizeof(*pHeader)
+				   + (unsigned int)pHeader->m_wFilenameLen
+				   + (unsigned int)pHeader->m_wExtraFieldLen
+				   + pHeader->m_dwCompressedSize;
+		
+		// Check for integer overflow and out-of-bounds
+		if (iEntrySize < pHeader->m_dwCompressedSize
+				|| iOffset + iEntrySize < iOffset
+				|| iOffset + iEntrySize > pContext->m_dwFileSize)
+		{
+			CP_TRACE0("ZIP entry exceeds file bounds");
 			return FALSE;
 		}
 		
@@ -387,11 +421,8 @@ BOOL CP_BuildDirectory(CP_COMPOSITEFILE hComposite)
 		pNewSubFile->m_iFileOffset = iOffset + sizeof(*pHeader) + pHeader->m_wFilenameLen + pHeader->m_wExtraFieldLen;
 		CP_TRACE1("SubFile:\"%s\"", pNewSubFile->m_pcName);
 		
-		// Skip to next file
-		iOffset += sizeof(*pHeader)
-				   + pHeader->m_dwCompressedSize
-				   + pHeader->m_wFilenameLen
-				   + pHeader->m_wExtraFieldLen;
+		// Skip to next file (overflow already checked above)
+		iOffset += iEntrySize;
 	}
 	
 	

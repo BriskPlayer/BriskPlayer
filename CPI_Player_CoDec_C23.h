@@ -219,18 +219,6 @@ static inline void audio_process_stereo_float(struct AudioFrame frames[],
 // Audio filter function type
 typedef void (*AudioFilterFunc)(struct AudioFrame* frame);
 
-// Normalization filter implementation
-static void normalize_audio_filter(struct AudioFrame* frame)
-{
-    const float max_amplitude = 1.0f;
-    float peak = fmaxf(fabsf(frame->left), fabsf(frame->right));
-    if (peak > max_amplitude) {
-        float scale = max_amplitude / peak;
-        frame->left *= scale;
-        frame->right *= scale;
-    }
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 // C23 Codec Factory with Enhanced Type Safety
 

@@ -92,6 +92,7 @@ void CPI_Player_Output_Initialise_File(CPs_OutputModule* pModule)
 //
 void CPP_OMFL_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInfo, CP_HEQUALISER hEqualiser)
 {
+	(void)pFileInfo;
 
 	// This is called when some playing is required.
 	// Do all allocation here so that we do not hold
@@ -204,8 +205,7 @@ void CPP_OMFL_RefillBuffers(CPs_OutputModule* pModule)
 		
 		// saving internet stream
 		
-		if (_strnicmp(pathname, CIC_HTTPHEADER, strlen(CIC_HTTPHEADER)) == 0 ||
-		    _strnicmp(pathname, CIC_ICYHEADER, strlen(CIC_ICYHEADER)) == 0)
+		if (CP_IsURL(pathname))
 		{
 				cp_strcpy_s(newpath, MAX_PATH, "Stream.wav");
 				pFileInfo.m_iFileLength_Secs = 0xffffffff;
@@ -389,6 +389,9 @@ BOOL CPP_OMFL_IsOutputComplete(CPs_OutputModule* pModule)
 //
 void CPP_OMFL_OnEQChanged(CPs_OutputModule* pModule)
 {
+#ifndef _DEBUG
+	(void)pModule;
+#endif
 #ifdef _DEBUG
 	CPs_OutputContext_File* pContext = (CPs_OutputContext_File*)pModule->m_pModuleCookie;
 	
@@ -401,6 +404,9 @@ void CPP_OMFL_OnEQChanged(CPs_OutputModule* pModule)
 //
 void CPP_OMFL_Flush(CPs_OutputModule* pModule)
 {
+#ifndef _DEBUG
+	(void)pModule;
+#endif
 #ifdef _DEBUG
 	CPs_OutputContext_File* pContext = (CPs_OutputContext_File*)pModule->m_pModuleCookie;
 	

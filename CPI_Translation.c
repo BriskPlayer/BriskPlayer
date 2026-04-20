@@ -64,7 +64,7 @@ BOOL Translation_Initialize(void)
 // Function to mark all translatable strings (for POT file generation)
 // This function is never called at runtime - it's only used by xgettext
 // to extract strings for translation
-static void __translation_strings_marker(void) 
+static void __attribute__((unused)) __translation_strings_marker(void) 
 {
     // Menu strings
     _(STR_MENU_OPEN);

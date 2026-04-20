@@ -68,3 +68,7 @@ typedef struct _CPs_InStream
 //
 ////////////////////////////////////////////////////////////////////////////////
 CPs_InStream* CP_CreateInStream(const char* pcFlexiURL, HWND hWndOwner);
+
+// Shared stream seek helper for codec callbacks (bridges SEEK_SET/CUR/END to CPs_InStream)
+int CP_StreamSeek(CPs_InStream* pStream, long long iOffset, int iWhence);
+long long CP_StreamTell(CPs_InStream* pStream);

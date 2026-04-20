@@ -45,6 +45,7 @@
 // Stream size and time codes
 void CPI_Player_cb_OnStreamInfo(CP_HPLAYER hPlayer, const CPs_FileInfo* pInfo)
 {
+	(void)hPlayer;
 	globals.main_long_track_duration = pInfo->m_iFileLength_Secs;
 	
 	ZeroMemory(globals.main_text_bitrate, BITRATE_STRLEN);
@@ -87,6 +88,7 @@ void CPI_Player_cb_OnStreamInfo(CP_HPLAYER hPlayer, const CPs_FileInfo* pInfo)
 //
 void CPI_Player_cb_OnStreamOffset_Secs(CP_HPLAYER hPlayer, const int iTrackElapsedSeconds)
 {
+	(void)hPlayer;
 	globals.main_int_track_total_seconds = iTrackElapsedSeconds;
 	main_draw_time(windows.wnd_main);
 }
@@ -96,6 +98,7 @@ void CPI_Player_cb_OnStreamOffset_Secs(CP_HPLAYER hPlayer, const int iTrackElaps
 //
 void CPI_Player_cb_OnStreamOffset_Range(CP_HPLAYER hPlayer, const int iTrackElapsed_Range)
 {
+	(void)hPlayer;
 	// Redraw progress bar
 	globals.main_int_track_position = iTrackElapsed_Range;
 	
@@ -220,6 +223,7 @@ void CPI_Player_cb_OnPlayerState(CP_HPLAYER hPlayer, const CPe_PlayerState enPla
 //
 void CPI_Player_cb_OnSyncCookie(CP_HPLAYER hPlayer, const int iCookie)
 {
+	(void)hPlayer;
 	if (iCookie == CP_SYNCCOOKIE_DESTROY)
 		DestroyWindow(windows.wnd_main);
 }
@@ -229,6 +233,7 @@ void CPI_Player_cb_OnSyncCookie(CP_HPLAYER hPlayer, const int iCookie)
 //
 void CPI_Player_cb_OnVolumeChange(CP_HPLAYER hPlayer, const int iNewVolume)
 {
+	(void)hPlayer;
 	globals.m_iVolume = iNewVolume;
 	main_draw_vu_from_value(windows.wnd_main, VolumeSlider, iNewVolume);
 }
@@ -238,6 +243,7 @@ void CPI_Player_cb_OnVolumeChange(CP_HPLAYER hPlayer, const int iNewVolume)
 //
 void CPI_Player_cb_OnStreamStateChange(CP_HPLAYER hPlayer, const BOOL bStreaming, const int iBufferUsagePercent)
 {
+	(void)hPlayer;
 	const int iRange = Skin.Object[PositionSlider].maxw ? Skin.Object[PositionSlider].h : Skin.Object[PositionSlider].w;
 	
 	// Set streaming params
@@ -293,6 +299,7 @@ void CPI_Player_cb_OnGaplessTransition(CP_HPLAYER hPlayer)
 // Output device enumeration
 void CPI_Player_cb_OnEnumOutputDevice(CP_HPLAYER hPlayer, const char* pcDeviceName, const int iDeviceID)
 {
+	(void)hPlayer;
 	int iNewDeviceIDX;
 	
 	// Add this device to the configure dialog

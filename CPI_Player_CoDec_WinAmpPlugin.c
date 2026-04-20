@@ -376,8 +376,8 @@ void ProbeWinAmpModule(CPs_CoDecModule* pCoDec, const char* pcModulePath)
 	pContext = (CPs_CoDec_WinAmpPlugin*)pCoDec->m_pModuleCookie;
 	CP_CHECKOBJECT(pContext);
 	
-	// Load plugin and get EP
-	hModPlugin = LoadLibrary(pcModulePath);
+	// Load plugin and get EP - restrict DLL search path to plugin's directory
+	hModPlugin = LoadLibrarySafeA(pcModulePath);
 	
 	if (!hModPlugin)
 		return;
@@ -802,10 +802,9 @@ BOOL CPP_OMAPLG_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD
 		if (pContext->m_pActivePluginModule)
 			CloseCurrentModule(pContext);
 			
-		// Load plugin and get EP
+		// Load plugin and get EP - restrict DLL search path to plugin's directory
 		CP_TRACE1("Load module: \"%s\"", pSelectedPlugInModule->m_pcModuleName);
-		
-		pContext->m_hModPlugin = LoadLibrary(pSelectedPlugInModule->m_pcModuleName);
+		pContext->m_hModPlugin = LoadLibrarySafeA(pSelectedPlugInModule->m_pcModuleName);
 		
 		if (!pContext->m_hModPlugin)
 			return FALSE;

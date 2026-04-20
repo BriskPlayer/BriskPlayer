@@ -155,6 +155,9 @@ void IF_ProcessDeInit(void)
 //
 CP_HINTERFACE IF_Create(const char* pcTitle, const RECT* pInitialSize, const DWORD dwStyle)
 {
+	(void)pcTitle;
+	(void)pInitialSize;
+	(void)dwStyle;
 	CPs_InterfaceWindowState* pState;
 	
 	pState = (CPs_InterfaceWindowState*)SAFE_MALLOC(sizeof(*pState));
@@ -181,7 +184,7 @@ void IF_OpenWindow(CP_HINTERFACE hInterface, const char* pcTitle, const RECT* pI
 	pState->m_bSkipRegion = FALSE;
 	
 	// Create Windows window
-	HWND hWnd = CreateWindowEx(WS_EX_ACCEPTFILES,
+	(void)CreateWindowEx(WS_EX_ACCEPTFILES,
 				   CLC_BRISKPLAYER_INTERFACECLASSNAME,
 				   pcTitle,
 				   WS_POPUP | WS_CLIPCHILDREN | WS_SYSMENU

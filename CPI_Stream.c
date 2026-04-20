@@ -130,52 +130,13 @@ CPs_InStream* CP_CreateInStream(const char* pcFlexiURL, HWND hWndOwner)
 		}
 	}
 	
-	// Check for HTTP URLs
-	if (iURLLen > 5)
+	// Check for URL protocols (http, https, icy, ftp)
+	if (CP_IsURL(pcFlexiURL))
 	{
-		char cHeader[6];
-		memcpy(cHeader, pcFlexiURL, 5);
-		cHeader[5] = '\0';
+		pNewStream = CP_CreateInStream_Internet(pcFlexiURL, hWndOwner);
 		
-		if (stricmp(cHeader, "http:") == 0)
-		{
-			pNewStream = CP_CreateInStream_Internet(pcFlexiURL, hWndOwner);
-			
-			if (pNewStream)
-				return pNewStream;
-		}
-	}
-	
-	// Check for HTTPS URLs
-	if (iURLLen > 6)
-	{
-		char cHttpsHeader[7];
-		memcpy(cHttpsHeader, pcFlexiURL, 6);
-		cHttpsHeader[6] = '\0';
-		
-		if (stricmp(cHttpsHeader, "https:") == 0)
-		{
-			pNewStream = CP_CreateInStream_Internet(pcFlexiURL, hWndOwner);
-			
-			if (pNewStream)
-				return pNewStream;
-		}
-	}
-	
-	// Check for icy:// protocol (Icecast/SHOUTcast)
-	if (iURLLen > 4)
-	{
-		char cIcyHeader[5];
-		memcpy(cIcyHeader, pcFlexiURL, 4);
-		cIcyHeader[4] = '\0';
-		
-		if (stricmp(cIcyHeader, "icy:") == 0)
-		{
-			pNewStream = CP_CreateInStream_Internet(pcFlexiURL, hWndOwner);
-			
-			if (pNewStream)
-				return pNewStream;
-		}
+		if (pNewStream)
+			return pNewStream;
 	}
 	
 	// Try the local file system
@@ -197,3 +158,38 @@ CPs_InStream* CP_CreateInStream(const char* pcFlexiURL, HWND hWndOwner)
 //
 //
 //
+
+int CP_StreamSeek(CPs_InStream* pStream, long long iOffset, int iWhence)
+{
+	if (!pStream || !pStream->IsSeekable(pStream))
+		return -1;
+
+	uint64_t new_pos;
+
+	switch (iWhence) {
+		case SEEK_SET:
+			new_pos = (uint64_t)iOffset;
+			break;
+		case SEEK_CUR:
+			new_pos = pStream->Tell(pStream) + iOffset;
+			break;
+		case SEEK_END:
+			new_pos = pStream->GetLength(pStream) + iOffset;
+			break;
+		default:
+			return -1;
+	}
+
+	if (new_pos > pStream->GetLength(pStream))
+		return -1;
+
+	pStream->Seek(pStream, new_pos);
+	return 0;
+}
+
+long long CP_StreamTell(CPs_InStream* pStream)
+{
+	if (!pStream)
+		return -1;
+	return (long long)pStream->Tell(pStream);
+}

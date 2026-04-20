@@ -777,7 +777,7 @@ int     playlist_open_file(BOOL clearlist)
 				(void)path_remove_filespec(pcPathBuffer);
 			}
 			
-			strcpy(options.last_used_directory, pcPathBuffer);
+			cp_strcpy_s(options.last_used_directory, sizeof(options.last_used_directory), pcPathBuffer);
 			
 			// Convert back to Unicode for processing
 			WCHAR* pwcPathBuffer = STR_ConvertToUnicode(pcPathBuffer);
@@ -2314,7 +2314,7 @@ BOOL cmdline_parse_argument(char *token)
 	char    buffie[MAX_PATH] = "";
 	char    expath[MAX_PATH];
 	
-	strcpy(buffie, token);
+	cp_strcpy_s(buffie, sizeof(buffie), token);
 	path_unquote(buffie);
 	
 	if (buffie[0] == '\0')
@@ -2328,7 +2328,7 @@ BOOL cmdline_parse_argument(char *token)
 	}
 	
 	else
-		strcpy(expath, buffie);
+		cp_strcpy_s(expath, sizeof(expath), buffie);
 		
 	// Convert to Unicode for better filename support
 	WCHAR* pwcExpath = STR_ConvertToUnicode(expath);
@@ -2724,8 +2724,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 									&& firstItem == NULL))
 						{
 							char pcPlaylistFilename[MAX_PATH];
-							main_get_program_path(GetModuleHandle(NULL), pcPlaylistFilename, MAX_PATH);
-							strcat(pcPlaylistFilename, "default.m3u");
+							main_get_program_file_path("default.m3u", pcPlaylistFilename, MAX_PATH);
 							
 							SAFE_PLAYLIST_CALL(CPL_SyncLoadNextFile);
 							

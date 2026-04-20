@@ -156,7 +156,6 @@ void CPAAT_UpdateContent(CP_HPLAYLISTITEM hItem)
 	const char* pcArtist;
 	const char* pcAlbum;
 	const char* pcLength;
-	const char* pcArtists;
 	const char* pcFeaturedArtist;
 	const char* pcRemixer;
 	unsigned int iBitrate;
@@ -182,7 +181,6 @@ void CPAAT_UpdateContent(CP_HPLAYLISTITEM hItem)
 	pcPath = CPLI_GetPath(hItem);
 	
 	// Get multiple artists info
-	pcArtists = CPLI_GetArtists(hItem);
 	pcFeaturedArtist = CPLI_GetFeaturedArtist(hItem);
 	pcRemixer = CPLI_GetRemixer(hItem);
 	

@@ -36,6 +36,7 @@
 #include "CPI_Gettext.h"
 #include "CPI_AlbumArtTooltip.h"
 #include "CPI_DpiScale.h"
+#include "CPString.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -403,7 +404,6 @@ void CPlaylistWindow_TrackStackMenu(int iItem)
 	int iSearchItemIDX;
 	CP_HPLAYLISTITEM hClickedItem;
 	CPe_ItemStackState enClickedItemState;
-	BOOL bMultipleSelection;
 	
 	// We want to get the subitem's rect in the co-ordinate space of the dialog
 	hWndList = CLV_GetHWND(globals.m_hPlaylistViewControl);
@@ -414,12 +414,7 @@ void CPlaylistWindow_TrackStackMenu(int iItem)
 	
 	if (iSearchItemIDX != CPC_INVALIDITEM)
 		iSearchItemIDX = CLV_GetNextSelectedItem(globals.m_hPlaylistViewControl, iSearchItemIDX);
-		
-	if (iSearchItemIDX != CPC_INVALIDITEM)
-		bMultipleSelection = TRUE;
-	else
-		bMultipleSelection = FALSE;
-		
+	
 	ptItem.x = rSubItem.left;
 	ptItem.y = rSubItem.bottom;
 	ClientToScreen(hWndList, &ptItem);
@@ -914,7 +909,6 @@ BOOL CPlaylistWindow_OffsetSelectedItems(const int iOffset)
 	int iNumItemsInList;
 	int iStartItem, iTermItem, iItemInc, iItemIDX;
 	int iScanStartItem, iScanTermItem;
-	CP_HPLAYLISTITEM hActive;
 	int iNewFocusItemIDX;
 	
 	if (iOffset == 0)
@@ -1039,7 +1033,7 @@ BOOL CPlaylistWindow_OffsetSelectedItems(const int iOffset)
 	}
 	
 	// Set the "active" item in the list
-	hActive = CPL_GetActiveItem(globals.m_hPlaylist);
+	(void)CPL_GetActiveItem(globals.m_hPlaylist);
 	
 	return TRUE;
 }
@@ -1049,6 +1043,8 @@ BOOL CPlaylistWindow_OffsetSelectedItems(const int iOffset)
 //
 void CPlaylistWindow_CB_onMouseMove(CP_HINTERFACE hInterface, const POINTS _ptMouse, const unsigned short iFlags)
 {
+	(void)hInterface;
+	(void)iFlags;
 	POINT ptMouse;
 	int iHitItem;
 	
@@ -1077,6 +1073,9 @@ void CPlaylistWindow_CB_onMouseMove(CP_HINTERFACE hInterface, const POINTS _ptMo
 //
 void CPlaylistWindow_CB_onMouseButton_LUp(CP_HINTERFACE hInterface, const POINTS ptMouse, const unsigned short iFlags)
 {
+	(void)hInterface;
+	(void)ptMouse;
+	(void)iFlags;
 	IF_ReleaseMouseCapture(windows.m_hifPlaylist);
 }
 
@@ -1085,6 +1084,7 @@ void CPlaylistWindow_CB_onMouseButton_LUp(CP_HINTERFACE hInterface, const POINTS
 //
 void CPlaylistWindow_WM_COMMAND_IDC_PL_FLOATINGEDIT(WPARAM wParam, LPARAM lParam)
 {
+	(void)lParam;
 	if (HIWORD(wParam) == EN_KILLFOCUS)
 	{
 		// Floating combo control looses focus - destroy it (after breaking out of kill focus context)
@@ -1147,6 +1147,7 @@ void CPlaylistWindow_WM_COMMAND_IDC_PL_FLOATINGEDIT(WPARAM wParam, LPARAM lParam
 //
 void CPlaylistWindow_WM_COMMAND_IDC_PL_FLOATINGCOMBO(WPARAM wParam, LPARAM lParam)
 {
+	(void)lParam;
 	if (HIWORD(wParam) == CBN_KILLFOCUS)
 	{
 		// Floating combo control looses focus - destroy it (after breaking out of kill focus context)
@@ -1199,6 +1200,7 @@ void LVCB_DrawBackgroundRect(CPs_DrawContext* pDC)
 //
 void CPlaylistWindow_CB_onClose(CP_HINTERFACE hInterface)
 {
+	(void)hInterface;
 	options.show_playlist = FALSE;
 	CPlaylistWindow_SetVisible(FALSE);
 }
@@ -1218,6 +1220,8 @@ void LVCB_HeaderChanged(CP_HLISTVIEW _hListData)
 //
 void LVCB_ItemSelected(CP_HLISTVIEW _hListData, const int iItemIDX, const CP_HPLAYLISTITEM hItem)
 {
+	(void)_hListData;
+	(void)iItemIDX;
 	if (options.read_id3_tag_of_selected)
 		CPLI_ReadTag(hItem);
 }
@@ -1227,6 +1231,8 @@ void LVCB_ItemSelected(CP_HLISTVIEW _hListData, const int iItemIDX, const CP_HPL
 //
 void LVCB_ItemAction(CP_HLISTVIEW _hListData, const int iItemIDX, const CP_HPLAYLISTITEM hItem)
 {
+	(void)_hListData;
+	(void)iItemIDX;
 	// Setup & play the active item
 	if (CPL_Stack_GetItemState(globals.m_hPlaylist, hItem) == issUnstacked)
 	{
@@ -1248,6 +1254,8 @@ void LVCB_ItemAction(CP_HLISTVIEW _hListData, const int iItemIDX, const CP_HPLAY
 //
 void LVCB_ItemDrag(CP_HLISTVIEW _hListData, const int iItemIDX, const CP_HPLAYLISTITEM hItem)
 {
+	(void)_hListData;
+	(void)hItem;
 	globals.main_drag_anchor_point = iItemIDX;
 	IF_SetMouseCapture(windows.m_hifPlaylist, CPlaylistWindow_CB_onMouseMove, CPlaylistWindow_CB_onMouseButton_LUp);
 }
@@ -1257,6 +1265,7 @@ void LVCB_ItemDrag(CP_HLISTVIEW _hListData, const int iItemIDX, const CP_HPLAYLI
 //
 void LVCB_ColHeaderClick(CP_HLISTVIEW _hListData, const int iColIDX)
 {
+	(void)_hListData;
 	// Work out assending or decending
 	BOOL bDesc;
 	
@@ -1328,6 +1337,9 @@ void LVCB_ColHeaderClick(CP_HLISTVIEW _hListData, const int iColIDX)
 //
 void LVCB_ItemRightClick(CP_HLISTVIEW _hListData, const int iItemIDX, const int iColumnIDX, const CP_HPLAYLISTITEM hItem)
 {
+	(void)_hListData;
+	(void)iItemIDX;
+	(void)iColumnIDX;
 	HMENU hMenu;
 	POINT ptCursor;
 	UINT uiResult;
@@ -1382,24 +1394,7 @@ void LVCB_ItemRightClick(CP_HLISTVIEW _hListData, const int iItemIDX, const int 
 			const char* pcTrackID = CPLI_GetMusicBrainz_TrackID(hItem);
 			const char* pcReleaseID = CPLI_GetMusicBrainz_ReleaseID(hItem);
 			const char* pcArtistID = CPLI_GetMusicBrainz_ArtistID(hItem);
-			char url[512];
-			
-			// Open the most specific MusicBrainz page available
-			if (pcTrackID)
-			{
-				snprintf(url, sizeof(url), "https://musicbrainz.org/recording/%s", pcTrackID);
-				ShellExecuteA(windows.m_hWndPlaylist, "open", url, NULL, NULL, SW_SHOWNORMAL);
-			}
-			else if (pcReleaseID)
-			{
-				snprintf(url, sizeof(url), "https://musicbrainz.org/release/%s", pcReleaseID);
-				ShellExecuteA(windows.m_hWndPlaylist, "open", url, NULL, NULL, SW_SHOWNORMAL);
-			}
-			else if (pcArtistID)
-			{
-				snprintf(url, sizeof(url), "https://musicbrainz.org/artist/%s", pcArtistID);
-				ShellExecuteA(windows.m_hWndPlaylist, "open", url, NULL, NULL, SW_SHOWNORMAL);
-			}
+			STR_OpenMusicBrainzPage(windows.m_hWndPlaylist, pcTrackID, pcReleaseID, pcArtistID);
 			break;
 		}
 		
@@ -1424,6 +1419,7 @@ void LVCB_ItemRightClick(CP_HLISTVIEW _hListData, const int iItemIDX, const int 
 //
 void LVCB_UnhandledKeyPress(CP_HLISTVIEW _hListData, const int iVKey, const BOOL bAlt, const BOOL bCtrl, const BOOL bShift)
 {
+	(void)_hListData;
 	CP_HandleKeyPress_Playlist(windows.m_hWndPlaylist, iVKey, bAlt, bCtrl, bShift);
 }
 
@@ -1459,6 +1455,7 @@ void CPlaylistWindow_ClearSelectedItems(void)
 void CPlaylistWindow_CB_onCreate(CP_HINTERFACE hInterface, const RECT* pInitialPosition)
 {
 	(void)hInterface;
+	(void)pInitialPosition;
 	CPlaylistWindow_CreateListView();
 }
 

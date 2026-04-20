@@ -174,7 +174,7 @@ BOOL CPP_OMWAV_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD_
 		{
 			// Calculate tag size from sync-safe integer
 			iStreamStart = 10; // Header size
-			iStreamStart += (buffer[6] << 21) | (buffer[7] << 14) | (buffer[8] << 7) | buffer[9];
+			iStreamStart += ((buffer[6] & 0x7F) << 21) | ((buffer[7] & 0x7F) << 14) | ((buffer[8] & 0x7F) << 7) | (buffer[9] & 0x7F);
 		}
 		
 		SetFilePointer(pContext->m_hFile, iStreamStart, NULL, FILE_BEGIN);
@@ -296,14 +296,20 @@ void CPP_OMWAV_CloseFile(CPs_CoDecModule* pModule)
 BOOL SkipToChunk(HANDLE hFile, CPs_RIFFChunk* pChunk, const char cChunkID[4])
 {
 	DWORD dwBytesRead;
+	int iMaxChunks = 4096;  // Guard against infinite loops from malformed files
 	
-	while (ReadFile(hFile, pChunk, sizeof(*pChunk), &dwBytesRead, NULL)
+	while (--iMaxChunks > 0
+			&& ReadFile(hFile, pChunk, sizeof(*pChunk), &dwBytesRead, NULL)
 			&& dwBytesRead == sizeof(*pChunk))
 	{
 		if (memcmp(pChunk->m_cID, cChunkID, 4) == 0)
 			return TRUE;
-			
-		SetFilePointer(hFile, pChunk->m_dwLength, NULL, FILE_CURRENT);
+		
+		// Reject chunk lengths that would cause backward seeks when cast to LONG
+		if (pChunk->m_dwLength == 0 || pChunk->m_dwLength > 0x7FFFFFFF)
+			return FALSE;
+		
+		SetFilePointer(hFile, (LONG)pChunk->m_dwLength, NULL, FILE_CURRENT);
 	}
 	
 	return FALSE;

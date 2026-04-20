@@ -27,6 +27,8 @@
 #ifndef _WINDEF_
 typedef int BOOL;
 typedef unsigned short WCHAR;
+struct HWND__;
+typedef struct HWND__* HWND;
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -42,6 +44,14 @@ WCHAR* STR_ConvertToUnicode(const char* pcSource);
 char* STR_ConvertFromUnicode(const WCHAR* pwcSource);
 unsigned int STR_AllocSetStringW(WCHAR** ppwcDest, const WCHAR* pwcSource, const BOOL bFreeExisting);
 char* STR_AllocConvertFromUnicode(const WCHAR* pwcSource);
+
+// Validation utilities
+BOOL STR_IsValidMusicBrainzID(const char* pcID);
+
+// Open the best available MusicBrainz page for the given IDs (any may be NULL).
+// Returns TRUE if a page was opened.
+BOOL STR_OpenMusicBrainzPage(HWND hWndOwner, const char* pcTrackID,
+                              const char* pcReleaseID, const char* pcArtistID);
 
 #endif // CPSTRING_H
 

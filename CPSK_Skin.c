@@ -424,12 +424,12 @@ DWORD CPSK_DecodeAlign(const char* pcAlign)
 	char cAlignFlag[130];
 	DWORD dwAlignFlag = 0;
 	
-	strcpy(cAlign, pcAlign);
+	cp_strcpy_s(cAlign, sizeof(cAlign), pcAlign);
 	// while(sscanf(cAlign, " %128[a-zA-Z_] | %[^\0]", cAlignFlag, cAlign_Remains) > 0)
 	
 	while (sscanf_s(cAlign, " %128[a-zA-Z_] | %128s", cAlignFlag, (unsigned)sizeof(cAlignFlag), cAlign_Remains, (unsigned)sizeof(cAlign_Remains)) > 0)
 	{
-		strcpy(cAlign, cAlign_Remains);
+		cp_strcpy_s(cAlign, sizeof(cAlign), cAlign_Remains);
 		cAlign_Remains[0] = '\0';
 		
 		if (stricmp(cAlignFlag, "ALIGN_LEFT") == 0)

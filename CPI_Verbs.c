@@ -481,7 +481,7 @@ void CPVERB_AddFile(const CPe_VerbAction enAction, void* _pParam)
 void CPVERB_About(const CPe_VerbAction enAction, void* _pParam)
 {
 	if (enAction == vaDoVerb)
-		about_create((HWND)_pParam);
+		(void)about_create((HWND)_pParam);
 	else if (enAction == vaQueryName)
 	{
 		CPs_VerbQueryName* pParam = (CPs_VerbQueryName*)_pParam;

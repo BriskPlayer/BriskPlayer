@@ -106,7 +106,7 @@ BOOL CPG_Initialize(const GetTextConfig* config)
 #else
         const char* lang = getenv("LANG");
         if (lang && strlen(lang) >= 2) {
-            strncpy(g_current_language, lang, 2);
+            memcpy(g_current_language, lang, 2);
             g_current_language[2] = '\0';
         }
 #endif

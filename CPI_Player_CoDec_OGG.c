@@ -110,64 +110,27 @@ static size_t ogg_read_callback(void* buffer, size_t size, size_t count, void* s
     return bytes_read / size;  // Return number of items read
 }
 
-// Enhanced seek callback with better error handling
+// Seek callback using shared stream helper
 static int ogg_seek_callback(void* stream_ptr, ogg_int64_t offset, int whence)
 {
     OggContext* context = (OggContext*)stream_ptr;
-    
-    if (!context || !context->input_stream) {
-        return -1;
-    }
-    
-    if (!context->input_stream->IsSeekable(context->input_stream)) {
-        return -1;
-    }
-    
-    uint64_t new_position;
-    
-    switch (whence) {
-        case SEEK_SET:
-            new_position = (uint64_t)offset;
-            break;
-            
-        case SEEK_CUR:
-            new_position = context->input_stream->Tell(context->input_stream) + offset;
-            break;
-            
-        case SEEK_END:
-            new_position = context->input_stream->GetLength(context->input_stream) + offset;
-            break;
-            
-        default:
-            return -1;
-    }
-    
-    // Bounds checking
-    if (new_position > context->input_stream->GetLength(context->input_stream)) {
-        return -1;
-    }
-    
-    context->input_stream->Seek(context->input_stream, new_position);
+    if (!context) return -1;
+    return CP_StreamSeek(context->input_stream, (long long)offset, whence);
+}
+
+// Close callback (no-op - we handle cleanup elsewhere)
+static int ogg_close_callback(void* stream_ptr)
+{
+    (void)stream_ptr;
     return 0;
 }
 
-// Enhanced close callback (no-op for our implementation)
-static int ogg_close_callback(void* stream_ptr)
-{
-    (void)stream_ptr;  // Unused parameter
-    return 0;  // Success - we handle cleanup elsewhere
-}
-
-// Enhanced tell callback with error checking
+// Tell callback using shared stream helper
 static long ogg_tell_callback(void* stream_ptr)
 {
     OggContext* context = (OggContext*)stream_ptr;
-    
-    if (!context || !context->input_stream) {
-        return -1;
-    }
-    
-    return (long)context->input_stream->Tell(context->input_stream);
+    if (!context) return -1;
+    return (long)CP_StreamTell(context->input_stream);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

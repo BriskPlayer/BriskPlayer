@@ -155,7 +155,27 @@ void CPFA_AssociateWithEXE(CPs_CoDecModule* pCoDec)
 	while (pCursor)
 	{
 		char* pDotExt;
+		const char* pCheck;
+		BOOL bValidExt;
 		CP_CHECKOBJECT(pCursor);
+		
+		// Validate extension contains only safe characters (alphanumeric and digits)
+		bValidExt = TRUE;
+		for (pCheck = pCursor->m_pcExtension; *pCheck; pCheck++)
+		{
+			if (!((*pCheck >= 'a' && *pCheck <= 'z') || (*pCheck >= 'A' && *pCheck <= 'Z')
+				|| (*pCheck >= '0' && *pCheck <= '9')))
+			{
+				bValidExt = FALSE;
+				break;
+			}
+		}
+		if (!bValidExt || strlen(pCursor->m_pcExtension) == 0)
+		{
+			CP_TRACE1("Rejecting invalid file extension: \"%s\"", pCursor->m_pcExtension);
+			pCursor = (CPs_FileAssociation*)pCursor->m_pNext;
+			continue;
+		}
 		
 		// Build a string of the format .ext
 		pDotExt = (char*)malloc(strlen(pCursor->m_pcExtension) + 2);

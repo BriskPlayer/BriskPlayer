@@ -56,7 +56,7 @@ static inline int least_abs(int a, int b)
 }
 
 // Check if two windows are edge-to-edge docked (Audacious-style)
-static BOOL IsDockedToWindow(RECT* pWindow, RECT* pTarget, int dockType)
+static BOOL __attribute__((unused)) IsDockedToWindow(RECT* pWindow, RECT* pTarget, int dockType)
 {
     int wndRight = pWindow->right;
     int wndBottom = pWindow->bottom;
@@ -234,9 +234,6 @@ void SnapWindow(HWND hWnd, RECT* pMovingRect)
     // Horizontal and vertical snap offsets (Audacious uses separate tracking)
     int horiSnap = snapTolerance + 1;  // Start beyond tolerance (no snap)
     int vertSnap = snapTolerance + 1;
-    
-    int movingWidth = pMovingRect->right - pMovingRect->left;
-    int movingHeight = pMovingRect->bottom - pMovingRect->top;
     
     HWND dockedToWindow = NULL;
     

@@ -641,8 +641,6 @@ void CPP_OMWA_RefillBuffers(CPs_OutputModule* pModule)
         if (dwBytesRead < dwBytesNeeded)
             memset(pData + dwBytesRead, 0, dwBytesNeeded - dwBytesRead);
 
-        UINT32 framesWritten = (pContext->m_pMixFormat->nBlockAlign > 0)
-            ? dwBytesRead / pContext->m_pMixFormat->nBlockAlign : 0;
         // Release the full buffer (silence-padded)
         IAudioRenderClient_ReleaseBuffer(pContext->m_pRenderClient, uAvailFrames, 0);
 

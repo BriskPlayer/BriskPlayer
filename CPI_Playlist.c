@@ -345,8 +345,7 @@ void CPL_AddSingleFile_pt2(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hNewFile, co
 		int iLastDotIDX = CPC_INVALIDCHAR;
 		int iLastCharIDX = CPC_INVALIDCHAR;
 		
-		if (_strnicmp(pcPath, CIC_HTTPHEADER, strlen(CIC_HTTPHEADER)) == 0 ||
-		    _strnicmp(pcPath, CIC_ICYHEADER, strlen(CIC_ICYHEADER)) == 0)
+		if (CP_IsURL(pcPath))
 			iLastCharIDX = strlen(pcPath);
 		else
 			for (iCharIDX = 0; pcPath[iCharIDX]; iCharIDX++)
@@ -449,10 +448,7 @@ void CPL_AddSingleFile(CP_HPLAYLIST hPlaylist, const char* pcPath, const char* p
 		// it might get here if a stream is of the form http://ipaddr:port with no
 		// file name such as http://ipaddr:port/filename.ogg
 		
-		if (_strnicmp(CIC_HTTPHEADER, pcPath, 5) == 0
-				|| _strnicmp(CIC_ICYHEADER, pcPath, 4) == 0
-				|| _strnicmp("https:", pcPath, 6) == 0
-				|| _strnicmp("ftp:", pcPath, 4) == 0)
+		if (CP_IsURL(pcPath))
 			valid = TRUE;
 			
 		if (valid == FALSE)
@@ -1066,14 +1062,14 @@ void CPL_ExportPlaylist(CP_HPLAYLIST hPlaylist, const char* pcOutputName)
 				for (; iCharIDX < iPlaylist_DirectoryBytes; iCharIDX++)
 				{
 					if (pcOutputName[iCharIDX] == '\\')
-						strcat(cRelPath, "..\\");
+						cp_strcat_s(cRelPath, sizeof(cRelPath), "..\\");
 				}
 				
-				strcat(cRelPath, pcLastCommonSplitPoint);
+				cp_strcat_s(cRelPath, sizeof(cRelPath), pcLastCommonSplitPoint);
 			}
 			
 			else
-				strcpy(cRelPath, _pcFilename);
+				cp_strcpy_s(cRelPath, sizeof(cRelPath), _pcFilename);
 				
 			// PLS files have the format FileXXX=pathname - we want to write the stuff up to (and including)
 			// the equals sign
@@ -1103,6 +1099,18 @@ void CPL_AddPrefixedFile(CP_HPLAYLIST hPlaylist,
 {
 	const unsigned int iFile_VolumeBytes = CPL_GetPathVolumeBytes(pcFilename);
 	
+	// Reject path traversal attacks (../ or ..\) and UNC paths (\\server\share)
+	if (strstr(pcFilename, "..") != NULL)
+	{
+		CP_TRACE1("Rejecting playlist entry with path traversal: \"%s\"", pcFilename);
+		return;
+	}
+	if (pcFilename[0] == '\\' && pcFilename[1] == '\\')
+	{
+		CP_TRACE1("Rejecting playlist entry with UNC path: \"%s\"", pcFilename);
+		return;
+	}
+	
 	// If the file has volume information - add it as it is
 	
 	if (iFile_VolumeBytes)
@@ -1112,9 +1120,12 @@ void CPL_AddPrefixedFile(CP_HPLAYLIST hPlaylist,
 	else if (pcFilename[0] == '\\')
 	{
 		char cFullPath[MAX_PATH];
-		memcpy(cFullPath, pcPlaylistFile, iPlaylist_VolumeBytes);
-		strcpy(cFullPath + iPlaylist_VolumeBytes, pcFilename + 1);
-		CPL_AddSingleFile(hPlaylist, cFullPath, pcTitle);
+		size_t iRemaining = sizeof(cFullPath);
+		if (iPlaylist_VolumeBytes < iRemaining) {
+			memcpy(cFullPath, pcPlaylistFile, iPlaylist_VolumeBytes);
+			cp_strcpy_s(cFullPath + iPlaylist_VolumeBytes, iRemaining - iPlaylist_VolumeBytes, pcFilename + 1);
+			CPL_AddSingleFile(hPlaylist, cFullPath, pcTitle);
+		}
 	}
 	
 	// Add the filename prepended by the playlist's directory
@@ -1122,9 +1133,12 @@ void CPL_AddPrefixedFile(CP_HPLAYLIST hPlaylist,
 	else
 	{
 		char cFullPath[MAX_PATH];
-		memcpy(cFullPath, pcPlaylistFile, iPlaylist_DirBytes);
-		strcpy(cFullPath + iPlaylist_DirBytes, pcFilename);
-		CPL_AddSingleFile(hPlaylist, cFullPath, pcTitle);
+		size_t iRemaining = sizeof(cFullPath);
+		if (iPlaylist_DirBytes < iRemaining) {
+			memcpy(cFullPath, pcPlaylistFile, iPlaylist_DirBytes);
+			cp_strcpy_s(cFullPath + iPlaylist_DirBytes, iRemaining - iPlaylist_DirBytes, pcFilename);
+			CPL_AddSingleFile(hPlaylist, cFullPath, pcTitle);
+		}
 	}
 }
 
@@ -1985,7 +1999,7 @@ void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char *pDir)
 #endif
 	
 	// Build a full path to the directory
-	strcpy(cFullPath, pDir);
+	cp_strcpy_s(cFullPath, sizeof(cFullPath), pDir);
 	
 	if (cFullPath[iDirStrLen-1] == '\\' && iDirStrLen > 1)
 		cFullPath[iDirStrLen-1] = '\0';
@@ -2000,14 +2014,14 @@ void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char *pDir)
 	//Scan directory building a list of filenames
 	
 	if (strcmp(cFullPath, "\\") == 0)
-		strcpy(cWildCard, "\\*.*");
+		cp_strcpy_s(cWildCard, sizeof(cWildCard), "\\*.*");
 	else
 	{
-		strcpy(cWildCard, cFullPath);
-		strcat(cWildCard, "\\*.*");
+		cp_strcpy_s(cWildCard, sizeof(cWildCard), cFullPath);
+		cp_strcat_s(cWildCard, sizeof(cWildCard), "\\*.*");
 	}
 	
-	strcat(cFullPath, "\\");
+	cp_strcat_s(cFullPath, sizeof(cFullPath), "\\");
 	
 	hFileFind = FindFirstFile(cWildCard, &finddata);
 	
@@ -2026,9 +2040,9 @@ void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char *pDir)
 		if (finddata.cFileName[0] == '.')
 			continue;
 			
-		strcpy(pcFullPath, cFullPath);
+		cp_strcpy_s(pcFullPath, sizeof(pcFullPath), cFullPath);
 		
-		strcat(pcFullPath, finddata.cFileName);
+		cp_strcat_s(pcFullPath, sizeof(pcFullPath), finddata.cFileName);
 		
 		// Add to linked list
 		if (finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
@@ -2119,7 +2133,7 @@ void CPL_AddDroppedFiles(CP_HPLAYLIST hPlaylist, HDROP hDrop)
 		if (path_is_directory(ppFiles[iFileIDX]) == TRUE)
 		{
 			CPL_AddDirectory_Recurse(globals.m_hPlaylist, ppFiles[iFileIDX]);
-			strcpy(options.last_used_directory, ppFiles[iFileIDX]);
+			cp_strcpy_s(options.last_used_directory, sizeof(options.last_used_directory), ppFiles[iFileIDX]);
 		}
 		
 		else
