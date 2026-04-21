@@ -2591,8 +2591,8 @@ void CLV_AddColumn(CP_HLISTVIEW _hListData, const char* pcTitle, const int iWidt
 	iNewColumnIDX = pListData->m_iNumColumns;
 	pListData->m_iNumColumns++;
 	{
-		CIs_ListView_Column* pNewCols = (CIs_ListView_Column*)realloc(pListData->m_pColumns, pListData->m_iNumColumns * sizeof(CIs_ListView_Column));
-		unsigned int* pNewOrder = (unsigned int*)realloc(pListData->m_piColumnOrder, pListData->m_iNumColumns * sizeof(unsigned int));
+		CIs_ListView_Column* pNewCols = (CIs_ListView_Column*)SAFE_REALLOC(pListData->m_pColumns, pListData->m_iNumColumns * sizeof(CIs_ListView_Column));
+		unsigned int* pNewOrder = (unsigned int*)SAFE_REALLOC(pListData->m_piColumnOrder, pListData->m_iNumColumns * sizeof(unsigned int));
 		if (!pNewCols || !pNewOrder)
 		{
 			CP_TRACE0("CLV_AddColumn: realloc failed");
@@ -2659,7 +2659,7 @@ int CLV_AddItem(CP_HLISTVIEW _hListData, const void* pvItemData)
 	if (pListData->m_iNumItemsInBuffer == pListData->m_iNumItems)
 	{
 		int iNewBufferSize = pListData->m_iNumItemsInBuffer + CPC_BUFFERQUANTISATION;
-		CIs_ListView_Item* pNewItems = (CIs_ListView_Item*)realloc(pListData->m_pItems, iNewBufferSize * sizeof(CIs_ListView_Item));
+		CIs_ListView_Item* pNewItems = (CIs_ListView_Item*)SAFE_REALLOC(pListData->m_pItems, iNewBufferSize * sizeof(CIs_ListView_Item));
 		if (!pNewItems)
 		{
 			CP_TRACE0("CLV_AddItem: realloc failed");

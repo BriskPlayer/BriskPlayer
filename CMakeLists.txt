@@ -195,8 +195,12 @@ else()
     # Static linking for MinGW
     if(BUILD_STATIC AND MINGW)
         if(CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-            # Clang on Windows uses different flags
-            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+            # Clang/LLVM on MinGW: -static covers the CRT but the clang driver
+            # adds -lc++ independently and ignores -static for it.
+            # -nostdlib++ suppresses the driver's automatic -lc++; we then
+            # re-add it ourselves inside a -Bstatic/-Bdynamic bracket so the
+            # static libc++.a archive is chosen instead of libc++.dll.
+            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -nostdlib++ -Wl,-Bstatic,-lc++,-Bdynamic")
         else()
             # GCC/MinGW-w64
             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
@@ -253,6 +257,7 @@ set(BRISK_SOURCES
     CPSK_Skin.c
     DLG_Find.c
     DLG_Properties.c
+    DLG_Equalizer.c
     globals.c
     main.c
     MainMenu.c

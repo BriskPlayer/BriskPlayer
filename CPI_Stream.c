@@ -74,16 +74,34 @@ static BOOL ValidateURLInput(const char* pcFlexiURL, size_t* piLength)
 //
 static BOOL ContainsDirectoryTraversal(const char* pcPath)
 {
-	// Check for .. sequences
+	// Check for literal .. sequences
 	if (strstr(pcPath, "..") != NULL)
 		return TRUE;
 	
-	// Check for multiple consecutive slashes (path normalization issue)
+	// Check for URL-encoded traversal sequences (case-insensitive hex):
+	//   %2E = '.'  (two of these back-to-back = "..")
+	//   %2F = '/'  (encoded forward-slash used as path separator)
+	//   %5C = '\'  (encoded backslash used as path separator)
 	const char* p = pcPath;
 	while (*p)
 	{
+		if (*p == '%' && p[1] != '\0' && p[2] != '\0')
+		{
+			char hi = (char)toupper((unsigned char)p[1]);
+			char lo = (char)toupper((unsigned char)p[2]);
+			
+			if (hi == '2' && lo == 'E')  // %2E = '.'
+				return TRUE;
+			if (hi == '2' && lo == 'F')  // %2F = '/'
+				return TRUE;
+			if (hi == '5' && lo == 'C')  // %5C = '\'
+				return TRUE;
+		}
+		
+		// Check for multiple consecutive slashes (path normalization issue)
 		if ((*p == '\\' || *p == '/') && (*(p+1) == '\\' || *(p+1) == '/'))
 			return TRUE;
+		
 		p++;
 	}
 	

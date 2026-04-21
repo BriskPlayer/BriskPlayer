@@ -151,7 +151,8 @@ void    options_read(void)
 	CPConfig_GetString("Skin", "PlaylistSkin", "",
 	                   (char*)options.playlist_skin_file, MAX_PATH);
 	options.equalizer = CPConfig_GetInt("Equalizer", "Active", 0);
-	
+	options.eq_settings[0] = CPConfig_GetInt("Equalizer", "ActivePreset", -1);
+
 	for (teller = 1; teller < (int)ARRAY_SIZE(options.eq_settings); teller++)
 	{
 		char    keyname[100];
@@ -287,7 +288,8 @@ void    options_write(void)
 	CPConfig_SetInt("Misc", "DelayTime", options.seconds_delay_after_track);
 	CPConfig_SetInt("Misc", "RememberSkins", options.remember_skin_count);
 	CPConfig_SetInt("Equalizer", "Active", options.equalizer);
-	
+	CPConfig_SetInt("Equalizer", "ActivePreset", options.eq_settings[0]);
+
 	for (teller = 1; teller < (int)ARRAY_SIZE(options.eq_settings); teller++)
 	{
 		char    keyname[100];

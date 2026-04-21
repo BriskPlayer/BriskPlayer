@@ -245,6 +245,7 @@ brisksrc = files([
     'CPSK_Skin.c',
     'DLG_Find.c',
     'DLG_Properties.c',
+    'DLG_Equalizer.c',
     'globals.c',
     'main.c',
     'MainMenu.c',

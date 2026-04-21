@@ -214,7 +214,7 @@ CPs_CircleBuffer* CP_CreateCircleBuffer(const unsigned int iBufferSize)
 	pNewBuffer->IsComplete = CircleIsComplete;
 	
 	pNewBuffer->m_iBufferSize = iBufferSize;
-	pNewBuffer->m_pBuffer = (BYTE*)malloc(iBufferSize);
+	pNewBuffer->m_pBuffer = (BYTE*)SAFE_MALLOC(iBufferSize);
 	if (!pNewBuffer->m_pBuffer)
 	{
 		CP_TRACE0("Failed to allocate circle buffer data");

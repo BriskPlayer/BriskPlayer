@@ -43,6 +43,14 @@ typedef struct __CPs_PlayEngine
 	DWORD m_dwMixerControlID;
 } CPs_PlayEngine;
 
+// Parameter struct for CPTM_OPENFILE and CPTM_SETNEXTFILE.
+// The caller allocates and the callee frees (both the struct and m_pcFilename).
+typedef struct
+{
+	char*  m_pcFilename;       // Heap-allocated filename string (callee frees)
+	float  m_fReplayGainScale; // ReplayGain scale factor
+} CPs_OpenFileParams;
+
 
 // Engine entry point
 extern DWORD WINAPI CPI_Player__EngineEP(void* pCookie);

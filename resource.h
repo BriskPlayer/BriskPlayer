@@ -170,6 +170,7 @@
 
 // Properties dialog controls
 #define IDD_PROPERTIES                  159
+#define IDD_EQUALIZER                   160
 #define IDC_PROP_FILENAME               1067
 #define IDC_PROP_ARTIST                 1068
 #define IDC_PROP_ALBUM                  1069
@@ -197,7 +198,36 @@
 #define IDC_PROP_UPDATE_MUSICBRAINZ     1091
 #define IDC_PROP_ALBUMART               1092
 
-// Next default values for new objects
+#define MENU_EQ_PRESET_FLAT             40051
+#define MENU_EQ_PRESET_BASS_BOOST       40052
+#define MENU_EQ_PRESET_TREBLE_BOOST     40053
+#define MENU_EQ_PRESET_ROCK             40054
+#define MENU_EQ_PRESET_CLASSICAL        40055
+#define MENU_EQ_PRESET_POP              40056
+#define MENU_EQ_PRESET_JAZZ             40057
+#define MENU_EQ_PRESET_DANCE            40058
+
+// Equalizer dialog controls
+#define IDC_EQ_ENABLE                   1100
+#define IDC_EQ_PRESET                   1101
+#define IDC_EQ_FLAT                     1102
+#define IDC_EQ_BAND_1                   1110
+#define IDC_EQ_BAND_2                   1111
+#define IDC_EQ_BAND_3                   1112
+#define IDC_EQ_BAND_4                   1113
+#define IDC_EQ_BAND_5                   1114
+#define IDC_EQ_BAND_6                   1115
+#define IDC_EQ_BAND_7                   1116
+#define IDC_EQ_BAND_8                   1117
+#define IDC_EQ_VAL_1                    1120
+#define IDC_EQ_VAL_2                    1121
+#define IDC_EQ_VAL_3                    1122
+#define IDC_EQ_VAL_4                    1123
+#define IDC_EQ_VAL_5                    1124
+#define IDC_EQ_VAL_6                    1125
+#define IDC_EQ_VAL_7                    1126
+#define IDC_EQ_VAL_8                    1127
+
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS

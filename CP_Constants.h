@@ -96,6 +96,8 @@
 #define CPC_VOLUME_MAX              100     // Maximum volume
 #define CPC_VOLUME_STEP             5       // Volume adjustment step
 #define CPC_VOLUME_MUTE_THRESHOLD   1       // Below this is muted
+// Windows mixer MIXERCONTROLDETAILS_UNSIGNED range is 0-65535; divide by 100 to get per-unit scale
+#define CPC_MIXER_VOLUME_SCALE_FACTOR  0x28F   // 655 = 65535 / 100
 
 // Equalizer
 #define CPC_EQ_BAND_COUNT           8       // Number of EQ bands
@@ -117,6 +119,8 @@
 #define CPC_URL_BUFFER              2048            // URLs
 #define CPC_INI_VALUE_BUFFER        256             // INI file values
 #define CPC_FILTER_BUFFER           1024            // File dialog filters
+// Systray tip: "%.1024s - %.1024s" = artist(1024) + " - "(3) + title(1024) + NUL, rounded up
+#define CPC_SYSTRAY_TIP_BUFFER      2060            // System tray tooltip text buffer
 
 // File type limits
 #define CPC_MAX_EXTENSIONS          64              // Max file extensions
@@ -138,6 +142,10 @@
 
 // Skin color defaults
 #define CPC_SKIN_TRANSPARENT_COLOR  RGB(255, 0, 255)    // Default magenta
+
+// Font bitmap: characters start at ASCII 32 (space); the bitmap covers the printable range
+#define CPC_FONT_CHAR_FIRST         32      // First character in the skin font bitmap (space)
+#define CPC_FONT_CHAR_LAST          127     // Last character in the skin font bitmap
 
 ////////////////////////////////////////////////////////////////////////////////
 // Network Constants

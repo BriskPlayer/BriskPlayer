@@ -130,7 +130,7 @@ HRGN main_bitmap_to_region(HBITMAP hBmp, COLORREF cTransparentColor)
 					if (iLastRectIDX == iRGNDataSize_Rects)
 					{
 						int iNewSize = iRGNDataSize_Rects + CPC_RECT_QUANTISE;
-						RGNDATA* pNewData = (RGNDATA*)realloc(pRGNData, sizeof(RGNDATAHEADER) + (iNewSize * sizeof(RECT)));
+						RGNDATA* pNewData = (RGNDATA*)SAFE_REALLOC(pRGNData, sizeof(RGNDATAHEADER) + (iNewSize * sizeof(RECT)));
 						if (!pNewData)
 						{
 							free(pRGNData);
@@ -278,7 +278,7 @@ HRGN main_bitmap_to_region_1bit(HBITMAP hBmp, COLORREF cTransparentColor)
 					if (iLastRectIDX == iRGNDataSize_Rects)
 					{
 						int iNewSize = iRGNDataSize_Rects + CPC_RECT_QUANTISE;
-						RGNDATA* pNewData = (RGNDATA*)realloc(pRGNData, sizeof(RGNDATAHEADER) + (iNewSize * sizeof(RECT)));
+						RGNDATA* pNewData = (RGNDATA*)SAFE_REALLOC(pRGNData, sizeof(RGNDATAHEADER) + (iNewSize * sizeof(RECT)));
 						if (!pNewData)
 						{
 							free(pRGNData);

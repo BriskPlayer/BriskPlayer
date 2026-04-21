@@ -28,6 +28,7 @@
 #include "CPI_Playlist.h"
 #include "CPI_PlaylistItem.h"
 #include "DLG_Find.h"
+#include "DLG_Equalizer.h"
 #include "CPI_PlaylistWindow.h"
 #include "RotatingIcon.h"
 #include "CPI_Indicators.h"
@@ -496,17 +497,24 @@ void main_update_title_text(void)
 	
 	for (teller = 0; teller < stringlen; teller++)
 	{
+		// Clamp character to the printable range supported by the skin font bitmap.
+		// Characters outside [CPC_FONT_CHAR_FIRST, CPC_FONT_CHAR_LAST] are rendered
+		// as a space (index 0) to avoid reading beyond the bitmap.
+		unsigned char ch = (unsigned char)pcText[teller];
+		int charOffset = (ch >= CPC_FONT_CHAR_FIRST && ch <= CPC_FONT_CHAR_LAST)
+			? (ch - CPC_FONT_CHAR_FIRST) : 0;
+		
 		BitBlt(SongtitleDc, (teller * Skin.Object[SongtitleText].w),
 			   0, Skin.Object[SongtitleText].w,
 			   Skin.Object[SongtitleText].h, drawables.dc_memory,
-			   Skin.Object[SongtitleText].w * (pcText[teller] - 32), 0,
+			   Skin.Object[SongtitleText].w * charOffset, 0,
 			   SRCCOPY);
 		       
 		if (stringlen > Skin.Object[SongtitleText].maxw)
 			BitBlt(SongtitleDc, width + (teller * Skin.Object[SongtitleText].w), 0,
 				   Skin.Object[SongtitleText].w,
 				   Skin.Object[SongtitleText].h, drawables.dc_memory,
-				   Skin.Object[SongtitleText].w * (pcText[teller] - 32), 0,
+				   Skin.Object[SongtitleText].w * charOffset, 0,
 				   SRCCOPY);
 	}
 	
@@ -522,7 +530,7 @@ void main_update_title_text(void)
 		// If there is a track name and artist name - set the format %artist% - %track%
 		if (CPLI_GetTrackName(hItem_Current) && CPLI_GetArtist(hItem_Current))
 		{
-			char cBuffer[2060];
+			char cBuffer[CPC_SYSTRAY_TIP_BUFFER];
 			sprintf_s(cBuffer, sizeof(cBuffer), "%.1024s - %.1024s", CPLI_GetArtist(hItem_Current), CPLI_GetTrackName(hItem_Current));
 			
 			CPSYSICON_SetTipText(globals.m_hSysIcon, cBuffer);
@@ -1271,6 +1279,20 @@ void    main_menuproc(HWND hWnd, LPPOINT points)
 	   SetForegroundWindow also causes our MessageBox to pop up in front
 	   of any other application's windows. */
 	SetForegroundWindow(hWnd);
+
+	// Update EQ preset checkmarks
+	{
+		static const int eq_preset_ids[] = {
+			MENU_EQ_PRESET_FLAT, MENU_EQ_PRESET_BASS_BOOST, MENU_EQ_PRESET_TREBLE_BOOST,
+			MENU_EQ_PRESET_ROCK, MENU_EQ_PRESET_CLASSICAL, MENU_EQ_PRESET_POP,
+			MENU_EQ_PRESET_JAZZ, MENU_EQ_PRESET_DANCE
+		};
+		int active = options.eq_settings[0]; // -1 or 0-7
+		for (int i = 0; i < 8; i++)
+			CheckMenuItem(globals.main_menu_popup, eq_preset_ids[i],
+			              MF_BYCOMMAND | (i == active ? MF_CHECKED : MF_UNCHECKED));
+	}
+
 	/* We specifiy TPM_RETURNCMD, so TrackPopupMenu returns the menu
 	   selection instead of returning immediately and our getting a
 	   WM_COMMAND with the selection. You don't have to do it this way.
@@ -1310,10 +1332,39 @@ void    main_menuproc(HWND hWnd, LPPOINT points)
 		case MENU_OPTIONS:
 			options_create(hWnd);
 			break;
-			
+
+        case MENU_EQ_PRESET_FLAT:
+        case MENU_EQ_PRESET_BASS_BOOST:
+        case MENU_EQ_PRESET_TREBLE_BOOST:
+        case MENU_EQ_PRESET_ROCK:
+        case MENU_EQ_PRESET_CLASSICAL:
+        case MENU_EQ_PRESET_POP:
+        case MENU_EQ_PRESET_JAZZ:
+        case MENU_EQ_PRESET_DANCE:
+        {
+            // Band values in -127..+127 range (≈ -12 to +12 dB), bands 1-8
+            static const int eq_presets[][8] =
+            {
+                {   0,   0,   0,   0,   0,   0,   0,   0 }, // Flat
+                {  85,  64,  21,   0,   0,   0,   0,   0 }, // Bass Boost
+                {   0,   0,   0,   0,  21,  64,  85, 106 }, // Treble Boost
+                {  74,  53, -32, -42,  11,  53,  74,  74 }, // Rock
+                {  64,  53,  21,   0,   0,  11,  42,  53 }, // Classical
+                { -11,  42,  64,  53,   0, -21, -21, -21 }, // Pop
+                {  42,  32,  11,  32, -21, -21,  11,  32 }, // Jazz
+                {  85,  64,  21, -42, -21,   0,  64,  64 }, // Dance
+            };
+            int preset = (int)(retval - MENU_EQ_PRESET_FLAT);
+            for (int i = 0; i < 8; i++)
+                options.eq_settings[i + 1] = eq_presets[preset][i];
+            options.eq_settings[0] = preset; // remember active preset
+            main_set_eq();
+            InvalidateRect(hWnd, NULL, FALSE);
+            break;
+        }
+
 		case MENU_SKIN_DEFAULT:
 		{
-		
 			options.use_default_skin = TRUE;
 			globals.main_bool_skin_next_is_default = TRUE;
 			main_play_control(ID_LOADSKIN, hWnd);

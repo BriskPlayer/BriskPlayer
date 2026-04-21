@@ -202,7 +202,7 @@ CP_COMPOSITEFILE CF_Create_FromResource(HMODULE hModule, UINT uiResourceID, cons
 	CP_ASSERT(hResourceData);
 	
 	// Form a memory mapped file from the source
-	pContext = (CPs_CompositeContext*)malloc(sizeof(CPs_CompositeContext));
+	pContext = (CPs_CompositeContext*)SAFE_MALLOC(sizeof(CPs_CompositeContext));
 	if (!pContext)
 		return NULL;
 	pContext->m_dwFileSize = SizeofResource(hModule, hResource);
@@ -278,7 +278,7 @@ BOOL CF_GetSubFile(CP_COMPOSITEFILE hComposite, const char* pcSubfilename, void*
 		return FALSE;
 	}
 	
-	*ppSubFile_Uncompressed = malloc(pSubFile->m_iUncompressedSize);
+	*ppSubFile_Uncompressed = SAFE_MALLOC(pSubFile->m_iUncompressedSize);
 	if (!*ppSubFile_Uncompressed)
 	{
 		*piSubFile_Length = 0;
@@ -392,7 +392,7 @@ BOOL CP_BuildDirectory(CP_COMPOSITEFILE hComposite)
 		}
 		
 		// Create subfile object
-		pNewSubFile = (CPs_SubFile*)malloc(sizeof(*pNewSubFile));
+		pNewSubFile = (CPs_SubFile*)SAFE_MALLOC(sizeof(*pNewSubFile));
 		if (!pNewSubFile)
 		{
 			CP_TRACE0("Failed to allocate subfile");
@@ -404,7 +404,7 @@ BOOL CP_BuildDirectory(CP_COMPOSITEFILE hComposite)
 		pContext->m_pFirstSubFile = pNewSubFile;
 		
 		// Init subfile members
-		pNewSubFile->m_pcName = (char*)malloc(pHeader->m_wFilenameLen + 1);
+		pNewSubFile->m_pcName = (char*)SAFE_MALLOC(pHeader->m_wFilenameLen + 1);
 		if (!pNewSubFile->m_pcName)
 		{
 			CP_TRACE0("Failed to allocate subfile name");

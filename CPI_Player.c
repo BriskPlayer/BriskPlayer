@@ -111,8 +111,11 @@ void CPI_Player__Destroy(CP_HPLAYER hPlayer)
 	{
 		// TerminateThread is intentionally avoided here: it does not release
 		// critical sections, unwind COM, or flush buffers and can corrupt the
-		// process heap.  Log the problem and let the OS clean up on exit.
-		CP_TRACE0("Player thread did not exit within timeout; leaking thread handle to avoid heap corruption");
+		// process heap.  Close the handle and free state so we don't leak
+		// OS resources, even though the thread itself continues until exit.
+		CP_TRACE0("Player thread did not exit within timeout; closing handle without terminating");
+		CloseHandle(pPlayEngine->m_hThread);
+		free(pPlayEngine);
 		return;
 	}
 	
@@ -262,19 +265,18 @@ void CPI_Player__ReopenMixer(CP_HPLAYER hPlayer)
 //
 void CPI_Player__OpenFile(CP_HPLAYER hPlayer, const char* pcFilename, float fReplayGainScale)
 {
-	char* pcStringCopy;
-	DWORD dwGainBits;
 	CPs_PlayEngine* pPlayEngine = (CPs_PlayEngine*)hPlayer;
 	CP_CHECKOBJECT(pPlayEngine);
 	
-	// Make copy of string data
-	STR_AllocSetString(&pcStringCopy, pcFilename, FALSE);
+	// Allocate parameter block; callee frees both the struct and the filename
+	CPs_OpenFileParams* pParams = (CPs_OpenFileParams*)SAFE_MALLOC(sizeof(CPs_OpenFileParams));
+	if (!pParams)
+		return;
 	
-	// Pack float into LPARAM bits
-	memcpy(&dwGainBits, &fReplayGainScale, sizeof(float));
+	STR_AllocSetString(&pParams->m_pcFilename, pcFilename, FALSE);
+	pParams->m_fReplayGainScale = fReplayGainScale;
 	
-	// Send message (callee will free string)
-	PostThreadMessage(pPlayEngine->m_dwThreadID, CPTM_OPENFILE, (WPARAM)pcStringCopy, (LPARAM)dwGainBits);
+	PostThreadMessage(pPlayEngine->m_dwThreadID, CPTM_OPENFILE, (WPARAM)pParams, 0);
 }
 
 //
@@ -345,6 +347,13 @@ void CPI_Player__SetVolume(CP_HPLAYER hPlayer, const int iNewVolume)
 	CPs_PlayEngine* pPlayEngine = (CPs_PlayEngine*)hPlayer;
 	CP_CHECKOBJECT(pPlayEngine);
 	
+	// Validate range before any arithmetic to prevent overflow
+	if (iNewVolume < CPC_VOLUME_MIN || iNewVolume > CPC_VOLUME_MAX)
+	{
+		CP_TRACE1("CPI_Player__SetVolume: volume %d out of range [0,100]; ignoring", iNewVolume);
+		return;
+	}
+	
 	// Set volume through mixer (for DirectSound/WaveOut that use Windows mixer)
 	if (pPlayEngine->m_hVolumeMixer)
 	{
@@ -358,7 +367,7 @@ void CPI_Player__SetVolume(CP_HPLAYER hPlayer, const int iNewVolume)
 		details.cMultipleItems = 0;
 		details.cbDetails = sizeof(VolumeLevel);
 		details.paDetails = &VolumeLevel;
-		VolumeLevel.dwValue = iNewVolume * 0x28F;
+		VolumeLevel.dwValue = iNewVolume * CPC_MIXER_VOLUME_SCALE_FACTOR;
 		
 		mixerSetControlDetails((HMIXEROBJ)pPlayEngine->m_hVolumeMixer, &details, MIXER_OBJECTF_HMIXER);
 	}
@@ -393,7 +402,7 @@ int CPI_Player__GetVolume(CP_HPLAYER hPlayer)
 		VolumeLevel.dwValue = 0;
 		
 		mixerGetControlDetails((HMIXEROBJ)pPlayEngine->m_hVolumeMixer, &details, MIXER_OBJECTF_HMIXER);
-		return VolumeLevel.dwValue / 0x28F;
+		return VolumeLevel.dwValue / CPC_MIXER_VOLUME_SCALE_FACTOR;
 	}
 	
 	else
@@ -441,15 +450,18 @@ void CPI_Player__EnumOutputDevices(CP_HPLAYER hPlayer)
 //
 void CPI_Player__SetNextFile(CP_HPLAYER hPlayer, const char* pcFilename, float fReplayGainScale)
 {
-	char* pcStringCopy;
-	DWORD dwGainBits;
 	CPs_PlayEngine* pPlayEngine = (CPs_PlayEngine*)hPlayer;
 	CP_CHECKOBJECT(pPlayEngine);
 	
-	STR_AllocSetString(&pcStringCopy, pcFilename, FALSE);
-	memcpy(&dwGainBits, &fReplayGainScale, sizeof(float));
-	PostThreadMessage(pPlayEngine->m_dwThreadID, CPTM_SETNEXTFILE,
-		(WPARAM)pcStringCopy, (LPARAM)dwGainBits);
+	// Allocate parameter block; callee frees both the struct and the filename
+	CPs_OpenFileParams* pParams = (CPs_OpenFileParams*)SAFE_MALLOC(sizeof(CPs_OpenFileParams));
+	if (!pParams)
+		return;
+	
+	STR_AllocSetString(&pParams->m_pcFilename, pcFilename, FALSE);
+	pParams->m_fReplayGainScale = fReplayGainScale;
+	
+	PostThreadMessage(pPlayEngine->m_dwThreadID, CPTM_SETNEXTFILE, (WPARAM)pParams, 0);
 }
 
 //

@@ -266,15 +266,10 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 					
 				case CPTM_OPENFILE:
 				{
-					char* pcFilename = (char*)msg.wParam;
-					
-					// Extract ReplayGain scale from lParam
-					{
-						DWORD dwGainBits = (DWORD)msg.lParam;
-						float fScale;
-						memcpy(&fScale, &dwGainBits, sizeof(float));
-						playercontext.m_pCurrentOutputModule->m_fReplayGainScale = fScale;
-					}
+					CPs_OpenFileParams* pParams = (CPs_OpenFileParams*)msg.wParam;
+					char* pcFilename = pParams->m_pcFilename;
+					playercontext.m_pCurrentOutputModule->m_fReplayGainScale = pParams->m_fReplayGainScale;
+					free(pParams);  // Free the parameter struct; filename freed at end of case
 					
 					// If there is another pending openfile then ignore this one
 					// This helps when this thread is non responsive (on an http connect for example)
@@ -520,14 +515,13 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 					
 				case CPTM_SETNEXTFILE:
 				{
+					CPs_OpenFileParams* pParams = (CPs_OpenFileParams*)msg.wParam;
 					// Free any previously queued next file
 					if (playercontext.m_pcNextFile)
 						free(playercontext.m_pcNextFile);
-					playercontext.m_pcNextFile = (char*)msg.wParam;
-					{
-						DWORD dwGainBits = (DWORD)msg.lParam;
-						memcpy(&playercontext.m_fNextReplayGainScale, &dwGainBits, sizeof(float));
-					}
+					playercontext.m_pcNextFile = pParams->m_pcFilename;
+					playercontext.m_fNextReplayGainScale = pParams->m_fReplayGainScale;
+					free(pParams);
 				}
 				break;
 			}

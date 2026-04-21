@@ -121,6 +121,17 @@ BEGIN
         BEGIN
             MENUITEM "None (Disabled)",             MENU_DSP_NONE
         END
+        POPUP "&Equalizer"
+        BEGIN
+            MENUITEM "Flat",                        MENU_EQ_PRESET_FLAT
+            MENUITEM "Bass Boost",                  MENU_EQ_PRESET_BASS_BOOST
+            MENUITEM "Treble Boost",                MENU_EQ_PRESET_TREBLE_BOOST
+            MENUITEM "Rock",                        MENU_EQ_PRESET_ROCK
+            MENUITEM "Classical",                   MENU_EQ_PRESET_CLASSICAL
+            MENUITEM "Pop",                         MENU_EQ_PRESET_POP
+            MENUITEM "Jazz",                        MENU_EQ_PRESET_JAZZ
+            MENUITEM "Dance",                       MENU_EQ_PRESET_DANCE
+        END
         MENUITEM SEPARATOR
         POPUP "Play &Control"
         BEGIN
@@ -313,6 +324,60 @@ BEGIN
     PUSHBUTTON      "Update",IDC_PROP_UPDATE_MUSICBRAINZ,214,127,58,15
     
     DEFPUSHBUTTON   "Close",IDOK,563,422,50,15
+END
+
+
+IDD_EQUALIZER DIALOGEX 0, 0, 360, 200
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Equalizer"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    // Enable toggle and preset row
+    CONTROL         "Enable Equalizer",IDC_EQ_ENABLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,7,90,12
+    LTEXT           "Preset:",IDC_STATIC,104,8,30,8
+    COMBOBOX        IDC_EQ_PRESET,136,6,120,80,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Flat",IDC_EQ_FLAT,264,5,40,14
+    DEFPUSHBUTTON   "Close",IDOK,310,5,40,14
+
+    // Band 1 – 60 Hz
+    LTEXT           "60Hz",IDC_STATIC,7,28,22,8
+    CONTROL         "",IDC_EQ_BAND_1,"msctls_trackbar32",TBS_VERT | TBS_REVERSED | TBS_AUTOTICKS | WS_TABSTOP,7,38,20,130
+    LTEXT           "0.0 dB",IDC_EQ_VAL_1,4,172,28,8
+
+    // Band 2 – 170 Hz
+    LTEXT           "170Hz",IDC_STATIC,36,28,24,8
+    CONTROL         "",IDC_EQ_BAND_2,"msctls_trackbar32",TBS_VERT | TBS_REVERSED | TBS_AUTOTICKS | WS_TABSTOP,36,38,20,130
+    LTEXT           "0.0 dB",IDC_EQ_VAL_2,33,172,28,8
+
+    // Band 3 – 310 Hz
+    LTEXT           "310Hz",IDC_STATIC,65,28,24,8
+    CONTROL         "",IDC_EQ_BAND_3,"msctls_trackbar32",TBS_VERT | TBS_REVERSED | TBS_AUTOTICKS | WS_TABSTOP,65,38,20,130
+    LTEXT           "0.0 dB",IDC_EQ_VAL_3,62,172,28,8
+
+    // Band 4 – 600 Hz
+    LTEXT           "600Hz",IDC_STATIC,94,28,24,8
+    CONTROL         "",IDC_EQ_BAND_4,"msctls_trackbar32",TBS_VERT | TBS_REVERSED | TBS_AUTOTICKS | WS_TABSTOP,94,38,20,130
+    LTEXT           "0.0 dB",IDC_EQ_VAL_4,91,172,28,8
+
+    // Band 5 – 1 kHz
+    LTEXT           "1kHz",IDC_STATIC,123,28,22,8
+    CONTROL         "",IDC_EQ_BAND_5,"msctls_trackbar32",TBS_VERT | TBS_REVERSED | TBS_AUTOTICKS | WS_TABSTOP,123,38,20,130
+    LTEXT           "0.0 dB",IDC_EQ_VAL_5,120,172,28,8
+
+    // Band 6 – 3 kHz
+    LTEXT           "3kHz",IDC_STATIC,152,28,22,8
+    CONTROL         "",IDC_EQ_BAND_6,"msctls_trackbar32",TBS_VERT | TBS_REVERSED | TBS_AUTOTICKS | WS_TABSTOP,152,38,20,130
+    LTEXT           "0.0 dB",IDC_EQ_VAL_6,149,172,28,8
+
+    // Band 7 – 6 kHz
+    LTEXT           "6kHz",IDC_STATIC,181,28,22,8
+    CONTROL         "",IDC_EQ_BAND_7,"msctls_trackbar32",TBS_VERT | TBS_REVERSED | TBS_AUTOTICKS | WS_TABSTOP,181,38,20,130
+    LTEXT           "0.0 dB",IDC_EQ_VAL_7,178,172,28,8
+
+    // Band 8 – 12 kHz
+    LTEXT           "12kHz",IDC_STATIC,210,28,24,8
+    CONTROL         "",IDC_EQ_BAND_8,"msctls_trackbar32",TBS_VERT | TBS_REVERSED | TBS_AUTOTICKS | WS_TABSTOP,210,38,20,130
+    LTEXT           "0.0 dB",IDC_EQ_VAL_8,207,172,28,8
 END
 
 

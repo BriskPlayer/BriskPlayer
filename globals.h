@@ -201,6 +201,7 @@ typedef struct
 	CP_HINTERFACE m_hifMain;
 	CP_HINTERFACE m_hifPlaylist;
 	HWND    wnd_albumart_tooltip;  // Custom tooltip for album art display
+	HWND    wnd_equalizer;         // Equalizer settings dialog (modeless)
 } windows_t;
 
 extern windows_t windows;
