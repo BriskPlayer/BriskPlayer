@@ -602,21 +602,30 @@ if(CMAKE_CXX_COMPILER MATCHES "mingw" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # Fallback paths for native MSYS2/MinGW
     list(APPEND LIB_SEARCH_PATHS "${COMPILER_ROOT}/lib")
     
-    # For Windows XP compatibility, link winpthread before libstdc++
-    # This provides XP-compatible implementations of threading primitives
+    # Resolve the static winpthread archive for MinGW builds.
     set(WINPTHREAD_LIB "")
-    foreach(SEARCH_PATH ${LIB_SEARCH_PATHS})
-        set(CANDIDATE_LIB "${SEARCH_PATH}/libwinpthread.a")
-        if(EXISTS "${CANDIDATE_LIB}")
-            set(WINPTHREAD_LIB "${CANDIDATE_LIB}")
-            break()
-        endif()
-    endforeach()
-    if(WINPTHREAD_LIB)
-        target_link_libraries(briskplayer PRIVATE "${WINPTHREAD_LIB}")
-        message(STATUS "✓ Linked winpthread for XP compatibility: ${WINPTHREAD_LIB}")
+
+    # Ask the compiler for the canonical static winpthread archive first.
+    execute_process(
+        COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libwinpthread.a
+        OUTPUT_VARIABLE WINPTHREAD_FROM_COMPILER
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    if(WINPTHREAD_FROM_COMPILER AND NOT WINPTHREAD_FROM_COMPILER STREQUAL "libwinpthread.a" AND EXISTS "${WINPTHREAD_FROM_COMPILER}")
+        set(WINPTHREAD_LIB "${WINPTHREAD_FROM_COMPILER}")
     endif()
-    
+
+    if(NOT WINPTHREAD_LIB)
+        foreach(SEARCH_PATH ${LIB_SEARCH_PATHS})
+            set(CANDIDATE_LIB "${SEARCH_PATH}/libwinpthread.a")
+            if(EXISTS "${CANDIDATE_LIB}")
+                set(WINPTHREAD_LIB "${CANDIDATE_LIB}")
+                break()
+            endif()
+        endforeach()
+    endif()
+
     # Link the static C++ standard library using full path
     set(STDCXX_LIB "")
     foreach(SEARCH_PATH ${LIB_SEARCH_PATHS})
@@ -631,6 +640,14 @@ if(CMAKE_CXX_COMPILER MATCHES "mingw" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         message(STATUS "✓ Linked C++ standard library: ${STDCXX_LIB}")
     else()
         message(WARNING "Could not find libstdc++.a - the linker will search standard paths")
+    endif()
+
+    # Link winpthread after libstdc++ so pthread symbols resolve from this static archive.
+    if(WINPTHREAD_LIB)
+        target_link_libraries(briskplayer PRIVATE "${WINPTHREAD_LIB}")
+        message(STATUS "✓ Linked static winpthread: ${WINPTHREAD_LIB}")
+    else()
+        message(WARNING "Could not find static libwinpthread.a; linker may fall back to shared libwinpthread")
     endif()
 endif()
 
