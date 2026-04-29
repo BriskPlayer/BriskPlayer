@@ -2663,7 +2663,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	else
 	{
-		main_set_default_skin();
+		switch (globals.builtin_skin_variant)
+		{
+			case BUILTIN_SKIN_EQ:
+				main_set_eq_skin();
+				break;
+			case BUILTIN_SKIN_SHADE:
+				main_set_shade_skin();
+				break;
+			case BUILTIN_SKIN_NORMAL:
+			default:
+				main_set_default_skin();
+				break;
+		}
 	}
 	
 	globals.main_bool_wavwrite_dir_already_known = FALSE;

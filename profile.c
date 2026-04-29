@@ -124,6 +124,9 @@ void    options_read(void)
 	options.last_selected_skin_number = CPConfig_GetInt("Skin", "LastSkin", 0);
 	options.use_default_skin = CPConfig_GetInt("Skin", "UseDefault", 1);
 	options.use_playlist_skin = CPConfig_GetInt("Skin", "Useplaylistskin", 0);
+	globals.builtin_skin_variant = (BuiltinSkinVariant)CPConfig_GetInt("Skin", "BuiltinVariant", BUILTIN_SKIN_NORMAL);
+	if (globals.builtin_skin_variant < BUILTIN_SKIN_NORMAL || globals.builtin_skin_variant >= BUILTIN_SKIN_COUNT)
+		globals.builtin_skin_variant = BUILTIN_SKIN_NORMAL;
 	
 	{
 		int     teller;
@@ -253,6 +256,7 @@ void    options_write(void)
 	CPConfig_SetInt("Skin", "LastSkin", options.last_selected_skin_number);
 	CPConfig_SetInt("Skin", "UsePlaylistSkin", options.use_playlist_skin);
 	CPConfig_SetInt("Skin", "UseDefault", options.use_default_skin);
+	CPConfig_SetInt("Skin", "BuiltinVariant", (int)globals.builtin_skin_variant);
 	CPConfig_SetInt("Misc", "Repeat", options.repeat_playlist);
 	CPConfig_SetInt("Misc", "Shuffle", options.shuffle_play);
 	CPConfig_SetInt("Misc", "Easymove", options.easy_move);
