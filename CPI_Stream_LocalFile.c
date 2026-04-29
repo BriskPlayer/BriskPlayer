@@ -87,13 +87,14 @@ CPs_InStream* CP_CreateInStream_LocalFile(const char* pcFlexiURL, HWND hWndOwner
 			return NULL;
 		}
 		
-		pNewStream->Uninitialise = CPSLOCAL_Uninitialise;
-		pNewStream->Read = CPSLOCAL_Read;
-		pNewStream->Seek = CPSLOCAL_Seek;
-		pNewStream->Tell = CPSLOCAL_Tell;
-		pNewStream->GetLength = CPSLOCAL_GetLength;
-		pNewStream->IsSeekable = CPSLOCAL_IsSeekable;
-		pNewStream->m_pModuleCookie = pContext;
+		CP_InStream_Init(pNewStream,
+		    CPSLOCAL_Uninitialise,
+		    CPSLOCAL_Read,
+		    CPSLOCAL_Seek,
+		    CPSLOCAL_Tell,
+		    CPSLOCAL_GetLength,
+		    CPSLOCAL_IsSeekable,
+		    pContext);
 		
 		pContext->m_hFile = hFile;
 		
@@ -178,8 +179,6 @@ BOOL CPSLOCAL_IsSeekable(CPs_InStream* pStream)
 //
 //
 //
-#define GetFilePointer(hFile) SetFilePointer(hFile, 0, NULL, FILE_CURRENT)
-
 unsigned int CPSLOCAL_Tell(CPs_InStream* pStream)
 {
 	CPs_InStream_File* pContext = (CPs_InStream_File*)pStream->m_pModuleCookie;

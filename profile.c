@@ -111,7 +111,7 @@ void    options_read(void)
 	options.rotate_systray_icon = CPConfig_GetInt("Misc", "RotateIcon", 1);
 	options.scroll_track_title = CPConfig_GetInt("Misc", "Scrolltitle", 1);
 	options.sticky_windows = CPConfig_GetInt("Misc", "StickyWindows", 1);
-	options.discord_rpc_enabled = CPConfig_GetInt("Misc", "DiscordRPC", 0);
+	options.discord_rpc_enabled = CPConfig_GetInt("Misc", "DiscordRPC", 1);
 	options.replaygain_mode = CPConfig_GetInt("Misc", "ReplayGainMode", 0);
 	options.replaygain_preamp_db = CPConfig_GetInt("Misc", "ReplayGainPreamp", 0);
 	options.replaygain_prevent_clipping = CPConfig_GetInt("Misc", "ReplayGainNoClip", 1);

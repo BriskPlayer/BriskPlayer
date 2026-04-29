@@ -43,7 +43,7 @@ typedef struct __CPs_PlayerContext
 	int m_iLastSentTime_Proportion;
 	int m_iProportion_TrackLength;
 	
-	int m_iOpenDevice_Freq_Hz;
+	UINT m_iOpenDevice_Freq_Hz;
 	BOOL m_bOpenDevice_Stereo;
 	BOOL m_bOpenDevice_16bit;
 	

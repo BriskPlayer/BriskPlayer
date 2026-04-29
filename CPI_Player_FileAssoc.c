@@ -194,7 +194,7 @@ void CPFA_AssociateWithEXE(CPs_CoDecModule* pCoDec)
 					   REG_OPTION_NON_VOLATILE,
 					   KEY_ALL_ACCESS, NULL, &hKey,
 					   &dwDisposition);
-		RegSetValueEx(hKey, NULL, 0, REG_SZ, CIC_BRISKPLAYER_FILETYPE, sizeof(CIC_BRISKPLAYER_FILETYPE));
+		RegSetValueEx(hKey, NULL, 0, REG_SZ, (const BYTE*)CIC_BRISKPLAYER_FILETYPE, sizeof(CIC_BRISKPLAYER_FILETYPE));
 		RegCloseKey(hKey);
 		
 		// Cleanup

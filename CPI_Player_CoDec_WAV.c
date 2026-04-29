@@ -94,13 +94,13 @@ void CP_InitialiseCodec_WAV(CPs_CoDecModule* pCoDec)
 	pCoDec->GetCurrentPos_secs = CPP_OMWAV_GetCurrentPos_secs;
 	
 	// Setup private data
-	pCoDec->m_pModuleCookie = malloc(sizeof(CPs_CoDec_Wave));
-	if (!pCoDec->m_pModuleCookie)
+	pContext = CALLOC_TYPE(CPs_CoDec_Wave, 1);
+	if (!pContext)
 	{
 		CP_TRACE0("Failed to allocate WAV codec context");
 		return;
 	}
-	pContext = (CPs_CoDec_Wave*)pCoDec->m_pModuleCookie;
+	pCoDec->m_pModuleCookie = pContext;
 	pContext->m_hFile = INVALID_HANDLE_VALUE;
 	
 	CPFA_InitialiseFileAssociations(pCoDec);
@@ -112,11 +112,16 @@ void CP_InitialiseCodec_WAV(CPs_CoDecModule* pCoDec)
 //
 void CPP_OMWAV_Uninitialise(CPs_CoDecModule* pModule)
 {
-	CPs_CoDec_Wave *pContext = (CPs_CoDec_Wave*)pModule->m_pModuleCookie;
-	CP_CHECKOBJECT(pContext);
+	CPs_CoDec_Wave *pContext;
+	
+	if (!pModule || !pModule->m_pModuleCookie)
+		return;
+	
+	pContext = (CPs_CoDec_Wave*)pModule->m_pModuleCookie;
 	CP_ASSERT(pContext->m_hFile == INVALID_HANDLE_VALUE);
 	
 	free(pContext);
+	pModule->m_pModuleCookie = NULL;
 	CPFA_EmptyFileAssociations(pModule);
 }
 

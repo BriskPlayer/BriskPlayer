@@ -25,7 +25,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifndef FLAC__NO_DLL
 #define FLAC__NO_DLL  // Static linking with FLAC library
+#endif
 #include "CPI_Player_CoDec_C23.h"
 #include "threading_compat.h"  // Consolidated threading support
 #include <FLAC/stream_decoder.h>
@@ -554,12 +556,9 @@ CodecModule* create_flac_codec(void)
     CodecModule* codec = create_codec(CODEC_TYPE_FLAC);
     if (!codec) return NULL;
     
-    // Enhanced initialization with function pointers
-    codec->open_file = (CodecOpenFunc)CPP_OMFLAC_OpenFile;
-    codec->close_file = (CodecCloseFunc)CPP_OMFLAC_Uninitialise;
-    codec->decode_block = (CodecDecodeFunc)CPP_OMFLAC_GetPCMBlock;
-    codec->seek_position = (CodecSeekFunc)CPP_OMFLAC_Seek;
-    
+    // The C23 CodecModule vtable uses different signatures to CPs_CoDecModule;
+    // proper wrappers are needed before this path is functional.
+    // vtable intentionally left as NULL (from calloc in create_codec).
     return codec;
 }
 

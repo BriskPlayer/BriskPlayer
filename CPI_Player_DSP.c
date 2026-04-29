@@ -151,12 +151,16 @@ void CPDSP_Uninitialize(void)
 // Debug Log Helper
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifdef _DEBUG
 static FILE* CPDSP_OpenDebugLog(const char* pcMode)
 {
     char pcPath[MAX_PATH];
     main_get_program_file_path("dsp_debug.log", pcPath, MAX_PATH);
     return fopen(pcPath, pcMode);
 }
+#else
+static FILE* CPDSP_OpenDebugLog(const char* pcMode) { (void)pcMode; return NULL; }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // Plugin Discovery

@@ -37,6 +37,15 @@
 
 #define DISCORD_APP_ID "1492632255573528869"
 
+#ifdef _DEBUG
+static void drpc_log(const char* msg)
+{
+    OutputDebugStringA(msg);
+    FILE* f = fopen("discord_rpc_debug.log", "a");
+    if (f) { fputs(msg, f); fclose(f); }
+}
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 // Helper: build a "Artist - Title" details string (max 128 bytes for Discord)
 static void drpc_build_details(char* buf, size_t buflen, CP_HPLAYLISTITEM hItem)
@@ -55,9 +64,44 @@ static void drpc_build_details(char* buf, size_t buflen, CP_HPLAYLISTITEM hItem)
 
 ////////////////////////////////////////////////////////////////////////////////
 // Discord event handlers
-static void drpc_ready(const DiscordUser* user)        { (void)user; }
-static void drpc_disconnected(int ec, const char* msg) { (void)ec; (void)msg; }
-static void drpc_errored(int ec, const char* msg)      { (void)ec; (void)msg; }
+static void drpc_ready(const DiscordUser* user)
+{
+#ifdef _DEBUG
+    char buf[128];
+    _snprintf_s(buf, sizeof(buf), _TRUNCATE,
+        "[BriskPlayer] Discord RPC ready: user=%s\n",
+        (user && user->username) ? user->username : "(unknown)");
+    drpc_log(buf);
+#else
+    (void)user;
+#endif
+}
+
+static void drpc_disconnected(int ec, const char* msg)
+{
+#ifdef _DEBUG
+    char buf[256];
+    _snprintf_s(buf, sizeof(buf), _TRUNCATE,
+        "[BriskPlayer] Discord RPC disconnected: ec=%d msg=%s\n",
+        ec, msg ? msg : "");
+    drpc_log(buf);
+#else
+    (void)ec; (void)msg;
+#endif
+}
+
+static void drpc_errored(int ec, const char* msg)
+{
+#ifdef _DEBUG
+    char buf[256];
+    _snprintf_s(buf, sizeof(buf), _TRUNCATE,
+        "[BriskPlayer] Discord RPC error: ec=%d msg=%s\n",
+        ec, msg ? msg : "");
+    drpc_log(buf);
+#else
+    (void)ec; (void)msg;
+#endif
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 void CPI_DiscordRPC_Init(void)
@@ -68,7 +112,10 @@ void CPI_DiscordRPC_Init(void)
     handlers.disconnected = drpc_disconnected;
     handlers.errored      = drpc_errored;
 
-    Discord_Initialize(DISCORD_APP_ID, &handlers, 1, NULL);
+#ifdef _DEBUG
+    drpc_log("[BriskPlayer] Discord_Initialize called\n");
+#endif
+    Discord_Initialize(DISCORD_APP_ID, &handlers, 0, NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -112,6 +159,9 @@ void CPI_DiscordRPC_SetPlaying(CP_HPLAYLISTITEM hItem, int iDurationSecs)
     presence.largeImageKey  = "briskplayer";
     presence.largeImageText = "BriskPlayer";
 
+#ifdef _DEBUG
+    drpc_log("[BriskPlayer] Discord_UpdatePresence (playing)\n");
+#endif
     Discord_UpdatePresence(&presence);
 }
 

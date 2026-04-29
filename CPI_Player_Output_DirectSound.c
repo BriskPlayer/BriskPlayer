@@ -86,19 +86,15 @@ void CPP_OMDS_SetInternalVolume(CPs_OutputModule* pModule, const int iNewVolume)
 void CPI_Player_Output_Initialise_DirectSound(CPs_OutputModule* pModule)
 {
 	// This is a one off call to set up the function pointers
-	pModule->Initialise = CPP_OMDS_Initialise;
-	pModule->Uninitialise = CPP_OMDS_Uninitialise;
-	pModule->RefillBuffers = CPP_OMDS_RefillBuffers;
-	pModule->SetPause = CPP_OMDS_SetPause;
-	pModule->IsOutputComplete = CPP_OMDS_IsOutputComplete;
-	pModule->Flush = CPP_OMDS_Flush;
-	pModule->OnEQChanged = CPP_OMDS_OnEQChanged;
+	pModule->Initialise        = CPP_OMDS_Initialise;
+	pModule->Uninitialise      = CPP_OMDS_Uninitialise;
+	pModule->RefillBuffers     = CPP_OMDS_RefillBuffers;
+	pModule->SetPause          = CPP_OMDS_SetPause;
+	pModule->IsOutputComplete  = CPP_OMDS_IsOutputComplete;
+	pModule->Flush             = CPP_OMDS_Flush;
+	pModule->OnEQChanged       = CPP_OMDS_OnEQChanged;
 	pModule->SetInternalVolume = CPP_OMDS_SetInternalVolume;
-	pModule->m_pModuleCookie = NULL;
-	pModule->m_pcModuleName = "DirectSound Plugout";
-	pModule->m_pCoDec = NULL;
-	pModule->m_pEqualiser = NULL;
-	pModule->m_fReplayGainScale = 1.0f;
+	CPI_OutputModule_InitDefaults(pModule, "DirectSound Plugout");
 }
 
 //

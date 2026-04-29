@@ -503,6 +503,9 @@ extern globals_t globals;
 
 extern CoolSkin Skin;
 
+// Win32 helper: returns the current file pointer position without moving it.
+#define GetFilePointer(hFile) SetFilePointer((hFile), 0, NULL, FILE_CURRENT)
+
 #ifdef __cplusplus
 }
 #endif

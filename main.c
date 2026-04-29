@@ -1612,6 +1612,18 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SetTimer(hWnd, CPC_TIMERID_ROTATINGSMILY, 100, NULL);
 			
 #ifdef ENABLE_DISCORD_RPC
+#ifdef _DEBUG
+			{
+				char _drpc_buf[128];
+				FILE* _drpc_f;
+				_snprintf_s(_drpc_buf, sizeof(_drpc_buf), _TRUNCATE,
+					"[BriskPlayer] discord_rpc_enabled=%d (WM_CREATE)\n",
+					options.discord_rpc_enabled);
+				OutputDebugStringA(_drpc_buf);
+				_drpc_f = fopen("discord_rpc_debug.log", "a");
+				if (_drpc_f) { fputs(_drpc_buf, _drpc_f); fclose(_drpc_f); }
+			}
+#endif
 			if (options.discord_rpc_enabled)
 				CPI_DiscordRPC_Init();
 #endif

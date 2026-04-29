@@ -22,7 +22,7 @@ typedef struct _CPDlgProperties_Data
 //
 // Forward declarations
 //
-BOOL CALLBACK DlgProc_Properties(HWND hWnd, UINT uiMessage, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DlgProc_Properties(HWND hWnd, UINT uiMessage, WPARAM wParam, LPARAM lParam);
 void Properties_OnInit(HWND hWnd, CP_HPLAYLISTITEM hItem);
 void Properties_OnUpdateFromMusicBrainz(HWND hWnd, CP_HPLAYLISTITEM hItem);
 
@@ -47,7 +47,7 @@ void CPDlgProperties_Show(HWND hWndParent, CP_HPLAYLISTITEM hItem)
 	DialogBoxParamW(GetModuleHandle(NULL), 
 	               MAKEINTRESOURCEW(IDD_PROPERTIES), 
 	               hWndParent,
-	               (DLGPROC)DlgProc_Properties,
+	               DlgProc_Properties,
 	               (LPARAM)pData);
 	
 	// Cleanup
@@ -59,7 +59,7 @@ void CPDlgProperties_Show(HWND hWndParent, CP_HPLAYLISTITEM hItem)
 //
 // Dialog procedure
 //
-BOOL CALLBACK DlgProc_Properties(HWND hWnd, UINT uiMessage, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_Properties(HWND hWnd, UINT uiMessage, WPARAM wParam, LPARAM lParam)
 {
 	CPDlgProperties_Data* pData;
 	

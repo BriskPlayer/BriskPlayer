@@ -719,12 +719,14 @@ CPs_InStream* CP_CreateInStream_Internet(const char* pcFlexiURL, HWND hWndOwner)
 			return NULL;
 		}
 		
-		pNewStream->Uninitialise = CPSINET_Uninitialise;
-		pNewStream->Read = CPSINET_Read;
-		pNewStream->Seek = CPSINET_Seek;
-		pNewStream->GetLength = CPSINET_GetLength;
-		pNewStream->IsSeekable = CPSINET_IsSeekable;
-		pNewStream->m_pModuleCookie = pContext;
+		CP_InStream_Init(pNewStream,
+		    CPSINET_Uninitialise,
+		    CPSINET_Read,
+		    CPSINET_Seek,
+		    NULL, /* Tell not supported for internet streams */
+		    CPSINET_GetLength,
+		    CPSINET_IsSeekable,
+		    pContext);
 		
 		pContext->m_pCircleBuffer = CP_CreateCircleBuffer(CIC_STREAMBUFFERSIZE);
 	}

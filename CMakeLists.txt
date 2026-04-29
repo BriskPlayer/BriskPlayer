@@ -84,6 +84,13 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE OR NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
 # ---------------------------------------------------------------------------
+# Build options — declared here (before project()) so that the vcpkg feature
+# selection block below can read them on the very first configure run.
+# ---------------------------------------------------------------------------
+option(ENABLE_FFMPEG       "Use FFmpeg for audio decoding"              OFF)
+option(ENABLE_DISCORD_RPC  "Enable Discord Rich Presence integration"   ON)
+
+# ---------------------------------------------------------------------------
 # vcpkg manifest feature selection
 # Map CMake option flags to vcpkg features BEFORE project() so that vcpkg
 # installs the right set of packages during the initial configure.
@@ -285,15 +292,9 @@ set(BRISK_RC briskplayer.rc)
 # Codec selection: FFmpeg vs native libs (libmad/vorbis/FLAC/opus/fdk-aac)
 # Native codecs are the default. Use -DENABLE_FFMPEG=ON to use FFmpeg instead.
 # When using FFmpeg, install with: vcpkg install briskplayer[ffmpeg]
+# (ENABLE_FFMPEG and ENABLE_DISCORD_RPC options are declared near the top of
+# this file, before project(), so vcpkg can read them on first configure.)
 # ---------------------------------------------------------------------------
-option(ENABLE_FFMPEG "Use FFmpeg for audio decoding" OFF)
-
-# ---------------------------------------------------------------------------
-# Discord Rich Presence (optional)
-# Shows "Now Playing" info in the user's Discord profile.
-# Install with: vcpkg install briskplayer[discord-rpc]
-# ---------------------------------------------------------------------------
-option(ENABLE_DISCORD_RPC "Enable Discord Rich Presence integration" OFF)
 
 if(ENABLE_FFMPEG)
     message(STATUS "Codec backend: FFmpeg")

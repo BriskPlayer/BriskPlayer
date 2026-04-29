@@ -299,7 +299,7 @@ void CPlaylistWindow_CreateListView(void)
 	for (iColumnIDX = 1; iColumnIDX <= PLAYLIST_last; iColumnIDX++)
 		CLV_SetColumnCustomDrawColour(globals.m_hPlaylistViewControl, iColumnIDX, LVCB_GetItemColour);
 		
-	CLV_SetColumnOrder(globals.m_hPlaylistViewControl, options.playlist_column_seq, PLAYLIST_last + 1);
+	CLV_SetColumnOrder(globals.m_hPlaylistViewControl, (unsigned int*)options.playlist_column_seq, PLAYLIST_last + 1);
 	CPL_cb_SetWindowToReflectList();
 }
 
@@ -1210,7 +1210,7 @@ void CPlaylistWindow_CB_onClose(CP_HINTERFACE hInterface)
 //
 void LVCB_HeaderChanged(CP_HLISTVIEW _hListData)
 {
-	CLV_GetColumnOrder(_hListData, options.playlist_column_seq, PLAYLIST_last + 1);
+	CLV_GetColumnOrder(_hListData, (unsigned int*)options.playlist_column_seq, PLAYLIST_last + 1);
 	CLV_GetColumnWidths(_hListData, options.playlist_column_widths, PLAYLIST_last + 1);
 	CLV_GetColumnVisibleState(_hListData, options.playlist_column_visible, PLAYLIST_last + 1);
 }

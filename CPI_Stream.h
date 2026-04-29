@@ -69,6 +69,26 @@ typedef struct _CPs_InStream
 ////////////////////////////////////////////////////////////////////////////////
 CPs_InStream* CP_CreateInStream(const char* pcFlexiURL, HWND hWndOwner);
 
+// Helper — initialises all vtable fields of a freshly allocated CPs_InStream in one call.
+// Pass NULL for Tell when the stream implementation does not support it.
+static inline void CP_InStream_Init(CPs_InStream* pStream,
+    pfn_StreamUninitialise Uninitialise,
+    pfn_StreamRead         Read,
+    pfn_StreamSeek         Seek,
+    pfn_StreamTell         Tell,
+    pfn_StreamGetLength    GetLength,
+    pfn_StreamIsSeakable   IsSeekable,
+    void*                  pCookie)
+{
+    pStream->Uninitialise    = Uninitialise;
+    pStream->Read            = Read;
+    pStream->Seek            = Seek;
+    pStream->Tell            = Tell;
+    pStream->GetLength       = GetLength;
+    pStream->IsSeekable      = IsSeekable;
+    pStream->m_pModuleCookie = pCookie;
+}
+
 // Shared stream seek helper for codec callbacks (bridges SEEK_SET/CUR/END to CPs_InStream)
 int CP_StreamSeek(CPs_InStream* pStream, long long iOffset, int iWhence);
 long long CP_StreamTell(CPs_InStream* pStream);

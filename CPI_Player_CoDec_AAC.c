@@ -943,8 +943,12 @@ void CP_InitialiseCodec_AAC(CPs_CoDecModule* pCoDec)
 	pCoDec->GetCurrentPos_secs = CPP_OMAAC_GetCurrentPos_secs;
 	
 	// Setup private data
-	pContext = (CPs_CoDec_AAC*)malloc(sizeof(CPs_CoDec_AAC));
-	memset(pContext, 0, sizeof(CPs_CoDec_AAC));
+	pContext = CALLOC_TYPE(CPs_CoDec_AAC, 1);
+	if (!pContext)
+	{
+		CP_TRACE0("Failed to allocate AAC codec context");
+		return;
+	}
 	pCoDec->m_pModuleCookie = pContext;
 	
 	// Setup file associations

@@ -83,19 +83,15 @@ void CPP_OMWV_SetInternalVolume(CPs_OutputModule* pModule, const int iNewVolume)
 void CPI_Player_Output_Initialise_WaveMapper(CPs_OutputModule* pModule)
 {
 	// This is a one off call to set up the function pointers
-	pModule->Initialise = CPP_OMWV_Initialise;
-	pModule->Uninitialise = CPP_OMWV_Uninitialise;
-	pModule->RefillBuffers = CPP_OMWV_RefillBuffers;
-	pModule->SetPause = CPP_OMWV_SetPause;
-	pModule->IsOutputComplete = CPP_OMWV_IsOutputComplete;
-	pModule->Flush = CPP_OMWV_Flush;
-	pModule->OnEQChanged = CPP_OMWV_OnEQChanged;
+	pModule->Initialise        = CPP_OMWV_Initialise;
+	pModule->Uninitialise      = CPP_OMWV_Uninitialise;
+	pModule->RefillBuffers     = CPP_OMWV_RefillBuffers;
+	pModule->SetPause          = CPP_OMWV_SetPause;
+	pModule->IsOutputComplete  = CPP_OMWV_IsOutputComplete;
+	pModule->Flush             = CPP_OMWV_Flush;
+	pModule->OnEQChanged       = CPP_OMWV_OnEQChanged;
 	pModule->SetInternalVolume = CPP_OMWV_SetInternalVolume;
-	pModule->m_pModuleCookie = NULL;
-	pModule->m_pcModuleName = "Cooler Wave mapper";
-	pModule->m_pCoDec = NULL;
-	pModule->m_pEqualiser = NULL;
-	pModule->m_fReplayGainScale = 1.0f;
+	CPI_OutputModule_InitDefaults(pModule, "Cooler Wave mapper");
 }
 
 //

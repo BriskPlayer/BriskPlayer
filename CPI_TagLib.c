@@ -72,7 +72,9 @@ extern "C" {
 #include <objbase.h>
 
 // TagLib C and C++ API
+#ifndef TAGLIB_STATIC
 #define TAGLIB_STATIC
+#endif
 #include <tag_c.h>
 #include <taglib/fileref.h>
 #include <taglib/tpropertymap.h>

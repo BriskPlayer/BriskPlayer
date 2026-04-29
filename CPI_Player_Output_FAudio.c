@@ -107,19 +107,15 @@ void FAUDIOCALL CPP_OMFA_VoiceCallback(FAudioVoiceCallback* callback, void* pBuf
 void CPI_Player_Output_Initialise_FAudio(CPs_OutputModule* pModule)
 {
 	// This is a one off call to set up the function pointers
-	pModule->Initialise = CPP_OMFA_Initialise;
-	pModule->Uninitialise = CPP_OMFA_Uninitialise;
-	pModule->RefillBuffers = CPP_OMFA_RefillBuffers;
-	pModule->SetPause = CPP_OMFA_SetPause;
-	pModule->IsOutputComplete = CPP_OMFA_IsOutputComplete;
-	pModule->Flush = CPP_OMFA_Flush;
-	pModule->OnEQChanged = CPP_OMFA_OnEQChanged;
+	pModule->Initialise        = CPP_OMFA_Initialise;
+	pModule->Uninitialise      = CPP_OMFA_Uninitialise;
+	pModule->RefillBuffers     = CPP_OMFA_RefillBuffers;
+	pModule->SetPause          = CPP_OMFA_SetPause;
+	pModule->IsOutputComplete  = CPP_OMFA_IsOutputComplete;
+	pModule->Flush             = CPP_OMFA_Flush;
+	pModule->OnEQChanged       = CPP_OMFA_OnEQChanged;
 	pModule->SetInternalVolume = CPP_OMFA_SetInternalVolume;
-	pModule->m_pModuleCookie = NULL;
-	pModule->m_pcModuleName = "FAudio Output";
-	pModule->m_pCoDec = NULL;
-	pModule->m_pEqualiser = NULL;
-	pModule->m_fReplayGainScale = 1.0f;
+	CPI_OutputModule_InitDefaults(pModule, "FAudio Output");
 }
 
 void CPP_OMFA_Initialise(CPs_OutputModule* pModule, const CPs_FileInfo* pFileInfo, CP_HEQUALISER hEqualiser)

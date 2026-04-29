@@ -439,7 +439,15 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 #ifdef ENABLE_DISCORD_RPC
 						// Start or stop Discord RPC based on toggle
 						if (options.discord_rpc_enabled && !bWasEnabled)
+						{
 							CPI_DiscordRPC_Init();
+							// Push current playback state immediately
+							CP_HPLAYLISTITEM hCurrent = CPL_GetActiveItem(globals.m_hPlaylist);
+							if (globals.m_enPlayerState == cppsPlaying && hCurrent)
+								CPI_DiscordRPC_SetPlaying(hCurrent, globals.main_long_track_duration);
+							else if (globals.m_enPlayerState == cppsPaused && hCurrent)
+								CPI_DiscordRPC_SetPaused(hCurrent);
+						}
 						else if (!options.discord_rpc_enabled && bWasEnabled)
 						{
 							CPI_DiscordRPC_Clear();

@@ -83,6 +83,18 @@ typedef struct _CPs_OutputModule
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// Output module helper — sets all non-vtable fields to their default values.
+// Call this at the end of every CPI_Player_Output_Initialise_*() function.
+static inline void CPI_OutputModule_InitDefaults(CPs_OutputModule* pModule, const char* pcModuleName)
+{
+	pModule->m_pModuleCookie  = NULL;
+	pModule->m_pcModuleName   = pcModuleName;
+	pModule->m_pCoDec         = NULL;
+	pModule->m_pEqualiser     = NULL;
+	pModule->m_fReplayGainScale = 1.0f;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Output initialisers
 void CPI_Player_Output_Initialise_WaveMapper(CPs_OutputModule* pModule);
 void CPI_Player_Output_Initialise_DirectSound(CPs_OutputModule* pModule);

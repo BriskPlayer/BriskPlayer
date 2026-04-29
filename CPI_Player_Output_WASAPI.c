@@ -226,19 +226,15 @@ static BOOL FormatsMatch(const WAVEFORMATEX* pSrc, const WAVEFORMATEX* pDst)
 
 void CPI_Player_Output_Initialise_WASAPI(CPs_OutputModule* pModule)
 {
-    pModule->Initialise       = CPP_OMWA_Initialise;
-    pModule->Uninitialise     = CPP_OMWA_Uninitialise;
-    pModule->RefillBuffers    = CPP_OMWA_RefillBuffers;
-    pModule->SetPause         = CPP_OMWA_SetPause;
-    pModule->IsOutputComplete = CPP_OMWA_IsOutputComplete;
-    pModule->Flush            = CPP_OMWA_Flush;
-    pModule->OnEQChanged      = CPP_OMWA_OnEQChanged;
+    pModule->Initialise        = CPP_OMWA_Initialise;
+    pModule->Uninitialise      = CPP_OMWA_Uninitialise;
+    pModule->RefillBuffers     = CPP_OMWA_RefillBuffers;
+    pModule->SetPause          = CPP_OMWA_SetPause;
+    pModule->IsOutputComplete  = CPP_OMWA_IsOutputComplete;
+    pModule->Flush             = CPP_OMWA_Flush;
+    pModule->OnEQChanged       = CPP_OMWA_OnEQChanged;
     pModule->SetInternalVolume = CPP_OMWA_SetInternalVolume;
-    pModule->m_pModuleCookie  = NULL;
-    pModule->m_pcModuleName   = "WASAPI Output";
-    pModule->m_pCoDec         = NULL;
-    pModule->m_pEqualiser     = NULL;
-    pModule->m_fReplayGainScale = 1.0f;
+    CPI_OutputModule_InitDefaults(pModule, "WASAPI Output");
 }
 
 ////////////////////////////////////////////////////////////////////////////////

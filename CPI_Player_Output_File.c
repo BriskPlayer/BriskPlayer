@@ -72,19 +72,15 @@ void CPP_OMFL_SetInternalVolume(CPs_OutputModule* pModule, const int iNewVolume)
 void CPI_Player_Output_Initialise_File(CPs_OutputModule* pModule)
 {
 	// This is a one off call to set up the function pointers
-	pModule->Initialise = CPP_OMFL_Initialise;
-	pModule->Uninitialise = CPP_OMFL_Uninitialise;
-	pModule->RefillBuffers = CPP_OMFL_RefillBuffers;
-	pModule->SetPause = CPP_OMFL_SetPause;
-	pModule->IsOutputComplete = CPP_OMFL_IsOutputComplete;
-	pModule->Flush = CPP_OMFL_Flush;
-	pModule->OnEQChanged = CPP_OMFL_OnEQChanged;
+	pModule->Initialise        = CPP_OMFL_Initialise;
+	pModule->Uninitialise      = CPP_OMFL_Uninitialise;
+	pModule->RefillBuffers     = CPP_OMFL_RefillBuffers;
+	pModule->SetPause          = CPP_OMFL_SetPause;
+	pModule->IsOutputComplete  = CPP_OMFL_IsOutputComplete;
+	pModule->Flush             = CPP_OMFL_Flush;
+	pModule->OnEQChanged       = CPP_OMFL_OnEQChanged;
 	pModule->SetInternalVolume = CPP_OMFL_SetInternalVolume;
-	pModule->m_pModuleCookie = NULL;
-	pModule->m_pcModuleName = "WAV File Writer";
-	pModule->m_pCoDec = NULL;
-	pModule->m_pEqualiser = NULL;
-	pModule->m_fReplayGainScale = 1.0f;
+	CPI_OutputModule_InitDefaults(pModule, "WAV File Writer");
 }
 
 //

@@ -738,9 +738,9 @@ BOOL CPP_OMMP3_GetPCMBlock(CPs_CoDecModule* pModule, void *block, DWORD *size)
 		
 		bitrate = context->rate / context->frames;
 		
-		if (context->info.m_iBitRate_Kbs != (int)bitrate)
+		if (context->info.m_iBitRate_Kbs != bitrate)
 		{
-			context->info.m_iBitRate_Kbs = (int)bitrate;
+			context->info.m_iBitRate_Kbs = bitrate;
 		}
 	}
 	
