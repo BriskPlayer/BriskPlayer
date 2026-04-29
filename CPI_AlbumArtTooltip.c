@@ -28,6 +28,15 @@
 // Tooltip State
 ////////////////////////////////////////////////////////////////////////////////
 
+static void CPAAT_TextOutUTF8(HDC hDC, int x, int y, const char* pcUtf8)
+{
+	wchar_t wcBuffer[512];
+	if (MultiByteToWideChar(CP_UTF8, 0, pcUtf8, -1, wcBuffer, 512) > 0)
+		TextOutW(hDC, x, y, wcBuffer, (int)wcslen(wcBuffer));
+	else
+		TextOutA(hDC, x, y, pcUtf8, (int)strlen(pcUtf8));
+}
+
 typedef struct _CPs_TooltipState
 {
 	HWND m_hWnd;
@@ -633,36 +642,36 @@ LRESULT CALLBACK CPAAT_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 				SelectObject(hDC, hBoldFont);
 				SetTextColor(hDC, RGB(0, 0, 0));  // Black for title
 				
-				TextOut(hDC, iX, iY, g_Tooltip.m_cTitle, (int)strlen(g_Tooltip.m_cTitle));
+				CPAAT_TextOutUTF8(hDC, iX, iY, g_Tooltip.m_cTitle);
 				iY += 20;
 				
 				// Normal font for rest
 				SelectObject(hDC, hFont);
 				SetTextColor(hDC, RGB(0, 0, 0));  // Black for artist
-				TextOut(hDC, iX, iY, g_Tooltip.m_cArtist, (int)strlen(g_Tooltip.m_cArtist));
+				CPAAT_TextOutUTF8(hDC, iX, iY, g_Tooltip.m_cArtist);
 				iY += 18;
 				SetTextColor(hDC, RGB(0, 0, 0));  // Black for album
-				TextOut(hDC, iX, iY, g_Tooltip.m_cAlbum, (int)strlen(g_Tooltip.m_cAlbum));
+				CPAAT_TextOutUTF8(hDC, iX, iY, g_Tooltip.m_cAlbum);
 				iY += 18;
 				
 				// Multiple artists info (if available)
 				if (g_Tooltip.m_cArtists[0])
 				{
 					SetTextColor(hDC, RGB(80, 80, 150));  // Blue-ish for featured artists
-					TextOut(hDC, iX, iY, g_Tooltip.m_cArtists, (int)strlen(g_Tooltip.m_cArtists));
+					CPAAT_TextOutUTF8(hDC, iX, iY, g_Tooltip.m_cArtists);
 					iY += 18;
 				}
 				
 				// Duration and file size
 				SetTextColor(hDC, RGB(100, 100, 100));
-				TextOut(hDC, iX, iY, g_Tooltip.m_cInfo, (int)strlen(g_Tooltip.m_cInfo));
+				CPAAT_TextOutUTF8(hDC, iX, iY, g_Tooltip.m_cInfo);
 				iY += 18;
 				
 				// Technical info line 1 (codec and bitrate)
 				if (g_Tooltip.m_cTechnical1[0])
 				{
 					SetTextColor(hDC, RGB(120, 120, 120));
-					TextOut(hDC, iX, iY, g_Tooltip.m_cTechnical1, (int)strlen(g_Tooltip.m_cTechnical1));
+					CPAAT_TextOutUTF8(hDC, iX, iY, g_Tooltip.m_cTechnical1);
 					iY += 18;
 				}
 				
@@ -670,7 +679,7 @@ LRESULT CALLBACK CPAAT_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 				if (g_Tooltip.m_cTechnical2[0])
 				{
 					SetTextColor(hDC, RGB(120, 120, 120));
-					TextOut(hDC, iX, iY, g_Tooltip.m_cTechnical2, (int)strlen(g_Tooltip.m_cTechnical2));
+					CPAAT_TextOutUTF8(hDC, iX, iY, g_Tooltip.m_cTechnical2);
 					iY += 18;
 				}
 				

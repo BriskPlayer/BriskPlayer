@@ -342,7 +342,14 @@ void CLV_DrawText(CPs_DrawContext* pDC, const char* pcString, const RECT* _prTar
 		uiFlags = 0L;
 		
 	OffsetRect(&rDraw, pDC->m_ptOffset.x, pDC->m_ptOffset.y);
-	DrawText(pDC->m_dcDraw, pcString, -1, &rDraw, DT_WORD_ELLIPSIS | DT_NOPREFIX | uiFlags);
+	{
+		wchar_t wcBuffer[1024];
+		int iLen = MultiByteToWideChar(CP_UTF8, 0, pcString, -1, wcBuffer, 1024);
+		if (iLen > 0)
+			DrawTextW(pDC->m_dcDraw, wcBuffer, -1, &rDraw, DT_WORD_ELLIPSIS | DT_NOPREFIX | uiFlags);
+		else
+			DrawText(pDC->m_dcDraw, pcString, -1, &rDraw, DT_WORD_ELLIPSIS | DT_NOPREFIX | uiFlags);
+	}
 }
 
 //

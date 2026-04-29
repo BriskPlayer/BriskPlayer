@@ -175,7 +175,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_3DLOOK | DS_CENTER | WS
 CAPTION "BriskPlayer Options"
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "General",-1,7,1,406,185
+    GROUPBOX        "General",-1,7,1,406,193
     CONTROL         "Always on top",IDC_ONTOP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,15,180,10
     CONTROL         "Exit after playing",IDC_AUTOEXIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,28,180,10
     CONTROL         "Rotate systemtray icon",IDC_ROTATE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,41,180,10

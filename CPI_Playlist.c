@@ -1088,6 +1088,67 @@ void CPL_ExportPlaylist(CP_HPLAYLIST hPlaylist, const char* pcOutputName)
 	CloseHandle(hOutputFile);
 }
 
+// Resolve . and .. components in an absolute Windows path in-place.
+static void CPL_CanonicalizePath(char* pcPath)
+{
+	char cTemp[MAX_PATH];
+	char* parts[MAX_PATH];
+	int nParts = 0;
+	int nOut = 0;
+	int prefixLen = 0;
+	char* pComp;
+	char* pSep;
+	int i;
+
+	cp_strcpy_s(cTemp, sizeof(cTemp), pcPath);
+
+	// Preserve drive prefix (e.g. "C:\")
+	if (cTemp[0] && cTemp[1] == ':' && (cTemp[2] == '\\' || cTemp[2] == '/'))
+		prefixLen = 3;
+
+	// Split remaining path into components at separators
+	pComp = cTemp + prefixLen;
+	pSep = pComp;
+
+	while (*pSep)
+	{
+		if (*pSep == '\\' || *pSep == '/')
+		{
+			*pSep = '\0';
+			if (*pComp != '\0')
+				parts[nParts++] = pComp;
+			pComp = pSep + 1;
+		}
+		pSep++;
+	}
+	if (*pComp != '\0')
+		parts[nParts++] = pComp;
+
+	// Process each component
+	for (i = 0; i < nParts; i++)
+	{
+		if (strcmp(parts[i], "..") == 0)
+		{
+			if (nOut > 0)
+				nOut--;
+		}
+		else if (strcmp(parts[i], ".") != 0)
+		{
+			parts[nOut++] = parts[i];
+		}
+	}
+
+	// Reconstruct into pcPath
+	memcpy(pcPath, cTemp, prefixLen);
+	pcPath[prefixLen] = '\0';
+	for (i = 0; i < nOut; i++)
+	{
+		if (i > 0)
+			cp_strcat_s(pcPath, MAX_PATH, "\\");
+		cp_strcat_s(pcPath, MAX_PATH, parts[i]);
+	}
+}
+
 //
 //
 //
@@ -1099,12 +1160,7 @@ void CPL_AddPrefixedFile(CP_HPLAYLIST hPlaylist,
 {
 	const unsigned int iFile_VolumeBytes = CPL_GetPathVolumeBytes(pcFilename);
 	
-	// Reject path traversal attacks (../ or ..\) and UNC paths (\\server\share)
-	if (strstr(pcFilename, "..") != NULL)
-	{
-		CP_TRACE1("Rejecting playlist entry with path traversal: \"%s\"", pcFilename);
-		return;
-	}
+	// Reject UNC paths from untrusted playlists (\\server\share)
 	if (pcFilename[0] == '\\' && pcFilename[1] == '\\')
 	{
 		CP_TRACE1("Rejecting playlist entry with UNC path: \"%s\"", pcFilename);
@@ -1124,6 +1180,7 @@ void CPL_AddPrefixedFile(CP_HPLAYLIST hPlaylist,
 		if (iPlaylist_VolumeBytes < iRemaining) {
 			memcpy(cFullPath, pcPlaylistFile, iPlaylist_VolumeBytes);
 			cp_strcpy_s(cFullPath + iPlaylist_VolumeBytes, iRemaining - iPlaylist_VolumeBytes, pcFilename + 1);
+			CPL_CanonicalizePath(cFullPath);
 			CPL_AddSingleFile(hPlaylist, cFullPath, pcTitle);
 		}
 	}
@@ -1137,6 +1194,7 @@ void CPL_AddPrefixedFile(CP_HPLAYLIST hPlaylist,
 		if (iPlaylist_DirBytes < iRemaining) {
 			memcpy(cFullPath, pcPlaylistFile, iPlaylist_DirBytes);
 			cp_strcpy_s(cFullPath + iPlaylist_DirBytes, iRemaining - iPlaylist_DirBytes, pcFilename);
+			CPL_CanonicalizePath(cFullPath);
 			CPL_AddSingleFile(hPlaylist, cFullPath, pcTitle);
 		}
 	}

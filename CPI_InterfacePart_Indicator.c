@@ -108,7 +108,13 @@ void IPIC_Draw(CP_HINTERFACEPART hPart, CPs_DrawContext* pContext)
 		hfOld = (HFONT)SelectObject(pContext->m_dcDraw, glb_pSkin->mpl_hfFont);
 		SetTextColor(pContext->m_dcDraw, glb_pSkin->mpl_ListHeaderColour);
 		SetBkMode(pContext->m_dcDraw, TRANSPARENT);
-		DrawText(pContext->m_dcDraw, pcValue, -1, &rText, DT_WORD_ELLIPSIS | DT_NOPREFIX | DT_VCENTER);
+		{
+			wchar_t wcBuffer[1024];
+			if (MultiByteToWideChar(CP_UTF8, 0, pcValue, -1, wcBuffer, 1024) > 0)
+				DrawTextW(pContext->m_dcDraw, wcBuffer, -1, &rText, DT_WORD_ELLIPSIS | DT_NOPREFIX | DT_VCENTER);
+			else
+				DrawText(pContext->m_dcDraw, pcValue, -1, &rText, DT_WORD_ELLIPSIS | DT_NOPREFIX | DT_VCENTER);
+		}
 		SelectObject(pContext->m_dcDraw, hfOld);
 	}
 }
