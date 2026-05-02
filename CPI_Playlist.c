@@ -49,6 +49,22 @@ typedef struct _CPs_PlaylistWorkerThreadInfo
 //
 //
 
+////////////////////////////////////////////////////////////////////////////////
+// O(1) path-lookup hash table (separate chaining, case-insensitive)
+// Used for duplicate detection in AddSingleFile and RemoveDuplicates.
+////////////////////////////////////////////////////////////////////////////////
+
+#define CPL_HASH_BUCKETS 512u  /* power-of-2; & mask replaces % */
+
+typedef struct _CPs_PathHashNode {
+	char                    *m_pcLowercasePath;
+	struct _CPs_PathHashNode *m_pNext;
+} CPs_PathHashNode;
+
+typedef struct _CPs_PathHashTable {
+	CPs_PathHashNode *m_pBuckets[CPL_HASH_BUCKETS];
+} CPs_PathHashTable;
+
 typedef struct _CPs_Playlist
 {
 	CP_HPLAYLISTITEM m_hFirst;
@@ -65,6 +81,8 @@ typedef struct _CPs_Playlist
 	CPs_PlaylistWorkerThreadInfo m_WorkerThreadInfo;
 	BOOL m_bSyncLoadNextFile;
 	BOOL m_bAutoActivateInitial;
+	
+	CPs_PathHashTable m_PathLookup; /* O(1) path duplicate check */
 	
 } CPs_Playlist;
 
@@ -99,6 +117,105 @@ typedef struct _CPs_NotifyChunk
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////
+// Hash table helpers (file-private)
+////////////////////////////////////////////////////////////////////////////////
+
+/* FNV-1a hash, case-folded and slash-normalised */
+static unsigned int CPL_HashPath(const char *pcPath)
+{
+	unsigned int h = 2166136261u;
+	unsigned char c;
+	while ((c = (unsigned char)*pcPath++) != '\0') {
+		if (c >= 'A' && c <= 'Z') c |= 0x20u;
+		else if (c == '/') c = '\\';
+		h ^= c;
+		h *= 16777619u;
+	}
+	return h & (CPL_HASH_BUCKETS - 1u);
+}
+
+static void CPL_Hash_Insert(CPs_PathHashTable *pTable, const char *pcPath)
+{
+	unsigned int slot;
+	CPs_PathHashNode *pNode;
+	int len;
+	if (!pcPath || !pcPath[0]) return;
+	slot = CPL_HashPath(pcPath);
+	pNode = (CPs_PathHashNode*)malloc(sizeof(CPs_PathHashNode));
+	if (!pNode) return;
+	len = lstrlenA(pcPath);
+	pNode->m_pcLowercasePath = (char*)malloc((size_t)len + 1);
+	if (!pNode->m_pcLowercasePath) { free(pNode); return; }
+	memcpy(pNode->m_pcLowercasePath, pcPath, (size_t)len + 1);
+	CharLowerA(pNode->m_pcLowercasePath);
+	pNode->m_pNext = pTable->m_pBuckets[slot];
+	pTable->m_pBuckets[slot] = pNode;
+}
+
+static BOOL CPL_Hash_Contains(const CPs_PathHashTable *pTable, const char *pcPath)
+{
+	char szLower[MAX_PATH];
+	unsigned int slot;
+	const CPs_PathHashNode *pNode;
+	int len;
+	if (!pcPath || !pcPath[0]) return FALSE;
+	len = lstrlenA(pcPath);
+	if (len >= MAX_PATH) len = MAX_PATH - 1;
+	memcpy(szLower, pcPath, (size_t)len + 1);
+	CharLowerA(szLower);
+	slot = CPL_HashPath(pcPath);
+	pNode = pTable->m_pBuckets[slot];
+	while (pNode) {
+		if (lstrcmpA(pNode->m_pcLowercasePath, szLower) == 0)
+			return TRUE;
+		pNode = pNode->m_pNext;
+	}
+	return FALSE;
+}
+
+static void CPL_Hash_Remove(CPs_PathHashTable *pTable, const char *pcPath)
+{
+	char szLower[MAX_PATH];
+	unsigned int slot;
+	CPs_PathHashNode **ppNode;
+	int len;
+	if (!pcPath || !pcPath[0]) return;
+	len = lstrlenA(pcPath);
+	if (len >= MAX_PATH) len = MAX_PATH - 1;
+	memcpy(szLower, pcPath, (size_t)len + 1);
+	CharLowerA(szLower);
+	slot = CPL_HashPath(pcPath);
+	ppNode = &pTable->m_pBuckets[slot];
+	while (*ppNode) {
+		if (lstrcmpA((*ppNode)->m_pcLowercasePath, szLower) == 0) {
+			CPs_PathHashNode *pDead = *ppNode;
+			*ppNode = pDead->m_pNext;
+			free(pDead->m_pcLowercasePath);
+			free(pDead);
+			return;
+		}
+		ppNode = &(*ppNode)->m_pNext;
+	}
+}
+
+static void CPL_Hash_Clear(CPs_PathHashTable *pTable)
+{
+	unsigned int i;
+	for (i = 0; i < CPL_HASH_BUCKETS; i++) {
+		CPs_PathHashNode *pNode = pTable->m_pBuckets[i];
+		while (pNode) {
+			CPs_PathHashNode *pNext = pNode->m_pNext;
+			free(pNode->m_pcLowercasePath);
+			free(pNode);
+			pNode = pNext;
+		}
+		pTable->m_pBuckets[i] = NULL;
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -120,6 +237,8 @@ CP_HPLAYLIST CPL_CreatePlaylist(void)
 	pNewPlaylist->m_iTrackStackCursor = 0;
 	pNewPlaylist->m_bSyncLoadNextFile = FALSE;
 	pNewPlaylist->m_bAutoActivateInitial = FALSE;
+	
+	memset(&pNewPlaylist->m_PathLookup, 0, sizeof(pNewPlaylist->m_PathLookup));
 	
 	pNewPlaylist->m_WorkerThreadInfo.m_dwHostThreadID = GetCurrentThreadId();
 	pNewPlaylist->m_WorkerThreadInfo.m_dwCurrentBatchID = 0;
@@ -276,6 +395,9 @@ void CPL_Empty(CP_HPLAYLIST hPlaylist)
 	pPlaylist->m_hFirst = NULL;
 	pPlaylist->m_hLast = NULL;
 	
+	// Clear path lookup table (all items just destroyed above)
+	CPL_Hash_Clear(&pPlaylist->m_PathLookup);
+	
 	// Clean up the trackstack
 	if (pPlaylist->m_pTrackStack)
 		free(pPlaylist->m_pTrackStack);
@@ -304,24 +426,14 @@ void CPL_AddSingleFile_pt2(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hNewFile, co
 		return;
 	}
 	
-	// If items are only allowed once - look for another instance of this item
-	// and skip this add if it is found
+	// If items are only allowed once - check the hash table (O(1))
 	
 	if (options.allow_file_once_in_playlist)
 	{
-		CP_HPLAYLISTITEM hCursor;
-		hCursor = pPlaylist->m_hFirst;
-		
-		while (hCursor)
+		if (CPL_Hash_Contains(&pPlaylist->m_PathLookup, pcPath))
 		{
-			// Is this item in the list already?
-			if (stricmp(CPLII_DECODEHANDLE(hCursor)->m_pcPath, pcPath) == 0)
-			{
-				CPLII_DestroyItem(hNewFile);
-				return;
-			}
-			
-			hCursor = CPLI_Next(hCursor);
+			CPLII_DestroyItem(hNewFile);
+			return;
 		}
 	}
 	
@@ -335,6 +447,9 @@ void CPL_AddSingleFile_pt2(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hNewFile, co
 	
 	if (pPlaylist->m_hFirst == NULL)
 		pPlaylist->m_hFirst = hNewFile;
+	
+	// Record path in lookup table so future adds can detect duplicates in O(1)
+	CPL_Hash_Insert(&pPlaylist->m_PathLookup, pcPath);
 		
 	// If there is no track name (ID3 read off or failed) - create one from the path
 	if (CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName == NULL)
@@ -404,7 +519,7 @@ void CPL_AddSingleFile_pt2(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hNewFile, co
 //
 void CPL_AddSingleFile(CP_HPLAYLIST hPlaylist, const char* pcPath, const char* pcTitle)
 {
-	char name[256];
+	char name[MAX_PATH];
 	int pos, last, len, dst;
 	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
 	CP_HPLAYLISTITEM hNewFile;
@@ -477,9 +592,9 @@ void CPL_AddSingleFile(CP_HPLAYLIST hPlaylist, const char* pcPath, const char* p
 		pos = 0;
 		dst = 0;
 		
-		memset(name, 0, 256);
+		memset(name, 0, MAX_PATH);
 		
-		while (pos <= len)
+		while (pos <= len && dst < MAX_PATH - 1)
 		{
 			if (pcPath[pos] == '\\')
 			{
@@ -560,36 +675,32 @@ void CPL_RemoveDuplicates(CP_HPLAYLIST hPlaylist)
 {
 	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
 	CP_HPLAYLISTITEM hCursor;
+	CPs_PathHashTable seenPaths;
 	CP_CHECKOBJECT(pPlaylist);
 	
-	// Scan the playlist removing duplicates
-	hCursor = pPlaylist->m_hFirst;
+	/* Single-pass O(n) duplicate removal using a local hash set.
+	   CPL_RemoveItem keeps pPlaylist->m_PathLookup consistent. */
+	memset(&seenPaths, 0, sizeof(seenPaths));
 	
+	hCursor = pPlaylist->m_hFirst;
 	while (hCursor)
 	{
-		CP_HPLAYLISTITEM hCursor_Scan;
+		CP_HPLAYLISTITEM hNext = CPLI_Next(hCursor);
+		const char *pcPath = CPLII_DECODEHANDLE(hCursor)->m_pcPath;
 		
-		// Look for duplicates after this item (as all items will be scanned
-		// in this way there is no need to look for duplicates before this item)
-		hCursor_Scan = CPLI_Next(hCursor);
-		
-		while (hCursor_Scan)
+		if (CPL_Hash_Contains(&seenPaths, pcPath))
 		{
-			// Is this a duplicate
-			if (stricmp(CPLII_DECODEHANDLE(hCursor_Scan)->m_pcPath,
-						CPLII_DECODEHANDLE(hCursor)->m_pcPath) == 0)
-			{
-				CPL_RemoveItem(hPlaylist, hCursor_Scan);
-				
-				// Items before the current are already unique - stop scanning
-				break;
-			}
-			
-			hCursor_Scan = CPLI_Next(hCursor_Scan);
+			CPL_RemoveItem(hPlaylist, hCursor);
+		}
+		else
+		{
+			CPL_Hash_Insert(&seenPaths, pcPath);
 		}
 		
-		hCursor = CPLI_Next(hCursor);
+		hCursor = hNext;
 	}
+	
+	CPL_Hash_Clear(&seenPaths);
 }
 
 //
@@ -628,6 +739,9 @@ void CPL_RemoveItem(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem)
 {
 	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
 	CP_CHECKOBJECT(pPlaylist);
+	
+	// Remove from path lookup before the item is unlinked/destroyed
+	CPL_Hash_Remove(&pPlaylist->m_PathLookup, CPLII_DECODEHANDLE(hItem)->m_pcPath);
 	
 	// Callback
 	CPL_cb_OnPlaylistItemDelete(hItem);

@@ -343,12 +343,28 @@ void CLV_DrawText(CPs_DrawContext* pDC, const char* pcString, const RECT* _prTar
 		
 	OffsetRect(&rDraw, pDC->m_ptOffset.x, pDC->m_ptOffset.y);
 	{
-		wchar_t wcBuffer[1024];
-		int iLen = MultiByteToWideChar(CP_UTF8, 0, pcString, -1, wcBuffer, 1024);
-		if (iLen > 0)
-			DrawTextW(pDC->m_dcDraw, wcBuffer, -1, &rDraw, DT_WORD_ELLIPSIS | DT_NOPREFIX | uiFlags);
-		else
-			DrawText(pDC->m_dcDraw, pcString, -1, &rDraw, DT_WORD_ELLIPSIS | DT_NOPREFIX | uiFlags);
+		/* Fast path: pure ASCII strings (bytes 0-127) need no conversion.
+		   DrawTextA handles them correctly and avoids a MultiByteToWideChar
+		   call on every cell of every repaint. Only convert when multi-byte
+		   UTF-8 sequences are present (byte value > 127). */
+		const unsigned char *pScan = (const unsigned char *)pcString;
+		BOOL bNeedsWide = FALSE;
+		while (*pScan) {
+			if (*pScan > 127u) { bNeedsWide = TRUE; break; }
+			pScan++;
+		}
+		if (bNeedsWide) {
+			wchar_t wcBuffer[1024];
+			int iLen = MultiByteToWideChar(CP_UTF8, 0, pcString, -1, wcBuffer, 1024);
+			if (iLen > 1)
+				/* iLen includes the null terminator; pass iLen-1 so DrawTextW
+				   doesn't have to scan for the null itself. */
+				DrawTextW(pDC->m_dcDraw, wcBuffer, iLen - 1, &rDraw, DT_WORD_ELLIPSIS | DT_NOPREFIX | uiFlags);
+			else
+				DrawTextA(pDC->m_dcDraw, pcString, -1, &rDraw, DT_WORD_ELLIPSIS | DT_NOPREFIX | uiFlags);
+		} else {
+			DrawTextA(pDC->m_dcDraw, pcString, -1, &rDraw, DT_WORD_ELLIPSIS | DT_NOPREFIX | uiFlags);
+		}
 	}
 }
 

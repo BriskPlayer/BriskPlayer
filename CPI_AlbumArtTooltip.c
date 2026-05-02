@@ -31,10 +31,13 @@
 static void CPAAT_TextOutUTF8(HDC hDC, int x, int y, const char* pcUtf8)
 {
 	wchar_t wcBuffer[512];
-	if (MultiByteToWideChar(CP_UTF8, 0, pcUtf8, -1, wcBuffer, 512) > 0)
-		TextOutW(hDC, x, y, wcBuffer, (int)wcslen(wcBuffer));
+	/* MultiByteToWideChar with -1 source length returns count including the
+	   null terminator, so pass iLen-1 to TextOutW. */
+	int iLen = MultiByteToWideChar(CP_UTF8, 0, pcUtf8, -1, wcBuffer, 512);
+	if (iLen > 1)
+		TextOutW(hDC, x, y, wcBuffer, iLen - 1);
 	else
-		TextOutA(hDC, x, y, pcUtf8, (int)strlen(pcUtf8));
+		TextOutA(hDC, x, y, pcUtf8, lstrlenA(pcUtf8));
 }
 
 typedef struct _CPs_TooltipState
@@ -231,62 +234,46 @@ void CPAAT_UpdateContent(CP_HPLAYLISTITEM hItem)
 	
 	if (iBitrate > 0 || iSampleRate > 0)
 	{
-		char tempBuf[256];
+		/* Build m_cTechnical1 ("Codec [Mode] Xkbps") with a position pointer
+		   so each segment is written at a known offset without strcat_s
+		   rescanning from the start. */
+		char *pW = g_Tooltip.m_cTechnical1;
+		char *pEnd = g_Tooltip.m_cTechnical1 + sizeof(g_Tooltip.m_cTechnical1) - 1;
 		
-		// Line 1: Codec and bitrate
-		if (pcCodec && pcCodec[0])
-		{
-			strcpy_s(g_Tooltip.m_cTechnical1, sizeof(g_Tooltip.m_cTechnical1), pcCodec);
-			strcat_s(g_Tooltip.m_cTechnical1, sizeof(g_Tooltip.m_cTechnical1), " ");
+		if (pcCodec && pcCodec[0]) {
+			int n = snprintf(pW, (size_t)(pEnd - pW + 1), "%s ", pcCodec);
+			if (n > 0 && pW + n < pEnd) pW += n; else pW = pEnd;
+		}
+		if (pcBitrateMode && pcBitrateMode[0] && lstrcmpA(pcBitrateMode, "CBR") != 0) {
+			int n = snprintf(pW, (size_t)(pEnd - pW + 1), "%s ", pcBitrateMode);
+			if (n > 0 && pW + n < pEnd) pW += n; else pW = pEnd;
+		}
+		if (iBitrate > 0) {
+			snprintf(pW, (size_t)(pEnd - pW + 1), "%u kbps", iBitrate);
 		}
 		
-		// Add bitrate mode if not CBR
-		if (pcBitrateMode && pcBitrateMode[0] && strcmp(pcBitrateMode, "CBR") != 0)
-		{
-			strcat_s(g_Tooltip.m_cTechnical1, sizeof(g_Tooltip.m_cTechnical1), pcBitrateMode);
-			strcat_s(g_Tooltip.m_cTechnical1, sizeof(g_Tooltip.m_cTechnical1), " ");
-		}
+		/* Build m_cTechnical2 ("XHz - Ybit - Channels") the same way. */
+		pW   = g_Tooltip.m_cTechnical2;
+		pEnd = g_Tooltip.m_cTechnical2 + sizeof(g_Tooltip.m_cTechnical2) - 1;
 		
-		// Add bitrate
-		if (iBitrate > 0)
-		{
-			sprintf_s(tempBuf, sizeof(tempBuf), "%u kbps", iBitrate);
-			strcat_s(g_Tooltip.m_cTechnical1, sizeof(g_Tooltip.m_cTechnical1), tempBuf);
+		if (iSampleRate > 0) {
+			int n = snprintf(pW, (size_t)(pEnd - pW + 1), "%u Hz", iSampleRate);
+			if (n > 0 && pW + n < pEnd) pW += n; else pW = pEnd;
 		}
-		
-		// Line 2: Sample rate, bit depth, and channels
-		if (iSampleRate > 0)
-		{
-			sprintf_s(tempBuf, sizeof(tempBuf), "%u Hz", iSampleRate);
-			strcpy_s(g_Tooltip.m_cTechnical2, sizeof(g_Tooltip.m_cTechnical2), tempBuf);
+		if (iBitDepth > 0) {
+			int n = snprintf(pW, (size_t)(pEnd - pW + 1), "%s%u-bit",
+			                 (pW > g_Tooltip.m_cTechnical2) ? " - " : "", iBitDepth);
+			if (n > 0 && pW + n < pEnd) pW += n; else pW = pEnd;
 		}
-		
-		// Add bit depth
-		if (iBitDepth > 0)
-		{
-			if (g_Tooltip.m_cTechnical2[0])
-				strcat_s(g_Tooltip.m_cTechnical2, sizeof(g_Tooltip.m_cTechnical2), " - ");
-			sprintf_s(tempBuf, sizeof(tempBuf), "%u-bit", iBitDepth);
-			strcat_s(g_Tooltip.m_cTechnical2, sizeof(g_Tooltip.m_cTechnical2), tempBuf);
-		}
-		
-		// Add channels
-		if (cChannels > 0)
-		{
-			if (g_Tooltip.m_cTechnical2[0])
-				strcat_s(g_Tooltip.m_cTechnical2, sizeof(g_Tooltip.m_cTechnical2), " - ");
-			
-			if (cChannels == 1)
-				strcat_s(g_Tooltip.m_cTechnical2, sizeof(g_Tooltip.m_cTechnical2), "Mono");
-			else if (cChannels == 2)
-				strcat_s(g_Tooltip.m_cTechnical2, sizeof(g_Tooltip.m_cTechnical2), "Stereo");
-			else if (cChannels == 6)
-				strcat_s(g_Tooltip.m_cTechnical2, sizeof(g_Tooltip.m_cTechnical2), "5.1");
-			else
-			{
-				sprintf_s(tempBuf, sizeof(tempBuf), "%dch", cChannels);
-				strcat_s(g_Tooltip.m_cTechnical2, sizeof(g_Tooltip.m_cTechnical2), tempBuf);
-			}
+		if (cChannels > 0) {
+			const char *pcChLabel;
+			char chBuf[16];
+			if (cChannels == 1)      pcChLabel = "Mono";
+			else if (cChannels == 2) pcChLabel = "Stereo";
+			else if (cChannels == 6) pcChLabel = "5.1";
+			else { snprintf(chBuf, sizeof(chBuf), "%dch", cChannels); pcChLabel = chBuf; }
+			snprintf(pW, (size_t)(pEnd - pW + 1), "%s%s",
+			         (pW > g_Tooltip.m_cTechnical2) ? " - " : "", pcChLabel);
 		}
 	}
 	
@@ -340,33 +327,43 @@ void CPAAT_CalculateSize(void)
 		lf.lfWeight = FW_BOLD;
 		HFONT hBoldFont = CreateFontIndirect(&lf);
 		
+		/* Pre-compute lengths once; GetTextExtentPoint32 requires an explicit
+		   character count and does not accept -1 like DrawText does. */
+		int cTitle      = lstrlenA(g_Tooltip.m_cTitle);
+		int cArtist     = lstrlenA(g_Tooltip.m_cArtist);
+		int cAlbum      = lstrlenA(g_Tooltip.m_cAlbum);
+		int cInfo       = lstrlenA(g_Tooltip.m_cInfo);
+		int cTechnical1 = lstrlenA(g_Tooltip.m_cTechnical1);
+		int cTechnical2 = lstrlenA(g_Tooltip.m_cTechnical2);
+		int cArtists    = lstrlenA(g_Tooltip.m_cArtists);
+		
 		// Get max text width - measure title with bold font
 		SelectObject(hDC, hBoldFont);
-		GetTextExtentPoint32(hDC, g_Tooltip.m_cTitle, (int)strlen(g_Tooltip.m_cTitle), &szText);
+		GetTextExtentPoint32(hDC, g_Tooltip.m_cTitle, cTitle, &szText);
 		iContentWidth = szText.cx;
 		SelectObject(hDC, hFont);
 		
-		GetTextExtentPoint32(hDC, g_Tooltip.m_cArtist, (int)strlen(g_Tooltip.m_cArtist), &szText);
+		GetTextExtentPoint32(hDC, g_Tooltip.m_cArtist, cArtist, &szText);
 		if (szText.cx > iContentWidth)
 			iContentWidth = szText.cx;
 			
-		GetTextExtentPoint32(hDC, g_Tooltip.m_cAlbum, (int)strlen(g_Tooltip.m_cAlbum), &szText);
+		GetTextExtentPoint32(hDC, g_Tooltip.m_cAlbum, cAlbum, &szText);
 		if (szText.cx > iContentWidth)
 			iContentWidth = szText.cx;
 		
-		GetTextExtentPoint32(hDC, g_Tooltip.m_cInfo, (int)strlen(g_Tooltip.m_cInfo), &szText);
+		GetTextExtentPoint32(hDC, g_Tooltip.m_cInfo, cInfo, &szText);
 		if (szText.cx > iContentWidth)
 			iContentWidth = szText.cx;
 		
-		GetTextExtentPoint32(hDC, g_Tooltip.m_cTechnical1, (int)strlen(g_Tooltip.m_cTechnical1), &szText);
+		GetTextExtentPoint32(hDC, g_Tooltip.m_cTechnical1, cTechnical1, &szText);
 		if (szText.cx > iContentWidth)
 			iContentWidth = szText.cx;
 		
-		GetTextExtentPoint32(hDC, g_Tooltip.m_cTechnical2, (int)strlen(g_Tooltip.m_cTechnical2), &szText);
+		GetTextExtentPoint32(hDC, g_Tooltip.m_cTechnical2, cTechnical2, &szText);
 		if (szText.cx > iContentWidth)
 			iContentWidth = szText.cx;
 		
-		GetTextExtentPoint32(hDC, g_Tooltip.m_cArtists, (int)strlen(g_Tooltip.m_cArtists), &szText);
+		GetTextExtentPoint32(hDC, g_Tooltip.m_cArtists, cArtists, &szText);
 		if (szText.cx > iContentWidth)
 			iContentWidth = szText.cx;
 		

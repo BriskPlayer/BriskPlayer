@@ -25,6 +25,32 @@
 #include "CPI_PlaylistItem.h"
 
 
+/* Pre-built key name tables avoid snprintf overhead in the read/write loops.
+   Column indices 0-10, EQ bands 1-8. */
+static const char* const s_pcColKeys[11][3] = {
+	{"PlaylistCol0","PlaylistSeq0","PlaylistVis0"},
+	{"PlaylistCol1","PlaylistSeq1","PlaylistVis1"},
+	{"PlaylistCol2","PlaylistSeq2","PlaylistVis2"},
+	{"PlaylistCol3","PlaylistSeq3","PlaylistVis3"},
+	{"PlaylistCol4","PlaylistSeq4","PlaylistVis4"},
+	{"PlaylistCol5","PlaylistSeq5","PlaylistVis5"},
+	{"PlaylistCol6","PlaylistSeq6","PlaylistVis6"},
+	{"PlaylistCol7","PlaylistSeq7","PlaylistVis7"},
+	{"PlaylistCol8","PlaylistSeq8","PlaylistVis8"},
+	{"PlaylistCol9","PlaylistSeq9","PlaylistVis9"},
+	{"PlaylistCol10","PlaylistSeq10","PlaylistVis10"},
+};
+static const char* const s_pcEqKeys[] = {
+	NULL,    /* index 0 = "ActivePreset", handled separately */
+	"Eq1","Eq2","Eq3","Eq4","Eq5","Eq6","Eq7","Eq8"
+};
+static const char* CPL_SkinKey(char *buf, size_t bufSz, int n)
+{
+	snprintf(buf, bufSz, "SkinFile%d", n);
+	return buf;
+}
+
+
 ////////////////////////////////////////////////////////////
 //
 //
@@ -49,15 +75,9 @@ void    options_read(void)
 	
 	for (iColIDX = PLAYLIST_first; iColIDX <= PLAYLIST_last; iColIDX++)
 	{
-		char keyname[100];
-		sprintf_s(keyname, sizeof(keyname), "PlaylistCol%d", iColIDX);
-		options.playlist_column_widths[iColIDX] = CPConfig_GetInt("WindowPos", keyname, widths[iColIDX]);
-		
-		sprintf_s(keyname, sizeof(keyname), "PlaylistSeq%d", iColIDX);
-		options.playlist_column_seq[iColIDX] = CPConfig_GetInt("WindowPos", keyname, sequences[iColIDX]);
-		
-		sprintf_s(keyname, sizeof(keyname), "PlaylistVis%d", iColIDX);
-		options.playlist_column_visible[iColIDX] = CPConfig_GetInt("WindowPos", keyname, visibles[iColIDX]) ? TRUE : FALSE;
+		options.playlist_column_widths[iColIDX]  = CPConfig_GetInt("WindowPos", s_pcColKeys[iColIDX][0], widths[iColIDX]);
+		options.playlist_column_seq[iColIDX]     = CPConfig_GetInt("WindowPos", s_pcColKeys[iColIDX][1], sequences[iColIDX]);
+		options.playlist_column_visible[iColIDX] = CPConfig_GetInt("WindowPos", s_pcColKeys[iColIDX][2], visibles[iColIDX]) ? TRUE : FALSE;
 	}
 	
 	options.main_window_pos.x = CPConfig_GetInt("WindowPos", "WindowX", 100);
@@ -136,7 +156,7 @@ void    options_read(void)
 		{
 			char    SkinFileString[MAX_PATH];
 			char    skinpath[MAX_PATH];
-			snprintf(SkinFileString, sizeof(SkinFileString), "SkinFile%d", teller - MENU_SKIN_DEFAULT);
+			CPL_SkinKey(SkinFileString, sizeof(SkinFileString), teller - MENU_SKIN_DEFAULT);
 			CPConfig_GetString("Skin", SkinFileString, "", skinpath, MAX_PATH);
 			
 			if (*skinpath != 0)
@@ -158,9 +178,7 @@ void    options_read(void)
 
 	for (teller = 1; teller < (int)ARRAY_SIZE(options.eq_settings); teller++)
 	{
-		char    keyname[100];
-		snprintf(keyname, sizeof(keyname), "Eq%d", teller);
-		options.eq_settings[teller] = CPConfig_GetInt("Equalizer", keyname, 0);
+		options.eq_settings[teller] = CPConfig_GetInt("Equalizer", s_pcEqKeys[teller], 0);
 	}
 	
 	// Read quick find defaults
@@ -199,16 +217,9 @@ void    options_write(void)
 	
 	for (iColIDX = PLAYLIST_first; iColIDX <= PLAYLIST_last; iColIDX++)
 	{
-		char keyname[100];
-		
-		snprintf(keyname, sizeof(keyname), "PlaylistCol%d", iColIDX);
-		CPConfig_SetInt("WindowPos", keyname, options.playlist_column_widths[iColIDX]);
-		
-		snprintf(keyname, sizeof(keyname), "PlaylistSeq%d", iColIDX);
-		CPConfig_SetInt("WindowPos", keyname, options.playlist_column_seq[iColIDX]);
-		
-		snprintf(keyname, sizeof(keyname), "PlaylistVis%d", iColIDX);
-		CPConfig_SetBool("WindowPos", keyname, options.playlist_column_visible[iColIDX]);
+		CPConfig_SetInt( "WindowPos", s_pcColKeys[iColIDX][0], options.playlist_column_widths[iColIDX]);
+		CPConfig_SetInt( "WindowPos", s_pcColKeys[iColIDX][1], options.playlist_column_seq[iColIDX]);
+		CPConfig_SetBool("WindowPos", s_pcColKeys[iColIDX][2], options.playlist_column_visible[iColIDX]);
 	}
 	
 	CPConfig_SetInt("WindowPos", "WindowX", options.main_window_pos.x);
@@ -242,12 +253,12 @@ void    options_write(void)
 					options.last_selected_skin_number = profileteller;
 				}
 				
-				snprintf(SkinFileString, sizeof(SkinFileString), "SkinFile%d", profileteller++);
+				CPL_SkinKey(SkinFileString, sizeof(SkinFileString), profileteller++);
 				CPConfig_SetString("Skin", SkinFileString, (char*)options.main_skin_file);
 			}
 			else
 			{
-				snprintf(SkinFileString, sizeof(SkinFileString), "SkinFile%d", profileteller++);
+				CPL_SkinKey(SkinFileString, sizeof(SkinFileString), profileteller++);
 				CPConfig_SetString("Skin", SkinFileString, NULL);
 			}
 		}
@@ -296,9 +307,7 @@ void    options_write(void)
 
 	for (teller = 1; teller < (int)ARRAY_SIZE(options.eq_settings); teller++)
 	{
-		char    keyname[100];
-		snprintf(keyname, sizeof(keyname), "Eq%d", teller);
-		CPConfig_SetInt("Equalizer", keyname, options.eq_settings[teller]);
+		CPConfig_SetInt("Equalizer", s_pcEqKeys[teller], options.eq_settings[teller]);
 	}
 	
 	// Write quick find defaults

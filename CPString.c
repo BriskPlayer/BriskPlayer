@@ -149,9 +149,10 @@ unsigned int STR_AllocSetStringW(WCHAR** ppwcDest, const WCHAR* pwcSource, const
 	if (pwcSource)
 	{
 		unsigned int uStringLength;
+		unsigned int uCharCount = (unsigned int)wcslen(pwcSource) + 1;  /* chars incl. null */
 		
-		uStringLength = (unsigned int)((wcslen(pwcSource) + 1) * sizeof(WCHAR));
-		*ppwcDest = CALLOC_TYPE(WCHAR, wcslen(pwcSource) + 1);
+		uStringLength = uCharCount * (unsigned int)sizeof(WCHAR);
+		*ppwcDest = CALLOC_TYPE(WCHAR, uCharCount);
 		
 		if (!*ppwcDest)
 		{

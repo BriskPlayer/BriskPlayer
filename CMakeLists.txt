@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
+cmake_policy(SET CMP0069 NEW)  # INTERPROCEDURAL_OPTIMIZATION honored for all compilers
 
 # ---------------------------------------------------------------------------
 # vcpkg toolchain autodetection
@@ -133,6 +134,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(ENABLE_NLS "Enable internationalization support" ON)
 option(BUILD_STATIC "Build with static linking (all libraries linked statically)" ON)
 option(BUILD_TESTS "Build unit tests" OFF)
+option(ENABLE_LTO "Enable Link Time Optimization (GCC/MinGW Release builds only)" ON)
 
 # For backwards compatibility
 if(DEFINED STATIC_LINK AND NOT DEFINED BUILD_STATIC)
@@ -659,6 +661,27 @@ endif()
 
 if(Intl_FOUND)
     target_link_libraries(briskplayer PRIVATE ${Intl_LIBRARIES})
+endif()
+
+# ---------------------------------------------------------------------------
+# LTO (Link Time Optimization) — MinGW Release builds (GCC and Clang)
+# GCC uses GIMPLE-based LTO; Clang uses LLVM ThinLTO via lld.
+# Both can link against non-LTO GCC-compiled vcpkg static libraries without
+# issue — the linker treats non-LTO archives as regular objects.
+# check_ipo_supported() handles per-compiler detection automatically.
+# ---------------------------------------------------------------------------
+if(ENABLE_LTO AND MINGW
+        AND (CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel"))
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT _lto_supported OUTPUT _lto_output LANGUAGES C CXX)
+    if(_lto_supported)
+        set_target_properties(briskplayer PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+        message(STATUS "LTO: enabled for MinGW/${CMAKE_C_COMPILER_ID} ${CMAKE_BUILD_TYPE} build")
+    else()
+        message(STATUS "LTO: not supported by this toolchain — ${_lto_output}")
+    endif()
+elseif(ENABLE_LTO AND NOT MINGW)
+    message(STATUS "LTO: skipped (MinGW-only option, current compiler is not MinGW)")
 endif()
 
 # Installation
