@@ -25,7 +25,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 // OS Compatibility Layer
-// Minimum target: Windows XP (0x0501)
+// Minimum target: Windows 7 (0x0601)
 //
 // Note: Legacy dynamic function loading has been removed. All APIs used here
 // are available on Windows XP and later. The previous code dynamically loaded

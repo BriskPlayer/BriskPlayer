@@ -192,7 +192,7 @@
  * 
  * @section compat Compatibility
  * 
- * - **Minimum OS**: Windows XP (0x0501)
+ * - **Minimum OS**: Windows 7 (0x0601)
  * - **Compilers**: MSVC, GCC (MinGW-w64), Clang
  * - **C Standard**: C17
  * 

@@ -115,20 +115,8 @@ typedef CRITICAL_SECTION mtx_t;
 #define mtx_plain 0
 #define thrd_success 0
 
-// Condition variable type - Windows Vista+ has native CONDITION_VARIABLE
-#if _WIN32_WINNT >= 0x0600
+// Condition variable type - Windows 7+ native CONDITION_VARIABLE
 typedef CONDITION_VARIABLE cp_condition_t;
-#else
-// For XP compatibility, use a semaphore-based approach (defined below)
-// The struct is forward-declared here; implementation follows.
-typedef struct {
-    HANDLE semaphore;
-    HANDLE waiters_done;
-    CRITICAL_SECTION lock;
-    volatile LONG waiters_count;
-    volatile BOOL was_broadcast;
-} cp_condition_t;
-#endif
 
 // Result codes
 #define CP_THREAD_SUCCESS   0
@@ -184,9 +172,7 @@ static inline void mtx_destroy(mtx_t* mtx) {
 }
 
 // Condition variable operations
-#if _WIN32_WINNT >= 0x0600
 
-// Windows Vista+ native condition variables
 static inline int cp_condition_init(cp_condition_t* cnd) {
     if (!cnd) return CP_THREAD_ERROR;
     InitializeConditionVariable(cnd);
@@ -220,117 +206,6 @@ static inline int cp_condition_timedwait(cp_condition_t* cnd, cp_mutex_t* mtx, D
 static inline void cp_condition_destroy(cp_condition_t* cnd) {
     (void)cnd; // No cleanup needed for CONDITION_VARIABLE
 }
-
-#else
-
-// Windows XP fallback using events
-// Uses a semaphore-based approach to avoid the classic lost-wakeup race
-// that plagues event-based condition variable emulations.
-
-static inline int cp_condition_init(cp_condition_t* cnd) {
-    if (!cnd) return CP_THREAD_ERROR;
-    cnd->semaphore = CreateSemaphore(NULL, 0, 0x7FFFFFFF, NULL);
-    cnd->waiters_done = CreateEvent(NULL, FALSE, FALSE, NULL); // Auto-reset
-    InitializeCriticalSection(&cnd->lock);
-    cnd->waiters_count = 0;
-    cnd->was_broadcast = FALSE;
-    return (cnd->semaphore && cnd->waiters_done) ? CP_THREAD_SUCCESS : CP_THREAD_ERROR;
-}
-
-static inline int cp_condition_signal(cp_condition_t* cnd) {
-    if (!cnd) return CP_THREAD_ERROR;
-    EnterCriticalSection(&cnd->lock);
-    BOOL have_waiters = (cnd->waiters_count > 0);
-    LeaveCriticalSection(&cnd->lock);
-    if (have_waiters) {
-        ReleaseSemaphore(cnd->semaphore, 1, NULL);
-    }
-    return CP_THREAD_SUCCESS;
-}
-
-static inline int cp_condition_broadcast(cp_condition_t* cnd) {
-    if (!cnd) return CP_THREAD_ERROR;
-    EnterCriticalSection(&cnd->lock);
-    BOOL have_waiters = (cnd->waiters_count > 0);
-    if (have_waiters) {
-        cnd->was_broadcast = TRUE;
-        ReleaseSemaphore(cnd->semaphore, cnd->waiters_count, NULL);
-        LeaveCriticalSection(&cnd->lock);
-        // Wait for all waiters to acquire the semaphore
-        WaitForSingleObject(cnd->waiters_done, INFINITE);
-        cnd->was_broadcast = FALSE;
-    } else {
-        LeaveCriticalSection(&cnd->lock);
-    }
-    return CP_THREAD_SUCCESS;
-}
-
-static inline int cp_condition_wait(cp_condition_t* cnd, cp_mutex_t* mtx) {
-    if (!cnd || !mtx) return CP_THREAD_ERROR;
-
-    EnterCriticalSection(&cnd->lock);
-    cnd->waiters_count++;
-    LeaveCriticalSection(&cnd->lock);
-
-    // Atomically release the mutex and wait on the semaphore
-    LeaveCriticalSection(mtx);
-    WaitForSingleObject(cnd->semaphore, INFINITE);
-
-    // Check if we're the last waiter after a broadcast
-    EnterCriticalSection(&cnd->lock);
-    cnd->waiters_count--;
-    BOOL last_waiter = (cnd->was_broadcast && cnd->waiters_count == 0);
-    LeaveCriticalSection(&cnd->lock);
-
-    if (last_waiter) {
-        SetEvent(cnd->waiters_done);
-    }
-
-    EnterCriticalSection(mtx);
-    return CP_THREAD_SUCCESS;
-}
-
-static inline int cp_condition_timedwait(cp_condition_t* cnd, cp_mutex_t* mtx, DWORD timeout_ms) {
-    if (!cnd || !mtx) return CP_THREAD_ERROR;
-
-    EnterCriticalSection(&cnd->lock);
-    cnd->waiters_count++;
-    LeaveCriticalSection(&cnd->lock);
-
-    LeaveCriticalSection(mtx);
-    DWORD result = WaitForSingleObject(cnd->semaphore, timeout_ms);
-
-    EnterCriticalSection(&cnd->lock);
-    cnd->waiters_count--;
-    BOOL last_waiter = (cnd->was_broadcast && cnd->waiters_count == 0);
-    LeaveCriticalSection(&cnd->lock);
-
-    if (last_waiter) {
-        SetEvent(cnd->waiters_done);
-    }
-
-    EnterCriticalSection(mtx);
-
-    if (result == WAIT_OBJECT_0) return CP_THREAD_SUCCESS;
-    if (result == WAIT_TIMEOUT) return CP_THREAD_TIMEDOUT;
-    return CP_THREAD_ERROR;
-}
-
-static inline void cp_condition_destroy(cp_condition_t* cnd) {
-    if (cnd) {
-        if (cnd->semaphore) {
-            CloseHandle(cnd->semaphore);
-            cnd->semaphore = NULL;
-        }
-        if (cnd->waiters_done) {
-            CloseHandle(cnd->waiters_done);
-            cnd->waiters_done = NULL;
-        }
-        DeleteCriticalSection(&cnd->lock);
-    }
-}
-
-#endif // _WIN32_WINNT >= 0x0600
 
 #endif // HAVE_C23_THREADING
 

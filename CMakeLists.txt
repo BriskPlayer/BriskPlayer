@@ -157,8 +157,8 @@ if(MSVC)
     add_compile_options(/W3 /utf-8 /std:c17 /experimental:c11atomics)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS WIN32 _WINDOWS)
     
-    # Windows Vista as minimum version (FAudio and FFmpeg 8 require Vista+)
-    add_compile_definitions(_WIN32_WINNT=0x0600 WINVER=0x0600)
+    # Windows 7 as minimum version (ITaskbarList3 requires Win7+)
+    add_compile_definitions(_WIN32_WINNT=0x0601 WINVER=0x0601)
     
     # Disable vectorized string operations that require newer runtime symbols
     # This avoids the ___std_find_*_trivial_pos symbols that may not be available
@@ -180,13 +180,9 @@ if(MSVC)
     # - Use: cmake -T v142 ... to match vcpkg's v142 toolset
     # - OR rebuild vcpkg libraries: vcpkg remove taglib:x86-windows-static && vcpkg install taglib:x86-windows-static
 else()
-    # Windows XP compatibility for MinGW
-    if(CMAKE_CXX_COMPILER MATCHES "mingw")
-        add_compile_definitions(_WIN32_WINNT=0x0501 WINVER=0x0501)
-        # Use XP-compatible threading in libstdc++
-        add_compile_definitions(_GLIBCXX_USE_C99_STDINT_TR1)
-    endif()
-    
+    # Windows 7 as minimum version
+    add_compile_definitions(_WIN32_WINNT=0x0601 WINVER=0x0601)
+
     # GCC/Clang
     add_compile_options(-Wall -Wextra)
 
