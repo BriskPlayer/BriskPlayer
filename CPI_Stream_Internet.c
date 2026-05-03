@@ -218,7 +218,20 @@ char* DownloadPlaylistContent(const char* pcURL)
 	
 	// Read the content in chunks
 	char* pcBuffer = CALLOC_TYPE(char, dwChunkSize);
+	if (!pcBuffer)
+	{
+		InternetCloseHandle(hURL);
+		InternetCloseHandle(hInternet);
+		return NULL;
+	}
 	pcContent = CALLOC_TYPE(char, 1); // Start with minimal allocation
+	if (!pcContent)
+	{
+		free(pcBuffer);
+		InternetCloseHandle(hURL);
+		InternetCloseHandle(hInternet);
+		return NULL;
+	}
 	pcContent[0] = '\0';
 	
 	while (InternetReadFile(hURL, pcBuffer, dwChunkSize, &dwBytesRead) && dwBytesRead > 0)
@@ -488,11 +501,10 @@ unsigned int _stdcall EP_FillerThread(void* _pContext)
 	// For testing, we can disable metadata to see if that's the issue
 	if (bIsIcyStream)
 	{
-		// Try without metadata first to see if that fixes the issue
 		pcHeaders = _strdup("User-Agent: BriskPlayer/3.0\r\n"
 							"Accept: */*\r\n"
+							"Icy-MetaData: 1\r\n"
 							"Connection: close\r\n");
-		// TODO: Re-enable metadata later: "Icy-MetaData: 1\r\n"
 	}
 	
 	// Validate URL format
@@ -541,12 +553,11 @@ unsigned int _stdcall EP_FillerThread(void* _pContext)
 	if (hURLStream == NULL)
 	{
 		DWORD dwError = GetLastError();
-		(void)dwError; // May be used for debugging
+		CP_TRACE2("EP_FillerThread::Failed to open URL %s (Error: %lu)", pcActualURL ? pcActualURL : pContext->m_pcFlexiURL, dwError);
 		InternetCloseHandle(hInternet);
 		if (pcActualURL) free(pcActualURL);
 		if (pcHeaders) free(pcHeaders);
 		pContext->m_pCircleBuffer->SetComplete(pContext->m_pCircleBuffer);
-		CP_TRACE2("EP_FillerThread::Failed to open URL %s (Error: %lu)", pcActualURL ? pcActualURL : pContext->m_pcFlexiURL, dwError);
 		return 0;
 	}
 	
@@ -571,34 +582,25 @@ unsigned int _stdcall EP_FillerThread(void* _pContext)
 			CP_TRACE1("EP_FillerThread::Content-Type: %s", szBuffer);
 		}
 		
-		// Check for Icecast metadata interval
-		dwBufferSize = sizeof(szBuffer);
-		if (HttpQueryInfo(hURLStream, HTTP_QUERY_CUSTOM, szBuffer, &dwBufferSize, NULL))
+		// Check for Icecast metadata interval.
+		// HTTP_QUERY_CUSTOM requires the header name in the buffer before calling.
 		{
-			// Need to use HttpQueryInfo with a custom header name
-			DWORD dwIndex = 0;
-			while (HttpQueryInfo(hURLStream, HTTP_QUERY_RAW_HEADERS_CRLF, szBuffer, &dwBufferSize, &dwIndex))
+			char szMetaIntBuf[32] = "icy-metaint";
+			DWORD dwMetaLen = sizeof(szMetaIntBuf);
+			if (HttpQueryInfo(hURLStream, HTTP_QUERY_CUSTOM, szMetaIntBuf, &dwMetaLen, NULL))
 			{
-				if (_strnicmp(szBuffer, "icy-metaint:", 12) == 0)
+				long lMetaInt = atol(szMetaIntBuf);
+				// Validate: must be positive and reasonable (at least 256 bytes, at most 1MB)
+				if (lMetaInt >= 256 && lMetaInt <= 1048576)
 				{
-					char* pcValue = szBuffer + 12;
-					long lMetaInt;
-					while (*pcValue == ' ' || *pcValue == '\t') pcValue++; // Skip whitespace
-					lMetaInt = atol(pcValue);
-					// Validate: must be positive and reasonable (at least 256 bytes, at most 1MB)
-					if (lMetaInt >= 256 && lMetaInt <= 1048576)
-					{
-						pContext->m_dwIcyMetaInt = (DWORD)lMetaInt;
-						CP_TRACE1("EP_FillerThread::Found icy-metaint: %lu", pContext->m_dwIcyMetaInt);
-					}
-					else
-					{
-						CP_TRACE1("EP_FillerThread::Ignoring invalid icy-metaint: %ld", lMetaInt);
-						pContext->m_dwIcyMetaInt = 0;
-					}
-					break;
+					pContext->m_dwIcyMetaInt = (DWORD)lMetaInt;
+					CP_TRACE1("EP_FillerThread::Found icy-metaint: %lu", pContext->m_dwIcyMetaInt);
 				}
-				dwBufferSize = sizeof(szBuffer);
+				else
+				{
+					CP_TRACE1("EP_FillerThread::Ignoring invalid icy-metaint: %ld", lMetaInt);
+					pContext->m_dwIcyMetaInt = 0;
+				}
 			}
 		}
 	}
@@ -618,14 +620,13 @@ unsigned int _stdcall EP_FillerThread(void* _pContext)
 			continue;
 		}
 		
-		// Read in another chunk - for now, use simple reading without metadata
 		DWORD dwBytesRead = 0;
-		bReadResult = InternetReadFile(hURLStream, bReadBuffer, CIC_READCHUNKSIZE, &dwBytesRead);
+		bReadResult = ReadStreamData(hURLStream, pContext, bReadBuffer, CIC_READCHUNKSIZE, &dwBytesRead);
 		
 		if (bReadResult == FALSE)
 		{
 			DWORD dwError = GetLastError();
-			CP_TRACE1("EP_FillerThread::InternetReadFile failed with error: %lu", dwError);
+			CP_TRACE1("EP_FillerThread::ReadStreamData failed with error: %lu", dwError);
 			bStreamComplete = TRUE;
 		}
 		else if (dwBytesRead == 0)

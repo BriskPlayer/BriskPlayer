@@ -131,6 +131,16 @@ char* DownloadPlaylistToTempFile(const char* pcPlaylistURL)
 	DWORD dwTotalBytes = 0;
 	while (InternetReadFile(hURL, buffer, dwChunkSize, &dwBytesRead) && dwBytesRead > 0)
 	{
+		// Enforce maximum playlist size to prevent disk exhaustion
+		if (dwTotalBytes + dwBytesRead > (10u * 1024u * 1024u))  /* 10 MB max */
+		{
+			CP_LOG_WARNING("DownloadPlaylistToTempFile: Playlist too large (exceeds 10 MB)\n");
+			CloseHandle(hFile);
+			InternetCloseHandle(hURL);
+			InternetCloseHandle(hInternet);
+			DeleteFileW(szTempFile);
+			return NULL;
+		}
 		if (!WriteFile(hFile, buffer, dwBytesRead, &dwBytesWritten, NULL) || dwBytesWritten != dwBytesRead)
 		{
 			CP_LOG_ERROR("DownloadPlaylistToTempFile: WriteFile failed\n");

@@ -211,7 +211,7 @@ const char* CPG_GetTranslationThreadSafe(const char* msgid)
         tl_translation_buffer = newBuffer;
     }
     
-    strcpy(tl_translation_buffer, translated);
+    memcpy(tl_translation_buffer, translated, transLen + 1);
     return tl_translation_buffer;
 #else
     // Copy msgid to thread buffer for consistency
@@ -225,7 +225,7 @@ const char* CPG_GetTranslationThreadSafe(const char* msgid)
         tl_translation_buffer = newBuffer;
     }
     
-    strcpy(tl_translation_buffer, msgid);
+    memcpy(tl_translation_buffer, msgid, msgLen + 1);
     return tl_translation_buffer;
 #endif
 }

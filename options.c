@@ -98,22 +98,22 @@ url_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			switch (LOWORD(wParam))
 			{
 			
-				case IDOK:
-				{
-					char urlbuf[MAX_PATH];
-					GetDlgItemText(hwndDlg, IDC_URL, urlbuf, MAX_PATH);
-					SAFE_PLAYLIST_CALL(CPL_Empty);
-					SAFE_PLAYLIST_CALL(CPL_SyncLoadNextFile);
-					SAFE_PLAYLIST_CALL1(CPL_AddFile, urlbuf);
-					SAFE_PLAYLIST_CALL2(CPL_PlayItem, TRUE, pmCurrentItem);
-				}
-				
+			case IDOK:
+			{
+				char urlbuf[2048];
+				GetDlgItemText(hwndDlg, IDC_URL, urlbuf, sizeof(urlbuf));
+				SAFE_PLAYLIST_CALL(CPL_Empty);
+				SAFE_PLAYLIST_CALL(CPL_SyncLoadNextFile);
+				SAFE_PLAYLIST_CALL1(CPL_AddFile, urlbuf);
+				SAFE_PLAYLIST_CALL2(CPL_PlayItem, TRUE, pmCurrentItem);
+			}
+			
+			EndDialog(hwndDlg, TRUE);
+			break;
+			
+			case IDCANCEL:
 				EndDialog(hwndDlg, TRUE);
 				break;
-				
-				case IDCANCEL:
-					EndDialog(hwndDlg, TRUE);
-					break;
 			}
 	}
 	
