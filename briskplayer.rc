@@ -442,9 +442,9 @@ VS_VERSION_INFO VERSIONINFO
  PRODUCTVERSION CP_VERSION_MAJOR,CP_VERSION_MINOR,CP_VERSION_BUILD,CP_BUILD_NUMBER
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
- FILEFLAGS VS_FF_PATCHED | VS_FF_DEBUG
+ FILEFLAGS VS_FF_DEBUG
 #else
- FILEFLAGS VS_FF_PATCHED
+ FILEFLAGS 0x0L
 #endif
  FILEOS 0x4L
  FILETYPE 0x1L
@@ -459,7 +459,7 @@ BEGIN
             //VALUE "CompanyName", "Niek Albers"
             VALUE "FileVersion", STRINGIFY(CP_VERSION_MAJOR) ", " STRINGIFY(CP_VERSION_MINOR) ", " STRINGIFY(CP_VERSION_BUILD) ", " STRINGIFY(CP_BUILD_NUMBER)
             VALUE "InternalName", "briskplayer.exe"
-            VALUE "LegalCopyright", "Copyright (C) 2000-2006 Niek Albers (C) 2025 Zach Bacon"
+            VALUE "LegalCopyright", "Copyright (C) 2000-2006 Niek Albers (C) 2025-2026 Zach Bacon"
             VALUE "OriginalFilename", "briskplayer.exe"
             VALUE "ProductName", "BriskPlayer"
             VALUE "ProductVersion", STRINGIFY(CP_VERSION_MAJOR) ", " STRINGIFY(CP_VERSION_MINOR) ", " STRINGIFY(CP_VERSION_BUILD) ", " STRINGIFY(CP_BUILD_NUMBER)

@@ -111,7 +111,7 @@ set(VCPKG_MANIFEST_FEATURES "${VCPKG_MANIFEST_FEATURES}" CACHE STRING "" FORCE)
 
 # Note: CXX language is required because TagLib (even tag_c.lib) is a C++ library
 # Your source code is pure C, but we need C++ runtime to link against TagLib
-project(briskplayer VERSION 3.0.2 LANGUAGES C CXX)
+project(briskplayer VERSION 3.0.3 LANGUAGES C CXX)
 
 # Calculate build number from version (MAJOR * 100 + MINOR * 10 + PATCH)
 math(EXPR CP_BUILD_NUMBER "${PROJECT_VERSION_MAJOR} * 100 + ${PROJECT_VERSION_MINOR} * 10 + ${PROJECT_VERSION_PATCH}")

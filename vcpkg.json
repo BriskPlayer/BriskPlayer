@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "briskplayer",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "builtin-baseline": "77df67cfff9c12ccfdb52284e07c87c75092f723",
   "dependencies": [
     "zlib",

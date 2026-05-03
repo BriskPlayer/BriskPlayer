@@ -1,5 +1,50 @@
 BriskPlayer Revision History
 ============================
+Version 303
+ + Discord Rich Presence support - shows Now Playing (artist, title, album, timestamps) in Discord
+ + WASAPI output backend added
+ + OPUS codec support added
+ + ReplayGain support added (track/album gain, preamp, clip prevention)
+ + Windows Taskbar integration - thumbnail toolbar play/pause/prev/next controls
+ + DPI scaling improvements throughout the UI (playlist, header, skin elements)
+ + Translation support expanded to 30+ languages via gettext
+ + CMakePresets.json added for streamlined configure/build workflows (MSVC x86/x64, MinGW x86/x64)
+ + FFmpeg made optional at cmake configure time; minimp4 and improved FLAC support added
+ + Improved FLAC codec support
+ + Performance optimizations in playlist rendering, paint paths, and string handling
+ + Fixed OS requirements and minimum Windows version settings
+ + Fixed pre-release bugs in network streaming and string handling
+ + Various code cleanup and minor fixes
+
+Version 302
+ + WinAmp DSP plugin support - scan and load dsp_*.dll plugins from app directory
+ + Built-in skin variants - Normal, EQ, and Shade styles cycle via the NextSkin button
+ + WIC image loading for skins - PNG, JPEG, GIF, and TIFF skin assets now supported in addition to BMP
+ + Rewritten window snapping with corner snap, per-surface snap distances, and multi-monitor awareness
+ + Fixed FAudio volume control to correctly apply saved volume on playback start
+ + Hardened codebase: fixed 6 unsafe realloc patterns, ~20 unchecked alloc calls, 23 sprintf calls converted to snprintf
+ + Fixed file and event handle leaks in local stream and file output modules
+ + Eliminated shared mutable static in internet stream filler thread (thread safety)
+ + Added thread-local storage for translation buffer
+ + FFmpeg codec refactored with goto-based cleanup, seek fallback, and double-lock deadlock fix
+ + Removed all IsBadReadPtr calls
+ + Removed unsupported -Wno-error=template-body compiler flag
+ + Fixed duplicate typedef and missing include guard build errors
+ + Synced meson.build version and source list with CMakeLists.txt
+
+Version 301
+ + Added playlist context menu and properties dialog with MusicBrainz ID display
+ + Added BUILD_STATIC cmake option for static linking configuration
+ + Improved album art scaling in the properties dialog
+ + Added NULL-safe global access macros for improved stability
+ + Enhanced Unicode and internationalization support
+ + Optimized TagLib metadata reading and caching
+ + Centralized version management - version defined once in CMakeLists.txt and auto-generated to headers
+ + Fixed MXE cross-compilation support and library path detection for all target variants
+ + Fixed SSE2 compatibility on i686 targets
+ + Fixed tooltip crash caused by premature deletion of cached album art bitmap
+ + Fixed various crash bugs and improved sticky windows behavior
+
 Version 300
  + Inagural version of BriskPlayer
  + Ported build system to support meson and use system deps from either msys2 or vcpkg
