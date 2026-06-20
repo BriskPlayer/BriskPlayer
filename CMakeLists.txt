@@ -307,7 +307,6 @@ if(ENABLE_FFMPEG)
 else()
     message(STATUS "Codec backend: native (libmad/vorbis/FLAC/opus/aac)")
     list(APPEND BRISK_SOURCES
-        CPI_Player_CoDec_OGG.c
         CPI_Player_CoDec_AAC.c
         CPI_Player_CoDec_OPUS.c
     )
@@ -315,6 +314,7 @@ else()
         list(APPEND BRISK_SOURCES
             CPI_Player_CoDec_MPEG.c
             CPI_Player_CoDec_FLAC.c
+            CPI_Player_CoDec_OGG.c
         )
     endif()
 endif()
@@ -336,7 +336,7 @@ if(ENABLE_RUST_CODECS)
         FetchContent_MakeAvailable(Corrosion)
     endif()
     corrosion_import_crate(MANIFEST_PATH ${CMAKE_CURRENT_SOURCE_DIR}/rust/Cargo.toml)
-    message(STATUS "Rust codecs: enabled (brisk_codecs — WAV, FLAC)")
+    message(STATUS "Rust codecs: enabled (brisk_codecs — WAV, FLAC, OGG/Vorbis)")
 endif()
 
 # Find required libraries via vcpkg-provided CMake config files.
@@ -359,8 +359,10 @@ else()
         set_target_properties(mad::mad PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${MAD_INCLUDE_DIR}")
     endif()
 
-    find_package(Ogg CONFIG REQUIRED)
-    find_package(Vorbis CONFIG REQUIRED)
+    if(NOT ENABLE_RUST_CODECS)
+        find_package(Ogg CONFIG REQUIRED)
+        find_package(Vorbis CONFIG REQUIRED)
+    endif()
     find_package(FLAC CONFIG REQUIRED)
     find_package(fdk-aac CONFIG REQUIRED)
     find_package(opusfile CONFIG REQUIRED)
@@ -559,18 +561,19 @@ else()
         endif()
     endif()
     set(_flac_lib "")
+    set(_ogg_libs "")
     if(NOT ENABLE_RUST_CODECS)
         set(_flac_lib FLAC::FLAC)
+        set(_ogg_libs Ogg::ogg Vorbis::vorbis Vorbis::vorbisfile)
     endif()
     target_link_libraries(briskplayer PRIVATE
-        Ogg::ogg
-        Vorbis::vorbis
-        Vorbis::vorbisfile
+        ${_ogg_libs}
         ${_flac_lib}
         FDK-AAC::fdk-aac
         OpusFile::opusfile
     )
     unset(_flac_lib)
+    unset(_ogg_libs)
 endif()
 
 # Link Rust codec static library (Corrosion target name = Cargo package name with - → _)

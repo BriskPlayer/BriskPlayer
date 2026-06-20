@@ -17,6 +17,8 @@
 mod ffi;
 mod flac;
 mod mp3;
+mod ogg;
 mod playlist;
+mod stream_internet;
 mod tags;
 mod wav;

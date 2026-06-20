@@ -9,5 +9,12 @@ crate-type = ["staticlib"]
 
 [dependencies]
 flac-codec = "1"
+lewton = "0.10"
 nanomp3 = "0.1"
 lofty = "0.24"
+windows-sys = { version = "0.52", features = [
+    "Win32_Foundation",
+    "Win32_Networking_WinInet",
+    "Win32_System_Threading",
+    "Win32_UI_WindowsAndMessaging",
+] }
