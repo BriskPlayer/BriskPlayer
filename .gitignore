@@ -35,3 +35,4 @@ CP_Version.h
 # OS generated files
 .DS_Store
 Thumbs.db
+rust/target/

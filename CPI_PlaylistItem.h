@@ -170,6 +170,13 @@ int CPLI_GetCookie(const CP_HPLAYLISTITEM hItem);
 CP_HPLAYLISTITEM CPLI_Next(const CP_HPLAYLISTITEM hItem);
 CP_HPLAYLISTITEM CPLI_Prev(const CP_HPLAYLISTITEM hItem);
 //
+// Linked-list plumbing — used by the Rust playlist module via FFI
+void CPLI_SetNext(CP_HPLAYLISTITEM hItem, CP_HPLAYLISTITEM hNext);
+void CPLI_SetPrev(CP_HPLAYLISTITEM hItem, CP_HPLAYLISTITEM hPrev);
+void CPLI_DestroyItem(CP_HPLAYLISTITEM hItem);
+BOOL CPLI_IsDestroyOnDeactivate(CP_HPLAYLISTITEM hItem);
+void CPLI_SetDestroyOnDeactivate(CP_HPLAYLISTITEM hItem, BOOL bVal);
+//
 // ID3 tag
 BOOL CPLI_IsTagDirty(CP_HPLAYLISTITEM hItem);
 void CPLI_ReadTag(CP_HPLAYLISTITEM hItem);

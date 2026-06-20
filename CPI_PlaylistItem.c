@@ -2446,6 +2446,35 @@ void CPLI_WriteTag_TagLib(CPs_PlaylistItem* pItem)
 	                     pItem->m_fReplayGain_Album_Peak);
 }
 
+// ---------------------------------------------------------------------------
+// Linked-list plumbing — called from the Rust playlist module via FFI
+// ---------------------------------------------------------------------------
+
+void CPLI_SetNext(CP_HPLAYLISTITEM hItem, CP_HPLAYLISTITEM hNext)
+{
+	CPLII_DECODEHANDLE(hItem)->m_hNext = hNext;
+}
+
+void CPLI_SetPrev(CP_HPLAYLISTITEM hItem, CP_HPLAYLISTITEM hPrev)
+{
+	CPLII_DECODEHANDLE(hItem)->m_hPrev = hPrev;
+}
+
+void CPLI_DestroyItem(CP_HPLAYLISTITEM hItem)
+{
+	CPLII_DestroyItem(hItem);
+}
+
+BOOL CPLI_IsDestroyOnDeactivate(CP_HPLAYLISTITEM hItem)
+{
+	return CPLII_DECODEHANDLE(hItem)->m_bDestroyOnDeactivate;
+}
+
+void CPLI_SetDestroyOnDeactivate(CP_HPLAYLISTITEM hItem, BOOL bVal)
+{
+	CPLII_DECODEHANDLE(hItem)->m_bDestroyOnDeactivate = bVal;
+}
+
 //
 //
 //

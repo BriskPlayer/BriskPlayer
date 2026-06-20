@@ -18,8 +18,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 ////////////////////////////////////////////////////////////////////////////////
-
-
+/*
+ * CPI_Playlist.c — Win32 shell layer.
+ *
+ * The playlist data model (linked list, track stack, path hash, sort,
+ * navigation) now lives in rust/codecs/src/playlist.rs.  This file keeps only
+ * the Win32-specific concerns:
+ *   - CPL_CreatePlaylist / CPL_DestroyPlaylist (thread management)
+ *   - CPL_PlayActiveItem (player engine bridge)
+ *   - CPL_AddSingleFile (tag-read dispatch to worker thread)
+ *   - CPL_HandleAsyncNotify (post-tag-read completion)
+ *   - CPL_QueueNextForGapless (gapless pre-buffer)
+ *   - File I/O: CPL_AddFile, CPL_ExportPlaylist, M3U/PLS parsers
+ *   - Directory scan: CPL_AddDirectory_Recurse, CPL_AddDroppedFiles
+ *   - Option accessors called by Rust (CP_opt_*)
+ *   - Miscellaneous helpers that stay in C
+ */
 
 #include "stdafx.h"
 #include "globals.h"
@@ -32,78 +46,13 @@
 #include "CPI_Gettext.h"
 #include "CPI_ReplayGain.h"
 
-#define CPC_TRACKSTACK_BUFFER_QUANTISATION 32
-typedef int (__cdecl *wp_SortFN)(const void *elem1, const void *elem2);
 int __cdecl exp_CompareStrings(const void *elem1, const void *elem2);
 DWORD WINAPI CPI_PlaylistWorkerThreadEP(void* pCookie);
-////////////////////////////////////////////////////////////////////////////////
-//
-
-typedef struct _CPs_PlaylistWorkerThreadInfo
-{
-	DWORD m_dwHostThreadID;
-	DWORD m_dwCurrentBatchID;
-	
-} CPs_PlaylistWorkerThreadInfo;
-
-//
-//
 
 ////////////////////////////////////////////////////////////////////////////////
-// O(1) path-lookup hash table (separate chaining, case-insensitive)
-// Used for duplicate detection in AddSingleFile and RemoveDuplicates.
+// Notify chunk (unchanged — used by worker thread and HandleAsyncNotify)
 ////////////////////////////////////////////////////////////////////////////////
 
-#define CPL_HASH_BUCKETS 512u  /* power-of-2; & mask replaces % */
-
-typedef struct _CPs_PathHashNode {
-	char                    *m_pcLowercasePath;
-	struct _CPs_PathHashNode *m_pNext;
-} CPs_PathHashNode;
-
-typedef struct _CPs_PathHashTable {
-	CPs_PathHashNode *m_pBuckets[CPL_HASH_BUCKETS];
-} CPs_PathHashTable;
-
-typedef struct _CPs_Playlist
-{
-	CP_HPLAYLISTITEM m_hFirst;
-	CP_HPLAYLISTITEM m_hLast;
-	CP_HPLAYLISTITEM m_hCurrent;
-	
-	CP_HPLAYLISTITEM* m_pTrackStack;
-	unsigned int m_iTrackStackSize;
-	unsigned int m_iTrackStackBufferSize;
-	unsigned int m_iTrackStackCursor;
-	
-	HANDLE m_hWorkerThread;
-	DWORD m_dwWorkerThreadID;
-	CPs_PlaylistWorkerThreadInfo m_WorkerThreadInfo;
-	BOOL m_bSyncLoadNextFile;
-	BOOL m_bAutoActivateInitial;
-	
-	CPs_PathHashTable m_PathLookup; /* O(1) path duplicate check */
-	
-} CPs_Playlist;
-
-//
-//
-typedef enum _CPe_PlayListFileType
-{
-	pftUnknown,
-	pftPLS,
-	pftM3U
-} CPe_PlayListFileType;
-//
-
-typedef struct _CPs_FilenameLLItem
-{
-	char* m_pcFilename;
-	void* m_pNextItem;
-} CPs_FilenameLLItem;
-
-//
-//
 #define CPC_PLAYLISTWORKER_NOTIFYCHUNKSIZE 32
 
 typedef struct _CPs_NotifyChunk
@@ -111,441 +60,240 @@ typedef struct _CPs_NotifyChunk
 	int m_iNumberInChunk;
 	CP_HPLAYLISTITEM m_aryItems[CPC_PLAYLISTWORKER_NOTIFYCHUNKSIZE];
 	DWORD m_aryBatchIDs[CPC_PLAYLISTWORKER_NOTIFYCHUNKSIZE];
-	
 } CPs_NotifyChunk;
 
-//
+////////////////////////////////////////////////////////////////////////////////
+// Playlist file type
 ////////////////////////////////////////////////////////////////////////////////
 
+typedef enum _CPe_PlayListFileType
+{
+	pftUnknown,
+	pftPLS,
+	pftM3U
+} CPe_PlayListFileType;
+
+typedef struct _CPs_FilenameLLItem
+{
+	char* m_pcFilename;
+	void* m_pNextItem;
+} CPs_FilenameLLItem;
+
 ////////////////////////////////////////////////////////////////////////////////
-// Hash table helpers (file-private)
+// Forward declarations for Rust-exported functions
 ////////////////////////////////////////////////////////////////////////////////
 
-/* FNV-1a hash, case-folded and slash-normalised */
-static unsigned int CPL_HashPath(const char *pcPath)
+/* Allocation */
+CP_HPLAYLIST CPPL_AllocPlaylist(void);
+void         CPPL_FreePlaylist(CP_HPLAYLIST hPlaylist);
+
+/* Worker-thread field accessors */
+void         CPPL_SetWorkerThread(CP_HPLAYLIST hPlaylist, uintptr_t hThread, DWORD dwThreadID);
+void         CPPL_SetHostThreadID(CP_HPLAYLIST hPlaylist, DWORD dwHostID);
+uintptr_t    CPPL_GetWorkerThread(CP_HPLAYLIST hPlaylist);
+DWORD        CPPL_GetWorkerThreadID(CP_HPLAYLIST hPlaylist);
+DWORD        CPPL_GetHostThreadID(CP_HPLAYLIST hPlaylist);
+DWORD        CPPL_GetBatchID(CP_HPLAYLIST hPlaylist);
+void         CPPL_IncrBatchID(CP_HPLAYLIST hPlaylist);
+BOOL         CPPL_GetSyncLoadNextFile(CP_HPLAYLIST hPlaylist);
+void         CPPL_SetSyncLoadNextFile(CP_HPLAYLIST hPlaylist, BOOL val);
+BOOL         CPPL_GetAutoActivateInitial(CP_HPLAYLIST hPlaylist);
+void         CPPL_SetAutoActivateInitial(CP_HPLAYLIST hPlaylist, BOOL val);
+
+/* Data-model functions (implemented in Rust, declared in CPI_Playlist.h) */
+/* CPL_Empty, CPL_RemoveItem, CPL_SetActiveItem, CPL_AddSingleFile_pt2, etc. */
+void CPL_AddSingleFile_pt2(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hNewFile, DWORD dwBatchID);
+
+////////////////////////////////////////////////////////////////////////////////
+// Option accessors — called by Rust via FFI to avoid mirroring CPs_Settings
+////////////////////////////////////////////////////////////////////////////////
+
+BOOL CP_opt_allow_file_once(void)
 {
-	unsigned int h = 2166136261u;
-	unsigned char c;
-	while ((c = (unsigned char)*pcPath++) != '\0') {
-		if (c >= 'A' && c <= 'Z') c |= 0x20u;
-		else if (c == '/') c = '\\';
-		h ^= c;
-		h *= 16777619u;
-	}
-	return h & (CPL_HASH_BUCKETS - 1u);
+	return options.allow_file_once_in_playlist;
 }
 
-static void CPL_Hash_Insert(CPs_PathHashTable *pTable, const char *pcPath)
+BOOL CP_opt_read_id3_tag_of_selected(void)
 {
-	unsigned int slot;
-	CPs_PathHashNode *pNode;
-	int len;
-	if (!pcPath || !pcPath[0]) return;
-	slot = CPL_HashPath(pcPath);
-	pNode = (CPs_PathHashNode*)malloc(sizeof(CPs_PathHashNode));
-	if (!pNode) return;
-	len = lstrlenA(pcPath);
-	pNode->m_pcLowercasePath = (char*)malloc((size_t)len + 1);
-	if (!pNode->m_pcLowercasePath) { free(pNode); return; }
-	memcpy(pNode->m_pcLowercasePath, pcPath, (size_t)len + 1);
-	CharLowerA(pNode->m_pcLowercasePath);
-	pNode->m_pNext = pTable->m_pBuckets[slot];
-	pTable->m_pBuckets[slot] = pNode;
+	return options.read_id3_tag_of_selected;
 }
 
-static BOOL CPL_Hash_Contains(const CPs_PathHashTable *pTable, const char *pcPath)
+BOOL CP_opt_shuffle_play(void)
 {
-	char szLower[MAX_PATH];
-	unsigned int slot;
-	const CPs_PathHashNode *pNode;
-	int len;
-	if (!pcPath || !pcPath[0]) return FALSE;
-	len = lstrlenA(pcPath);
-	if (len >= MAX_PATH) len = MAX_PATH - 1;
-	memcpy(szLower, pcPath, (size_t)len + 1);
-	CharLowerA(szLower);
-	slot = CPL_HashPath(pcPath);
-	pNode = pTable->m_pBuckets[slot];
-	while (pNode) {
-		if (lstrcmpA(pNode->m_pcLowercasePath, szLower) == 0)
-			return TRUE;
-		pNode = pNode->m_pNext;
-	}
-	return FALSE;
+	return options.shuffle_play;
 }
 
-static void CPL_Hash_Remove(CPs_PathHashTable *pTable, const char *pcPath)
+BOOL CP_opt_repeat_playlist(void)
 {
-	char szLower[MAX_PATH];
-	unsigned int slot;
-	CPs_PathHashNode **ppNode;
-	int len;
-	if (!pcPath || !pcPath[0]) return;
-	len = lstrlenA(pcPath);
-	if (len >= MAX_PATH) len = MAX_PATH - 1;
-	memcpy(szLower, pcPath, (size_t)len + 1);
-	CharLowerA(szLower);
-	slot = CPL_HashPath(pcPath);
-	ppNode = &pTable->m_pBuckets[slot];
-	while (*ppNode) {
-		if (lstrcmpA((*ppNode)->m_pcLowercasePath, szLower) == 0) {
-			CPs_PathHashNode *pDead = *ppNode;
-			*ppNode = pDead->m_pNext;
-			free(pDead->m_pcLowercasePath);
-			free(pDead);
-			return;
-		}
-		ppNode = &(*ppNode)->m_pNext;
-	}
+	return options.repeat_playlist;
 }
 
-static void CPL_Hash_Clear(CPs_PathHashTable *pTable)
+void CP_opt_set_initial_file(const char* pcPath)
 {
-	unsigned int i;
-	for (i = 0; i < CPL_HASH_BUCKETS; i++) {
-		CPs_PathHashNode *pNode = pTable->m_pBuckets[i];
-		while (pNode) {
-			CPs_PathHashNode *pNext = pNode->m_pNext;
-			free(pNode->m_pcLowercasePath);
-			free(pNode);
-			pNode = pNext;
-		}
-		pTable->m_pBuckets[i] = NULL;
-	}
+	if (!pcPath) return;
+	strncpy(options.initial_file, pcPath, sizeof(options.initial_file) - 1);
+	options.initial_file[sizeof(options.initial_file) - 1] = '\0';
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
-
-
+// Create / destroy playlist
 ////////////////////////////////////////////////////////////////////////////////
-//
-//
-//
+
 CP_HPLAYLIST CPL_CreatePlaylist(void)
 {
-	CPs_Playlist* pNewPlaylist = MALLOC_TYPE(CPs_Playlist);
-	if (!pNewPlaylist)
+	HANDLE hThread;
+	DWORD dwThreadID;
+	CP_HPLAYLIST hPlaylist = CPPL_AllocPlaylist();
+	if (!hPlaylist)
 		return NULL;
-	pNewPlaylist->m_hFirst = NULL;
-	pNewPlaylist->m_hLast = NULL;
-	pNewPlaylist->m_hCurrent = NULL;
-	
-	pNewPlaylist->m_pTrackStack = NULL;
-	pNewPlaylist->m_iTrackStackSize = 0;
-	pNewPlaylist->m_iTrackStackBufferSize = 0;
-	pNewPlaylist->m_iTrackStackCursor = 0;
-	pNewPlaylist->m_bSyncLoadNextFile = FALSE;
-	pNewPlaylist->m_bAutoActivateInitial = FALSE;
-	
-	memset(&pNewPlaylist->m_PathLookup, 0, sizeof(pNewPlaylist->m_PathLookup));
-	
-	pNewPlaylist->m_WorkerThreadInfo.m_dwHostThreadID = GetCurrentThreadId();
-	pNewPlaylist->m_WorkerThreadInfo.m_dwCurrentBatchID = 0;
-	
-	// Create worker thread
-	pNewPlaylist->m_hWorkerThread = CreateThread(NULL, 0, CPI_PlaylistWorkerThreadEP, &pNewPlaylist->m_WorkerThreadInfo, 0, &(pNewPlaylist->m_dwWorkerThreadID));
-	CP_ASSERT(pNewPlaylist->m_hWorkerThread);
-	
-	return pNewPlaylist;
+
+	CPPL_SetHostThreadID(hPlaylist, GetCurrentThreadId());
+
+	hThread = CreateThread(NULL, 0, CPI_PlaylistWorkerThreadEP, hPlaylist, 0, &dwThreadID);
+	CP_ASSERT(hThread);
+
+	CPPL_SetWorkerThread(hPlaylist, (uintptr_t)hThread, dwThreadID);
+
+	return hPlaylist;
 }
 
-//
-//
-//
 void CPL_DestroyPlaylist(CP_HPLAYLIST hPlaylist)
 {
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Stop the worker thread from processing any more pending ID3 reads
-	pPlaylist->m_WorkerThreadInfo.m_dwCurrentBatchID++;
-	
-	// Request worker thread to shutdown
-	PostThreadMessage(pPlaylist->m_dwWorkerThreadID, CPPLWT_TERMINATE, 0, 0);
-	
-	// Clean up list
+	CP_ASSERT(hPlaylist);
+
+	/* Cancel in-flight tag reads */
+	CPPL_IncrBatchID(hPlaylist);
+
+	/* Ask worker thread to exit */
+	PostThreadMessage(CPPL_GetWorkerThreadID(hPlaylist), CPPLWT_TERMINATE, 0, 0);
+
+	/* Empty data model (Rust) */
 	CPL_Empty(hPlaylist);
-	
-	// Delete an unattached active item
-	
-	if (pPlaylist->m_hCurrent && CPLII_DECODEHANDLE(pPlaylist->m_hCurrent)->m_bDestroyOnDeactivate)
-		CPLII_DestroyItem(pPlaylist->m_hCurrent);
-		
-	// Wait for shutdown to actually happen with timeout
-	DWORD dwWaitResult = WaitForSingleObject(pPlaylist->m_hWorkerThread, 5000);
-	if (dwWaitResult == WAIT_TIMEOUT)
+
+	/* Destroy deferred-destroy active item if still live */
 	{
-		CP_TRACE0("Worker thread did not exit gracefully within timeout");
+		CP_HPLAYLISTITEM hCurrent = CPL_GetActiveItem(hPlaylist);
+		if (hCurrent && CPLI_IsDestroyOnDeactivate(hCurrent))
+			CPLI_DestroyItem(hCurrent);
 	}
-	
-	CloseHandle(pPlaylist->m_hWorkerThread);
-	
-	// Remove any read ID3s from our message queue (with safety checks)
+
+	/* Wait for worker thread to finish */
+	{
+		DWORD dwWait = WaitForSingleObject((HANDLE)CPPL_GetWorkerThread(hPlaylist), 5000);
+		if (dwWait == WAIT_TIMEOUT)
+			CP_TRACE0("Worker thread did not exit gracefully within timeout");
+	}
+
+	CloseHandle((HANDLE)CPPL_GetWorkerThread(hPlaylist));
+
+	/* Drain any CPPLNM_TAGREAD messages that arrived after we sent TERMINATE */
 	{
 		MSG msg;
-		int iCleanupCount = 0;
-		const int iMaxCleanup = 1000; // Prevent infinite loop
-		
-		while (PeekMessage(&msg, NULL, CPPLNM_TAGREAD, CPPLNM_TAGREAD, PM_REMOVE) && iCleanupCount < iMaxCleanup)
+		int iCount = 0;
+		while (PeekMessage(&msg, NULL, CPPLNM_TAGREAD, CPPLNM_TAGREAD, PM_REMOVE) && iCount < 1000)
 		{
 			CPs_NotifyChunk* pChunk = (CPs_NotifyChunk*)msg.wParam;
-			int iChunkItemIDX;
-			
-			if (pChunk) // Validate pointer before use
+			if (pChunk)
 			{
-				// Validate chunk count is reasonable
 				if (pChunk->m_iNumberInChunk > 0 && pChunk->m_iNumberInChunk <= CPC_PLAYLISTWORKER_NOTIFYCHUNKSIZE)
 				{
-					for (iChunkItemIDX = 0; iChunkItemIDX < pChunk->m_iNumberInChunk; iChunkItemIDX++)
-					{
-						if (pChunk->m_aryItems[iChunkItemIDX]) // Validate item pointer
-							CPLII_DestroyItem(pChunk->m_aryItems[iChunkItemIDX]);
-					}
+					int i;
+					for (i = 0; i < pChunk->m_iNumberInChunk; i++)
+						if (pChunk->m_aryItems[i])
+							CPLII_DestroyItem(pChunk->m_aryItems[i]);
 				}
 				free(pChunk);
 			}
-			iCleanupCount++;
+			iCount++;
 		}
-		
-		if (iCleanupCount >= iMaxCleanup)
-		{
-			CP_TRACE0("Playlist cleanup: Hit maximum cleanup iteration limit");
-		}
+		if (iCount >= 1000)
+			CP_TRACE0("Playlist cleanup: hit maximum cleanup iteration limit");
 	}
-	
-	// Clean up object
-	free(pPlaylist);
+
+	CPPL_FreePlaylist(hPlaylist);
 }
 
-//
-//
-//
-void CPL_UnlinkItem(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem)
+////////////////////////////////////////////////////////////////////////////////
+// Play the active item through the player engine
+////////////////////////////////////////////////////////////////////////////////
+
+void CPL_PlayActiveItem(CP_HPLAYLIST hPlaylist, const BOOL bStopFirst)
 {
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CPs_PlaylistItem* pItemToUnlink = CPLII_DECODEHANDLE(hItem);
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Remove item from list
-	
-	if (pItemToUnlink->m_hPrev)
-		CPLII_DECODEHANDLE(pItemToUnlink->m_hPrev)->m_hNext = pItemToUnlink->m_hNext;
-	else
+	CP_ASSERT(hPlaylist);
+
+	if (bStopFirst == TRUE)
+		CPI_Player__Stop(globals.m_hPlayer);
+
 	{
-		CP_ASSERT(pPlaylist->m_hFirst == hItem);
-		pPlaylist->m_hFirst = pItemToUnlink->m_hNext;
-	}
-	
-	if (pItemToUnlink->m_hNext)
-		CPLII_DECODEHANDLE(pItemToUnlink->m_hNext)->m_hPrev = pItemToUnlink->m_hPrev;
-	else
-	{
-		CP_ASSERT(pPlaylist->m_hLast == hItem);
-		pPlaylist->m_hLast = pItemToUnlink->m_hPrev;
+		CP_HPLAYLISTITEM hCurrent = CPL_GetActiveItem(hPlaylist);
+		if (hCurrent)
+		{
+			float fScale = CPRG_ComputeScale(
+				(CPe_ReplayGainMode)options.replaygain_mode,
+				CPLI_GetReplayGain_Track_Gain(hCurrent),
+				CPLI_GetReplayGain_Track_Peak(hCurrent),
+				CPLI_GetReplayGain_Album_Gain(hCurrent),
+				CPLI_GetReplayGain_Album_Peak(hCurrent),
+				(float)options.replaygain_preamp_db,
+				options.replaygain_prevent_clipping);
+			CPI_Player__OpenFile(globals.m_hPlayer, CPLI_GetPath(hCurrent), fScale);
+			CPI_Player__Play(globals.m_hPlayer);
+		}
 	}
 }
 
-//
-//
-//
-void CPL_Empty(CP_HPLAYLIST hPlaylist)
+////////////////////////////////////////////////////////////////////////////////
+// Handle the CPPLNM_TAGREAD message posted by the worker thread
+////////////////////////////////////////////////////////////////////////////////
+
+void CPL_HandleAsyncNotify(CP_HPLAYLIST hPlaylist, WPARAM wParam, LPARAM lParam)
 {
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_HPLAYLISTITEM hCursor, hNext;
-	
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Stop the worker thread from processing any more pending ID3 reads
-	pPlaylist->m_WorkerThreadInfo.m_dwCurrentBatchID++;
-	
-	// Unlink the active item
-	
-	if (pPlaylist->m_hCurrent)
-	{
-		// This is the active item - clear it's next and prev entries and mark it
-		// so that it's destroyed when activation next changes
-		CPs_PlaylistItem* pActiveItem = CPLII_DECODEHANDLE(pPlaylist->m_hCurrent);
-		
-		if (pActiveItem->m_bDestroyOnDeactivate == FALSE)
-		{
-			CPL_UnlinkItem(hPlaylist, pPlaylist->m_hCurrent);
-			pActiveItem->m_hNext = NULL;
-			pActiveItem->m_hPrev = NULL;
-			pActiveItem->m_bDestroyOnDeactivate = TRUE;
-			CPL_cb_OnPlaylistActivationChange(pPlaylist->m_hCurrent, FALSE);
-			pActiveItem->m_iCookie = CPC_INVALIDITEM;
-		}
-	}
-	
-	// Callback
-	CPL_cb_OnPlaylistEmpty();
-	
-	// Clean up items
-	hCursor = pPlaylist->m_hFirst;
-	
-	while (hCursor)
-	{
-		hNext = CPLI_Next(hCursor);
-		CPLII_DestroyItem(hCursor);
-		hCursor = hNext;
-	}
-	
-	// Reset state
-	pPlaylist->m_hFirst = NULL;
-	pPlaylist->m_hLast = NULL;
-	
-	// Clear path lookup table (all items just destroyed above)
-	CPL_Hash_Clear(&pPlaylist->m_PathLookup);
-	
-	// Clean up the trackstack
-	if (pPlaylist->m_pTrackStack)
-		free(pPlaylist->m_pTrackStack);
-		
-	pPlaylist->m_pTrackStack = NULL;
-	pPlaylist->m_iTrackStackSize = 0;
-	pPlaylist->m_iTrackStackBufferSize = 0;
-	pPlaylist->m_iTrackStackCursor = 0;
+	CPs_NotifyChunk* pChunk = (CPs_NotifyChunk*)wParam;
+	int i;
+	(void)hPlaylist;
+	(void)lParam;
+
+	if (globals.m_hPlaylistViewControl)
+		CLV_BeginBatch(globals.m_hPlaylistViewControl);
+
+	for (i = 0; i < pChunk->m_iNumberInChunk; i++)
+		CPL_AddSingleFile_pt2(globals.m_hPlaylist, pChunk->m_aryItems[i], pChunk->m_aryBatchIDs[i]);
+
+	if (globals.m_hPlaylistViewControl)
+		CLV_EndBatch(globals.m_hPlaylistViewControl);
+
+	free(pChunk);
 }
 
-//
-//
-//
-void CPL_AddSingleFile_pt2(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hNewFile, const DWORD dwBatchID)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	const char* pcPath = CPLI_GetPath(hNewFile);
-	
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Batch has changed since this message was sent
-	
-	if (dwBatchID != pPlaylist->m_WorkerThreadInfo.m_dwCurrentBatchID)
-	{
-		CPLII_DestroyItem(hNewFile);
-		return;
-	}
-	
-	// If items are only allowed once - check the hash table (O(1))
-	
-	if (options.allow_file_once_in_playlist)
-	{
-		if (CPL_Hash_Contains(&pPlaylist->m_PathLookup, pcPath))
-		{
-			CPLII_DestroyItem(hNewFile);
-			return;
-		}
-	}
-	
-	// Add item to the list
-	CPLII_DECODEHANDLE(hNewFile)->m_hPrev = pPlaylist->m_hLast;
-	
-	if (pPlaylist->m_hLast)
-		CPLII_DECODEHANDLE(pPlaylist->m_hLast)->m_hNext = hNewFile;
-		
-	pPlaylist->m_hLast = hNewFile;
-	
-	if (pPlaylist->m_hFirst == NULL)
-		pPlaylist->m_hFirst = hNewFile;
-	
-	// Record path in lookup table so future adds can detect duplicates in O(1)
-	CPL_Hash_Insert(&pPlaylist->m_PathLookup, pcPath);
-		
-	// If there is no track name (ID3 read off or failed) - create one from the path
-	if (CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName == NULL)
-	{
-		int iNumChars;
-		int iCharIDX;
-		int iLastSlashIDX = CPC_INVALIDCHAR;
-		int iLastDotIDX = CPC_INVALIDCHAR;
-		int iLastCharIDX = CPC_INVALIDCHAR;
-		
-		if (CP_IsURL(pcPath))
-			iLastCharIDX = strlen(pcPath);
-		else
-			for (iCharIDX = 0; pcPath[iCharIDX]; iCharIDX++)
-			{
-				if (pcPath[iCharIDX] == '\\')
-					iLastSlashIDX = iCharIDX;
-					
-				if (pcPath[iCharIDX] == '.')
-					iLastDotIDX = iCharIDX;
-					
-				iLastCharIDX = iCharIDX;
-			}
-			
-		// Correct indices
-		
-		if (iLastSlashIDX == CPC_INVALIDCHAR)
-			iLastSlashIDX = 0;
-		else
-			iLastSlashIDX++; // We want the char after the last slash
-			
-		if (iLastDotIDX == CPC_INVALIDCHAR || iLastDotIDX < iLastSlashIDX)
-			iLastDotIDX = iLastCharIDX;
-		else
-			iLastDotIDX--; // We want the string up to the char before the last dot
-			
-		// Create title buffer
-		iNumChars = (iLastDotIDX - iLastSlashIDX) + 1;
-		
-		// Validate character count is reasonable
-		if (iNumChars <= 0 || iNumChars > 512)
-		{
-			// Use a safe default name if extraction failed
-			CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName = _strdup("[Unknown]");
-		}
-		else
-		{
-			CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName = CALLOC_TYPE(char, iNumChars + 1);
-			
-			if (CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName)
-			{
-				memcpy(CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName, pcPath + iLastSlashIDX, iNumChars);
-				CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName[iNumChars] = '\0';
-			}
-		}
-	}
-	
-	// Add to track stack
-	CPL_Stack_Append(hPlaylist, hNewFile);
-	
-	// Callback
-	CPL_cb_OnPlaylistAppend(hNewFile);
-}
+////////////////////////////////////////////////////////////////////////////////
+// Add a single audio file (may defer tag reading to the worker thread)
+////////////////////////////////////////////////////////////////////////////////
 
-//
-//
-//
 void CPL_AddSingleFile(CP_HPLAYLIST hPlaylist, const char* pcPath, const char* pcTitle)
 {
-	char name[MAX_PATH];
-	int pos, last, len, dst;
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
 	CP_HPLAYLISTITEM hNewFile;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// only allow items we can play
+	CP_ASSERT(hPlaylist);
+
+	/* Only allow file types we can play */
 	{
 		int i;
 		BOOL valid = FALSE;
 		CPs_PlayEngine* player = (CPs_PlayEngine*)globals.m_hPlayer;
 		CPs_PlayerContext* pContext = (CPs_PlayerContext*)player->m_pContext;
 		DWORD_PTR tempcookie;
-		char *extension = NULL;
+		char* extension = NULL;
 
 		{
-			// Find  the extension
-			char *dot = strrchr(pcPath, '.');
-			if (dot) 
+			char* dot = strrchr(pcPath, '.');
+			if (dot)
 				extension = dot + 1;
 		}
-		
+
 		if (extension == NULL)
 			return;
-		
+
 		CP_LOG_VERBOSE("CPL_AddItem: Checking file extension '%s' against codecs\n", extension);
-			
+
 		for (i = 0; i <= CP_CODEC_last; i++)
 		{
 			if (CPFA_IsAssociated(&pContext->m_CoDecs[i], extension, &tempcookie))
@@ -555,453 +303,241 @@ void CPL_AddSingleFile(CP_HPLAYLIST hPlaylist, const char* pcPath, const char* p
 				break;
 			}
 		}
-		
+
 		if (!valid)
 			CP_LOG_VERBOSE("CPL_AddItem: Extension '%s' is not supported by any codec\n", extension);
-		
-		// we could get here and still be valid
-		// it might get here if a stream is of the form http://ipaddr:port with no
-		// file name such as http://ipaddr:port/filename.ogg
-		
+
 		if (CP_IsURL(pcPath))
 			valid = TRUE;
-			
+
 		if (valid == FALSE)
 			return;
 	}
-	
+
 	hNewFile = CPLII_CreateItem(pcPath);
-	
-	// There was a title passed - setup the item accordingly
-	
+
+	/* If a title was passed, set it immediately */
 	if (pcTitle && pcTitle[0])
-		STR_AllocSetString(&CPLII_DECODEHANDLE(hNewFile)->m_pcTrackName, pcTitle, FALSE);
-		
-	// Defer this add to the worker thread if we are reading tags
-	if (options.read_id3_tag && options.read_id3_tag_in_background && !pPlaylist->m_bSyncLoadNextFile)
+		CPLI_SetTrackName(hNewFile, pcTitle);
+
+	/* Defer to background tag-read thread (async path) */
+	if (options.read_id3_tag && options.read_id3_tag_in_background && !CPPL_GetSyncLoadNextFile(hPlaylist))
 	{
-		while (!PostThreadMessage(pPlaylist->m_dwWorkerThreadID, CPPLWT_READTAG, (WPARAM)pPlaylist->m_WorkerThreadInfo.m_dwCurrentBatchID, (LPARAM)hNewFile))
-		{
+		DWORD dwBatchID = CPPL_GetBatchID(hPlaylist);
+		DWORD dwWorkerID = CPPL_GetWorkerThreadID(hPlaylist);
+
+		while (!PostThreadMessage(dwWorkerID, CPPLWT_READTAG, (WPARAM)dwBatchID, (LPARAM)hNewFile))
 			Sleep(50);
-		}
-		
-		// remove all the .. in a path
-		// ie: c:\mp3\song\..\somesong.mp3 would become c:\mp3\somesong.mp3
-		len = strlen(pcPath);
-		last = -1;
-		pos = 0;
-		dst = 0;
-		
-		memset(name, 0, MAX_PATH);
-		
-		while (pos <= len && dst < MAX_PATH - 1)
+
+		/* Canonicalize path for initial-file comparison */
 		{
-			if (pcPath[pos] == '\\')
+			char name[MAX_PATH];
+			int pos, last, len, dst;
+			len = (int)strlen(pcPath);
+			last = -1;
+			pos = 0;
+			dst = 0;
+			memset(name, 0, MAX_PATH);
+
+			while (pos <= len && dst < MAX_PATH - 1)
 			{
-				if (pcPath[pos+1] == '.' && pcPath[pos+2] == '.' && last != -1)
+				if (pcPath[pos] == '\\')
 				{
-					pos += 3;
-					dst = last;
-					last--;
-					
-					while (last >= 0)
-						if (name[last] == '\\')
-							break;
-						else
-							last--;
+					if (pcPath[pos+1] == '.' && pcPath[pos+2] == '.' && last != -1)
+					{
+						pos += 3;
+						dst = last;
+						last--;
+						while (last >= 0)
+							if (name[last] == '\\') break; else last--;
+					}
+					else
+					{
+						last = dst;
+						name[dst++] = pcPath[pos++];
+					}
 				}
-				
 				else
-				{
-					last = dst;
 					name[dst++] = pcPath[pos++];
-				}
 			}
-			
-			else
-				name[dst++] = pcPath[pos++];
+
+			if (CPPL_GetAutoActivateInitial(hPlaylist) && stricmp(name, options.initial_file) == 0)
+				PostThreadMessage(dwWorkerID, CPPLWT_SETACTIVE, (WPARAM)dwBatchID, (LPARAM)hNewFile);
 		}
-		
-		if (pPlaylist->m_bAutoActivateInitial && stricmp(name, options.initial_file) == 0)
-			PostThreadMessage(pPlaylist->m_dwWorkerThreadID, CPPLWT_SETACTIVE, (WPARAM)pPlaylist->m_WorkerThreadInfo.m_dwCurrentBatchID, (LPARAM)hNewFile);
 	}
-	
 	else
 	{
-		pPlaylist->m_bSyncLoadNextFile = FALSE;
-		
+		/* Synchronous tag-read path */
+		CPPL_SetSyncLoadNextFile(hPlaylist, FALSE);
+
 		if (options.read_id3_tag)
 			CPLI_ReadTag(hNewFile);
-			
-		// If we didn't get a track length from the tag - work it out
-		if (CPLI_GetTrackLength(hNewFile) == 0
-				&& options.work_out_track_lengths)
-		{
+
+		if (CPLI_GetTrackLength(hNewFile) == 0 && options.work_out_track_lengths)
 			CPLI_CalculateLength(hNewFile);
-		}
-		
-		CPL_AddSingleFile_pt2(hPlaylist, hNewFile, pPlaylist->m_WorkerThreadInfo.m_dwCurrentBatchID);
+
+		CPL_AddSingleFile_pt2(hPlaylist, hNewFile, CPPL_GetBatchID(hPlaylist));
 	}
 }
 
-//
-//
-//
-void CPL_HandleAsyncNotify(CP_HPLAYLIST hPlaylist, WPARAM wParam, LPARAM lParam)
-{
-	(void)hPlaylist;  // Suppress unused parameter warning
-	(void)lParam;     // Suppress unused parameter warning
-	CPs_NotifyChunk* pChunk = (CPs_NotifyChunk*)wParam;
-	int iChunkItemIDX;
-	
-	// Add all of the items in the chunk
-	if (globals.m_hPlaylistViewControl)
-		CLV_BeginBatch(globals.m_hPlaylistViewControl);
-	
-	for (iChunkItemIDX = 0; iChunkItemIDX < pChunk->m_iNumberInChunk; iChunkItemIDX++)
-		CPL_AddSingleFile_pt2(globals.m_hPlaylist, pChunk->m_aryItems[iChunkItemIDX], pChunk->m_aryBatchIDs[iChunkItemIDX]);
-		
-	if (globals.m_hPlaylistViewControl)
-		CLV_EndBatch(globals.m_hPlaylistViewControl);
-	
-	// Cleanup
-	free(pChunk);
-}
+////////////////////////////////////////////////////////////////////////////////
+// Gapless: pre-buffer the next file
+////////////////////////////////////////////////////////////////////////////////
 
-//
-//
-//
-void CPL_RemoveDuplicates(CP_HPLAYLIST hPlaylist)
+void CPL_QueueNextForGapless(CP_HPLAYLIST hPlaylist)
 {
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_HPLAYLISTITEM hCursor;
-	CPs_PathHashTable seenPaths;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	/* Single-pass O(n) duplicate removal using a local hash set.
-	   CPL_RemoveItem keeps pPlaylist->m_PathLookup consistent. */
-	memset(&seenPaths, 0, sizeof(seenPaths));
-	
-	hCursor = pPlaylist->m_hFirst;
-	while (hCursor)
-	{
-		CP_HPLAYLISTITEM hNext = CPLI_Next(hCursor);
-		const char *pcPath = CPLII_DECODEHANDLE(hCursor)->m_pcPath;
-		
-		if (CPL_Hash_Contains(&seenPaths, pcPath))
-		{
-			CPL_RemoveItem(hPlaylist, hCursor);
-		}
-		else
-		{
-			CPL_Hash_Insert(&seenPaths, pcPath);
-		}
-		
-		hCursor = hNext;
-	}
-	
-	CPL_Hash_Clear(&seenPaths);
-}
+	CP_HPLAYLISTITEM hNext;
 
-//
-//
-//
-void CPL_PlayActiveItem(CP_HPLAYLIST hPlaylist, const BOOL bStopFirst)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Stop
-	
-	if (bStopFirst == TRUE)
-		CPI_Player__Stop(globals.m_hPlayer);
-		
-	// Start playing
-	if (pPlaylist->m_hCurrent)
+	if (!options.gapless_playback)
+		return;
+
+	hNext = CPL_PeekNextItem(hPlaylist);
+
+	if (hNext)
 	{
 		float fScale = CPRG_ComputeScale(
 			(CPe_ReplayGainMode)options.replaygain_mode,
-			CPLI_GetReplayGain_Track_Gain(pPlaylist->m_hCurrent),
-			CPLI_GetReplayGain_Track_Peak(pPlaylist->m_hCurrent),
-			CPLI_GetReplayGain_Album_Gain(pPlaylist->m_hCurrent),
-			CPLI_GetReplayGain_Album_Peak(pPlaylist->m_hCurrent),
+			CPLI_GetReplayGain_Track_Gain(hNext),
+			CPLI_GetReplayGain_Track_Peak(hNext),
+			CPLI_GetReplayGain_Album_Gain(hNext),
+			CPLI_GetReplayGain_Album_Peak(hNext),
 			(float)options.replaygain_preamp_db,
 			options.replaygain_prevent_clipping);
-		CPI_Player__OpenFile(globals.m_hPlayer, CPLI_GetPath(pPlaylist->m_hCurrent), fScale);
-		CPI_Player__Play(globals.m_hPlayer);
+		CPI_Player__SetNextFile(globals.m_hPlayer, CPLI_GetPath(hNext), fScale);
 	}
 }
 
-//
-//
-//
-void CPL_RemoveItem(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem)
+////////////////////////////////////////////////////////////////////////////////
+// Wrapper functions that delegate to Rust CPPL_* accessors
+////////////////////////////////////////////////////////////////////////////////
+
+void CPL_SyncLoadNextFile(CP_HPLAYLIST hPlaylist)
 {
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Remove from path lookup before the item is unlinked/destroyed
-	CPL_Hash_Remove(&pPlaylist->m_PathLookup, CPLII_DECODEHANDLE(hItem)->m_pcPath);
-	
-	// Callback
-	CPL_cb_OnPlaylistItemDelete(hItem);
-	CPL_UnlinkItem(hPlaylist, hItem);
-	
-	// Remove item from track stack
-	CPL_Stack_Remove(hPlaylist, hItem);
-	
-	if (hItem == pPlaylist->m_hCurrent)
-	{
-		// This is the active item - clear it's next and prev entries and mark it
-		// so that it's destroyed when activation next changes
-		CPs_PlaylistItem* pActiveItem = CPLII_DECODEHANDLE(hItem);
-		pActiveItem->m_hNext = NULL;
-		pActiveItem->m_hPrev = NULL;
-		pActiveItem->m_bDestroyOnDeactivate = TRUE;
-		CPL_cb_OnPlaylistActivationChange(hItem, FALSE);
-		pActiveItem->m_iCookie = CPC_INVALIDITEM;
-	}
-	
-	else
-	{
-		// Cleanup
-		CPLII_DestroyItem(hItem);
-	}
+	CP_ASSERT(hPlaylist);
+	CPPL_SetSyncLoadNextFile(hPlaylist, TRUE);
 }
 
-//
-//
-//
-void CPL_SetActiveItem(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem)
+void CPL_SetAutoActivateInitial(CP_HPLAYLIST hPlaylist, const BOOL bAutoActivateInitial)
 {
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	if (pPlaylist->m_hCurrent == hItem)
-		return;
-		
-	// Unset any previous activation state
-	if (pPlaylist->m_hCurrent)
-	{
-		if (CPLII_DECODEHANDLE(pPlaylist->m_hCurrent)->m_bDestroyOnDeactivate)
-			CPLII_DestroyItem(pPlaylist->m_hCurrent);
-		else
-			CPL_cb_OnPlaylistActivationChange(pPlaylist->m_hCurrent, FALSE);
-	}
-	
-	pPlaylist->m_hCurrent = hItem;
-	
-	// Set new activation state
-	
-	if (pPlaylist->m_hCurrent)
-	{
-		CPL_cb_OnPlaylistActivationChange(pPlaylist->m_hCurrent, TRUE);
-		
-		if (options.read_id3_tag_of_selected == TRUE)
-			CPLI_ReadTag(hItem);
-	}
-	
-	else
-		CPL_cb_OnPlaylistActivationEmpty();
-		
-	// Update track stack
-	CPL_Stack_SetCursor(hPlaylist, pPlaylist->m_hCurrent);
-	
-	// Setup the initial file buffer (for remember last played)
-	if (pPlaylist->m_hCurrent)
-		strncpy(options.initial_file, CPLI_GetPath(hItem), sizeof(options.initial_file));
+	(void)bAutoActivateInitial;  /* parameter was historically ignored; always sets TRUE */
+	CP_ASSERT(hPlaylist);
+	CPPL_SetAutoActivateInitial(hPlaylist, TRUE);
 }
 
-//
-//
-//
-void CPL_PlayItem(CP_HPLAYLIST hPlaylist, const BOOL bStopFirst, const CPe_PlayMode enPlayMode)
+////////////////////////////////////////////////////////////////////////////////
+// Worker thread
+////////////////////////////////////////////////////////////////////////////////
+
+DWORD WINAPI CPI_PlaylistWorkerThreadEP(void* pCookie)
 {
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_HPLAYLISTITEM hItemToPlay = NULL;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Decide on what to play
-	
-	switch (enPlayMode)
+	CP_HPLAYLIST hPlaylist = (CP_HPLAYLIST)pCookie;
+	MSG msg;
+	CPs_NotifyChunk* pPendingChunk;
+	BOOL bRet;
+
+	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_IDLE);
+	pPendingChunk = NULL;
+
+	while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
 	{
-	
-		case pmCurrentItem:
-		
-			if (pPlaylist->m_hCurrent)
+		if (bRet == -1)
+			return 0;
+
+		if (msg.message == CPPLWT_TERMINATE)
+		{
+			break;
+		}
+		else if (msg.message == CPPLWT_READTAG)
+		{
+			MSG msgPeek;
+			CP_HPLAYLISTITEM hNewFile = (CP_HPLAYLISTITEM)msg.lParam;
+
+			if (CPPL_GetBatchID(hPlaylist) == (DWORD)msg.wParam)
 			{
-				// If the current item is no longer in the list and we are stopping - play the first item
-				if (bStopFirst == TRUE || CPLII_DECODEHANDLE(pPlaylist->m_hCurrent)->m_bDestroyOnDeactivate)
+				CPLI_ReadTag(hNewFile);
+
+				if (CPLI_GetTrackLength(hNewFile) == 0 && options.work_out_track_lengths)
+					CPLI_CalculateLength(hNewFile);
+
+				if (!pPendingChunk)
 				{
-					if (pPlaylist->m_iTrackStackSize > 0)
+					pPendingChunk = MALLOC_TYPE(CPs_NotifyChunk);
+					if (!pPendingChunk)
 					{
-						if (pPlaylist->m_iTrackStackCursor < pPlaylist->m_iTrackStackSize)
-							hItemToPlay = pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackCursor];
-						else
-							hItemToPlay = pPlaylist->m_pTrackStack[0];
+						CP_TRACE0("Playlist worker: Failed to allocate notify chunk");
+						continue;
 					}
+					pPendingChunk->m_iNumberInChunk = 0;
 				}
-				
-				else
-					hItemToPlay = pPlaylist->m_hCurrent;
+
+				pPendingChunk->m_aryItems[pPendingChunk->m_iNumberInChunk]    = hNewFile;
+				pPendingChunk->m_aryBatchIDs[pPendingChunk->m_iNumberInChunk] = (DWORD)msg.wParam;
+				pPendingChunk->m_iNumberInChunk++;
 			}
-			
 			else
 			{
-				if (pPlaylist->m_iTrackStackCursor < pPlaylist->m_iTrackStackSize)
+				CPLII_DestroyItem(hNewFile);
+			}
+
+			if (pPendingChunk)
+			{
+				if (pPendingChunk->m_iNumberInChunk == CPC_PLAYLISTWORKER_NOTIFYCHUNKSIZE
+					|| PeekMessage(&msgPeek, NULL, CPPLWT_READTAG, CPPLWT_READTAG, PM_NOREMOVE) == FALSE)
 				{
-					hItemToPlay = pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackCursor];
-				}
-				
-				else
-				{
-					if (options.shuffle_play)
-						CPL_Stack_Shuffle(globals.m_hPlaylist, FALSE);
-						
-					if (pPlaylist->m_iTrackStackSize > 0)
-						hItemToPlay = pPlaylist->m_pTrackStack[0];
+					PostThreadMessage(CPPL_GetHostThreadID(hPlaylist), CPPLNM_TAGREAD, (WPARAM)pPendingChunk, 0L);
+					pPendingChunk = NULL;
 				}
 			}
-			
-			break;
-			
-		case pmNextItem:
-		
-			// If the currently playing track is not the one at the head of the stack - play the head of the stack
-			
-			if (pPlaylist->m_hCurrent
-					&& pPlaylist->m_iTrackStackCursor < pPlaylist->m_iTrackStackSize
-					&& pPlaylist->m_hCurrent != pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackCursor])
+		}
+		else if (msg.message == CPPLWT_SYNCSHUFFLE)
+		{
+			PostThreadMessage(CPPL_GetHostThreadID(hPlaylist), CPPLNM_SYNCSHUFFLE, 0L, 0L);
+		}
+		else if (msg.message == CPPLWT_SETACTIVE)
+		{
+			CP_HPLAYLISTITEM hFile = (CP_HPLAYLISTITEM)msg.lParam;
+
+			if (pPendingChunk)
 			{
-				hItemToPlay = pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackCursor];
+				PostThreadMessage(CPPL_GetHostThreadID(hPlaylist), CPPLNM_TAGREAD, (WPARAM)pPendingChunk, 0L);
+				pPendingChunk = NULL;
 			}
-			
-			// Play the next item from the track stack
-			
-			if (hItemToPlay == NULL)
-			{
-				if (pPlaylist->m_iTrackStackCursor < pPlaylist->m_iTrackStackSize)
-					pPlaylist->m_iTrackStackCursor++;
-					
-				if (pPlaylist->m_iTrackStackCursor < pPlaylist->m_iTrackStackSize)
-					hItemToPlay = pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackCursor];
-			}
-			
-			if (hItemToPlay == NULL && options.repeat_playlist == TRUE)
-			{
-				if (options.shuffle_play)
-					CPL_Stack_Shuffle(globals.m_hPlaylist, FALSE);
-					
-				if (pPlaylist->m_iTrackStackSize > 0)
-					hItemToPlay = pPlaylist->m_pTrackStack[0];
-			}
-			
-			break;
-			
-		case pmPrevItem:
-			// Play the prev item in the track stack
-			
-			if (pPlaylist->m_iTrackStackCursor > 0)
-				hItemToPlay = pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackCursor-1];
-			else
-			{
-				if (options.repeat_playlist == TRUE)
-				{
-					if (pPlaylist->m_iTrackStackSize > 0)
-						hItemToPlay = pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackSize-1];
-				}
-				
-				else if (pPlaylist->m_iTrackStackSize > 0)
-					hItemToPlay = pPlaylist->m_pTrackStack[0];
-			}
-			
-		break;
-		
-	default:
-		CP_FAIL("UnknownPlayMode");
+
+			if (CPPL_GetBatchID(hPlaylist) == (DWORD)msg.wParam)
+				PostThreadMessage(CPPL_GetHostThreadID(hPlaylist), CPPLNM_SYNCSETACTIVE, (WPARAM)hFile, 0L);
+		}
 	}
-	
-	CPL_SetActiveItem(hPlaylist, hItemToPlay);
-	CPL_PlayActiveItem(hPlaylist, bStopFirst);
-}
 
-//
-//
-//
-CP_HPLAYLISTITEM CPL_GetFirstItem(CP_HPLAYLIST hPlaylist)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	return pPlaylist->m_hFirst;
-}
-
-//
-//
-//
-CP_HPLAYLISTITEM CPL_GetLastItem(CP_HPLAYLIST hPlaylist)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	return pPlaylist->m_hLast;
-}
-
-//
-//
-//
-CP_HPLAYLISTITEM CPL_GetActiveItem(CP_HPLAYLIST hPlaylist)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	return pPlaylist->m_hCurrent;
-}
-
-//
-//
-//
-CP_HPLAYLISTITEM CPL_FindPlaylistItem(CP_HPLAYLIST hPlaylist, const char* pcPath)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_HPLAYLISTITEM hCursor;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	for (hCursor = pPlaylist->m_hFirst; hCursor; hCursor = CPLI_Next(hCursor))
+	if (pPendingChunk)
 	{
-		CP_TRACE1("Looked at \"%s\"", CPLII_DECODEHANDLE(hCursor)->m_pcPath);
-		
-		if (stricmp(CPLII_DECODEHANDLE(hCursor)->m_pcPath, pcPath) == 0)
-			return hCursor;
+		int i;
+		for (i = 0; i < pPendingChunk->m_iNumberInChunk; i++)
+			CPLII_DestroyItem(pPendingChunk->m_aryItems[i]);
+		free(pPendingChunk);
 	}
-	
-	return NULL;
+
+	CP_TRACE0("Playlist worker thread terminating");
+	return 0;
 }
 
-//
-//
-//
-void WriteFile_Text(HANDLE hFile, const char* pcLine, const BOOL bAppendCR)
+////////////////////////////////////////////////////////////////////////////////
+// File I/O helpers
+////////////////////////////////////////////////////////////////////////////////
+
+static void WriteFile_Text(HANDLE hFile, const char* pcLine, const BOOL bAppendCR)
 {
 	DWORD dwBytesWritten;
-	int iLineLen = strlen(pcLine);
+	int iLineLen = (int)strlen(pcLine);
 	WriteFile(hFile, pcLine, iLineLen, &dwBytesWritten, NULL);
-	
 	if (bAppendCR)
 		WriteFile(hFile, "\r\n", 2, &dwBytesWritten, NULL);
 }
 
-//
-//
-//
-CPe_PlayListFileType CPL_GetFileType(const char* pcPath)
+static CPe_PlayListFileType CPL_GetFileType(const char* pcPath)
 {
-	// Determine format from file extension
 	const char* pcExtension = NULL;
 	int iCharIDX;
-	
-	// Find the extension (the chars after the last dot)
-	
+
 	for (iCharIDX = 0; pcPath[iCharIDX]; iCharIDX++)
 	{
 		if (pcPath[iCharIDX] == '.')
@@ -1009,200 +545,51 @@ CPe_PlayListFileType CPL_GetFileType(const char* pcPath)
 		else if (pcPath[iCharIDX] == '\\')
 			pcExtension = NULL;
 	}
-	
-	// No extension - we don't know what format to use!
-	
+
 	if (pcExtension == NULL)
 		return pftUnknown;
-		
+
 	if (stricmp(pcExtension, "pls") == 0)
 		return pftPLS;
 	else if (stricmp(pcExtension, "m3u") == 0)
 		return pftM3U;
-		
+
 	return pftUnknown;
 }
 
-//
-//
-//
 unsigned int CPL_GetPathVolumeBytes(const char* pcPath)
 {
-	// We understand volumes in the format of C:\ or \\SYSTEMNAME\SHAREPOINT\ so look for
-	// these
 	if (pcPath[1] == ':')
 		return 3;
 	else if (pcPath[0] == '\\' && pcPath[1] == '\\')
 	{
 		int iCharIDX;
-		int iNumSlashesFound;
-		
-		// UNCs format is \\SERVER\SharePoint\path
-		
-		// Find the second slash (skipping the double slash at the start)
-		iNumSlashesFound = 0;
-		
+		int iNumSlashesFound = 0;
 		for (iCharIDX = 2; pcPath[iCharIDX]; iCharIDX++)
 		{
 			if (pcPath[iCharIDX] == '\\')
 				iNumSlashesFound++;
-				
-			// We've found the second slash - build the prefix
 			if (iNumSlashesFound == 2)
 				return iCharIDX + 1;
 		}
 	}
-	
-	else if (_strnicmp(pcPath, CIC_HTTPHEADER, sizeof(CIC_HTTPHEADER) - 1) == 0)
-		return sizeof(CIC_HTTPHEADER);
-	else if (_strnicmp(pcPath, CIC_ICYHEADER, sizeof(CIC_ICYHEADER) - 1) == 0)
-		return sizeof(CIC_ICYHEADER);
-	else if (_strnicmp(pcPath, CIC_HTTPSHEADER, sizeof(CIC_HTTPSHEADER) - 1) == 0)
-		return sizeof(CIC_HTTPSHEADER);
-	else if (_strnicmp(pcPath, CIC_FTPHEADER, sizeof(CIC_FTPHEADER) - 1) == 0)
-		return sizeof(CIC_FTPHEADER);
-		
-	// There is no volume information
+	else if (_strnicmp(pcPath, CIC_HTTPHEADER,  sizeof(CIC_HTTPHEADER)  - 1) == 0) return sizeof(CIC_HTTPHEADER);
+	else if (_strnicmp(pcPath, CIC_ICYHEADER,   sizeof(CIC_ICYHEADER)   - 1) == 0) return sizeof(CIC_ICYHEADER);
+	else if (_strnicmp(pcPath, CIC_HTTPSHEADER, sizeof(CIC_HTTPSHEADER) - 1) == 0) return sizeof(CIC_HTTPSHEADER);
+	else if (_strnicmp(pcPath, CIC_FTPHEADER,   sizeof(CIC_FTPHEADER)   - 1) == 0) return sizeof(CIC_FTPHEADER);
 	return 0;
 }
 
-//
-//
-//
 unsigned int CPL_GetPathDirectoryBytes(const char* pcPath, const unsigned int iVolumeBytes)
 {
 	unsigned int iCharIDX;
-	unsigned int iLastSlashIDX;
-	
-	// Find the last slash and trim everything before it
-	// - if there is no directory stub then empty this string
-	iLastSlashIDX = 0;
-	
+	unsigned int iLastSlashIDX = 0;
 	for (iCharIDX = iVolumeBytes; pcPath[iCharIDX]; iCharIDX++)
-	{
-		if ((pcPath[iCharIDX] == '\\') || (pcPath[iCharIDX] == '/'))
+		if (pcPath[iCharIDX] == '\\' || pcPath[iCharIDX] == '/')
 			iLastSlashIDX = iCharIDX + 1;
-	}
-	
 	return iLastSlashIDX;
 }
 
-//
-//
-//
-void CPL_ExportPlaylist(CP_HPLAYLIST hPlaylist, const char* pcOutputName)
-{
-	HANDLE hOutputFile;
-	CPe_PlayListFileType enFileType;
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	const unsigned int iPlaylist_VolumeBytes = CPL_GetPathVolumeBytes(pcOutputName);
-	const unsigned int iPlaylist_DirectoryBytes = CPL_GetPathDirectoryBytes(pcOutputName, iPlaylist_VolumeBytes);
-	
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Check for known file types
-	enFileType = CPL_GetFileType(pcOutputName);
-	
-	if (enFileType == pftUnknown)
-		return;
-		
-	// Convert filename to Unicode for better filename support
-	WCHAR* pwcOutputName = STR_ConvertToUnicode(pcOutputName);
-	if (!pwcOutputName)
-		return;
-		
-	// Open the file
-	hOutputFile = CreateFileW(pwcOutputName, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	free(pwcOutputName);
-	
-	if (hOutputFile == INVALID_HANDLE_VALUE)
-	{
-		MessageBoxA(windows.wnd_main, T(STR_ERR_COULD_NOT_OPEN_FILE), T(STR_ERR_ERROR), MB_ICONERROR);
-		return;
-	}
-	
-	// Go through all playlist items - outputting them to the file
-	{
-		CP_HPLAYLISTITEM hCursor;
-		int iFileNumber;
-		
-		// If this is a PLS file then write some header info
-		
-		if (enFileType == pftPLS)
-		{
-			int iNumberOfEntries = 0;
-			char cNumEntriesLine[32];
-			
-			WriteFile_Text(hOutputFile, "[PlayList]", TRUE);
-			
-			// Count the number of playlist items
-			
-			for (hCursor = pPlaylist->m_hFirst; hCursor; hCursor = CPLI_Next(hCursor))
-				iNumberOfEntries++;
-				
-			sprintf_s(cNumEntriesLine, sizeof(cNumEntriesLine), "NumberOfEntries=%d", iNumberOfEntries);
-			
-			WriteFile_Text(hOutputFile, cNumEntriesLine, TRUE);
-		}
-		
-		iFileNumber = 0;
-		
-		for (hCursor = pPlaylist->m_hFirst; hCursor; hCursor = CPLI_Next(hCursor), iFileNumber++)
-		{
-			char cRelPath[MAX_PATH];
-			const char* _pcFilename = CPLI_GetPath(hCursor);
-			
-			// We prefer relative paths in our playlist files - only works if playlist
-			// and target are on the same volume
-			
-			if (_strnicmp(_pcFilename, pcOutputName, iPlaylist_VolumeBytes) == 0)
-			{
-				// - so strip off the directory stubs that the file and playlist may have in common
-				const char* pcLastCommonSplitPoint = _pcFilename;
-				unsigned int iCharIDX;
-				
-				for (iCharIDX = 0; _pcFilename[iCharIDX] && iCharIDX < iPlaylist_DirectoryBytes; iCharIDX++)
-				{
-					if (tolower(_pcFilename[iCharIDX]) != tolower(pcOutputName[iCharIDX]))
-						break;
-						
-					if (_pcFilename[iCharIDX] == '\\')
-						pcLastCommonSplitPoint = _pcFilename + iCharIDX + 1;
-				}
-				
-				// - add a .. for every slash left in the playlist's path
-				cRelPath[0] = '\0';
-				
-				for (; iCharIDX < iPlaylist_DirectoryBytes; iCharIDX++)
-				{
-					if (pcOutputName[iCharIDX] == '\\')
-						cp_strcat_s(cRelPath, sizeof(cRelPath), "..\\");
-				}
-				
-				cp_strcat_s(cRelPath, sizeof(cRelPath), pcLastCommonSplitPoint);
-			}
-			
-			else
-				cp_strcpy_s(cRelPath, sizeof(cRelPath), _pcFilename);
-				
-			// PLS files have the format FileXXX=pathname - we want to write the stuff up to (and including)
-			// the equals sign
-			if (enFileType == pftPLS)
-			{
-				char cPlsFileHeader[32];
-				sprintf_s(cPlsFileHeader, sizeof(cPlsFileHeader), "File%d=", iFileNumber + 1);
-				WriteFile_Text(hOutputFile, cPlsFileHeader, FALSE);
-			}
-			
-			// Write the filename
-			WriteFile_Text(hOutputFile, cRelPath, TRUE);
-		}
-	}
-	
-	CloseHandle(hOutputFile);
-}
-
-// Resolve . and .. components in an absolute Windows path in-place.
 static void CPL_CanonicalizePath(char* pcPath)
 {
 	char cTemp[MAX_PATH];
@@ -1216,13 +603,11 @@ static void CPL_CanonicalizePath(char* pcPath)
 
 	cp_strcpy_s(cTemp, sizeof(cTemp), pcPath);
 
-	// Preserve drive prefix (e.g. "C:\")
 	if (cTemp[0] && cTemp[1] == ':' && (cTemp[2] == '\\' || cTemp[2] == '/'))
 		prefixLen = 3;
 
-	// Split remaining path into components at separators
 	pComp = cTemp + prefixLen;
-	pSep = pComp;
+	pSep  = pComp;
 
 	while (*pSep)
 	{
@@ -1238,21 +623,14 @@ static void CPL_CanonicalizePath(char* pcPath)
 	if (*pComp != '\0')
 		parts[nParts++] = pComp;
 
-	// Process each component
 	for (i = 0; i < nParts; i++)
 	{
 		if (strcmp(parts[i], "..") == 0)
-		{
-			if (nOut > 0)
-				nOut--;
-		}
+		{ if (nOut > 0) nOut--; }
 		else if (strcmp(parts[i], ".") != 0)
-		{
 			parts[nOut++] = parts[i];
-		}
 	}
 
-	// Reconstruct into pcPath
 	memcpy(pcPath, cTemp, prefixLen);
 	pcPath[prefixLen] = '\0';
 	for (i = 0; i < nOut; i++)
@@ -1263,49 +641,141 @@ static void CPL_CanonicalizePath(char* pcPath)
 	}
 }
 
-//
-//
-//
+////////////////////////////////////////////////////////////////////////////////
+// Export playlist
+////////////////////////////////////////////////////////////////////////////////
+
+void CPL_ExportPlaylist(CP_HPLAYLIST hPlaylist, const char* pcOutputName)
+{
+	HANDLE hOutputFile;
+	CPe_PlayListFileType enFileType;
+	const unsigned int iPlaylist_VolumeBytes = CPL_GetPathVolumeBytes(pcOutputName);
+	const unsigned int iPlaylist_DirectoryBytes = CPL_GetPathDirectoryBytes(pcOutputName, iPlaylist_VolumeBytes);
+	CP_ASSERT(hPlaylist);
+
+	enFileType = CPL_GetFileType(pcOutputName);
+	if (enFileType == pftUnknown)
+		return;
+
+	{
+		WCHAR* pwcOutputName = STR_ConvertToUnicode(pcOutputName);
+		if (!pwcOutputName)
+			return;
+		hOutputFile = CreateFileW(pwcOutputName, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		free(pwcOutputName);
+	}
+
+	if (hOutputFile == INVALID_HANDLE_VALUE)
+	{
+		MessageBoxA(windows.wnd_main, T(STR_ERR_COULD_NOT_OPEN_FILE), T(STR_ERR_ERROR), MB_ICONERROR);
+		return;
+	}
+
+	{
+		CP_HPLAYLISTITEM hCursor;
+		int iFileNumber;
+
+		if (enFileType == pftPLS)
+		{
+			int iNumberOfEntries = 0;
+			char cNumEntriesLine[32];
+
+			WriteFile_Text(hOutputFile, "[PlayList]", TRUE);
+
+			for (hCursor = CPL_GetFirstItem(hPlaylist); hCursor; hCursor = CPLI_Next(hCursor))
+				iNumberOfEntries++;
+
+			sprintf_s(cNumEntriesLine, sizeof(cNumEntriesLine), "NumberOfEntries=%d", iNumberOfEntries);
+			WriteFile_Text(hOutputFile, cNumEntriesLine, TRUE);
+		}
+
+		iFileNumber = 0;
+
+		for (hCursor = CPL_GetFirstItem(hPlaylist); hCursor; hCursor = CPLI_Next(hCursor), iFileNumber++)
+		{
+			char cRelPath[MAX_PATH];
+			const char* pcFilename = CPLI_GetPath(hCursor);
+
+			if (_strnicmp(pcFilename, pcOutputName, iPlaylist_VolumeBytes) == 0)
+			{
+				const char* pcLastCommonSplitPoint = pcFilename;
+				unsigned int iCharIDX;
+
+				for (iCharIDX = 0; pcFilename[iCharIDX] && iCharIDX < iPlaylist_DirectoryBytes; iCharIDX++)
+				{
+					if (tolower(pcFilename[iCharIDX]) != tolower(pcOutputName[iCharIDX]))
+						break;
+					if (pcFilename[iCharIDX] == '\\')
+						pcLastCommonSplitPoint = pcFilename + iCharIDX + 1;
+				}
+
+				cRelPath[0] = '\0';
+				for (; iCharIDX < iPlaylist_DirectoryBytes; iCharIDX++)
+					if (pcOutputName[iCharIDX] == '\\')
+						cp_strcat_s(cRelPath, sizeof(cRelPath), "..\\");
+
+				cp_strcat_s(cRelPath, sizeof(cRelPath), pcLastCommonSplitPoint);
+			}
+			else
+			{
+				cp_strcpy_s(cRelPath, sizeof(cRelPath), pcFilename);
+			}
+
+			if (enFileType == pftPLS)
+			{
+				char cPlsFileHeader[32];
+				sprintf_s(cPlsFileHeader, sizeof(cPlsFileHeader), "File%d=", iFileNumber + 1);
+				WriteFile_Text(hOutputFile, cPlsFileHeader, FALSE);
+			}
+
+			WriteFile_Text(hOutputFile, cRelPath, TRUE);
+		}
+	}
+
+	CloseHandle(hOutputFile);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Add a file resolving relative paths against the playlist's own path
+////////////////////////////////////////////////////////////////////////////////
+
 void CPL_AddPrefixedFile(CP_HPLAYLIST hPlaylist,
-						 const char* pcFilename, const char* pcTitle,
-						 const char* pcPlaylistFile,
-						 const unsigned int iPlaylist_VolumeBytes,
-						 const unsigned int iPlaylist_DirBytes)
+						  const char* pcFilename, const char* pcTitle,
+						  const char* pcPlaylistFile,
+						  const unsigned int iPlaylist_VolumeBytes,
+						  const unsigned int iPlaylist_DirBytes)
 {
 	const unsigned int iFile_VolumeBytes = CPL_GetPathVolumeBytes(pcFilename);
-	
-	// Reject UNC paths from untrusted playlists (\\server\share)
+
+	/* Reject UNC paths from untrusted playlists */
 	if (pcFilename[0] == '\\' && pcFilename[1] == '\\')
 	{
 		CP_TRACE1("Rejecting playlist entry with UNC path: \"%s\"", pcFilename);
 		return;
 	}
-	
-	// If the file has volume information - add it as it is
-	
+
 	if (iFile_VolumeBytes)
+	{
 		CPL_AddSingleFile(hPlaylist, pcFilename, pcTitle);
-		
-	// If the filename has a leading \ then add it prepended by the playlist's volume
+	}
 	else if (pcFilename[0] == '\\')
 	{
 		char cFullPath[MAX_PATH];
 		size_t iRemaining = sizeof(cFullPath);
-		if (iPlaylist_VolumeBytes < iRemaining) {
+		if (iPlaylist_VolumeBytes < iRemaining)
+		{
 			memcpy(cFullPath, pcPlaylistFile, iPlaylist_VolumeBytes);
 			cp_strcpy_s(cFullPath + iPlaylist_VolumeBytes, iRemaining - iPlaylist_VolumeBytes, pcFilename + 1);
 			CPL_CanonicalizePath(cFullPath);
 			CPL_AddSingleFile(hPlaylist, cFullPath, pcTitle);
 		}
 	}
-	
-	// Add the filename prepended by the playlist's directory
-	
 	else
 	{
 		char cFullPath[MAX_PATH];
 		size_t iRemaining = sizeof(cFullPath);
-		if (iPlaylist_DirBytes < iRemaining) {
+		if (iPlaylist_DirBytes < iRemaining)
+		{
 			memcpy(cFullPath, pcPlaylistFile, iPlaylist_DirBytes);
 			cp_strcpy_s(cFullPath + iPlaylist_DirBytes, iRemaining - iPlaylist_DirBytes, pcFilename);
 			CPL_CanonicalizePath(cFullPath);
@@ -1314,179 +784,130 @@ void CPL_AddPrefixedFile(CP_HPLAYLIST hPlaylist,
 	}
 }
 
-//
-//
-//
-/** // TODO: - make AddFile load playlists from URLs **/
-// currently only supports loading m3u from URL
-// and has code duplication for reading m3u file
+////////////////////////////////////////////////////////////////////////////////
+// CPL_AddFile — load a file or playlist
+////////////////////////////////////////////////////////////////////////////////
+
 void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 {
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
 	CPe_PlayListFileType enFileType;
 	unsigned int iPlaylist_VolumeBytes;
 	unsigned int iPlaylist_DirectoryBytes;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Check for known file types
+	CP_ASSERT(hPlaylist);
+
 	enFileType = CPL_GetFileType(pcFilename);
-	
+
 	if (enFileType == pftUnknown)
 	{
-		// This doesn't seem to be a playlist file - add it as a playlist item
 		CPL_AddSingleFile(hPlaylist, pcFilename, NULL);
 		return;
 	}
-	
-	// Get playlist file information
-	iPlaylist_VolumeBytes = CPL_GetPathVolumeBytes(pcFilename);
+
+	iPlaylist_VolumeBytes    = CPL_GetPathVolumeBytes(pcFilename);
 	iPlaylist_DirectoryBytes = CPL_GetPathDirectoryBytes(pcFilename, iPlaylist_VolumeBytes);
-	
-	// Load the playlist files
+
 	CPL_cb_LockWindowUpdates(TRUE);
-	
+
 	if (enFileType == pftPLS)
 	{
-		// Check if this is a URL or local file
-		if ((_strnicmp(pcFilename, CIC_HTTPHEADER, sizeof(CIC_HTTPHEADER) - 1) == 0) ||
-				(_strnicmp(pcFilename, CIC_ICYHEADER, sizeof(CIC_ICYHEADER) - 1) == 0) ||
-				(_strnicmp(pcFilename, CIC_HTTPSHEADER, sizeof(CIC_HTTPSHEADER) - 1) == 0) ||
-				(_strnicmp(pcFilename, CIC_FTPHEADER, sizeof(CIC_FTPHEADER) - 1) == 0))
+		/* URL PLS */
+		if ((_strnicmp(pcFilename, CIC_HTTPHEADER,  sizeof(CIC_HTTPHEADER)  - 1) == 0) ||
+			(_strnicmp(pcFilename, CIC_ICYHEADER,   sizeof(CIC_ICYHEADER)   - 1) == 0) ||
+			(_strnicmp(pcFilename, CIC_HTTPSHEADER, sizeof(CIC_HTTPSHEADER) - 1) == 0) ||
+			(_strnicmp(pcFilename, CIC_FTPHEADER,   sizeof(CIC_FTPHEADER)   - 1) == 0))
 		{
-			// Handle PLS URL - download and parse content
 			HINTERNET hInternet, hURLStream;
 			DWORD dwTimeout;
 			INTERNET_BUFFERS internetbuffer;
-			char *pcPlaylistBuffer;
-			
+			char* pcPlaylistBuffer;
+
 			CP_LOG_DEBUG("CPL_AddFile: Processing PLS URL: %s\n", pcFilename);
-			
+
 			hInternet = InternetOpen(CP_BRISKPLAYER, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0L);
-			if (hInternet == NULL)
-			{
-				CP_LOG_ERROR("CPL_AddFile: InternetOpen failed for PLS URL\n");
-				CPL_cb_LockWindowUpdates(FALSE);
-				return;
-			}
-			
+			if (!hInternet) { CP_LOG_ERROR("CPL_AddFile: InternetOpen failed for PLS URL\n"); CPL_cb_LockWindowUpdates(FALSE); return; }
+
 			dwTimeout = 5000;
 			InternetSetOption(hInternet, INTERNET_OPTION_CONNECT_TIMEOUT, &dwTimeout, sizeof(dwTimeout));
-			
-			hURLStream = InternetOpenUrl(hInternet, pcFilename, NULL, 0, 
+
+			hURLStream = InternetOpenUrl(hInternet, pcFilename, NULL, 0,
 				INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE, 0);
-				
-			if (hURLStream == NULL)
-			{
-				CP_LOG_ERROR("CPL_AddFile: InternetOpenUrl failed for PLS URL: %s\n", pcFilename);
-				InternetCloseHandle(hInternet);
-				CPL_cb_LockWindowUpdates(FALSE);
-				return;
-			}
-			
-			// Allocate buffer for playlist content
+
+			if (!hURLStream) { CP_LOG_ERROR("CPL_AddFile: InternetOpenUrl failed\n"); InternetCloseHandle(hInternet); CPL_cb_LockWindowUpdates(FALSE); return; }
+
 			pcPlaylistBuffer = CALLOC_TYPE(char, 0x40001);
-			if (!pcPlaylistBuffer)
+			if (!pcPlaylistBuffer) { CP_LOG_ERROR("CPL_AddFile: alloc failed\n"); InternetCloseHandle(hURLStream); InternetCloseHandle(hInternet); CPL_cb_LockWindowUpdates(FALSE); return; }
+
+			internetbuffer.dwStructSize   = sizeof(internetbuffer);
+			internetbuffer.Next           = NULL;
+			internetbuffer.lpcszHeader    = NULL;
+			internetbuffer.lpvBuffer      = pcPlaylistBuffer;
+			internetbuffer.dwBufferLength = 0x40000;
+
 			{
-				CP_LOG_ERROR("CPL_AddFile: Memory allocation failed for PLS URL\n");
+				BOOL bReadResult = InternetReadFileEx(hURLStream, &internetbuffer, IRF_NO_WAIT, 0);
 				InternetCloseHandle(hURLStream);
 				InternetCloseHandle(hInternet);
-				CPL_cb_LockWindowUpdates(FALSE);
-				return;
-			}
-			
-			// Setup internet buffer
-			internetbuffer.dwStructSize = sizeof(internetbuffer);
-			internetbuffer.Next = NULL;
-			internetbuffer.lpcszHeader = NULL;
-			internetbuffer.lpvBuffer = pcPlaylistBuffer;
-			internetbuffer.dwBufferLength = 0x40000;
-			
-			// Download the playlist
-			BOOL bReadResult = InternetReadFileEx(hURLStream, &internetbuffer, IRF_NO_WAIT, 0);
-			
-			InternetCloseHandle(hURLStream);
-			InternetCloseHandle(hInternet);
-			
-			if ((!bReadResult) || (!internetbuffer.dwBufferLength))
-			{
-				CP_LOG_ERROR("CPL_AddFile: Failed to download PLS content from: %s\n", pcFilename);
-				free(pcPlaylistBuffer);
-				CPL_cb_LockWindowUpdates(FALSE);
-				return;
-			}
-			
-			// Null-terminate the buffer
-			pcPlaylistBuffer[internetbuffer.dwBufferLength] = '\0';
-			CP_LOG_DEBUG("CPL_AddFile: Downloaded %lu bytes of PLS content\n", internetbuffer.dwBufferLength);
-			
-			// Parse PLS content manually
-			char* pcLine = pcPlaylistBuffer;
-			char* pcNextLine;
-			
-			while (pcLine && *pcLine)
-			{
-				// Find the end of this line
-				pcNextLine = strchr(pcLine, '\n');
-				if (pcNextLine)
+
+				if (!bReadResult || !internetbuffer.dwBufferLength)
 				{
-					*pcNextLine = '\0';
-					pcNextLine++;
+					CP_LOG_ERROR("CPL_AddFile: Failed to download PLS\n");
+					free(pcPlaylistBuffer);
+					CPL_cb_LockWindowUpdates(FALSE);
+					return;
 				}
-				
-				// Remove trailing \r if present
-				int len = strlen(pcLine);
-				if (len > 0 && pcLine[len-1] == '\r')
-					pcLine[len-1] = '\0';
-				
-				// Check if this line contains a File entry
-				if (_strnicmp(pcLine, "File", 4) == 0)
+			}
+
+			pcPlaylistBuffer[internetbuffer.dwBufferLength] = '\0';
+
+			{
+				char* pcLine = pcPlaylistBuffer;
+				char* pcNextLine;
+				while (pcLine && *pcLine)
 				{
-					char* pcEquals = strchr(pcLine, '=');
-					if (pcEquals)
+					int len;
+					pcNextLine = strchr(pcLine, '\n');
+					if (pcNextLine) { *pcNextLine = '\0'; pcNextLine++; }
+
+					len = (int)strlen(pcLine);
+					if (len > 0 && pcLine[len-1] == '\r') pcLine[len-1] = '\0';
+
+					if (_strnicmp(pcLine, "File", 4) == 0)
 					{
-						pcEquals++; // Skip the '='
-						// Trim leading whitespace
-						while (*pcEquals && (*pcEquals == ' ' || *pcEquals == '\t'))
-							pcEquals++;
-						
-						if (*pcEquals)
+						char* pcEquals = strchr(pcLine, '=');
+						if (pcEquals)
 						{
-							CP_LOG_DEBUG("CPL_AddFile: Found stream URL: %s\n", pcEquals);
-							CPL_AddPrefixedFile(hPlaylist, pcEquals, NULL, pcFilename, iPlaylist_VolumeBytes, iPlaylist_DirectoryBytes);
+							pcEquals++;
+							while (*pcEquals && (*pcEquals == ' ' || *pcEquals == '\t')) pcEquals++;
+							if (*pcEquals)
+								CPL_AddPrefixedFile(hPlaylist, pcEquals, NULL, pcFilename, iPlaylist_VolumeBytes, iPlaylist_DirectoryBytes);
 						}
 					}
+					pcLine = pcNextLine;
 				}
-				
-				pcLine = pcNextLine;
 			}
-			
+
 			free(pcPlaylistBuffer);
 		}
 		else
 		{
-			// Handle local PLS file using GetPrivateProfileString
+			/* Local PLS */
 			int iNumFiles, iFileIDX;
-			
 			iNumFiles = GetPrivateProfileInt("playlist", "NumberOfEntries", 0, pcFilename);
-			
+
 			for (iFileIDX = 0; iFileIDX < iNumFiles; iFileIDX++)
 			{
-				DWORD dwNumCharsRead;
 				char cPlsFileHeader[32];
 				char cBuffer[MAX_PATH];
 				char cTitle[1024];
+				DWORD dwNumCharsRead;
+
 				sprintf_s(cPlsFileHeader, sizeof(cPlsFileHeader), "File%d", iFileIDX + 1);
-				
-				// Get the path - leave room for a drive
 				dwNumCharsRead = GetPrivateProfileString("playlist", cPlsFileHeader, NULL, cBuffer, MAX_PATH, pcFilename);
-				
-				if (dwNumCharsRead == 0)
-					continue;
-					
+				if (dwNumCharsRead == 0) continue;
+
 				sprintf_s(cPlsFileHeader, sizeof(cPlsFileHeader), "Title%d", iFileIDX + 1);
-				
 				dwNumCharsRead = GetPrivateProfileString("playlist", cPlsFileHeader, NULL, cTitle, 1024, pcFilename);
-				
+
 				if (dwNumCharsRead == 0)
 					CPL_AddPrefixedFile(hPlaylist, cBuffer, NULL, pcFilename, iPlaylist_VolumeBytes, iPlaylist_DirectoryBytes);
 				else
@@ -1494,95 +915,56 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 			}
 		}
 	}
-	
-	else
+	else /* M3U */
 	{
-		// Open file and load it all into memory
-		HANDLE hFile;
-		HINTERNET hURLStream;
-		HINTERNET hInternet;
-		DWORD dwTimeout, dwBytesRead;
-		INTERNET_BUFFERS internetbuffer;
-		char *pcPlaylistBuffer;
+		HINTERNET hInternet = NULL;
+		HINTERNET hURLStream = NULL;
+		HANDLE hFile = INVALID_HANDLE_VALUE;
+		char* pcPlaylistBuffer = NULL;
+		DWORD dwFileLen, dwBytesRead;
 		unsigned int iLastLineStartIDX, iCharIDX;
-		
-		// Perform reading
 		BOOL bReadResult;
-		
-		
-		// If the path is a URL, we will read the playlist from the internet.
-		
-		if ((_strnicmp(pcFilename, CIC_HTTPHEADER, sizeof(CIC_HTTPHEADER) - 1) == 0) ||
-				(_strnicmp(pcFilename, CIC_ICYHEADER, sizeof(CIC_ICYHEADER) - 1) == 0) ||
-				(_strnicmp(pcFilename, CIC_HTTPSHEADER, sizeof(CIC_HTTPSHEADER) - 1) == 0) ||
-				(_strnicmp(pcFilename, CIC_FTPHEADER, sizeof(CIC_FTPHEADER) - 1) == 0))
+		INTERNET_BUFFERS internetbuffer;
+		DWORD dwTimeout;
+
+		if ((_strnicmp(pcFilename, CIC_HTTPHEADER,  sizeof(CIC_HTTPHEADER)  - 1) == 0) ||
+			(_strnicmp(pcFilename, CIC_ICYHEADER,   sizeof(CIC_ICYHEADER)   - 1) == 0) ||
+			(_strnicmp(pcFilename, CIC_HTTPSHEADER, sizeof(CIC_HTTPSHEADER) - 1) == 0) ||
+			(_strnicmp(pcFilename, CIC_FTPHEADER,   sizeof(CIC_FTPHEADER)   - 1) == 0))
 		{
-			// This playlist is located on the internet, so we have to download it.
-			hInternet = InternetOpen(CP_BRISKPLAYER,
-									 INTERNET_OPEN_TYPE_PRECONFIG,
-									 NULL, NULL, 0L);
-			                         
-			if (hInternet == NULL)
-			{
-				CP_TRACE0("CPL_AddFile::NoInternetOpen");
-				return;
-			}
-			
+			hInternet = InternetOpen(CP_BRISKPLAYER, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0L);
+			if (!hInternet) { CP_TRACE0("CPL_AddFile::NoInternetOpen"); CPL_cb_LockWindowUpdates(FALSE); return; }
+
 			dwTimeout = 2000;
 			InternetSetOption(hInternet, INTERNET_OPTION_CONNECT_TIMEOUT, &dwTimeout, sizeof(dwTimeout));
-			
-			hURLStream = InternetOpenUrl(hInternet,
-										 pcFilename,
-										 NULL,
-										 0,
-										 INTERNET_FLAG_NO_CACHE_WRITE
-										 | INTERNET_FLAG_PRAGMA_NOCACHE,
-										 0);
-			                             
-			if (hURLStream == NULL)
-			{
-				InternetCloseHandle(hInternet);
-				CP_TRACE1("CPL_AddFile::NoOpenURL %s", pcFilename);
-				return;
-			}
-			
-			// We set up a 256k buffer to download the playlist.  If it's not enough, we won't bother reading the playlist.
+
+			hURLStream = InternetOpenUrl(hInternet, pcFilename, NULL, 0,
+				INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE, 0);
+
+			if (!hURLStream) { InternetCloseHandle(hInternet); CP_TRACE1("CPL_AddFile::NoOpenURL %s", pcFilename); CPL_cb_LockWindowUpdates(FALSE); return; }
+
 			pcPlaylistBuffer = CALLOC_TYPE(char, 0x40001);
-			
-			if (!pcPlaylistBuffer)
-			{
-				// Failed to allocate, we're done.
-				InternetCloseHandle(hInternet);
-				InternetCloseHandle(hURLStream);
-				CP_TRACE1("CPL_AddFile::AllocateError %s", pcFilename);
-				return;
-			}
-			
-			// Setup the internet buffer
-			internetbuffer.dwStructSize = sizeof(internetbuffer);
-			internetbuffer.Next = NULL;
-			internetbuffer.lpcszHeader = NULL;
-			internetbuffer.lpvBuffer = pcPlaylistBuffer;
+			if (!pcPlaylistBuffer) { InternetCloseHandle(hInternet); InternetCloseHandle(hURLStream); CPL_cb_LockWindowUpdates(FALSE); return; }
+
+			internetbuffer.dwStructSize   = sizeof(internetbuffer);
+			internetbuffer.Next           = NULL;
+			internetbuffer.lpcszHeader    = NULL;
+			internetbuffer.lpvBuffer      = pcPlaylistBuffer;
 			internetbuffer.dwBufferLength = 0x40000;
-			
-			// We attemt to read the file in a single read.  If that doesn't work. we don't
-			// bother to continue.
+
 			bReadResult = InternetReadFileEx(hURLStream, &internetbuffer, IRF_NO_WAIT, 0);
-			
 			InternetCloseHandle(hURLStream);
-			
 			InternetCloseHandle(hInternet);
-			
-			if ((!bReadResult) || (!internetbuffer.dwBufferLength))
+
+			if (!bReadResult || !internetbuffer.dwBufferLength)
 			{
-				// We've got no data
 				CP_TRACE1("CPL_AddFile::NoDataReturned %s", pcFilename);
+				free(pcPlaylistBuffer);
+				CPL_cb_LockWindowUpdates(FALSE);
 				return;
 			}
-			
-			// Read in the file line by line
+
 			iLastLineStartIDX = 0;
-			
 			for (iCharIDX = 0; iCharIDX < internetbuffer.dwBufferLength + 1; iCharIDX++)
 			{
 				if ((pcPlaylistBuffer[iCharIDX] == '\r'
@@ -1591,600 +973,116 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 						&& iLastLineStartIDX < iCharIDX)
 				{
 					char cBuffer[513];
-					
-					// Is there a file on this line (strip whitespace from start)
-					
 					if (sscanf_s(pcPlaylistBuffer + iLastLineStartIDX, " %511[^\r\n]", cBuffer, (unsigned)sizeof(cBuffer)) == 1)
 					{
-						// Something has been read - ignore lines starting with #
 						if (cBuffer[0] != '#')
 							CPL_AddPrefixedFile(hPlaylist, cBuffer, NULL, pcFilename, iPlaylist_VolumeBytes, iPlaylist_DirectoryBytes);
 					}
-					
-					// Set the line start for the next line
-					
-					if (pcPlaylistBuffer[iCharIDX + 1] == '\n')
-						iCharIDX++;
-						
 					iLastLineStartIDX = iCharIDX + 1;
 				}
 			}
-			
+
 			free(pcPlaylistBuffer);
 		}
-		
 		else
 		{
-			// It's not a URL, so we will read the file from a local (UNC) resource
-			// Convert filename to Unicode for better filename support
+			/* Local M3U */
 			WCHAR* pwcFilename = STR_ConvertToUnicode(pcFilename);
-			if (!pwcFilename)
-				return;
-				
-			hFile = CreateFileW(pwcFilename, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			if (!pwcFilename) { CPL_cb_LockWindowUpdates(FALSE); return; }
+
+			hFile = CreateFileW(pwcFilename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 			free(pwcFilename);
-			
-			if (hFile != INVALID_HANDLE_VALUE)
+
+			if (hFile == INVALID_HANDLE_VALUE) { CP_TRACE1("CPL_AddFile::OpenFailed %s", pcFilename); CPL_cb_LockWindowUpdates(FALSE); return; }
+
+			dwFileLen = GetFileSize(hFile, NULL);
+			if (dwFileLen == 0) { CloseHandle(hFile); CPL_cb_LockWindowUpdates(FALSE); return; }
+
+			pcPlaylistBuffer = CALLOC_TYPE(char, dwFileLen + 1);
+			if (!pcPlaylistBuffer) { CloseHandle(hFile); CPL_cb_LockWindowUpdates(FALSE); return; }
+
+			ReadFile(hFile, pcPlaylistBuffer, dwFileLen, &dwBytesRead, NULL);
+			CloseHandle(hFile);
+
+			iLastLineStartIDX = 0;
+			for (iCharIDX = 0; iCharIDX < dwBytesRead + 1; iCharIDX++)
 			{
-				const DWORD dwFileSize = GetFileSize(hFile, NULL);
-				
-				// We will only load playlists that are smaller than 256K
-				
-				if (dwFileSize < 0x40000)
+				if ((pcPlaylistBuffer[iCharIDX] == '\r'
+						|| pcPlaylistBuffer[iCharIDX] == '\n'
+						|| iCharIDX == dwBytesRead)
+						&& iLastLineStartIDX < iCharIDX)
 				{
-				// The plan is to load the entire file into a memblock and then split it into lines
-				// and scan off the whitepace and add the items to the list
-				pcPlaylistBuffer = CALLOC_TYPE(char, dwFileSize + 1);
-				ReadFile(hFile, pcPlaylistBuffer, dwFileSize, &dwBytesRead, NULL);					// Read in the file line by line
-					iLastLineStartIDX = 0;
-					
-					for (iCharIDX = 0; iCharIDX < dwFileSize + 1; iCharIDX++)
+					char cBuffer[513];
+					if (sscanf_s(pcPlaylistBuffer + iLastLineStartIDX, " %511[^\r\n]", cBuffer, (unsigned)sizeof(cBuffer)) == 1)
 					{
-						if ((pcPlaylistBuffer[iCharIDX] == '\r'
-								|| pcPlaylistBuffer[iCharIDX] == '\n'
-								|| iCharIDX == dwFileSize)
-								&& iLastLineStartIDX < iCharIDX)
-						{
-							char cBuffer[513];
-							
-							// Is there a file on this line (strip whitespace from start)
-							
-							if (sscanf_s(pcPlaylistBuffer + iLastLineStartIDX, " %511[^\r\n]", cBuffer, (unsigned)sizeof(cBuffer)) == 1)
-							{
-								// Something has been read - ignore lines starting with #
-								if (cBuffer[0] != '#')
-									CPL_AddPrefixedFile(hPlaylist, cBuffer, NULL, pcFilename, iPlaylist_VolumeBytes, iPlaylist_DirectoryBytes);
-							}
-							
-							// Set the line start for the next line
-							
-							if (pcPlaylistBuffer[iCharIDX + 1] == '\n')
-								iCharIDX++;
-								
-							iLastLineStartIDX = iCharIDX + 1;
-						}
+						if (cBuffer[0] != '#')
+							CPL_AddPrefixedFile(hPlaylist, cBuffer, NULL, pcFilename, iPlaylist_VolumeBytes, iPlaylist_DirectoryBytes);
 					}
-					
-					free(pcPlaylistBuffer);
+					iLastLineStartIDX = iCharIDX + 1;
 				}
-				
-				CloseHandle(hFile);
 			}
+
+			free(pcPlaylistBuffer);
 		}
 	}
-	
-	if (options.shuffle_play)
-		PostThreadMessage(pPlaylist->m_dwWorkerThreadID, CPPLWT_SYNCSHUFFLE, 0, 0);
-		
+
 	CPL_cb_LockWindowUpdates(FALSE);
 }
 
-//
-//
-//
-int __cdecl cpl_sort_Path(const void *e1, const void *e2)
-{
-	const CPs_PlaylistItem* pElem1 = *(const CPs_PlaylistItem**)e1;
-	const CPs_PlaylistItem* pElem2 = *(const CPs_PlaylistItem**)e2;
-	
-	return stricmp(pElem1->m_pcPath, pElem2->m_pcPath);
-}
+////////////////////////////////////////////////////////////////////////////////
+// Directory scanning
+////////////////////////////////////////////////////////////////////////////////
 
-//
-//
-//
-int __cdecl cpl_sort_Filename(const void *e1, const void *e2)
-{
-	const CPs_PlaylistItem* pElem1 = *(const CPs_PlaylistItem**)e1;
-	const CPs_PlaylistItem* pElem2 = *(const CPs_PlaylistItem**)e2;
-	
-	return stricmp(pElem1->m_pcPath, pElem2->m_pcPath);
-}
-
-//
-//
-//
-int __cdecl cpl_sort_TrackNum(const void *e1, const void *e2)
-{
-	const CPs_PlaylistItem* pElem1 = *(const CPs_PlaylistItem**)e1;
-	const CPs_PlaylistItem* pElem2 = *(const CPs_PlaylistItem**)e2;
-	
-	if (pElem1->m_cTrackNum == pElem2->m_cTrackNum)
-		return cpl_sort_Path(e1, e2);
-	else if ((char)pElem1->m_cTrackNum < (char)pElem2->m_cTrackNum)
-		return -1;
-		
-	return 1;
-}
-
-//
-//
-//
-int __cdecl cpl_sort_Length(const void *e1, const void *e2)
-{
-	const CPs_PlaylistItem* pElem1 = *(const CPs_PlaylistItem**)e1;
-	const CPs_PlaylistItem* pElem2 = *(const CPs_PlaylistItem**)e2;
-	
-	if (pElem1->m_iTrackLength == pElem2->m_iTrackLength)
-		return 0;
-	else if (pElem1->m_iTrackLength < pElem2->m_iTrackLength)
-		return -1;
-		
-	return 1;
-}
-
-//
-//
-//
-int __cdecl cpl_sort_TrackStackPos(const void *e1, const void *e2)
-{
-	const CPs_PlaylistItem* pElem1 = *(const CPs_PlaylistItem**)e1;
-	const CPs_PlaylistItem* pElem2 = *(const CPs_PlaylistItem**)e2;
-	
-	if (pElem1->m_iTrackStackPos == pElem2->m_iTrackStackPos)
-		return 0;
-		
-	if ((unsigned int)pElem1->m_iTrackStackPos == CIC_TRACKSTACK_UNSTACKED)
-		return 1;
-		
-	if ((unsigned int)pElem2->m_iTrackStackPos == CIC_TRACKSTACK_UNSTACKED)
-		return -1;
-		
-	if (pElem1->m_iTrackStackPos > pElem2->m_iTrackStackPos)
-		return 1;
-	else
-		return -1;
-}
-
-//
-//
-//
-int __cdecl cpl_sort_TrackName(const void *e1, const void *e2)
-{
-	const CPs_PlaylistItem* pElem1 = *(const CPs_PlaylistItem**)e1;
-	const CPs_PlaylistItem* pElem2 = *(const CPs_PlaylistItem**)e2;
-	
-	return stricmp(pElem1->m_pcTrackName, pElem2->m_pcTrackName);
-}
-
-//
-//
-//
-int __cdecl cpl_sort_Album(const void *e1, const void *e2)
-{
-	const CPs_PlaylistItem* pElem1 = *(const CPs_PlaylistItem**)e1;
-	const CPs_PlaylistItem* pElem2 = *(const CPs_PlaylistItem**)e2;
-	int iStringCompare;
-	
-	if (pElem1->m_pcAlbum == NULL && pElem2->m_pcAlbum == NULL)
-		return cpl_sort_TrackNum(e1, e2);
-	else if (pElem1->m_pcAlbum == NULL)
-		return -1;
-	else if (pElem2->m_pcAlbum == NULL)
-		return 1;
-		
-	// Sort by artist - but fall back to track name
-	iStringCompare = stricmp(pElem1->m_pcAlbum, pElem2->m_pcAlbum);
-	
-	if (iStringCompare != 0)
-		return iStringCompare;
-		
-	return cpl_sort_TrackNum(e1, e2);
-}
-
-//
-//
-//
-int __cdecl cpl_sort_Artist(const void *e1, const void *e2)
-{
-	const CPs_PlaylistItem* pElem1 = *(const CPs_PlaylistItem**)e1;
-	const CPs_PlaylistItem* pElem2 = *(const CPs_PlaylistItem**)e2;
-	int iStringCompare;
-	
-	if (pElem1->m_pcArtist == NULL && pElem2->m_pcArtist == NULL)
-		return cpl_sort_Album(e1, e2);
-	else if (pElem1->m_pcArtist == NULL)
-		return -1;
-	else if (pElem2->m_pcArtist == NULL)
-		return 1;
-		
-	// Sort by artist - but fall back to track name
-	iStringCompare = stricmp(pElem1->m_pcArtist, pElem2->m_pcArtist);
-	
-	if (iStringCompare != 0)
-		return iStringCompare;
-		
-	return cpl_sort_Album(e1, e2);
-}
-
-//
-//
-//
-int __cdecl cpl_sort_Year(const void *e1, const void *e2)
-{
-	const CPs_PlaylistItem* pElem1 = *(const CPs_PlaylistItem**)e1;
-	const CPs_PlaylistItem* pElem2 = *(const CPs_PlaylistItem**)e2;
-	int iStringCompare;
-	
-	if (pElem1->m_pcYear == NULL && pElem2->m_pcYear == NULL)
-		return cpl_sort_Artist(e1, e2);
-	else if (pElem1->m_pcYear == NULL)
-		return -1;
-	else if (pElem2->m_pcYear == NULL)
-		return 1;
-		
-	// Sort by artist - but fall back to track name
-	iStringCompare = stricmp(pElem1->m_pcYear, pElem2->m_pcYear);
-	
-	if (iStringCompare != 0)
-		return iStringCompare;
-		
-	return cpl_sort_Artist(e1, e2);
-}
-
-//
-//
-//
-int __cdecl cpl_sort_Genre(const void *e1, const void *e2)
-{
-	const CPs_PlaylistItem* pElem1 = *(const CPs_PlaylistItem**)e1;
-	const CPs_PlaylistItem* pElem2 = *(const CPs_PlaylistItem**)e2;
-	int iStringCompare;
-	
-	if (CPLI_GetGenre((CP_HPLAYLISTITEM)pElem1) == NULL && CPLI_GetGenre((CP_HPLAYLISTITEM)pElem2) == NULL)
-		return cpl_sort_Artist(e1, e2);
-	else if (CPLI_GetGenre((CP_HPLAYLISTITEM)pElem1) == NULL)
-		return -1;
-	else if (CPLI_GetGenre((CP_HPLAYLISTITEM)pElem2) == NULL)
-		return 1;
-		
-	// Sort by artist - but fall back to track name
-	iStringCompare = stricmp(CPLI_GetGenre((CP_HPLAYLISTITEM)pElem1), CPLI_GetGenre((CP_HPLAYLISTITEM)pElem2));
-	
-	if (iStringCompare != 0)
-		return iStringCompare;
-		
-	return cpl_sort_Artist(e1, e2);
-}
-
-//
-//
-//
-int __cdecl cpl_sort_Comment(const void *e1, const void *e2)
-{
-	const CPs_PlaylistItem* pElem1 = *(const CPs_PlaylistItem**)e1;
-	const CPs_PlaylistItem* pElem2 = *(const CPs_PlaylistItem**)e2;
-	int iStringCompare;
-	
-	if (pElem1->m_pcComment == NULL && pElem2->m_pcComment == NULL)
-		return cpl_sort_Artist(e1, e2);
-	else if (pElem1->m_pcComment == NULL)
-		return -1;
-	else if (pElem2->m_pcComment == NULL)
-		return 1;
-		
-	// Sort by artist - but fall back to track name
-	iStringCompare = stricmp(pElem1->m_pcComment, pElem2->m_pcComment);
-	
-	if (iStringCompare != 0)
-		return iStringCompare;
-		
-	return cpl_sort_Artist(e1, e2);
-}
-
-//
-//
-//
-int __cdecl cpl_sort_Random(const void *e1, const void *e2)
-{
-	(void)e1;  // Suppress unused parameter warning
-	(void)e2;  // Suppress unused parameter warning
-	const unsigned short r1 = rand();
-	const unsigned short r2 = rand();
-	
-	if (r1 < r2)
-		return -1;
-	else if (r1 == r2)
-		return 0;
-	else
-		return 1;
-}
-
-//
-//
-//
-void CPL_SortList(CP_HPLAYLIST hPlaylist, const CPe_PlayItemSortElement enElement, const BOOL bDesc)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CPs_PlaylistItem** pFlatArray;
-	unsigned int iNumItems;
-	wp_SortFN pfnSort = cpl_sort_TrackStackPos;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Skip if list is empty
-	
-	if (pPlaylist->m_hFirst == NULL)
-		return;
-		
-	// Decide sort function
-	{
-		switch (enElement)
-		{
-		
-			case piseTrackStackPos:
-				pfnSort = cpl_sort_TrackStackPos;
-				break;
-				
-			case piseTrackName:
-				pfnSort = cpl_sort_TrackName;
-				break;
-				
-			case piseArtist:
-				pfnSort = cpl_sort_Artist;
-				break;
-				
-			case piseAlbum:
-				pfnSort = cpl_sort_Album;
-				break;
-				
-			case piseYear:
-				pfnSort = cpl_sort_Year;
-				break;
-				
-			case piseTrackNum:
-				pfnSort = cpl_sort_TrackNum;
-				break;
-				
-			case piseGenre:
-				pfnSort = cpl_sort_Genre;
-				break;
-				
-			case piseComment:
-				pfnSort = cpl_sort_Comment;
-				break;
-				
-			case piseFilename:
-				pfnSort = cpl_sort_Filename;
-				break;
-				
-			case pisePath:
-				pfnSort = cpl_sort_Path;
-				break;
-				
-			case piseLength:
-				pfnSort = cpl_sort_Length;
-			break;
-			
-		default:
-			CP_FAIL("UnknownSortOrder");
-		}
-	}
-	
-	// Count items
-	{
-		CP_HPLAYLISTITEM hCursor;
-		iNumItems = 0;
-		
-		for (hCursor = pPlaylist->m_hFirst; hCursor; hCursor = CPLI_Next(hCursor))
-			iNumItems++;
-	}
-	
-	// Build flat array
-	{
-		CP_HPLAYLISTITEM hCursor;
-		int iItemIDX;
-		pFlatArray = CALLOC_TYPE(CPs_PlaylistItem*, iNumItems);
-		
-		iItemIDX = 0;
-		
-		for (hCursor = pPlaylist->m_hFirst; hCursor; hCursor = CPLI_Next(hCursor), iItemIDX++)
-			pFlatArray[iItemIDX] = CPLII_DECODEHANDLE(hCursor);
-	}
-	
-	// Qsort it
-	qsort(pFlatArray, iNumItems, sizeof(CPs_PlaylistItem*), pfnSort);
-	
-	// Relink list
-	{
-		int iFirstItem, iTermItem, iInc;
-		CP_HPLAYLISTITEM* phCursor_Referrer = &(pPlaylist->m_hFirst);
-		CP_HPLAYLISTITEM hCursor_Prev = NULL;
-		CP_HPLAYLISTITEM hLastAssignment = NULL;
-		int iItemIDX;
-		
-		// Work out how to traverse the flat array
-		
-		if (bDesc == FALSE)
-		{
-			iFirstItem = 0;
-			iTermItem = iNumItems;
-			iInc = 1;
-		}
-		
-		else
-		{
-			iFirstItem = iNumItems - 1;
-			iTermItem = -1;
-			iInc = -1;
-		}
-		
-		// Traverse the array
-		
-		for (iItemIDX = iFirstItem; iItemIDX != iTermItem; iItemIDX += iInc)
-		{
-			*phCursor_Referrer = pFlatArray[iItemIDX];
-			pFlatArray[iItemIDX]->m_hPrev = hCursor_Prev;
-			
-			phCursor_Referrer = &(CPLII_DECODEHANDLE(*phCursor_Referrer)->m_hNext);
-			hCursor_Prev = pFlatArray[iItemIDX];
-			hLastAssignment = hCursor_Prev;
-		}
-		
-		pPlaylist->m_hLast = hLastAssignment;
-		
-		CPLII_DECODEHANDLE(pPlaylist->m_hLast)->m_hNext = NULL;
-	}
-	
-	free(pFlatArray);
-	
-	CPL_cb_SetWindowToReflectList();
-}
-
-//
-//
-//
-void CPL_InsertItemBefore(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem_Anchor, CP_HPLAYLISTITEM hItem_ToMove)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CPs_PlaylistItem* pAnchor = CPLII_DECODEHANDLE(hItem_Anchor);
-	CP_CHECKOBJECT(pPlaylist);
-	
-	CPL_UnlinkItem(hPlaylist, hItem_ToMove);
-	
-	if (pAnchor->m_hPrev)
-	{
-		CPLII_DECODEHANDLE(pAnchor->m_hPrev)->m_hNext = hItem_ToMove;
-		CPLII_DECODEHANDLE(hItem_ToMove)->m_hPrev = pAnchor->m_hPrev;
-	}
-	
-	else
-	{
-		pPlaylist->m_hFirst = hItem_ToMove;
-		CPLII_DECODEHANDLE(hItem_ToMove)->m_hPrev = NULL;
-	}
-	
-	pAnchor->m_hPrev = hItem_ToMove;
-	
-	CPLII_DECODEHANDLE(hItem_ToMove)->m_hNext = hItem_Anchor;
-}
-
-//
-//
-//
-void CPL_InsertItemAfter(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem_Anchor, CP_HPLAYLISTITEM hItem_ToMove)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CPs_PlaylistItem* pAnchor = CPLII_DECODEHANDLE(hItem_Anchor);
-	CP_CHECKOBJECT(pPlaylist);
-	
-	CPL_UnlinkItem(hPlaylist, hItem_ToMove);
-	
-	if (pAnchor->m_hNext)
-	{
-		CPLII_DECODEHANDLE(pAnchor->m_hNext)->m_hPrev = hItem_ToMove;
-		CPLII_DECODEHANDLE(hItem_ToMove)->m_hNext = pAnchor->m_hNext;
-	}
-	
-	else
-	{
-		pPlaylist->m_hLast = hItem_ToMove;
-		CPLII_DECODEHANDLE(hItem_ToMove)->m_hNext = NULL;
-	}
-	
-	pAnchor->m_hNext = hItem_ToMove;
-	
-	CPLII_DECODEHANDLE(hItem_ToMove)->m_hPrev = hItem_Anchor;
-}
-
-//
-//
-//
-void SortLList(CPs_FilenameLLItem* pFirst)
+static void SortLList(CPs_FilenameLLItem* pFirst)
 {
 	char** ppStrings;
-	int iNumStrings;
+	int iNumStrings = 0;
 	int iStringIDX;
 	CPs_FilenameLLItem* pCursor;
-	
-	if (!pFirst)
-		return;
-		
-	// Count the number of strings in the list
-	iNumStrings = 0;
-	
+
+	if (!pFirst) return;
+
 	for (pCursor = pFirst; pCursor; pCursor = (CPs_FilenameLLItem*)pCursor->m_pNextItem)
 		iNumStrings++;
-		
-	// Allocate string buffer and assign strings to it
+
 	ppStrings = CALLOC_TYPE(char*, iNumStrings);
-	
+
 	iStringIDX = 0;
-	
 	for (pCursor = pFirst; pCursor; pCursor = (CPs_FilenameLLItem*)pCursor->m_pNextItem)
-	{
-		ppStrings[iStringIDX] = pCursor->m_pcFilename;
-		iStringIDX++;
-	}
-	
-	// Sort filelist
+		ppStrings[iStringIDX++] = pCursor->m_pcFilename;
+
 	qsort(ppStrings, iNumStrings, sizeof(char*), exp_CompareStrings);
-	
-	// Assign list to the now sorted string list
+
 	iStringIDX = 0;
-	
 	for (pCursor = pFirst; pCursor; pCursor = (CPs_FilenameLLItem*)pCursor->m_pNextItem)
-	{
-		pCursor->m_pcFilename = ppStrings[iStringIDX];
-		iStringIDX++;
-	}
-	
+		pCursor->m_pcFilename = ppStrings[iStringIDX++];
+
 	free(ppStrings);
 }
 
-//
-//
-//
-void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char *pDir)
+void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char* pDir)
 {
 	CPs_FilenameLLItem* m_pFirstFile = NULL;
-	CPs_FilenameLLItem* m_pFirstDir = NULL;
+	CPs_FilenameLLItem* m_pFirstDir  = NULL;
 	CPs_FilenameLLItem* pCursor;
 	CPs_FilenameLLItem* pNextItem;
 	char cFullPath[MAX_PATH];
 	char cWildCard[MAX_PATH];
-	const int iDirStrLen = strlen(pDir);
+	const int iDirStrLen = (int)strlen(pDir);
 	WIN32_FIND_DATA finddata;
 	HANDLE hFileFind;
-#ifdef _DEBUG
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_CHECKOBJECT(pPlaylist);
-#endif
-	
-	// Build a full path to the directory
+
 	cp_strcpy_s(cFullPath, sizeof(cFullPath), pDir);
-	
+
 	if (cFullPath[iDirStrLen-1] == '\\' && iDirStrLen > 1)
 		cFullPath[iDirStrLen-1] = '\0';
-		
-	// Check that this is a correct path
+
 	if (cFullPath[0] == '\0' || path_is_directory(cFullPath) == FALSE)
 	{
 		MessageBoxA(NULL, T(STR_ERR_NOT_VALID_DIRECTORY), cFullPath, MB_ICONERROR);
 		return;
 	}
-	
-	//Scan directory building a list of filenames
-	
+
 	if (strcmp(cFullPath, "\\") == 0)
 		cp_strcpy_s(cWildCard, sizeof(cWildCard), "\\*.*");
 	else
@@ -2192,76 +1090,60 @@ void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char *pDir)
 		cp_strcpy_s(cWildCard, sizeof(cWildCard), cFullPath);
 		cp_strcat_s(cWildCard, sizeof(cWildCard), "\\*.*");
 	}
-	
+
 	cp_strcat_s(cFullPath, sizeof(cFullPath), "\\");
-	
+
 	hFileFind = FindFirstFile(cWildCard, &finddata);
-	
 	if (hFileFind == INVALID_HANDLE_VALUE)
 	{
 		MessageBoxA(NULL, T(STR_ERR_COULD_NOT_SCAN), cFullPath, MB_ICONERROR);
 		return;
 	}
-	
+
 	do
 	{
 		char pcFullPath[MAX_PATH];
-		
-		// Skip dots
-		
-		if (finddata.cFileName[0] == '.')
-			continue;
-			
+		if (finddata.cFileName[0] == '.') continue;
+
 		cp_strcpy_s(pcFullPath, sizeof(pcFullPath), cFullPath);
-		
 		cp_strcat_s(pcFullPath, sizeof(pcFullPath), finddata.cFileName);
-		
-		// Add to linked list
+
 		if (finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
-			// Add to dirs list
 			CPs_FilenameLLItem* pNewItem = MALLOC_TYPE(CPs_FilenameLLItem);
-			if (!pNewItem)
-				continue;
+			if (!pNewItem) continue;
 			pNewItem->m_pNextItem = m_pFirstDir;
 			STR_AllocSetString(&pNewItem->m_pcFilename, pcFullPath, FALSE);
 			m_pFirstDir = pNewItem;
 		}
-		
 		else
 		{
-			// Add to files list
 			CPs_FilenameLLItem* pNewItem = MALLOC_TYPE(CPs_FilenameLLItem);
-			if (!pNewItem)
-				continue;
+			if (!pNewItem) continue;
 			pNewItem->m_pNextItem = m_pFirstFile;
 			STR_AllocSetString(&pNewItem->m_pcFilename, pcFullPath, FALSE);
 			m_pFirstFile = pNewItem;
 		}
-		
 	} while (FindNextFile(hFileFind, &finddata) != 0);
-	
+
 	FindClose(hFileFind);
-	
+
 	SortLList(m_pFirstDir);
-	
 	SortLList(m_pFirstFile);
-	
-	// Add files first - then directories
+
 	for (pCursor = m_pFirstFile; pCursor; pCursor = (CPs_FilenameLLItem*)pCursor->m_pNextItem)
 		CPL_AddFile(globals.m_hPlaylist, pCursor->m_pcFilename);
-		
+
 	for (pCursor = m_pFirstDir; pCursor; pCursor = (CPs_FilenameLLItem*)pCursor->m_pNextItem)
 		CPL_AddDirectory_Recurse(hPlaylist, pCursor->m_pcFilename);
-		
-	// Cleanup
+
 	for (pCursor = m_pFirstFile; pCursor; pCursor = pNextItem)
 	{
 		pNextItem = (CPs_FilenameLLItem*)pCursor->m_pNextItem;
 		free(pCursor->m_pcFilename);
 		free(pCursor);
 	}
-	
+
 	for (pCursor = m_pFirstDir; pCursor; pCursor = pNextItem)
 	{
 		pNextItem = (CPs_FilenameLLItem*)pCursor->m_pNextItem;
@@ -2270,36 +1152,32 @@ void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char *pDir)
 	}
 }
 
-//
-//
-//
+////////////////////////////////////////////////////////////////////////////////
+// Drag-and-drop
+////////////////////////////////////////////////////////////////////////////////
+
 void CPL_AddDroppedFiles(CP_HPLAYLIST hPlaylist, HDROP hDrop)
 {
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
 	int iNumFiles, iFileIDX;
 	char** ppFiles;
-	
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Read all the files into an array of strings
+	CP_ASSERT(hPlaylist);
+
 	iNumFiles = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0);
 	ppFiles = CALLOC_TYPE(char*, iNumFiles);
-	
+
 	for (iFileIDX = 0; iFileIDX < iNumFiles; iFileIDX++)
 	{
 		const int iBufferSize = DragQueryFile(hDrop, iFileIDX, NULL, 0) + 1;
 		ppFiles[iFileIDX] = CALLOC_TYPE(char, iBufferSize);
 		DragQueryFile(hDrop, iFileIDX, ppFiles[iFileIDX], iBufferSize);
 	}
-	
+
 	DragFinish(hDrop);
-	
-	// Sort filelist
+
 	qsort(ppFiles, iNumFiles, sizeof(char*), exp_CompareStrings);
-	
-	// Add to playlist
+
 	CLV_BeginBatch(globals.m_hPlaylistViewControl);
-	
+
 	for (iFileIDX = 0; iFileIDX < iNumFiles; iFileIDX++)
 	{
 		if (path_is_directory(ppFiles[iFileIDX]) == TRUE)
@@ -2307,629 +1185,19 @@ void CPL_AddDroppedFiles(CP_HPLAYLIST hPlaylist, HDROP hDrop)
 			CPL_AddDirectory_Recurse(globals.m_hPlaylist, ppFiles[iFileIDX]);
 			cp_strcpy_s(options.last_used_directory, sizeof(options.last_used_directory), ppFiles[iFileIDX]);
 		}
-		
 		else
+		{
 			CPL_AddFile(globals.m_hPlaylist, ppFiles[iFileIDX]);
+		}
 	}
-	
+
 	CLV_EndBatch(globals.m_hPlaylistViewControl);
-	
-	// Free string array
-	
+
 	for (iFileIDX = 0; iFileIDX < iNumFiles; iFileIDX++)
 		free(ppFiles[iFileIDX]);
-		
 	free(ppFiles);
-	
-	// Shuffle playlist
+
+	/* Shuffle on drop if enabled */
 	if (options.shuffle_play)
-		PostThreadMessage(pPlaylist->m_dwWorkerThreadID, CPPLWT_SYNCSHUFFLE, 0, 0);
-}
-
-//
-//
-//
-void CPL_Stack_Append(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	int iItemNumber;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Ensure buffer is big enough
-	
-	if ((pPlaylist->m_iTrackStackSize + 1) >= pPlaylist->m_iTrackStackBufferSize)
-	{
-		int iNewSize = pPlaylist->m_iTrackStackBufferSize + CPC_TRACKSTACK_BUFFER_QUANTISATION;
-		void* pNewStack = realloc(pPlaylist->m_pTrackStack, iNewSize * sizeof(CP_HPLAYLISTITEM));
-		if (!pNewStack)
-		{
-			CP_TRACE0("CPL_Stack_Append: realloc failed");
-			return;
-		}
-		pPlaylist->m_pTrackStack = pNewStack;
-		pPlaylist->m_iTrackStackBufferSize = iNewSize;
-	}
-	
-	// Ensure cursor is rational
-	
-	if (pPlaylist->m_iTrackStackCursor > pPlaylist->m_iTrackStackSize)
-		pPlaylist->m_iTrackStackCursor = pPlaylist->m_iTrackStackSize;
-		
-	// Add item
-	pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackSize] = hItem;
-	pPlaylist->m_iTrackStackSize++;
-	
-	// Number item
-	iItemNumber = (pPlaylist->m_iTrackStackSize - 1) - pPlaylist->m_iTrackStackCursor;
-	
-	CPLI_SetTrackStackPos(hItem, iItemNumber);
-	CPL_cb_TrackStackChanged();
-}
-
-//
-//
-//
-void CPL_Stack_Renumber(CP_HPLAYLIST hPlaylist)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	unsigned int iStackIDX;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	for (iStackIDX = 0; iStackIDX < pPlaylist->m_iTrackStackSize; iStackIDX++)
-		CPLI_SetTrackStackPos(pPlaylist->m_pTrackStack[iStackIDX], iStackIDX - pPlaylist->m_iTrackStackCursor);
-		
-	CPL_cb_TrackStackChanged();
-}
-
-//
-//
-//
-void CPL_Stack_Remove(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	unsigned int iStackIDX;
-	BOOL bFoundItem;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	CPLI_SetTrackStackPos(hItem, CIC_TRACKSTACK_UNSTACKED);
-	
-	// Search stack for item - remove it if we find it and renumber all items from there onwards
-	bFoundItem = FALSE;
-	
-	for (iStackIDX = 0; iStackIDX < pPlaylist->m_iTrackStackSize; iStackIDX++)
-	{
-		if (bFoundItem == FALSE && pPlaylist->m_pTrackStack[iStackIDX] == hItem)
-		{
-			pPlaylist->m_iTrackStackSize--;
-			
-			if (iStackIDX < pPlaylist->m_iTrackStackCursor)
-				pPlaylist->m_iTrackStackCursor--;
-				
-			bFoundItem = TRUE;
-		}
-		
-		if (bFoundItem == TRUE && iStackIDX < pPlaylist->m_iTrackStackSize)
-			pPlaylist->m_pTrackStack[iStackIDX] = pPlaylist->m_pTrackStack[iStackIDX+1];
-	}
-	
-	CPL_Stack_Renumber(hPlaylist);
-	
-	if (bFoundItem == TRUE)
-	{
-		// If the trackstack is now empty - free the buffers
-		if (pPlaylist->m_iTrackStackSize == 0)
-		{
-			pPlaylist->m_iTrackStackBufferSize = 0;
-			free(pPlaylist->m_pTrackStack);
-			pPlaylist->m_pTrackStack = NULL;
-		}
-		
-		CPL_cb_TrackStackChanged();
-	}
-}
-
-//
-//
-//
-void CPL_Stack_SetCursor(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	unsigned int iStackIDX;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Search for the item and set the cursor to this item - if it isn't in the stack then
-	// add this item to the end (and move the cursor there)
-	
-	for (iStackIDX = 0; iStackIDX < pPlaylist->m_iTrackStackSize; iStackIDX++)
-	{
-		if (pPlaylist->m_pTrackStack[iStackIDX] == hItem)
-		{
-			pPlaylist->m_iTrackStackCursor = iStackIDX;
-			break;
-		}
-	}
-	
-	CPL_Stack_Renumber(hPlaylist);
-}
-
-//
-//
-//
-void CPL_Stack_Clear(CP_HPLAYLIST hPlaylist)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	unsigned int iStackIDX;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Mark all items in stack as unstacked
-	
-	for (iStackIDX = 0; iStackIDX < pPlaylist->m_iTrackStackSize; iStackIDX++)
-		CPLI_SetTrackStackPos(pPlaylist->m_pTrackStack[iStackIDX], CIC_TRACKSTACK_UNSTACKED);
-		
-	// Clear the stack buffer
-	pPlaylist->m_iTrackStackSize = 0;
-	pPlaylist->m_iTrackStackBufferSize = 0;
-	pPlaylist->m_iTrackStackCursor = 0;
-	
-	free(pPlaylist->m_pTrackStack);
-	
-	pPlaylist->m_pTrackStack = NULL;
-	
-	CPL_cb_TrackStackChanged();
-}
-
-//
-//
-//
-void CPL_Stack_RestackAll(CP_HPLAYLIST hPlaylist)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_HPLAYLISTITEM hCursor;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	pPlaylist->m_iTrackStackSize = 0;
-	pPlaylist->m_iTrackStackCursor = 0;
-	
-	for (hCursor = pPlaylist->m_hFirst; hCursor; hCursor = CPLI_Next(hCursor))
-		CPL_Stack_Append(hPlaylist, hCursor);
-		
-	if (pPlaylist->m_hCurrent)
-		CPL_Stack_SetCursor(hPlaylist, pPlaylist->m_hCurrent);
-}
-
-//
-//
-//
-CPe_ItemStackState CPL_Stack_GetItemState(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	unsigned int iStackIDX;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Mark all items in stack as unstacked
-	
-	for (iStackIDX = 0; iStackIDX < pPlaylist->m_iTrackStackSize; iStackIDX++)
-	{
-		if (pPlaylist->m_pTrackStack[iStackIDX] == hItem)
-		{
-			if (iStackIDX < pPlaylist->m_iTrackStackCursor)
-				return issPlayed;
-			else if (iStackIDX == pPlaylist->m_iTrackStackCursor)
-				return issStacked_Top;
-			else
-				return issStacked;
-		}
-	}
-	
-	return issUnstacked;
-}
-
-//
-//
-//
-void CPL_Stack_Shuffle(CP_HPLAYLIST hPlaylist, const BOOL bForceCurrentToHead)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	unsigned int iStackIDX;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	if (pPlaylist->m_iTrackStackSize == 0)
-		return;
-		
-	// Qsort stack
-	qsort(pPlaylist->m_pTrackStack, pPlaylist->m_iTrackStackSize, sizeof(CP_HPLAYLISTITEM*), cpl_sort_Random);
-	
-	pPlaylist->m_iTrackStackCursor = 0;
-	
-	if (pPlaylist->m_hCurrent)
-	{
-		// If there is a playing track - ensure that it is at position 0
-		if (bForceCurrentToHead == TRUE)
-		{
-			for (iStackIDX = 0; iStackIDX < pPlaylist->m_iTrackStackSize; iStackIDX++)
-			{
-				if (pPlaylist->m_pTrackStack[iStackIDX] == pPlaylist->m_hCurrent)
-				{
-					pPlaylist->m_pTrackStack[iStackIDX] = pPlaylist->m_pTrackStack[0];
-					pPlaylist->m_pTrackStack[0] = pPlaylist->m_hCurrent;
-					break;
-				}
-			}
-		}
-		
-		else
-		{
-			// If the current song is still at the head - swap it with the last song (to prevent a double play)
-			if (pPlaylist->m_pTrackStack[0] == pPlaylist->m_hCurrent)
-			{
-				pPlaylist->m_pTrackStack[0] = pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackSize-1];
-				pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackSize-1] = pPlaylist->m_hCurrent;
-			}
-		}
-	}
-	
-	CPL_Stack_Renumber(hPlaylist);
-}
-
-//
-//
-//
-void CPL_Stack_ClipFromCurrent(CP_HPLAYLIST hPlaylist)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	unsigned int iStackIDX;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	if (pPlaylist->m_iTrackStackSize == 0 || pPlaylist->m_iTrackStackCursor >= pPlaylist->m_iTrackStackSize)
-		return;
-		
-	// Mark all items in stack as unstacked
-	for (iStackIDX = pPlaylist->m_iTrackStackCursor + 1; iStackIDX < pPlaylist->m_iTrackStackSize; iStackIDX++)
-		CPLI_SetTrackStackPos(pPlaylist->m_pTrackStack[iStackIDX], CIC_TRACKSTACK_UNSTACKED);
-		
-	pPlaylist->m_iTrackStackSize = pPlaylist->m_iTrackStackCursor + 1;
-	
-	CPL_cb_TrackStackChanged();
-}
-
-//
-//
-//
-void CPL_Stack_ClipFromItem(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	unsigned int iStackIDX;
-	BOOL bItemFound;
-	unsigned int iFoundItemIDX;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	if (pPlaylist->m_iTrackStackSize == 0)
-		return;
-		
-	// Mark items in stack after item as unstacked
-	bItemFound = FALSE;
-	
-	iFoundItemIDX = CPC_INVALIDITEM;
-	
-	for (iStackIDX = pPlaylist->m_iTrackStackCursor; iStackIDX < pPlaylist->m_iTrackStackSize; iStackIDX++)
-	{
-		if (bItemFound == FALSE && pPlaylist->m_pTrackStack[iStackIDX] == hItem)
-		{
-			bItemFound = TRUE;
-			iFoundItemIDX = iStackIDX;
-		}
-		
-		else if (bItemFound)
-			CPLI_SetTrackStackPos(pPlaylist->m_pTrackStack[iStackIDX], CIC_TRACKSTACK_UNSTACKED);
-	}
-	
-	if (bItemFound)
-	{
-		pPlaylist->m_iTrackStackSize = iFoundItemIDX + 1;
-		CPL_cb_TrackStackChanged();
-	}
-}
-
-//
-//
-//
-void CPL_Stack_PlayNext(CP_HPLAYLIST hPlaylist, CP_HPLAYLISTITEM hItem)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	unsigned int iStackIDX;
-	
-	CP_CHECKOBJECT(pPlaylist);
-	
-	CPL_Stack_Remove(hPlaylist, hItem);
-	
-	// Rationalise cursor
-	
-	if (pPlaylist->m_iTrackStackCursor >= pPlaylist->m_iTrackStackSize)
-	{
-		CPL_Stack_Append(hPlaylist, hItem);
-		return;
-	}
-	
-	// Simple case
-	
-	if (pPlaylist->m_iTrackStackBufferSize == 0)
-	{
-		CPL_Stack_Append(hPlaylist, hItem);
-		return;
-	}
-	
-	
-	// Ensure buffer is big enough
-	
-	if ((pPlaylist->m_iTrackStackSize + 1) >= pPlaylist->m_iTrackStackBufferSize)
-	{
-		int iNewSize = pPlaylist->m_iTrackStackBufferSize + CPC_TRACKSTACK_BUFFER_QUANTISATION;
-		void* pNewStack = realloc(pPlaylist->m_pTrackStack, iNewSize * sizeof(CP_HPLAYLISTITEM));
-		if (!pNewStack)
-		{
-			CP_TRACE0("CPL_Stack_Insert: realloc failed");
-			return;
-		}
-		pPlaylist->m_pTrackStack = pNewStack;
-		pPlaylist->m_iTrackStackBufferSize = iNewSize;
-	}
-	
-	// Shunt all items up one
-	
-	for (iStackIDX = pPlaylist->m_iTrackStackSize; iStackIDX > (pPlaylist->m_iTrackStackCursor + 1); iStackIDX--)
-	{
-		pPlaylist->m_pTrackStack[iStackIDX] = pPlaylist->m_pTrackStack[iStackIDX-1];
-		CPLI_SetTrackStackPos(pPlaylist->m_pTrackStack[iStackIDX], iStackIDX - pPlaylist->m_iTrackStackCursor);
-		
-	}
-	
-	// Add item
-	pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackCursor+1] = hItem;
-	CPLI_SetTrackStackPos(pPlaylist->m_pTrackStack[iStackIDX], 1);
-	
-	pPlaylist->m_iTrackStackSize++;
-	CPL_cb_TrackStackChanged();
-}
-
-//
-//
-//
-DWORD WINAPI CPI_PlaylistWorkerThreadEP(void* pCookie)
-{
-	CPs_PlaylistWorkerThreadInfo* pThreadInfo = (CPs_PlaylistWorkerThreadInfo*)pCookie;
-	MSG msg;
-	CPs_NotifyChunk* pPendingChunk;
-	BOOL bRet;
-	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_IDLE);
-	
-	pPendingChunk = NULL;
-	
-	while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
-	{
-		if (bRet == -1)
-		{
-			// handle the error and possibly exit
-			return 0;
-		}
-		
-		if (msg.message == CPPLWT_TERMINATE)
-		{
-			break;
-		}
-		
-		else if (msg.message == CPPLWT_READTAG)
-		{
-			MSG msgPeek;
-			CP_HPLAYLISTITEM hNewFile = (CP_HPLAYLISTITEM)msg.lParam;
-			
-			if (pThreadInfo->m_dwCurrentBatchID == (DWORD)msg.wParam)
-			{
-				CPLI_ReadTag(hNewFile);
-				
-				// If we didn't get a track length from the tag - work it out
-				
-				if (CPLI_GetTrackLength(hNewFile) == 0
-						&& options.work_out_track_lengths)
-				{
-					CPLI_CalculateLength(hNewFile);
-				}
-				
-				// Allocate chunk
-				
-				if (!pPendingChunk)
-				{
-					pPendingChunk = MALLOC_TYPE(CPs_NotifyChunk);
-					if (!pPendingChunk)
-					{
-						CP_TRACE0("Playlist worker: Failed to allocate notify chunk");
-						continue;
-					}
-					pPendingChunk->m_iNumberInChunk = 0;
-				}
-				
-				// Add to current chunk
-				pPendingChunk->m_aryItems[pPendingChunk->m_iNumberInChunk] = hNewFile;
-				pPendingChunk->m_aryBatchIDs[pPendingChunk->m_iNumberInChunk] = (DWORD)msg.wParam;
-				pPendingChunk->m_iNumberInChunk++;
-			}
-			
-			else
-				CPLII_DestroyItem(hNewFile);
-				
-			// Send the current chunk if its full or there are no more pending readtag messages
-			if (pPendingChunk)
-			{
-				if (pPendingChunk->m_iNumberInChunk == CPC_PLAYLISTWORKER_NOTIFYCHUNKSIZE
-						|| PeekMessage(&msgPeek, NULL, CPPLWT_READTAG, CPPLWT_READTAG, PM_NOREMOVE) == FALSE)
-				{
-					PostThreadMessage(pThreadInfo->m_dwHostThreadID, CPPLNM_TAGREAD, (WPARAM)pPendingChunk, 0L);
-					pPendingChunk = NULL;
-				}
-			}
-		}
-		
-		else if (msg.message == CPPLWT_SYNCSHUFFLE)
-		{
-			PostThreadMessage(pThreadInfo->m_dwHostThreadID, CPPLNM_SYNCSHUFFLE, 0L, 0L);
-		}
-		
-		else if (msg.message == CPPLWT_SETACTIVE)
-		{
-			CP_HPLAYLISTITEM hFile = (CP_HPLAYLISTITEM)msg.lParam;
-			
-			// Send the current chunk if there is one
-			
-			if (pPendingChunk)
-			{
-				PostThreadMessage(pThreadInfo->m_dwHostThreadID, CPPLNM_TAGREAD, (WPARAM)pPendingChunk, 0L);
-				pPendingChunk = NULL;
-			}
-			
-			// Send the setactivate
-			
-			if (pThreadInfo->m_dwCurrentBatchID == (DWORD)msg.wParam)
-				PostThreadMessage(pThreadInfo->m_dwHostThreadID, CPPLNM_SYNCSETACTIVE, (WPARAM)hFile, 0L);
-		}
-	}
-	
-	// Clean up any pending chunk
-	
-	if (pPendingChunk)
-	{
-		int iChunkItemIDX;
-		
-		for (iChunkItemIDX = 0; iChunkItemIDX < pPendingChunk->m_iNumberInChunk; iChunkItemIDX++)
-			CPLII_DestroyItem(pPendingChunk->m_aryItems[iChunkItemIDX]);
-			
-		free(pPendingChunk);
-	}
-	
-	
-	CP_TRACE0("Playlist worker thread terminating");
-	
-	return 0;
-}
-
-//
-//
-//
-void CPL_SyncLoadNextFile(CP_HPLAYLIST hPlaylist)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	pPlaylist->m_bSyncLoadNextFile = TRUE;
-}
-
-//
-//
-//
-void CPL_SetAutoActivateInitial(CP_HPLAYLIST hPlaylist, const BOOL bAutoActivateInitial)
-{
-	(void)bAutoActivateInitial;  // Suppress unused parameter warning
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	pPlaylist->m_bAutoActivateInitial = TRUE;
-}
-
-//
-//
-//
-CP_HPLAYLISTITEM CPL_PeekNextItem(CP_HPLAYLIST hPlaylist)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// If current is not at stack cursor position, next would be stack[cursor]
-	if (pPlaylist->m_hCurrent
-			&& pPlaylist->m_iTrackStackCursor < pPlaylist->m_iTrackStackSize
-			&& pPlaylist->m_hCurrent != pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackCursor])
-	{
-		return pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackCursor];
-	}
-	
-	// Next would be stack[cursor+1]
-	{
-		unsigned int nextCursor = pPlaylist->m_iTrackStackCursor + 1;
-		if (nextCursor < pPlaylist->m_iTrackStackSize)
-			return pPlaylist->m_pTrackStack[nextCursor];
-	}
-	
-	// Wrap around if repeat is enabled
-	if (options.repeat_playlist && pPlaylist->m_iTrackStackSize > 0)
-		return pPlaylist->m_pTrackStack[0];
-	
-	return NULL;
-}
-
-//
-//
-//
-void CPL_AdvanceToNextItem(CP_HPLAYLIST hPlaylist)
-{
-	CPs_Playlist* pPlaylist = (CPs_Playlist*)hPlaylist;
-	CP_HPLAYLISTITEM hNextItem;
-	CP_CHECKOBJECT(pPlaylist);
-	
-	// Resolve the next item using the same logic as CPL_PlayItem(pmNextItem)
-	// but without triggering any player commands
-	hNextItem = CPL_PeekNextItem(hPlaylist);
-	
-	if (hNextItem)
-	{
-		// Advance the track stack cursor (same logic as CPL_PlayItem pmNextItem)
-		if (pPlaylist->m_hCurrent
-				&& pPlaylist->m_iTrackStackCursor < pPlaylist->m_iTrackStackSize
-				&& pPlaylist->m_hCurrent != pPlaylist->m_pTrackStack[pPlaylist->m_iTrackStackCursor])
-		{
-			// Current was behind cursor — cursor stays
-		}
-		else
-		{
-			if (pPlaylist->m_iTrackStackCursor < pPlaylist->m_iTrackStackSize)
-				pPlaylist->m_iTrackStackCursor++;
-			
-			// Wrapped around
-			if (pPlaylist->m_iTrackStackCursor >= pPlaylist->m_iTrackStackSize
-					&& options.repeat_playlist && pPlaylist->m_iTrackStackSize > 0)
-			{
-				if (options.shuffle_play)
-					CPL_Stack_Shuffle(hPlaylist, FALSE);
-				pPlaylist->m_iTrackStackCursor = 0;
-			}
-		}
-		
-		CPL_SetActiveItem(hPlaylist, hNextItem);
-		
-		// Update initial_file for remember-last-played
-		if (hNextItem)
-			strncpy(options.initial_file, CPLI_GetPath(hNextItem), sizeof(options.initial_file));
-	}
-}
-
-//
-//
-//
-void CPL_QueueNextForGapless(CP_HPLAYLIST hPlaylist)
-{
-	CP_HPLAYLISTITEM hNext;
-	
-	if (!options.gapless_playback)
-		return;
-	
-	hNext = CPL_PeekNextItem(hPlaylist);
-	
-	if (hNext)
-	{
-		float fScale = CPRG_ComputeScale(
-			(CPe_ReplayGainMode)options.replaygain_mode,
-			CPLI_GetReplayGain_Track_Gain(hNext),
-			CPLI_GetReplayGain_Track_Peak(hNext),
-			CPLI_GetReplayGain_Album_Gain(hNext),
-			CPLI_GetReplayGain_Album_Peak(hNext),
-			(float)options.replaygain_preamp_db,
-			options.replaygain_prevent_clipping);
-		CPI_Player__SetNextFile(globals.m_hPlayer, CPLI_GetPath(hNext), fScale);
-	}
+		PostThreadMessage(CPPL_GetWorkerThreadID(hPlaylist), CPPLWT_SYNCSHUFFLE, 0, 0);
 }
