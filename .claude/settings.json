@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:crates.io)",
+      "WebFetch(domain:docs.rs)",
+      "Bash(grep -r \"AddFileAssociation.*flac\" \"d:\\\\MSYS64\\\\home\\\\zachbacon\\\\BriskPlayer\\\\\")",
+      "Read(//d/MSYS64/home/zachbacon/**)",
+      "Bash(cmake --build build --target briskplayer)",
+      "Bash(git -C d:/MSYS64/home/zachbacon/BriskPlayer diff CMakeLists.txt)",
+      "Bash(git -C d:/MSYS64/home/zachbacon/BriskPlayer diff CPI_Playlist.c)",
+      "Bash(git -C d:/MSYS64/home/zachbacon/BriskPlayer stash)",
+      "Bash(git -C d:/MSYS64/home/zachbacon/BriskPlayer stash pop)",
+      "Bash(git -C d:/MSYS64/home/zachbacon/BriskPlayer checkout -- CPI_Playlist.c)",
+      "Bash(git -C d:/MSYS64/home/zachbacon/BriskPlayer status)"
+    ]
+  }
+}

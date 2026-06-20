@@ -1,0 +1,11 @@
+[package]
+name    = "brisk-codecs"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name       = "brisk_codecs"
+crate-type = ["staticlib"]
+
+[dependencies]
+flac-codec = "1"

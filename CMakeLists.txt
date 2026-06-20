@@ -135,6 +135,7 @@ option(ENABLE_NLS "Enable internationalization support" ON)
 option(BUILD_STATIC "Build with static linking (all libraries linked statically)" ON)
 option(BUILD_TESTS "Build unit tests" OFF)
 option(ENABLE_LTO "Enable Link Time Optimization (GCC/MinGW Release builds only)" ON)
+option(ENABLE_RUST_CODECS "Replace C codec implementations with Rust equivalents (requires cargo)" ON)
 
 # For backwards compatibility
 if(DEFINED STATIC_LINK AND NOT DEFINED BUILD_STATIC)
@@ -237,7 +238,6 @@ set(BRISK_SOURCES
     CPI_Keyboard.c
     CPI_Player.c
     CPI_Player_Callbacks.c
-    CPI_Player_CoDec_WAV.c
     CPI_Player_CoDec_WinAmpPlugin.c
     CPI_Player_DSP.c
     CPI_Player_Engine.c
@@ -278,6 +278,15 @@ set(BRISK_SOURCES
     CP_Config.c
 )
 
+# WAV codec — use C implementation unless Rust codecs are enabled.
+# When Rust replaces the C WAV codec, CPI_RIFFUtil.c provides SkipToChunk
+# which CPI_PlaylistItem.c still needs for WAV duration probing.
+if(ENABLE_RUST_CODECS)
+    list(APPEND BRISK_SOURCES CPI_RIFFUtil.c)
+else()
+    list(APPEND BRISK_SOURCES CPI_Player_CoDec_WAV.c)
+endif()
+
 # Discord RPC (optional)
 if(ENABLE_DISCORD_RPC)
     list(APPEND BRISK_SOURCES CPI_DiscordRPC.c)
@@ -302,10 +311,32 @@ else()
     list(APPEND BRISK_SOURCES
         CPI_Player_CoDec_MPEG.c
         CPI_Player_CoDec_OGG.c
-        CPI_Player_CoDec_FLAC.c
         CPI_Player_CoDec_AAC.c
         CPI_Player_CoDec_OPUS.c
     )
+    if(NOT ENABLE_RUST_CODECS)
+        list(APPEND BRISK_SOURCES CPI_Player_CoDec_FLAC.c)
+    endif()
+endif()
+
+# ---------------------------------------------------------------------------
+# Rust codec support via Corrosion
+# Use find_package first so CI / power users can supply a pre-built Corrosion;
+# fall back to FetchContent so a plain checkout Just Works.
+# ---------------------------------------------------------------------------
+if(ENABLE_RUST_CODECS)
+    find_package(Corrosion QUIET)
+    if(NOT Corrosion_FOUND)
+        include(FetchContent)
+        FetchContent_Declare(
+            Corrosion
+            GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
+            GIT_TAG        v0.5.1
+        )
+        FetchContent_MakeAvailable(Corrosion)
+    endif()
+    corrosion_import_crate(MANIFEST_PATH ${CMAKE_CURRENT_SOURCE_DIR}/rust/Cargo.toml)
+    message(STATUS "Rust codecs: enabled (brisk_codecs — WAV, FLAC)")
 endif()
 
 # Find required libraries via vcpkg-provided CMake config files.
@@ -538,14 +569,26 @@ else()
     elseif(DEFINED MAD_LIBRARY)
         target_link_libraries(briskplayer PRIVATE ${MAD_LIBRARY})
     endif()
+    # FLAC::FLAC is replaced by the pure-Rust flac-codec crate when Rust codecs
+    # are enabled; omitting it avoids pulling in unused libFLAC object code.
+    set(_flac_lib "")
+    if(NOT ENABLE_RUST_CODECS)
+        set(_flac_lib FLAC::FLAC)
+    endif()
     target_link_libraries(briskplayer PRIVATE
         Ogg::ogg
         Vorbis::vorbis
         Vorbis::vorbisfile
-        FLAC::FLAC
+        ${_flac_lib}
         FDK-AAC::fdk-aac
         OpusFile::opusfile
     )
+    unset(_flac_lib)
+endif()
+
+# Link Rust codec static library (Corrosion target name = Cargo package name with - → _)
+if(ENABLE_RUST_CODECS)
+    target_link_libraries(briskplayer PRIVATE brisk_codecs)
 endif()
 
 # Link Windows system libraries (after FAudio/FFmpeg which need them)

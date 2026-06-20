@@ -1,0 +1,5 @@
+[workspace]
+resolver = "2"
+members  = ["codecs"]
+# codec-wav is superseded by the unified codecs crate; kept for git history only.
+exclude  = ["codec-wav"]
