@@ -17,4 +17,5 @@
 mod ffi;
 mod flac;
 mod mp3;
+mod tags;
 mod wav;
