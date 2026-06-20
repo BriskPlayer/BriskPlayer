@@ -109,8 +109,7 @@ if(ENABLE_DISCORD_RPC)
 endif()
 set(VCPKG_MANIFEST_FEATURES "${VCPKG_MANIFEST_FEATURES}" CACHE STRING "" FORCE)
 
-# Note: CXX language is required because TagLib (even tag_c.lib) is a C++ library
-# Your source code is pure C, but we need C++ runtime to link against TagLib
+# CXX language required: CPI_TagLib.c uses WIC COM interfaces (C++ method call syntax).
 project(briskplayer VERSION 3.0.3 LANGUAGES C CXX)
 
 # Calculate build number from version (MAJOR * 100 + MINOR * 10 + PATCH)
@@ -126,7 +125,6 @@ configure_file(
 # Set C standard
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-# Set C++ standard for TagLib compatibility
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -179,7 +177,7 @@ if(MSVC)
     # NOTE: If you get linker errors about ___std_find_* symbols, your vcpkg libraries
     # were built with a different toolset (v142 vs v143). To fix:
     # - Use: cmake -T v142 ... to match vcpkg's v142 toolset
-    # - OR rebuild vcpkg libraries: vcpkg remove taglib:x86-windows-static && vcpkg install taglib:x86-windows-static
+    # - OR rebuild vcpkg libraries with the correct toolset
 else()
     # Windows 7 as minimum version
     add_compile_definitions(_WIN32_WINNT=0x0601 WINVER=0x0601)
@@ -211,7 +209,7 @@ else()
             # GCC/MinGW-w64
             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static")
-            # Use g++ for linking since we link C++ libraries (TagLib)
+            # Use g++ for linking since CPI_TagLib.c (WIC) is compiled as C++
             set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
         endif()
     endif()
@@ -346,16 +344,6 @@ endif()
 # CMake's find_package calls are reached, so CONFIG-mode finds are reliable.
 find_package(ZLIB REQUIRED)
 
-# TagLib — exports TagLib::TagLib (C++) and, in recent versions, TagLib::tag_c
-find_package(taglib CONFIG REQUIRED)
-if(TARGET TagLib::tag_c)
-    set(TAGLIB_TARGETS TagLib::tag_c TagLib::TagLib)
-else()
-    # Older taglib releases merged tag_c into the main target; find the .lib directly
-    find_library(TAGLIB_C_LIBRARY NAMES tag_c REQUIRED)
-    set(TAGLIB_TARGETS ${TAGLIB_C_LIBRARY} TagLib::TagLib)
-endif()
-
 if(ENABLE_FFMPEG)
     # FFmpeg — vcpkg adds its FindFFmpeg.cmake module to CMAKE_MODULE_PATH via the
     # toolchain, so MODULE-mode find_package works without pkg-config.
@@ -464,13 +452,12 @@ endif()
 if(MSVC)
     add_executable(briskplayer WIN32 ${BRISK_SOURCES} ${BRISK_RC})
     
-    # Compile CPI_TagLib.c as C++ since it uses TagLib C++ API for album art
-    # Disable NLS for this file to avoid conflicts with TagLib templates
-    set_source_files_properties(CPI_TagLib.c PROPERTIES 
+    # CPI_TagLib.c uses WIC COM interfaces (C++ syntax) so compile as C++.
+    set_source_files_properties(CPI_TagLib.c PROPERTIES
         LANGUAGE CXX
         COMPILE_FLAGS "/UENABLE_NLS")
     set_source_files_properties(CPI_AlbumArtTooltip.c PROPERTIES LANGUAGE CXX)
-    
+
     set_target_properties(briskplayer PROPERTIES LINK_FLAGS "/MANIFEST:NO")
 else()
     # For MinGW, compile resource file separately
@@ -513,22 +500,21 @@ else()
     endif()
     add_executable(briskplayer WIN32 ${BRISK_SOURCES} ${BRISK_RC})
     
-    # Compile CPI_TagLib.c as C++ since it uses TagLib C++ API for album art
-    # Disable NLS for this file to avoid conflicts with TagLib templates
-    set_source_files_properties(CPI_TagLib.c PROPERTIES 
+    # CPI_TagLib.c uses WIC COM interfaces (C++ syntax) so compile as C++.
+    set_source_files_properties(CPI_TagLib.c PROPERTIES
         LANGUAGE CXX
         COMPILE_FLAGS "-UENABLE_NLS")
     set_source_files_properties(CPI_AlbumArtTooltip.c PROPERTIES LANGUAGE CXX)
-    
-    # Use C++ linker for MinGW since we link against C++ libraries (TagLib)
+
+    # MinGW: force C++ linker because some source files are compiled as C++.
     if(MINGW)
         set_target_properties(briskplayer PROPERTIES LINKER_LANGUAGE CXX)
     endif()
 endif()
 
 # Include directories
-# TagLib and FAudio include dirs are propagated automatically via their
-# imported targets; only FFMPEG still uses plain variables.
+# FAudio include dirs are propagated automatically via imported targets;
+# only FFMPEG still uses plain variables.
 target_include_directories(briskplayer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
@@ -545,9 +531,6 @@ endif()
 target_link_libraries(briskplayer PRIVATE
     ZLIB::ZLIB
 )
-
-# Link TagLib libraries (targets set above based on what taglib exports)
-target_link_libraries(briskplayer PRIVATE ${TAGLIB_TARGETS})
 
 # Link FAudio — the CONFIG-mode target handles static vs shared automatically
 if(TARGET FAudio::FAudio)
@@ -601,9 +584,8 @@ target_link_libraries(briskplayer PRIVATE
     gdiplus  # For album art decoding
 )
 
-# Explicitly link C++ standard library for MinGW-w64 cross-compilation
-# Since we're linking against TagLib (C++ library), we need the C++ runtime
-# The C compiler (gcc) is used for linking but doesn't automatically include libstdc++
+# Explicitly link C++ standard library for MinGW-w64 cross-compilation.
+# CPI_TagLib.c is compiled as C++ (WIC COM interfaces) so we need libstdc++.
 # Check if we're using a mingw compiler by looking at the compiler path
 if(CMAKE_CXX_COMPILER MATCHES "mingw" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     message(STATUS "Configuring C++ standard library for MinGW-w64...")
