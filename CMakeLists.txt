@@ -309,13 +309,15 @@ if(ENABLE_FFMPEG)
 else()
     message(STATUS "Codec backend: native (libmad/vorbis/FLAC/opus/aac)")
     list(APPEND BRISK_SOURCES
-        CPI_Player_CoDec_MPEG.c
         CPI_Player_CoDec_OGG.c
         CPI_Player_CoDec_AAC.c
         CPI_Player_CoDec_OPUS.c
     )
     if(NOT ENABLE_RUST_CODECS)
-        list(APPEND BRISK_SOURCES CPI_Player_CoDec_FLAC.c)
+        list(APPEND BRISK_SOURCES
+            CPI_Player_CoDec_MPEG.c
+            CPI_Player_CoDec_FLAC.c
+        )
     endif()
 endif()
 
@@ -564,13 +566,15 @@ if(ENABLE_FFMPEG)
     endif()
 else()
     # Native codec libraries
-    if(TARGET mad::mad)
-        target_link_libraries(briskplayer PRIVATE mad::mad)
-    elseif(DEFINED MAD_LIBRARY)
-        target_link_libraries(briskplayer PRIVATE ${MAD_LIBRARY})
+    # mad and FLAC::FLAC are replaced by Rust codecs when ENABLE_RUST_CODECS=ON;
+    # omitting them avoids pulling in unused C library object code.
+    if(NOT ENABLE_RUST_CODECS)
+        if(TARGET mad::mad)
+            target_link_libraries(briskplayer PRIVATE mad::mad)
+        elseif(DEFINED MAD_LIBRARY)
+            target_link_libraries(briskplayer PRIVATE ${MAD_LIBRARY})
+        endif()
     endif()
-    # FLAC::FLAC is replaced by the pure-Rust flac-codec crate when Rust codecs
-    # are enabled; omitting it avoids pulling in unused libFLAC object code.
     set(_flac_lib "")
     if(NOT ENABLE_RUST_CODECS)
         set(_flac_lib FLAC::FLAC)

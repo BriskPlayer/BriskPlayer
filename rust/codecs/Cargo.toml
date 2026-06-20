@@ -9,3 +9,4 @@ crate-type = ["staticlib"]
 
 [dependencies]
 flac-codec = "1"
+nanomp3 = "0.1"
