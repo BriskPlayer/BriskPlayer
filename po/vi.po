@@ -16,193 +16,359 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+#. Context: Application name and description
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer - Blazing fast audio player"
 msgstr "BriskPlayer – Trình phát nhạc siêu nhanh"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Audio file"
 msgstr "BriskPlayer Tệp âm thanh"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Playlist"
 msgstr "BriskPlayer Danh sách phát"
 
+#. Context: Menu items
+#, fuzzy
+msgctxt "menu"
 msgid "Open File..."
 msgstr "Mở tệp..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Open URL..."
 msgstr "Mở URL..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Add Files..."
 msgstr "Thêm tệp..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "Trình chỉnh sửa danh sách phát"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Skin"
 msgstr "Giao diện"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Default"
 msgstr "Mặc định"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Language"
 msgstr "Ngôn ngữ"
 
+#, fuzzy
+msgctxt "menu"
 msgid "English"
 msgstr "Tiếng Anh"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Deutsch"
 msgstr "Tiếng Đức"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playback"
 msgstr "Phát lại"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Play"
 msgstr "Phát"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Stop"
 msgstr "Dừng"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Pause"
 msgstr "Tạm dừng"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Next"
 msgstr "Tiếp theo"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Previous"
 msgstr "Trước đó"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Options..."
 msgstr "Tùy chọn..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "About"
 msgstr "Giới thiệu"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Exit"
 msgstr "Thoát"
 
+#. Context: Dialog titles
+#, fuzzy
+msgctxt "dialog"
 msgid "About BriskPlayer"
 msgstr "Giới thiệu BriskPlayer"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "BriskPlayer Options"
 msgstr "Tùy chọn BriskPlayer"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Open URL"
 msgstr "Mở URL"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Quick Find"
 msgstr "Tìm kiếm nhanh"
 
+#. Context: About dialog
+#, fuzzy
+msgctxt "dialog"
 msgid "&About"
 msgstr "&Giới thiệu"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "&Keyboard Shortcuts"
 msgstr "&Phím tắt bàn phím"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&hanges"
 msgstr "&Thay đổi"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&lose"
 msgstr "&Đóng"
 
+#. Context: Options dialog
+#, fuzzy
+msgctxt "options"
 msgid "General"
 msgstr "Chung"
 
+#, fuzzy
+msgctxt "options"
 msgid "Always on top"
 msgstr "Luôn hiển thị trên cùng"
 
+#, fuzzy
+msgctxt "options"
 msgid "Exit after playing"
 msgstr "Thoát sau khi phát xong"
 
+#, fuzzy
+msgctxt "options"
 msgid "Rotate systemtray icon"
 msgstr "Xoay biểu tượng khay hệ thống"
 
+#, fuzzy
+msgctxt "options"
 msgid "Scroll Songtitle"
 msgstr "Cuộn tiêu đề bài hát"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow file once in playlist"
 msgstr "Chỉ cho phép mỗi tệp xuất hiện một lần trong danh sách"
 
+#, fuzzy
+msgctxt "options"
 msgid "Autoplay on startup"
 msgstr "Tự động phát khi khởi động"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow multiple instances"
 msgstr "Cho phép nhiều phiên bản"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show remaining time"
 msgstr "Hiển thị thời gian còn lại"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show on taskbar"
 msgstr "Hiển thị trên thanh tác vụ"
 
-
+#, fuzzy
+msgctxt "options"
 msgid "Sticky windows"
 msgstr "Cửa sổ dính"
 
+#, fuzzy
+msgctxt "options"
 msgid "Discord Rich Presence"
 msgstr "Discord Rich Presence"
 
+msgctxt "replaygain"
+msgid "Off"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Track"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Album"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Prevent clipping"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "ReplayGain"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Mode"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Preamp (dB)"
+msgstr ""
+
+msgctxt "playback"
+msgid "Gapless playback"
+msgstr ""
+
+#, fuzzy
+msgctxt "options"
 msgid "Register Filetypes"
 msgstr "Đăng ký loại tệp"
 
+#, fuzzy
+msgctxt "options"
 msgid "Add to Start Menu"
 msgstr "Thêm vào menu Bắt đầu"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag (if any)"
 msgstr "Đọc thẻ ID3 (nếu có)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag of selected"
 msgstr "Đọc thẻ ID3 của mục đã chọn"
 
+#, fuzzy
+msgctxt "options"
 msgid "Support ID3v2"
 msgstr "Hỗ trợ ID3v2"
 
+#, fuzzy
+msgctxt "options"
 msgid "Prefer native OGG tags"
 msgstr "Ưu tiên thẻ OGG gốc"
 
+#, fuzzy
+msgctxt "options"
 msgid "Load ID3 tags in background"
 msgstr "Tải thẻ ID3 ở nền"
 
+#, fuzzy
+msgctxt "options"
 msgid "Work out track lengths"
 msgstr "Tính độ dài bản nhạc"
 
+#, fuzzy
+msgctxt "options"
 msgid "Easy move"
 msgstr "Di chuyển dễ dàng"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember playlist"
 msgstr "Ghi nhớ danh sách phát"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember last played"
 msgstr "Ghi nhớ bài cuối đã phát"
 
+#, fuzzy
+msgctxt "options"
 msgid "Track Delay (sec)"
 msgstr "Độ trễ bản nhạc (giây)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Skinlist length"
 msgstr "Độ dài danh sách giao diện"
 
+#, fuzzy
+msgctxt "options"
 msgid "Flush"
 msgstr "Xóa sạch"
 
+#, fuzzy
+msgctxt "options"
 msgid "Output"
 msgstr "Đầu ra"
 
+#, fuzzy
+msgctxt "options"
 msgid "Volume controls"
 msgstr "Điều chỉnh âm lượng"
 
+#, fuzzy
+msgctxt "options"
+msgid "Skin"
+msgstr "Giao diện"
+
+#, fuzzy
+msgctxt "options"
 msgid "Player"
 msgstr "Trình phát"
 
+#, fuzzy
+msgctxt "options"
 msgid "Open"
 msgstr "Mở"
 
+#, fuzzy
+msgctxt "options"
 msgid "OK"
 msgstr "Đồng ý"
 
+#, fuzzy
+msgctxt "options"
 msgid "Cancel"
 msgstr "Hủy"
 
+#. Context: URL dialog
 msgid ""
 "Type the URL you would like to play. Supported formats are MP3 and OGG "
 "streaming, and M3U playlists."
@@ -213,6 +379,7 @@ msgstr ""
 msgid "&URL:"
 msgstr "&URL:"
 
+#. Context: Quick Find dialog
 msgid "Find Text"
 msgstr "Tìm văn bản"
 
@@ -228,15 +395,25 @@ msgstr "Tên &nghệ sĩ"
 msgid "&Album Names"
 msgstr "Tên &album"
 
+#. Context: Volume control options
+#, fuzzy
+msgctxt "audio"
 msgid "System MASTER volume"
 msgstr "Âm lượng CHÍNH của hệ thống"
 
+#, fuzzy
+msgctxt "audio"
 msgid "System WAVE volume"
 msgstr "Âm lượng WAVE của hệ thống"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Internal volume"
 msgstr "Âm lượng nội bộ"
 
+#. Context: Status messages
+#, fuzzy
+msgctxt "status"
 msgid ""
 "Filetypes are registered.\n"
 "You can doubleclick a supported file to run BriskPlayer."
@@ -244,99 +421,131 @@ msgstr ""
 "Các loại tệp đã được đăng ký.\n"
 "Bạn có thể nhấp đúp vào tệp được hỗ trợ để chạy BriskPlayer."
 
+#, fuzzy
+msgctxt "status"
 msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
 msgstr "Biểu tượng BriskPlayer đã được tạo trong menu Bắt đầu và Màn hình nền."
 
+#. Context: File filters
 msgid "BriskPlayer Skin Initialization Files (*.ini)"
 msgstr "Tệp khởi tạo giao diện BriskPlayer (*.ini)"
 
 msgid "All Files (*.*)"
 msgstr "Tất cả tệp (*.*)"
 
+#. Context: Audio format strings
+#, fuzzy
+msgctxt "audio"
 msgid "Bitrate: %d kbps"
 msgstr "Tốc độ bit: %d kbps"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Sample rate: %.1f kHz"
 msgstr "Tần số lấy mẫu: %.1f kHz"
 
+#. Context: Time format (plural forms example)
+#, fuzzy
+msgctxt "time"
 msgid "Found %d file"
 msgid_plural "Found %d files"
 msgstr[0] "Tìm thấy %d tệp"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] "%d giây"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d minute"
 msgid_plural "%d minutes"
 msgstr[0] "%d phút"
 
+#. Context: Error messages
+#, fuzzy
+msgctxt "error"
 msgid "Failed to initialize audio device"
 msgstr "Không thể khởi tạo thiết bị âm thanh"
 
+#, fuzzy
+msgctxt "error"
 msgid "Unable to load audio file"
 msgstr "Không thể tải tệp âm thanh"
 
+#, fuzzy
+msgctxt "error"
 msgid "Invalid String ID"
 msgstr "ID chuỗi không hợp lệ"
 
+#, fuzzy
+msgctxt "error"
 msgid "Audio Error"
 msgstr "Lỗi âm thanh"
 
+#, fuzzy
+msgctxt "error"
 msgid "File Error"
 msgstr "Lỗi tệp"
 
+#. Context: Processing messages
+#, fuzzy
+msgctxt "status"
 msgid "Processing audio..."
 msgstr "Đang xử lý âm thanh..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Loading..."
 msgstr "Đang tải..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Ready"
 msgstr "Sẵn sàng"
 
-msgid "Rotate system tray icon"
-msgstr "Xoay biểu tượng khay hệ thống"
+#~ msgid "Rotate system tray icon"
+#~ msgstr "Xoay biểu tượng khay hệ thống"
 
-msgid "Scroll title"
-msgstr "Cuộn tiêu đề"
+#~ msgid "Scroll title"
+#~ msgstr "Cuộn tiêu đề"
 
-msgid "Only add file once to playlist"
-msgstr "Chỉ thêm tệp một lần vào danh sách phát"
+#~ msgid "Only add file once to playlist"
+#~ msgstr "Chỉ thêm tệp một lần vào danh sách phát"
 
-msgid "Read ID3 tags"
-msgstr "Đọc thẻ ID3"
+#~ msgid "Read ID3 tags"
+#~ msgstr "Đọc thẻ ID3"
 
-msgid "Read ID3 for selected files"
-msgstr "Đọc thẻ ID3 của tệp đã chọn"
+#~ msgid "Read ID3 for selected files"
+#~ msgstr "Đọc thẻ ID3 của tệp đã chọn"
 
-msgid "Read ID3 in background"
-msgstr "Đọc thẻ ID3 ở nền"
+#~ msgid "Read ID3 in background"
+#~ msgstr "Đọc thẻ ID3 ở nền"
 
-msgid "Calculate track lengths"
-msgstr "Tính toán độ dài bản nhạc"
+#~ msgid "Calculate track lengths"
+#~ msgstr "Tính toán độ dài bản nhạc"
 
-msgid "Easy move mode"
-msgstr "Chế độ di chuyển dễ dàng"
+#~ msgid "Easy move mode"
+#~ msgstr "Chế độ di chuyển dễ dàng"
 
-msgid "Register file types"
-msgstr "Đăng ký kiểu tệp"
+#~ msgid "Register file types"
+#~ msgstr "Đăng ký kiểu tệp"
 
-msgid "Track delay (seconds)"
-msgstr "Độ trễ bản nhạc (giây)"
+#~ msgid "Track delay (seconds)"
+#~ msgstr "Độ trễ bản nhạc (giây)"
 
-msgid "Skin list length"
-msgstr "Độ dài danh sách giao diện"
+#~ msgid "Skin list length"
+#~ msgstr "Độ dài danh sách giao diện"
 
-msgid "Open..."
-msgstr "Mở..."
+#~ msgid "Open..."
+#~ msgstr "Mở..."
 
+#~ msgid "DSP Plugins"
+#~ msgstr "Plugin DSP"
 
-msgid "DSP Plugins"
-msgstr "Plugin DSP"
+#~ msgid "None (Disabled)"
+#~ msgstr "Không có (Đã tắt)"
 
-msgid "None (Disabled)"
-msgstr "Không có (Đã tắt)"
-
-msgid "Configure..."
-msgstr "Cấu hình..."
+#~ msgid "Configure..."
+#~ msgstr "Cấu hình..."

@@ -56,6 +56,16 @@ typedef struct _CPs_EqualiserContext_Basic
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+// Cross-compiler hint: ignore assumed vector dependencies so the compiler can
+// vectorize / unroll the fixed 9-point inner loops.
+#if defined(_MSC_VER)
+#  define LOOP_IVDEP __pragma(loop(ivdep))
+#elif defined(__GNUC__) || defined(__clang__)
+#  define LOOP_IVDEP _Pragma("GCC ivdep")
+#else
+#  define LOOP_IVDEP
+#endif
+
 #define CIC_WRAPSAMPLE(expr)   ((expr)&0xFF)   // Wraps a sample to a 256 circular buffer
 #define CIC_DECODESAMPLE_LEFT(expr)  ((short)LOWORD(expr))
 #define CIC_DECODESAMPLE_RIGHT(expr) ((short)HIWORD(expr))
@@ -195,16 +205,16 @@ void CPP_EBSC_ApplyEQToBlock_Inplace(CPs_EqualiserModule* pModule, void* _pPCMBl
 		// Perform processing
 		
 		// Add future offsets
-		
+		LOOP_IVDEP
 		for (iPointIDX = 0; iPointIDX < 9; iPointIDX++)
 		{
 			iTempSample = pContext->m_aryFuture[CIC_WRAPSAMPLE(pContext->m_iCursor+glb_iEQOffsets[iPointIDX])];
 			pContext->m_arySum_left[iPointIDX] += CIC_DECODESAMPLE_LEFT(iTempSample);
 			pContext->m_arySum_right[iPointIDX] += CIC_DECODESAMPLE_RIGHT(iTempSample);
 		}
-		
-		// Build scaled coefficients
-		
+
+		// Build scaled coefficients (each element independent — good vectorization candidate)
+		LOOP_IVDEP
 		for (iPointIDX = 0; iPointIDX < 9; iPointIDX++)
 		{
 			aryCoefficient_left[iPointIDX] = pContext->m_arySum_left[iPointIDX] >> (iPointIDX + 1);
@@ -225,7 +235,7 @@ void CPP_EBSC_ApplyEQToBlock_Inplace(CPs_EqualiserModule* pModule, void* _pPCMBl
 		iThisSample_right += CIC_FPMULTIPLY(aryCoefficient_right[8], pContext->m_aryLevels[9]);
 		
 		// Update sums according to history
-		
+		LOOP_IVDEP
 		for (iPointIDX = 0; iPointIDX < 9; iPointIDX++)
 		{
 			iTempSample = pContext->m_aryHistory[CIC_WRAPSAMPLE(pContext->m_iCursor+glb_iEQOffsets_his[iPointIDX])];

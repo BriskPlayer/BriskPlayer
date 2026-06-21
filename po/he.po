@@ -16,193 +16,359 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#. Context: Application name and description
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer - Blazing fast audio player"
 msgstr "BriskPlayer – נגן מוזיקה מהיר כברק"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Audio file"
 msgstr "BriskPlayer קובץ שמע"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Playlist"
 msgstr "BriskPlayer רשימת השמעה"
 
+#. Context: Menu items
+#, fuzzy
+msgctxt "menu"
 msgid "Open File..."
 msgstr "פתח קובץ..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Open URL..."
 msgstr "פתח כתובת URL..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Add Files..."
 msgstr "הוסף קבצים..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "עורך רשימת השמעה"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Skin"
 msgstr "ערכת עיצוב"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Default"
 msgstr "ברירת מחדל"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Language"
 msgstr "שפה"
 
+#, fuzzy
+msgctxt "menu"
 msgid "English"
 msgstr "אנגלית"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Deutsch"
 msgstr "גרמנית"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playback"
 msgstr "השמעה"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Play"
 msgstr "השמע"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Stop"
 msgstr "עצור"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Pause"
 msgstr "השהה"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Next"
 msgstr "הבא"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Previous"
 msgstr "הקודם"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Options..."
 msgstr "אפשרויות..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "About"
 msgstr "אודות"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Exit"
 msgstr "יציאה"
 
+#. Context: Dialog titles
+#, fuzzy
+msgctxt "dialog"
 msgid "About BriskPlayer"
 msgstr "אודות BriskPlayer"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "BriskPlayer Options"
 msgstr "אפשרויות BriskPlayer"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Open URL"
 msgstr "פתח כתובת URL"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Quick Find"
 msgstr "חיפוש מהיר"
 
+#. Context: About dialog
+#, fuzzy
+msgctxt "dialog"
 msgid "&About"
 msgstr "&אודות"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "&Keyboard Shortcuts"
 msgstr "&קיצורי מקלדת"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&hanges"
 msgstr "&שינויים"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&lose"
 msgstr "&סגור"
 
+#. Context: Options dialog
+#, fuzzy
+msgctxt "options"
 msgid "General"
 msgstr "כללי"
 
+#, fuzzy
+msgctxt "options"
 msgid "Always on top"
 msgstr "תמיד בחזית"
 
+#, fuzzy
+msgctxt "options"
 msgid "Exit after playing"
 msgstr "צא לאחר ההשמעה"
 
+#, fuzzy
+msgctxt "options"
 msgid "Rotate systemtray icon"
 msgstr "סובב אייקון מגש המערכת"
 
+#, fuzzy
+msgctxt "options"
 msgid "Scroll Songtitle"
 msgstr "גלול כותרת שיר"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow file once in playlist"
 msgstr "אפשר כל קובץ פעם אחת ברשימה"
 
+#, fuzzy
+msgctxt "options"
 msgid "Autoplay on startup"
 msgstr "השמעה אוטומטית בהפעלה"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow multiple instances"
 msgstr "אפשר מספר מופעים"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show remaining time"
 msgstr "הצג זמן שנותר"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show on taskbar"
 msgstr "הצג בשורת המשימות"
 
-
+#, fuzzy
+msgctxt "options"
 msgid "Sticky windows"
 msgstr "חלונות דביקים"
 
+#, fuzzy
+msgctxt "options"
 msgid "Discord Rich Presence"
 msgstr "Discord Rich Presence"
 
+msgctxt "replaygain"
+msgid "Off"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Track"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Album"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Prevent clipping"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "ReplayGain"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Mode"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Preamp (dB)"
+msgstr ""
+
+msgctxt "playback"
+msgid "Gapless playback"
+msgstr ""
+
+#, fuzzy
+msgctxt "options"
 msgid "Register Filetypes"
 msgstr "רשום סוגי קבצים"
 
+#, fuzzy
+msgctxt "options"
 msgid "Add to Start Menu"
 msgstr "הוסף לתפריט התחלה"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag (if any)"
 msgstr "קרא תגית ID3 (אם קיימת)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag of selected"
 msgstr "קרא תגית ID3 של הנבחר"
 
+#, fuzzy
+msgctxt "options"
 msgid "Support ID3v2"
 msgstr "תמיכה ב-ID3v2"
 
+#, fuzzy
+msgctxt "options"
 msgid "Prefer native OGG tags"
 msgstr "העדף תגיות OGG מקוריות"
 
+#, fuzzy
+msgctxt "options"
 msgid "Load ID3 tags in background"
 msgstr "טען תגיות ID3 ברקע"
 
+#, fuzzy
+msgctxt "options"
 msgid "Work out track lengths"
 msgstr "חשב אורכי רצועות"
 
+#, fuzzy
+msgctxt "options"
 msgid "Easy move"
 msgstr "הזזה קלה"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember playlist"
 msgstr "זכור רשימת השמעה"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember last played"
 msgstr "זכור את האחרון שהושמע"
 
+#, fuzzy
+msgctxt "options"
 msgid "Track Delay (sec)"
 msgstr "עיכוב רצועה (שנ)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Skinlist length"
 msgstr "אורך רשימת עיצובים"
 
+#, fuzzy
+msgctxt "options"
 msgid "Flush"
 msgstr "נקה"
 
+#, fuzzy
+msgctxt "options"
 msgid "Output"
 msgstr "פלט"
 
+#, fuzzy
+msgctxt "options"
 msgid "Volume controls"
 msgstr "בקרות עוצמת קול"
 
+#, fuzzy
+msgctxt "options"
+msgid "Skin"
+msgstr "ערכת עיצוב"
+
+#, fuzzy
+msgctxt "options"
 msgid "Player"
 msgstr "נגן"
 
+#, fuzzy
+msgctxt "options"
 msgid "Open"
 msgstr "פתח"
 
+#, fuzzy
+msgctxt "options"
 msgid "OK"
 msgstr "אישור"
 
+#, fuzzy
+msgctxt "options"
 msgid "Cancel"
 msgstr "ביטול"
 
+#. Context: URL dialog
 msgid ""
 "Type the URL you would like to play. Supported formats are MP3 and OGG "
 "streaming, and M3U playlists."
@@ -213,6 +379,7 @@ msgstr ""
 msgid "&URL:"
 msgstr "&URL:"
 
+#. Context: Quick Find dialog
 msgid "Find Text"
 msgstr "חפש טקסט"
 
@@ -228,15 +395,25 @@ msgstr "שמות &אמנים"
 msgid "&Album Names"
 msgstr "שמות &אלבומים"
 
+#. Context: Volume control options
+#, fuzzy
+msgctxt "audio"
 msgid "System MASTER volume"
 msgstr "עוצמת קול ראשית של המערכת"
 
+#, fuzzy
+msgctxt "audio"
 msgid "System WAVE volume"
 msgstr "עוצמת קול WAVE של המערכת"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Internal volume"
 msgstr "עוצמת קול פנימית"
 
+#. Context: Status messages
+#, fuzzy
+msgctxt "status"
 msgid ""
 "Filetypes are registered.\n"
 "You can doubleclick a supported file to run BriskPlayer."
@@ -244,102 +421,134 @@ msgstr ""
 "סוגי הקבצים רשומים.\n"
 "תוכל ללחוץ פעמיים על קובץ נתמך להפעלת BriskPlayer."
 
+#, fuzzy
+msgctxt "status"
 msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
 msgstr "אייקון עבור BriskPlayer נוצר בתפריט התחלה ובשולחן העבודה."
 
+#. Context: File filters
 msgid "BriskPlayer Skin Initialization Files (*.ini)"
 msgstr "קבצי אתחול ערכת עיצוב BriskPlayer (*.ini)"
 
 msgid "All Files (*.*)"
 msgstr "כל הקבצים (*.*)"
 
+#. Context: Audio format strings
+#, fuzzy
+msgctxt "audio"
 msgid "Bitrate: %d kbps"
 msgstr "קצב סיביות: %d kbps"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Sample rate: %.1f kHz"
 msgstr "קצב דגימה: %.1f kHz"
 
+#. Context: Time format (plural forms example)
+#, fuzzy
+msgctxt "time"
 msgid "Found %d file"
 msgid_plural "Found %d files"
 msgstr[0] "נמצא %d קובץ"
 msgstr[1] "נמצאו %d קבצים"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] "%d שניה"
 msgstr[1] "%d שניות"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d minute"
 msgid_plural "%d minutes"
 msgstr[0] "%d דקה"
 msgstr[1] "%d דקות"
 
+#. Context: Error messages
+#, fuzzy
+msgctxt "error"
 msgid "Failed to initialize audio device"
 msgstr "כשל באתחול התקן השמע"
 
+#, fuzzy
+msgctxt "error"
 msgid "Unable to load audio file"
 msgstr "לא ניתן לטעון קובץ שמע"
 
+#, fuzzy
+msgctxt "error"
 msgid "Invalid String ID"
 msgstr "מזהה מחרוזת לא חוקי"
 
+#, fuzzy
+msgctxt "error"
 msgid "Audio Error"
 msgstr "שגיאת שמע"
 
+#, fuzzy
+msgctxt "error"
 msgid "File Error"
 msgstr "שגיאת קובץ"
 
+#. Context: Processing messages
+#, fuzzy
+msgctxt "status"
 msgid "Processing audio..."
 msgstr "מעבד שמע..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Loading..."
 msgstr "טוען..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Ready"
 msgstr "מוכן"
 
-msgid "Rotate system tray icon"
-msgstr "סיבוב סמל מגש המערכת"
+#~ msgid "Rotate system tray icon"
+#~ msgstr "סיבוב סמל מגש המערכת"
 
-msgid "Scroll title"
-msgstr "גלילת כותרת"
+#~ msgid "Scroll title"
+#~ msgstr "גלילת כותרת"
 
-msgid "Only add file once to playlist"
-msgstr "הוספת קובץ לרשימת ההשמעה פעם אחת בלבד"
+#~ msgid "Only add file once to playlist"
+#~ msgstr "הוספת קובץ לרשימת ההשמעה פעם אחת בלבד"
 
-msgid "Read ID3 tags"
-msgstr "קריאת תגיות ID3"
+#~ msgid "Read ID3 tags"
+#~ msgstr "קריאת תגיות ID3"
 
-msgid "Read ID3 for selected files"
-msgstr "קריאת תגיות ID3 עבור הקבצים שנבחרו"
+#~ msgid "Read ID3 for selected files"
+#~ msgstr "קריאת תגיות ID3 עבור הקבצים שנבחרו"
 
-msgid "Read ID3 in background"
-msgstr "קריאת תגיות ID3 ברקע"
+#~ msgid "Read ID3 in background"
+#~ msgstr "קריאת תגיות ID3 ברקע"
 
-msgid "Calculate track lengths"
-msgstr "חישוב אורכי הרצועות"
+#~ msgid "Calculate track lengths"
+#~ msgstr "חישוב אורכי הרצועות"
 
-msgid "Easy move mode"
-msgstr "מצב הזזה קלה"
+#~ msgid "Easy move mode"
+#~ msgstr "מצב הזזה קלה"
 
-msgid "Register file types"
-msgstr "רישום סוגי קבצים"
+#~ msgid "Register file types"
+#~ msgstr "רישום סוגי קבצים"
 
-msgid "Track delay (seconds)"
-msgstr "עיכוב רצועה (שניות)"
+#~ msgid "Track delay (seconds)"
+#~ msgstr "עיכוב רצועה (שניות)"
 
-msgid "Skin list length"
-msgstr "אורך רשימת הנושא"
+#~ msgid "Skin list length"
+#~ msgstr "אורך רשימת הנושא"
 
-msgid "Open..."
-msgstr "פתיחה..."
+#~ msgid "Open..."
+#~ msgstr "פתיחה..."
 
+#~ msgid "DSP Plugins"
+#~ msgstr "תוספי DSP"
 
-msgid "DSP Plugins"
-msgstr "תוספי DSP"
+#~ msgid "None (Disabled)"
+#~ msgstr "ללא (מושבת)"
 
-msgid "None (Disabled)"
-msgstr "ללא (מושבת)"
-
-msgid "Configure..."
-msgstr "הגדרה..."
+#~ msgid "Configure..."
+#~ msgstr "הגדרה..."

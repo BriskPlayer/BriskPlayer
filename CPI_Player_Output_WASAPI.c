@@ -155,6 +155,9 @@ static DWORD ConvertPCM(
         dstBytes  = dstFrames * dstFrameSize;
     }
 
+    // Precompute reciprocal once; multiplication is faster than per-sample division.
+    const float k_inv32768 = 1.0f / 32768.0f;
+
     for (DWORD d = 0; d < dstFrames; d++)
     {
         // Map destination frame back to source frame (nearest-neighbour)
@@ -200,9 +203,9 @@ static DWORD ConvertPCM(
         // 32-bit float output (WASAPI often uses this in shared mode)
         else if (dstBits == 32)
         {
-            ((float*)pDstFrame)[0] = samples[0] / 32768.0f;
+            ((float*)pDstFrame)[0] = samples[0] * k_inv32768;
             if (dstChannels >= 2)
-                ((float*)pDstFrame)[1] = samples[1] / 32768.0f;
+                ((float*)pDstFrame)[1] = samples[1] * k_inv32768;
             // Fill remaining channels with silence
             for (int ch = 2; ch < dstChannels; ch++)
                 ((float*)pDstFrame)[ch] = 0.0f;

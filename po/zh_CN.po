@@ -16,193 +16,359 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+#. Context: Application name and description
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer - Blazing fast audio player"
 msgstr "BriskPlayer – 超快速音频播放器"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Audio file"
 msgstr "BriskPlayer 音频文件"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Playlist"
 msgstr "BriskPlayer 播放列表"
 
+#. Context: Menu items
+#, fuzzy
+msgctxt "menu"
 msgid "Open File..."
 msgstr "打开文件..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Open URL..."
 msgstr "打开网址..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Add Files..."
 msgstr "添加文件..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "播放列表编辑器"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Skin"
 msgstr "主题"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Default"
 msgstr "默认"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Language"
 msgstr "语言"
 
+#, fuzzy
+msgctxt "menu"
 msgid "English"
 msgstr "英语"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Deutsch"
 msgstr "德语"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playback"
 msgstr "播放"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Play"
 msgstr "播放"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Stop"
 msgstr "停止"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Pause"
 msgstr "暂停"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Next"
 msgstr "下一首"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Previous"
 msgstr "上一首"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Options..."
 msgstr "选项..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "About"
 msgstr "关于"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Exit"
 msgstr "退出"
 
+#. Context: Dialog titles
+#, fuzzy
+msgctxt "dialog"
 msgid "About BriskPlayer"
 msgstr "关于 BriskPlayer"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "BriskPlayer Options"
 msgstr "BriskPlayer 选项"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Open URL"
 msgstr "打开网址"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Quick Find"
 msgstr "快速查找"
 
+#. Context: About dialog
+#, fuzzy
+msgctxt "dialog"
 msgid "&About"
 msgstr "关于(&A)"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "&Keyboard Shortcuts"
 msgstr "键盘快捷键(&K)"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&hanges"
 msgstr "更改记录(&H)"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&lose"
 msgstr "关闭(&L)"
 
+#. Context: Options dialog
+#, fuzzy
+msgctxt "options"
 msgid "General"
 msgstr "常规"
 
+#, fuzzy
+msgctxt "options"
 msgid "Always on top"
 msgstr "始终置顶"
 
+#, fuzzy
+msgctxt "options"
 msgid "Exit after playing"
 msgstr "播放完毕后退出"
 
+#, fuzzy
+msgctxt "options"
 msgid "Rotate systemtray icon"
 msgstr "旋转系统托盘图标"
 
+#, fuzzy
+msgctxt "options"
 msgid "Scroll Songtitle"
 msgstr "滚动歌曲标题"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow file once in playlist"
 msgstr "每个文件在播放列表中只出现一次"
 
+#, fuzzy
+msgctxt "options"
 msgid "Autoplay on startup"
 msgstr "启动时自动播放"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow multiple instances"
 msgstr "允许多个实例"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show remaining time"
 msgstr "显示剩余时间"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show on taskbar"
 msgstr "在任务栏显示"
 
-
+#, fuzzy
+msgctxt "options"
 msgid "Sticky windows"
 msgstr "窗口吸附"
 
+#, fuzzy
+msgctxt "options"
 msgid "Discord Rich Presence"
 msgstr "Discord Rich Presence"
 
+msgctxt "replaygain"
+msgid "Off"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Track"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Album"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Prevent clipping"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "ReplayGain"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Mode"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Preamp (dB)"
+msgstr ""
+
+msgctxt "playback"
+msgid "Gapless playback"
+msgstr ""
+
+#, fuzzy
+msgctxt "options"
 msgid "Register Filetypes"
 msgstr "注册文件类型"
 
+#, fuzzy
+msgctxt "options"
 msgid "Add to Start Menu"
 msgstr "添加到开始菜单"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag (if any)"
 msgstr "读取 ID3 标签（如有）"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag of selected"
 msgstr "读取选中项的 ID3 标签"
 
+#, fuzzy
+msgctxt "options"
 msgid "Support ID3v2"
 msgstr "支持 ID3v2"
 
+#, fuzzy
+msgctxt "options"
 msgid "Prefer native OGG tags"
 msgstr "优先使用原生 OGG 标签"
 
+#, fuzzy
+msgctxt "options"
 msgid "Load ID3 tags in background"
 msgstr "在后台加载 ID3 标签"
 
+#, fuzzy
+msgctxt "options"
 msgid "Work out track lengths"
 msgstr "计算曲目长度"
 
+#, fuzzy
+msgctxt "options"
 msgid "Easy move"
 msgstr "轻松移动"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember playlist"
 msgstr "记住播放列表"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember last played"
 msgstr "记住上次播放的曲目"
 
+#, fuzzy
+msgctxt "options"
 msgid "Track Delay (sec)"
 msgstr "曲目延迟（秒）"
 
+#, fuzzy
+msgctxt "options"
 msgid "Skinlist length"
 msgstr "主题列表长度"
 
+#, fuzzy
+msgctxt "options"
 msgid "Flush"
 msgstr "清空"
 
+#, fuzzy
+msgctxt "options"
 msgid "Output"
 msgstr "输出"
 
+#, fuzzy
+msgctxt "options"
 msgid "Volume controls"
 msgstr "音量控制"
 
+#, fuzzy
+msgctxt "options"
+msgid "Skin"
+msgstr "主题"
+
+#, fuzzy
+msgctxt "options"
 msgid "Player"
 msgstr "播放器"
 
+#, fuzzy
+msgctxt "options"
 msgid "Open"
 msgstr "打开"
 
+#, fuzzy
+msgctxt "options"
 msgid "OK"
 msgstr "确定"
 
+#, fuzzy
+msgctxt "options"
 msgid "Cancel"
 msgstr "取消"
 
+#. Context: URL dialog
 msgid ""
 "Type the URL you would like to play. Supported formats are MP3 and OGG "
 "streaming, and M3U playlists."
@@ -212,6 +378,7 @@ msgstr ""
 msgid "&URL:"
 msgstr "网址(&U):"
 
+#. Context: Quick Find dialog
 msgid "Find Text"
 msgstr "查找文字"
 
@@ -227,15 +394,25 @@ msgstr "艺术家名称(&N)"
 msgid "&Album Names"
 msgstr "专辑名称(&A)"
 
+#. Context: Volume control options
+#, fuzzy
+msgctxt "audio"
 msgid "System MASTER volume"
 msgstr "系统 MASTER 音量"
 
+#, fuzzy
+msgctxt "audio"
 msgid "System WAVE volume"
 msgstr "系统 WAVE 音量"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Internal volume"
 msgstr "内部音量"
 
+#. Context: Status messages
+#, fuzzy
+msgctxt "status"
 msgid ""
 "Filetypes are registered.\n"
 "You can doubleclick a supported file to run BriskPlayer."
@@ -243,99 +420,131 @@ msgstr ""
 "文件类型已注册。\n"
 "您可以双击支持的文件来启动 BriskPlayer。"
 
+#, fuzzy
+msgctxt "status"
 msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
 msgstr "BriskPlayer 的图标已添加到开始菜单和桌面。"
 
+#. Context: File filters
 msgid "BriskPlayer Skin Initialization Files (*.ini)"
 msgstr "BriskPlayer 主题初始化文件 (*.ini)"
 
 msgid "All Files (*.*)"
 msgstr "所有文件 (*.*)"
 
+#. Context: Audio format strings
+#, fuzzy
+msgctxt "audio"
 msgid "Bitrate: %d kbps"
 msgstr "比特率：%d kbps"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Sample rate: %.1f kHz"
 msgstr "采样率：%.1f kHz"
 
+#. Context: Time format (plural forms example)
+#, fuzzy
+msgctxt "time"
 msgid "Found %d file"
 msgid_plural "Found %d files"
 msgstr[0] "找到 %d 个文件"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] "%d 秒"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d minute"
 msgid_plural "%d minutes"
 msgstr[0] "%d 分钟"
 
+#. Context: Error messages
+#, fuzzy
+msgctxt "error"
 msgid "Failed to initialize audio device"
 msgstr "音频设备初始化失败"
 
+#, fuzzy
+msgctxt "error"
 msgid "Unable to load audio file"
 msgstr "无法加载音频文件"
 
+#, fuzzy
+msgctxt "error"
 msgid "Invalid String ID"
 msgstr "无效的字符串 ID"
 
+#, fuzzy
+msgctxt "error"
 msgid "Audio Error"
 msgstr "音频错误"
 
+#, fuzzy
+msgctxt "error"
 msgid "File Error"
 msgstr "文件错误"
 
+#. Context: Processing messages
+#, fuzzy
+msgctxt "status"
 msgid "Processing audio..."
 msgstr "正在处理音频..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Loading..."
 msgstr "加载中..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Ready"
 msgstr "就绪"
 
-msgid "Rotate system tray icon"
-msgstr "旋转系统托盘图标"
+#~ msgid "Rotate system tray icon"
+#~ msgstr "旋转系统托盘图标"
 
-msgid "Scroll title"
-msgstr "滚动标题"
+#~ msgid "Scroll title"
+#~ msgstr "滚动标题"
 
-msgid "Only add file once to playlist"
-msgstr "每首曲目只添加一次到播放列表"
+#~ msgid "Only add file once to playlist"
+#~ msgstr "每首曲目只添加一次到播放列表"
 
-msgid "Read ID3 tags"
-msgstr "读取 ID3 标签"
+#~ msgid "Read ID3 tags"
+#~ msgstr "读取 ID3 标签"
 
-msgid "Read ID3 for selected files"
-msgstr "读取所选文件的 ID3 标签"
+#~ msgid "Read ID3 for selected files"
+#~ msgstr "读取所选文件的 ID3 标签"
 
-msgid "Read ID3 in background"
-msgstr "在后台读取 ID3 标签"
+#~ msgid "Read ID3 in background"
+#~ msgstr "在后台读取 ID3 标签"
 
-msgid "Calculate track lengths"
-msgstr "计算曲目时长"
+#~ msgid "Calculate track lengths"
+#~ msgstr "计算曲目时长"
 
-msgid "Easy move mode"
-msgstr "轻松移动模式"
+#~ msgid "Easy move mode"
+#~ msgstr "轻松移动模式"
 
-msgid "Register file types"
-msgstr "注册文件类型"
+#~ msgid "Register file types"
+#~ msgstr "注册文件类型"
 
-msgid "Track delay (seconds)"
-msgstr "曲目延迟（秒）"
+#~ msgid "Track delay (seconds)"
+#~ msgstr "曲目延迟（秒）"
 
-msgid "Skin list length"
-msgstr "皮肤列表长度"
+#~ msgid "Skin list length"
+#~ msgstr "皮肤列表长度"
 
-msgid "Open..."
-msgstr "打开..."
+#~ msgid "Open..."
+#~ msgstr "打开..."
 
+#~ msgid "DSP Plugins"
+#~ msgstr "DSP 插件"
 
-msgid "DSP Plugins"
-msgstr "DSP 插件"
+#~ msgid "None (Disabled)"
+#~ msgstr "无（已禁用）"
 
-msgid "None (Disabled)"
-msgstr "无（已禁用）"
-
-msgid "Configure..."
-msgstr "配置..."
+#~ msgid "Configure..."
+#~ msgstr "配置..."

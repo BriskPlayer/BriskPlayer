@@ -16,193 +16,359 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#. Context: Application name and description
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer - Blazing fast audio player"
 msgstr "BriskPlayer – Razendsnelle audiospeler"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Audio file"
 msgstr "BriskPlayer audiobestand"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Playlist"
 msgstr "BriskPlayer afspeellijst"
 
+#. Context: Menu items
+#, fuzzy
+msgctxt "menu"
 msgid "Open File..."
 msgstr "Bestand openen..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Open URL..."
 msgstr "URL openen..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Add Files..."
 msgstr "Bestanden toevoegen..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "Afspeellijsteditor"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Skin"
 msgstr "Uiterlijk"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Default"
 msgstr "Standaard"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Language"
 msgstr "Taal"
 
+#, fuzzy
+msgctxt "menu"
 msgid "English"
 msgstr "Engels"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Deutsch"
 msgstr "Duits"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playback"
 msgstr "Afspelen"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Play"
 msgstr "Afspelen"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Stop"
 msgstr "Stoppen"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Pause"
 msgstr "Pauzeren"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Next"
 msgstr "Volgende"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Previous"
 msgstr "Vorige"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Options..."
 msgstr "Opties..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "About"
 msgstr "Over"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Exit"
 msgstr "Afsluiten"
 
+#. Context: Dialog titles
+#, fuzzy
+msgctxt "dialog"
 msgid "About BriskPlayer"
 msgstr "Over BriskPlayer"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "BriskPlayer Options"
 msgstr "BriskPlayer opties"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Open URL"
 msgstr "URL openen"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Quick Find"
 msgstr "Snel zoeken"
 
+#. Context: About dialog
+#, fuzzy
+msgctxt "dialog"
 msgid "&About"
 msgstr "&Over"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "&Keyboard Shortcuts"
 msgstr "&Sneltoetsen"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&hanges"
 msgstr "&Wijzigingen"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&lose"
 msgstr "&Sluiten"
 
+#. Context: Options dialog
+#, fuzzy
+msgctxt "options"
 msgid "General"
 msgstr "Algemeen"
 
+#, fuzzy
+msgctxt "options"
 msgid "Always on top"
 msgstr "Altijd bovenaan"
 
+#, fuzzy
+msgctxt "options"
 msgid "Exit after playing"
 msgstr "Afsluiten na afspelen"
 
+#, fuzzy
+msgctxt "options"
 msgid "Rotate systemtray icon"
 msgstr "Systeemvakpictogram roteren"
 
+#, fuzzy
+msgctxt "options"
 msgid "Scroll Songtitle"
 msgstr "Liedtitel scrollen"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow file once in playlist"
 msgstr "Elk bestand eenmalig in afspeellijst"
 
+#, fuzzy
+msgctxt "options"
 msgid "Autoplay on startup"
 msgstr "Automatisch afspelen bij opstarten"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow multiple instances"
 msgstr "Meerdere instanties toestaan"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show remaining time"
 msgstr "Resterende tijd weergeven"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show on taskbar"
 msgstr "Weergeven in taakbalk"
 
-
+#, fuzzy
+msgctxt "options"
 msgid "Sticky windows"
 msgstr "Plakkende vensters"
 
+#, fuzzy
+msgctxt "options"
 msgid "Discord Rich Presence"
 msgstr "Discord Rich Presence"
 
+msgctxt "replaygain"
+msgid "Off"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Track"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Album"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Prevent clipping"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "ReplayGain"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Mode"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Preamp (dB)"
+msgstr ""
+
+msgctxt "playback"
+msgid "Gapless playback"
+msgstr ""
+
+#, fuzzy
+msgctxt "options"
 msgid "Register Filetypes"
 msgstr "Bestandstypen registreren"
 
+#, fuzzy
+msgctxt "options"
 msgid "Add to Start Menu"
 msgstr "Toevoegen aan Startmenu"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag (if any)"
 msgstr "ID3-tag lezen (indien aanwezig)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag of selected"
 msgstr "ID3-tag van geselecteerde lezen"
 
+#, fuzzy
+msgctxt "options"
 msgid "Support ID3v2"
 msgstr "ID3v2 ondersteunen"
 
+#, fuzzy
+msgctxt "options"
 msgid "Prefer native OGG tags"
 msgstr "Voorkeur voor native OGG-tags"
 
+#, fuzzy
+msgctxt "options"
 msgid "Load ID3 tags in background"
 msgstr "ID3-tags op achtergrond laden"
 
+#, fuzzy
+msgctxt "options"
 msgid "Work out track lengths"
 msgstr "Nummerlengtes berekenen"
 
+#, fuzzy
+msgctxt "options"
 msgid "Easy move"
 msgstr "Eenvoudig verplaatsen"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember playlist"
 msgstr "Afspeellijst onthouden"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember last played"
 msgstr "Laatste afgespeeld onthouden"
 
+#, fuzzy
+msgctxt "options"
 msgid "Track Delay (sec)"
 msgstr "Nummervertraging (sec)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Skinlist length"
 msgstr "Lengte van uiterlijklijst"
 
+#, fuzzy
+msgctxt "options"
 msgid "Flush"
 msgstr "Leegmaken"
 
+#, fuzzy
+msgctxt "options"
 msgid "Output"
 msgstr "Uitvoer"
 
+#, fuzzy
+msgctxt "options"
 msgid "Volume controls"
 msgstr "Volumeregeling"
 
+#, fuzzy
+msgctxt "options"
+msgid "Skin"
+msgstr "Uiterlijk"
+
+#, fuzzy
+msgctxt "options"
 msgid "Player"
 msgstr "Speler"
 
+#, fuzzy
+msgctxt "options"
 msgid "Open"
 msgstr "Openen"
 
+#, fuzzy
+msgctxt "options"
 msgid "OK"
 msgstr "OK"
 
+#, fuzzy
+msgctxt "options"
 msgid "Cancel"
 msgstr "Annuleren"
 
+#. Context: URL dialog
 msgid ""
 "Type the URL you would like to play. Supported formats are MP3 and OGG "
 "streaming, and M3U playlists."
@@ -213,6 +379,7 @@ msgstr ""
 msgid "&URL:"
 msgstr "&URL:"
 
+#. Context: Quick Find dialog
 msgid "Find Text"
 msgstr "Tekst zoeken"
 
@@ -228,15 +395,25 @@ msgstr "Artiest&namen"
 msgid "&Album Names"
 msgstr "&Albumnamen"
 
+#. Context: Volume control options
+#, fuzzy
+msgctxt "audio"
 msgid "System MASTER volume"
 msgstr "Systeem MASTER-volume"
 
+#, fuzzy
+msgctxt "audio"
 msgid "System WAVE volume"
 msgstr "Systeem WAVE-volume"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Internal volume"
 msgstr "Intern volume"
 
+#. Context: Status messages
+#, fuzzy
+msgctxt "status"
 msgid ""
 "Filetypes are registered.\n"
 "You can doubleclick a supported file to run BriskPlayer."
@@ -244,104 +421,136 @@ msgstr ""
 "Bestandstypen zijn geregistreerd.\n"
 "U kunt dubbelklikken op een ondersteund bestand om BriskPlayer te starten."
 
+#, fuzzy
+msgctxt "status"
 msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
 msgstr ""
 "Er is een pictogram voor BriskPlayer aangemaakt in het Startmenu en op het "
 "Bureaublad."
 
+#. Context: File filters
 msgid "BriskPlayer Skin Initialization Files (*.ini)"
 msgstr "BriskPlayer uiterlijk initialisatiebestanden (*.ini)"
 
 msgid "All Files (*.*)"
 msgstr "Alle bestanden (*.*)"
 
+#. Context: Audio format strings
+#, fuzzy
+msgctxt "audio"
 msgid "Bitrate: %d kbps"
 msgstr "Bitsnelheid: %d kbps"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Sample rate: %.1f kHz"
 msgstr "Samplefrequentie: %.1f kHz"
 
+#. Context: Time format (plural forms example)
+#, fuzzy
+msgctxt "time"
 msgid "Found %d file"
 msgid_plural "Found %d files"
 msgstr[0] "%d bestand gevonden"
 msgstr[1] "%d bestanden gevonden"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] "%d seconde"
 msgstr[1] "%d seconden"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d minute"
 msgid_plural "%d minutes"
 msgstr[0] "%d minuut"
 msgstr[1] "%d minuten"
 
+#. Context: Error messages
+#, fuzzy
+msgctxt "error"
 msgid "Failed to initialize audio device"
 msgstr "Audioapparaat initialiseren mislukt"
 
+#, fuzzy
+msgctxt "error"
 msgid "Unable to load audio file"
 msgstr "Audiobestand kan niet worden geladen"
 
+#, fuzzy
+msgctxt "error"
 msgid "Invalid String ID"
 msgstr "Ongeldige tekenreeks-ID"
 
+#, fuzzy
+msgctxt "error"
 msgid "Audio Error"
 msgstr "Audiofout"
 
+#, fuzzy
+msgctxt "error"
 msgid "File Error"
 msgstr "Bestandsfout"
 
+#. Context: Processing messages
+#, fuzzy
+msgctxt "status"
 msgid "Processing audio..."
 msgstr "Audio verwerken..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Loading..."
 msgstr "Laden..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Ready"
 msgstr "Gereed"
 
-msgid "Rotate system tray icon"
-msgstr "Systeemvakpictogram draaien"
+#~ msgid "Rotate system tray icon"
+#~ msgstr "Systeemvakpictogram draaien"
 
-msgid "Scroll title"
-msgstr "Titel scrollen"
+#~ msgid "Scroll title"
+#~ msgstr "Titel scrollen"
 
-msgid "Only add file once to playlist"
-msgstr "Bestand slechts één keer aan afspeellijst toevoegen"
+#~ msgid "Only add file once to playlist"
+#~ msgstr "Bestand slechts één keer aan afspeellijst toevoegen"
 
-msgid "Read ID3 tags"
-msgstr "ID3-tags lezen"
+#~ msgid "Read ID3 tags"
+#~ msgstr "ID3-tags lezen"
 
-msgid "Read ID3 for selected files"
-msgstr "ID3-tags van geselecteerde bestanden lezen"
+#~ msgid "Read ID3 for selected files"
+#~ msgstr "ID3-tags van geselecteerde bestanden lezen"
 
-msgid "Read ID3 in background"
-msgstr "ID3-tags op de achtergrond lezen"
+#~ msgid "Read ID3 in background"
+#~ msgstr "ID3-tags op de achtergrond lezen"
 
-msgid "Calculate track lengths"
-msgstr "Nummerduur berekenen"
+#~ msgid "Calculate track lengths"
+#~ msgstr "Nummerduur berekenen"
 
-msgid "Easy move mode"
-msgstr "Eenvoudige verplaatsingsmodus"
+#~ msgid "Easy move mode"
+#~ msgstr "Eenvoudige verplaatsingsmodus"
 
-msgid "Register file types"
-msgstr "Bestandstypen registreren"
+#~ msgid "Register file types"
+#~ msgstr "Bestandstypen registreren"
 
-msgid "Track delay (seconds)"
-msgstr "Nummerwachttijd (seconden)"
+#~ msgid "Track delay (seconds)"
+#~ msgstr "Nummerwachttijd (seconden)"
 
-msgid "Skin list length"
-msgstr "Lengte van de skin-lijst"
+#~ msgid "Skin list length"
+#~ msgstr "Lengte van de skin-lijst"
 
-msgid "Open..."
-msgstr "Openen..."
+#~ msgid "Open..."
+#~ msgstr "Openen..."
 
+#~ msgid "DSP Plugins"
+#~ msgstr "DSP-plugins"
 
-msgid "DSP Plugins"
-msgstr "DSP-plugins"
+#~ msgid "None (Disabled)"
+#~ msgstr "Geen (Uitgeschakeld)"
 
-msgid "None (Disabled)"
-msgstr "Geen (Uitgeschakeld)"
-
-msgid "Configure..."
-msgstr "Configureren..."
+#~ msgid "Configure..."
+#~ msgstr "Configureren..."

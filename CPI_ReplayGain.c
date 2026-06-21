@@ -36,7 +36,7 @@ float CPRG_ComputeScale(CPe_ReplayGainMode enMode,
 		return 1.0f;  // No gain data
 
 	fGainDb += fPreampDb;
-	fScale = powf(10.0f, fGainDb / 20.0f);
+	fScale = powf(10.0f, fGainDb * (1.0f / 20.0f));
 
 	if (bPreventClipping && fPeak > 0.0f && fPeak * fScale > 1.0f)
 		fScale = 1.0f / fPeak;

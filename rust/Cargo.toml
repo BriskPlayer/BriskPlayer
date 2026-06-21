@@ -3,3 +3,9 @@ resolver = "2"
 members  = ["codecs"]
 # codec-wav is superseded by the unified codecs crate; kept for git history only.
 exclude  = ["codec-wav"]
+
+[profile.release]
+opt-level     = 3        # Maximum speed
+lto           = "fat"    # Cross-crate inlining; slower link, faster runtime
+codegen-units = 1        # Required for fat LTO; single CGU for best optimization
+panic         = "abort"  # No unwinding machinery → smaller static lib

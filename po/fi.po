@@ -16,193 +16,359 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#. Context: Application name and description
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer - Blazing fast audio player"
 msgstr "BriskPlayer – Salamannopea mediasoitin"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Audio file"
 msgstr "BriskPlayer-äänitiedosto"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Playlist"
 msgstr "BriskPlayer-soittolista"
 
+#. Context: Menu items
+#, fuzzy
+msgctxt "menu"
 msgid "Open File..."
 msgstr "Avaa tiedosto..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Open URL..."
 msgstr "Avaa URL..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Add Files..."
 msgstr "Lisää tiedostoja..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "Soittolistaeditori"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Skin"
 msgstr "Teema"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Default"
 msgstr "Oletus"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Language"
 msgstr "Kieli"
 
+#, fuzzy
+msgctxt "menu"
 msgid "English"
 msgstr "Englanti"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Deutsch"
 msgstr "Saksa"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playback"
 msgstr "Toisto"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Play"
 msgstr "Toista"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Stop"
 msgstr "Pysäytä"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Pause"
 msgstr "Tauko"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Next"
 msgstr "Seuraava"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Previous"
 msgstr "Edellinen"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Options..."
 msgstr "Asetukset..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "About"
 msgstr "Tietoja"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Exit"
 msgstr "Lopeta"
 
+#. Context: Dialog titles
+#, fuzzy
+msgctxt "dialog"
 msgid "About BriskPlayer"
 msgstr "Tietoja BriskPlayerista"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "BriskPlayer Options"
 msgstr "BriskPlayer-asetukset"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Open URL"
 msgstr "Avaa URL"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Quick Find"
 msgstr "Pikahaku"
 
+#. Context: About dialog
+#, fuzzy
+msgctxt "dialog"
 msgid "&About"
 msgstr "&Tietoja"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "&Keyboard Shortcuts"
 msgstr "&Pikanäppäimet"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&hanges"
 msgstr "&Muutokset"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&lose"
 msgstr "&Sulje"
 
+#. Context: Options dialog
+#, fuzzy
+msgctxt "options"
 msgid "General"
 msgstr "Yleiset"
 
+#, fuzzy
+msgctxt "options"
 msgid "Always on top"
 msgstr "Aina päällimmäisenä"
 
+#, fuzzy
+msgctxt "options"
 msgid "Exit after playing"
 msgstr "Lopeta toiston jälkeen"
 
+#, fuzzy
+msgctxt "options"
 msgid "Rotate systemtray icon"
 msgstr "Pyöritä järjestelmäpalkin kuvaketta"
 
+#, fuzzy
+msgctxt "options"
 msgid "Scroll Songtitle"
 msgstr "Vieritä kappaleen nimeä"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow file once in playlist"
 msgstr "Salli tiedosto vain kerran soittolistalla"
 
+#, fuzzy
+msgctxt "options"
 msgid "Autoplay on startup"
 msgstr "Automaattinen toisto käynnistettäessä"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow multiple instances"
 msgstr "Salli useita instansseja"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show remaining time"
 msgstr "Näytä jäljellä oleva aika"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show on taskbar"
 msgstr "Näytä tehtäväpalkissa"
 
-
+#, fuzzy
+msgctxt "options"
 msgid "Sticky windows"
 msgstr "Tarttuvat ikkunat"
 
+#, fuzzy
+msgctxt "options"
 msgid "Discord Rich Presence"
 msgstr "Discord Rich Presence"
 
+msgctxt "replaygain"
+msgid "Off"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Track"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Album"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Prevent clipping"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "ReplayGain"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Mode"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Preamp (dB)"
+msgstr ""
+
+msgctxt "playback"
+msgid "Gapless playback"
+msgstr ""
+
+#, fuzzy
+msgctxt "options"
 msgid "Register Filetypes"
 msgstr "Rekisteröi tiedostotyypit"
 
+#, fuzzy
+msgctxt "options"
 msgid "Add to Start Menu"
 msgstr "Lisää Käynnistä-valikkoon"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag (if any)"
 msgstr "Lue ID3-tunniste (jos sellainen on)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag of selected"
 msgstr "Lue ID3-tunniste valitusta"
 
+#, fuzzy
+msgctxt "options"
 msgid "Support ID3v2"
 msgstr "Tue ID3v2:ta"
 
+#, fuzzy
+msgctxt "options"
 msgid "Prefer native OGG tags"
 msgstr "Suosi natiiveja OGG-tunnisteita"
 
+#, fuzzy
+msgctxt "options"
 msgid "Load ID3 tags in background"
 msgstr "Lataa ID3-tunnisteet taustalla"
 
+#, fuzzy
+msgctxt "options"
 msgid "Work out track lengths"
 msgstr "Laske kappaleiden pituudet"
 
+#, fuzzy
+msgctxt "options"
 msgid "Easy move"
 msgstr "Helppo siirto"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember playlist"
 msgstr "Muista soittolista"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember last played"
 msgstr "Muista viimeksi toistettu"
 
+#, fuzzy
+msgctxt "options"
 msgid "Track Delay (sec)"
 msgstr "Kappaleen viive (sek)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Skinlist length"
 msgstr "Teemalistauksen pituus"
 
+#, fuzzy
+msgctxt "options"
 msgid "Flush"
 msgstr "Tyhjennä"
 
+#, fuzzy
+msgctxt "options"
 msgid "Output"
 msgstr "Lähtö"
 
+#, fuzzy
+msgctxt "options"
 msgid "Volume controls"
 msgstr "Äänenvoimakkuuden säätimet"
 
+#, fuzzy
+msgctxt "options"
+msgid "Skin"
+msgstr "Teema"
+
+#, fuzzy
+msgctxt "options"
 msgid "Player"
 msgstr "Soitin"
 
+#, fuzzy
+msgctxt "options"
 msgid "Open"
 msgstr "Avaa"
 
+#, fuzzy
+msgctxt "options"
 msgid "OK"
 msgstr "OK"
 
+#, fuzzy
+msgctxt "options"
 msgid "Cancel"
 msgstr "Peruuta"
 
+#. Context: URL dialog
 msgid ""
 "Type the URL you would like to play. Supported formats are MP3 and OGG "
 "streaming, and M3U playlists."
@@ -213,6 +379,7 @@ msgstr ""
 msgid "&URL:"
 msgstr "&URL:"
 
+#. Context: Quick Find dialog
 msgid "Find Text"
 msgstr "Etsi tekstiä"
 
@@ -228,15 +395,25 @@ msgstr "Esittäjä&nimet"
 msgid "&Album Names"
 msgstr "&Albuminimet"
 
+#. Context: Volume control options
+#, fuzzy
+msgctxt "audio"
 msgid "System MASTER volume"
 msgstr "Järjestelmän MASTER-äänenvoimakkuus"
 
+#, fuzzy
+msgctxt "audio"
 msgid "System WAVE volume"
 msgstr "Järjestelmän WAVE-äänenvoimakkuus"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Internal volume"
 msgstr "Sisäinen äänenvoimakkuus"
 
+#. Context: Status messages
+#, fuzzy
+msgctxt "status"
 msgid ""
 "Filetypes are registered.\n"
 "You can doubleclick a supported file to run BriskPlayer."
@@ -244,102 +421,134 @@ msgstr ""
 "Tiedostotyypit on rekisteröity.\n"
 "Voit käynnistää BriskPlayerin kaksoisnapsauttamalla tuettua tiedostoa."
 
+#, fuzzy
+msgctxt "status"
 msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
 msgstr "BriskPlayer-kuvake on luotu Käynnistä-valikkoon ja Työpöydälle."
 
+#. Context: File filters
 msgid "BriskPlayer Skin Initialization Files (*.ini)"
 msgstr "BriskPlayer-teeman alustustiedostot (*.ini)"
 
 msgid "All Files (*.*)"
 msgstr "Kaikki tiedostot (*.*)"
 
+#. Context: Audio format strings
+#, fuzzy
+msgctxt "audio"
 msgid "Bitrate: %d kbps"
 msgstr "Bittinopeus: %d kbps"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Sample rate: %.1f kHz"
 msgstr "Näytteenottotaajuus: %.1f kHz"
 
+#. Context: Time format (plural forms example)
+#, fuzzy
+msgctxt "time"
 msgid "Found %d file"
 msgid_plural "Found %d files"
 msgstr[0] "Löydettiin %d tiedosto"
 msgstr[1] "Löydettiin %d tiedostoa"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] "%d sekunti"
 msgstr[1] "%d sekuntia"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d minute"
 msgid_plural "%d minutes"
 msgstr[0] "%d minuutti"
 msgstr[1] "%d minuuttia"
 
+#. Context: Error messages
+#, fuzzy
+msgctxt "error"
 msgid "Failed to initialize audio device"
 msgstr "Äänilaitteen alustus epäonnistui"
 
+#, fuzzy
+msgctxt "error"
 msgid "Unable to load audio file"
 msgstr "Äänitiedostoa ei voida ladata"
 
+#, fuzzy
+msgctxt "error"
 msgid "Invalid String ID"
 msgstr "Virheellinen merkkijono-ID"
 
+#, fuzzy
+msgctxt "error"
 msgid "Audio Error"
 msgstr "Äänivirhe"
 
+#, fuzzy
+msgctxt "error"
 msgid "File Error"
 msgstr "Tiedostovirhe"
 
+#. Context: Processing messages
+#, fuzzy
+msgctxt "status"
 msgid "Processing audio..."
 msgstr "Käsitellään ääntä..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Loading..."
 msgstr "Ladataan..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Ready"
 msgstr "Valmis"
 
-msgid "Rotate system tray icon"
-msgstr "Animoi tehtäväpalkkikuvake"
+#~ msgid "Rotate system tray icon"
+#~ msgstr "Animoi tehtäväpalkkikuvake"
 
-msgid "Scroll title"
-msgstr "Vieritä kappalenimeä"
+#~ msgid "Scroll title"
+#~ msgstr "Vieritä kappalenimeä"
 
-msgid "Only add file once to playlist"
-msgstr "Lisää tiedosto soittolistalle vain kerran"
+#~ msgid "Only add file once to playlist"
+#~ msgstr "Lisää tiedosto soittolistalle vain kerran"
 
-msgid "Read ID3 tags"
-msgstr "Lue ID3-tunnisteet"
+#~ msgid "Read ID3 tags"
+#~ msgstr "Lue ID3-tunnisteet"
 
-msgid "Read ID3 for selected files"
-msgstr "Lue ID3-tunnisteet valituille tiedostoille"
+#~ msgid "Read ID3 for selected files"
+#~ msgstr "Lue ID3-tunnisteet valituille tiedostoille"
 
-msgid "Read ID3 in background"
-msgstr "Lue ID3-tunnisteet taustalla"
+#~ msgid "Read ID3 in background"
+#~ msgstr "Lue ID3-tunnisteet taustalla"
 
-msgid "Calculate track lengths"
-msgstr "Laske kappaleiden pituudet"
+#~ msgid "Calculate track lengths"
+#~ msgstr "Laske kappaleiden pituudet"
 
-msgid "Easy move mode"
-msgstr "Helppo siirtotila"
+#~ msgid "Easy move mode"
+#~ msgstr "Helppo siirtotila"
 
-msgid "Register file types"
-msgstr "Rekisteröi tiedostotyypit"
+#~ msgid "Register file types"
+#~ msgstr "Rekisteröi tiedostotyypit"
 
-msgid "Track delay (seconds)"
-msgstr "Kappaleviive (sekuntia)"
+#~ msgid "Track delay (seconds)"
+#~ msgstr "Kappaleviive (sekuntia)"
 
-msgid "Skin list length"
-msgstr "Skin-listan pituus"
+#~ msgid "Skin list length"
+#~ msgstr "Skin-listan pituus"
 
-msgid "Open..."
-msgstr "Avaa..."
+#~ msgid "Open..."
+#~ msgstr "Avaa..."
 
+#~ msgid "DSP Plugins"
+#~ msgstr "DSP-laajennukset"
 
-msgid "DSP Plugins"
-msgstr "DSP-laajennukset"
+#~ msgid "None (Disabled)"
+#~ msgstr "Ei mitään (Poistettu käytöstä)"
 
-msgid "None (Disabled)"
-msgstr "Ei mitään (Poistettu käytöstä)"
-
-msgid "Configure..."
-msgstr "Määritä..."
+#~ msgid "Configure..."
+#~ msgstr "Määritä..."

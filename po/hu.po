@@ -16,193 +16,359 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#. Context: Application name and description
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer - Blazing fast audio player"
 msgstr "BriskPlayer – Villámgyors médialejátszó"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Audio file"
 msgstr "BriskPlayer Hangfájl"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Playlist"
 msgstr "BriskPlayer Lejátszási lista"
 
+#. Context: Menu items
+#, fuzzy
+msgctxt "menu"
 msgid "Open File..."
 msgstr "Fájl megnyitása..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Open URL..."
 msgstr "URL megnyitása..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Add Files..."
 msgstr "Fájlok hozzáadása..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "Lejátszási lista szerkesztő"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Skin"
 msgstr "Téma"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Default"
 msgstr "Alapértelmezett"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Language"
 msgstr "Nyelv"
 
+#, fuzzy
+msgctxt "menu"
 msgid "English"
 msgstr "Angol"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Deutsch"
 msgstr "Német"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playback"
 msgstr "Lejátszás"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Play"
 msgstr "Lejátszás"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Stop"
 msgstr "Leállítás"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Pause"
 msgstr "Szünet"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Next"
 msgstr "Következő"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Previous"
 msgstr "Előző"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Options..."
 msgstr "Beállítások..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "About"
 msgstr "Névjegy"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Exit"
 msgstr "Kilépés"
 
+#. Context: Dialog titles
+#, fuzzy
+msgctxt "dialog"
 msgid "About BriskPlayer"
 msgstr "A BriskPlayer névjegye"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "BriskPlayer Options"
 msgstr "BriskPlayer beállítások"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Open URL"
 msgstr "URL megnyitása"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Quick Find"
 msgstr "Gyorskeresés"
 
+#. Context: About dialog
+#, fuzzy
+msgctxt "dialog"
 msgid "&About"
 msgstr "&Névjegy"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "&Keyboard Shortcuts"
 msgstr "&Billentyűparancsok"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&hanges"
 msgstr "&Változások"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&lose"
 msgstr "&Bezárás"
 
+#. Context: Options dialog
+#, fuzzy
+msgctxt "options"
 msgid "General"
 msgstr "Általános"
 
+#, fuzzy
+msgctxt "options"
 msgid "Always on top"
 msgstr "Mindig felül"
 
+#, fuzzy
+msgctxt "options"
 msgid "Exit after playing"
 msgstr "Kilépés lejátszás után"
 
+#, fuzzy
+msgctxt "options"
 msgid "Rotate systemtray icon"
 msgstr "Rendszertálca ikon forgatása"
 
+#, fuzzy
+msgctxt "options"
 msgid "Scroll Songtitle"
 msgstr "Dalocím görgetése"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow file once in playlist"
 msgstr "Minden fájl csak egyszer szerepelhet a listában"
 
+#, fuzzy
+msgctxt "options"
 msgid "Autoplay on startup"
 msgstr "Automatikus lejátszás indításkor"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow multiple instances"
 msgstr "Több példány engedélyezése"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show remaining time"
 msgstr "Hátralévő idő megjelenítése"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show on taskbar"
 msgstr "Megjelenítés a tálcán"
 
-
+#, fuzzy
+msgctxt "options"
 msgid "Sticky windows"
 msgstr "Ragadós ablakok"
 
+#, fuzzy
+msgctxt "options"
 msgid "Discord Rich Presence"
 msgstr "Discord Rich Presence"
 
+msgctxt "replaygain"
+msgid "Off"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Track"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Album"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Prevent clipping"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "ReplayGain"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Mode"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Preamp (dB)"
+msgstr ""
+
+msgctxt "playback"
+msgid "Gapless playback"
+msgstr ""
+
+#, fuzzy
+msgctxt "options"
 msgid "Register Filetypes"
 msgstr "Fájltípusok regisztrálása"
 
+#, fuzzy
+msgctxt "options"
 msgid "Add to Start Menu"
 msgstr "Hozzáadás a Start menühöz"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag (if any)"
 msgstr "ID3 tag olvasása (ha van)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag of selected"
 msgstr "Kijelölt ID3 tagjának olvasása"
 
+#, fuzzy
+msgctxt "options"
 msgid "Support ID3v2"
 msgstr "ID3v2 támogatás"
 
+#, fuzzy
+msgctxt "options"
 msgid "Prefer native OGG tags"
 msgstr "Natív OGG tagek előnyben részesítése"
 
+#, fuzzy
+msgctxt "options"
 msgid "Load ID3 tags in background"
 msgstr "ID3 tagek háttérben való betöltése"
 
+#, fuzzy
+msgctxt "options"
 msgid "Work out track lengths"
 msgstr "Számhosszak kiszámítása"
 
+#, fuzzy
+msgctxt "options"
 msgid "Easy move"
 msgstr "Könnyű mozgatás"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember playlist"
 msgstr "Lejátszási lista megjegyzése"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember last played"
 msgstr "Utoljára lejátszott megjegyzése"
 
+#, fuzzy
+msgctxt "options"
 msgid "Track Delay (sec)"
 msgstr "Szám késleltetés (mp)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Skinlist length"
 msgstr "Témalista hossza"
 
+#, fuzzy
+msgctxt "options"
 msgid "Flush"
 msgstr "Törlés"
 
+#, fuzzy
+msgctxt "options"
 msgid "Output"
 msgstr "Kimenet"
 
+#, fuzzy
+msgctxt "options"
 msgid "Volume controls"
 msgstr "Hangerő vezérlők"
 
+#, fuzzy
+msgctxt "options"
+msgid "Skin"
+msgstr "Téma"
+
+#, fuzzy
+msgctxt "options"
 msgid "Player"
 msgstr "Lejátszó"
 
+#, fuzzy
+msgctxt "options"
 msgid "Open"
 msgstr "Megnyitás"
 
+#, fuzzy
+msgctxt "options"
 msgid "OK"
 msgstr "OK"
 
+#, fuzzy
+msgctxt "options"
 msgid "Cancel"
 msgstr "Mégse"
 
+#. Context: URL dialog
 msgid ""
 "Type the URL you would like to play. Supported formats are MP3 and OGG "
 "streaming, and M3U playlists."
@@ -213,6 +379,7 @@ msgstr ""
 msgid "&URL:"
 msgstr "&URL:"
 
+#. Context: Quick Find dialog
 msgid "Find Text"
 msgstr "Szöveg keresése"
 
@@ -228,15 +395,25 @@ msgstr "Előadó &nevek"
 msgid "&Album Names"
 msgstr "&Album nevek"
 
+#. Context: Volume control options
+#, fuzzy
+msgctxt "audio"
 msgid "System MASTER volume"
 msgstr "Rendszer FŐHANGERŐ"
 
+#, fuzzy
+msgctxt "audio"
 msgid "System WAVE volume"
 msgstr "Rendszer WAVE hangerő"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Internal volume"
 msgstr "Belső hangerő"
 
+#. Context: Status messages
+#, fuzzy
+msgctxt "status"
 msgid ""
 "Filetypes are registered.\n"
 "You can doubleclick a supported file to run BriskPlayer."
@@ -244,102 +421,134 @@ msgstr ""
 "A fájltípusok regisztrálva vannak.\n"
 "Kattintson duplán egy támogatott fájlra a BriskPlayer indításához."
 
+#, fuzzy
+msgctxt "status"
 msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
 msgstr "A BriskPlayer ikonja létrejött a Start menüben és az Asztalon."
 
+#. Context: File filters
 msgid "BriskPlayer Skin Initialization Files (*.ini)"
 msgstr "BriskPlayer Téma inicializálási fájlok (*.ini)"
 
 msgid "All Files (*.*)"
 msgstr "Minden fájl (*.*)"
 
+#. Context: Audio format strings
+#, fuzzy
+msgctxt "audio"
 msgid "Bitrate: %d kbps"
 msgstr "Bitsebességr: %d kbps"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Sample rate: %.1f kHz"
 msgstr "Mintavételi frekvencia: %.1f kHz"
 
+#. Context: Time format (plural forms example)
+#, fuzzy
+msgctxt "time"
 msgid "Found %d file"
 msgid_plural "Found %d files"
 msgstr[0] "Találat: %d fájl"
 msgstr[1] "Találat: %d fájl"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] "%d másodperc"
 msgstr[1] "%d másodperc"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d minute"
 msgid_plural "%d minutes"
 msgstr[0] "%d perc"
 msgstr[1] "%d perc"
 
+#. Context: Error messages
+#, fuzzy
+msgctxt "error"
 msgid "Failed to initialize audio device"
 msgstr "Nem sikerült inicializálni a hangeszközt"
 
+#, fuzzy
+msgctxt "error"
 msgid "Unable to load audio file"
 msgstr "Nem sikerült betölteni a hangfájlt"
 
+#, fuzzy
+msgctxt "error"
 msgid "Invalid String ID"
 msgstr "Érvénytelen karakterlánc-azonosító"
 
+#, fuzzy
+msgctxt "error"
 msgid "Audio Error"
 msgstr "Hanghiba"
 
+#, fuzzy
+msgctxt "error"
 msgid "File Error"
 msgstr "Fájlhiba"
 
+#. Context: Processing messages
+#, fuzzy
+msgctxt "status"
 msgid "Processing audio..."
 msgstr "Hang feldolgozása..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Loading..."
 msgstr "Betöltés..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Ready"
 msgstr "Kész"
 
-msgid "Rotate system tray icon"
-msgstr "Tálcaikon forgatása"
+#~ msgid "Rotate system tray icon"
+#~ msgstr "Tálcaikon forgatása"
 
-msgid "Scroll title"
-msgstr "Cím gördítése"
+#~ msgid "Scroll title"
+#~ msgstr "Cím gördítése"
 
-msgid "Only add file once to playlist"
-msgstr "Fájl csak egyszer kerüljön a lejátszási listára"
+#~ msgid "Only add file once to playlist"
+#~ msgstr "Fájl csak egyszer kerüljön a lejátszási listára"
 
-msgid "Read ID3 tags"
-msgstr "ID3 címkék olvasása"
+#~ msgid "Read ID3 tags"
+#~ msgstr "ID3 címkék olvasása"
 
-msgid "Read ID3 for selected files"
-msgstr "Kijelölt fájlok ID3 címkéinek olvasása"
+#~ msgid "Read ID3 for selected files"
+#~ msgstr "Kijelölt fájlok ID3 címkéinek olvasása"
 
-msgid "Read ID3 in background"
-msgstr "ID3 címkék olvasása a háttérben"
+#~ msgid "Read ID3 in background"
+#~ msgstr "ID3 címkék olvasása a háttérben"
 
-msgid "Calculate track lengths"
-msgstr "Műsorszám hosszak kiszámítása"
+#~ msgid "Calculate track lengths"
+#~ msgstr "Műsorszám hosszak kiszámítása"
 
-msgid "Easy move mode"
-msgstr "Egyszerű mozgatás módja"
+#~ msgid "Easy move mode"
+#~ msgstr "Egyszerű mozgatás módja"
 
-msgid "Register file types"
-msgstr "Fájltípusok regisztrálása"
+#~ msgid "Register file types"
+#~ msgstr "Fájltípusok regisztrálása"
 
-msgid "Track delay (seconds)"
-msgstr "Műsor késleltetése (másodpercek)"
+#~ msgid "Track delay (seconds)"
+#~ msgstr "Műsor késleltetése (másodpercek)"
 
-msgid "Skin list length"
-msgstr "Megjelenés lista hossza"
+#~ msgid "Skin list length"
+#~ msgstr "Megjelenés lista hossza"
 
-msgid "Open..."
-msgstr "Megnyitás..."
+#~ msgid "Open..."
+#~ msgstr "Megnyitás..."
 
+#~ msgid "DSP Plugins"
+#~ msgstr "DSP bővítmények"
 
-msgid "DSP Plugins"
-msgstr "DSP bővítmények"
+#~ msgid "None (Disabled)"
+#~ msgstr "Nincs (Letiltva)"
 
-msgid "None (Disabled)"
-msgstr "Nincs (Letiltva)"
-
-msgid "Configure..."
-msgstr "Beállítás..."
+#~ msgid "Configure..."
+#~ msgstr "Beállítás..."

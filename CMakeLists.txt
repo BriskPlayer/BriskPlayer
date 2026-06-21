@@ -133,7 +133,6 @@ option(ENABLE_NLS "Enable internationalization support" ON)
 option(BUILD_STATIC "Build with static linking (all libraries linked statically)" ON)
 option(BUILD_TESTS "Build unit tests" OFF)
 option(ENABLE_LTO "Enable Link Time Optimization (GCC/MinGW Release builds only)" ON)
-option(ENABLE_RUST_CODECS "Replace C codec implementations with Rust equivalents (requires cargo)" ON)
 
 # For backwards compatibility
 if(DEFINED STATIC_LINK AND NOT DEFINED BUILD_STATIC)
@@ -162,7 +161,18 @@ if(MSVC)
     # Disable vectorized string operations that require newer runtime symbols
     # This avoids the ___std_find_*_trivial_pos symbols that may not be available
     add_compile_options(/d2FH4-)
-    
+
+    # Release-mode: speed optimization, whole-program optimization, dead-code stripping,
+    # string pooling, and enhanced inlining. Scoped to Release/RelWithDebInfo only so
+    # Debug builds remain debuggable.
+    add_compile_options(
+        $<$<CONFIG:Release,RelWithDebInfo>:/O2>
+        $<$<CONFIG:Release,RelWithDebInfo>:/GL>
+        $<$<CONFIG:Release,RelWithDebInfo>:/Gy>
+        $<$<CONFIG:Release,RelWithDebInfo>:/Gf>
+        $<$<CONFIG:Release,RelWithDebInfo>:/Zc:inline>
+    )
+
     # Use static runtime - /MT for Release, /MTd for Debug
     # Note: vcpkg x86-windows-static uses /MT (Release runtime)
     # For Debug builds with vcpkg static libs, use x86-windows-static-md or build in Release
@@ -189,10 +199,16 @@ else()
     add_compile_options(-ffunction-sections -fdata-sections)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections")
 
-    # In Release builds, prefer -Os (size) over -O2 (speed) and strip symbols
+    # Release: keep -O2 (speed, GCC default) and add constant merging across TUs
+    # (-fmerge-all-constants, equivalent to MSVC /Gf). Dead-code elimination is
+    # already handled by -ffunction-sections + --gc-sections above (/Gy equivalent).
+    # LTO (/GL + /LTCG equivalent) is applied below via INTERPROCEDURAL_OPTIMIZATION.
+    # MinSizeRel already uses -Os via CMAKE_C_FLAGS_MINSIZEREL — no override needed.
+    if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+        add_compile_options(-fmerge-all-constants)
+    endif()
+    # Strip symbols from all optimized builds to reduce binary size
     if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
-        string(REPLACE "-O2" "-Os" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-        string(REPLACE "-O2" "-Os" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s")
     endif()
 
@@ -276,14 +292,8 @@ set(BRISK_SOURCES
     CP_Config.c
 )
 
-# WAV codec — use C implementation unless Rust codecs are enabled.
-# When Rust replaces the C WAV codec, CPI_RIFFUtil.c provides SkipToChunk
-# which CPI_PlaylistItem.c still needs for WAV duration probing.
-if(ENABLE_RUST_CODECS)
-    list(APPEND BRISK_SOURCES CPI_RIFFUtil.c)
-else()
-    list(APPEND BRISK_SOURCES CPI_Player_CoDec_WAV.c)
-endif()
+# CPI_RIFFUtil.c provides SkipToChunk used by CPI_PlaylistItem.c for WAV duration probing.
+list(APPEND BRISK_SOURCES CPI_RIFFUtil.c)
 
 # Discord RPC (optional)
 if(ENABLE_DISCORD_RPC)
@@ -294,8 +304,9 @@ endif()
 set(BRISK_RC briskplayer.rc)
 
 # ---------------------------------------------------------------------------
-# Codec selection: FFmpeg vs native libs (libmad/vorbis/FLAC/opus/fdk-aac)
-# Native codecs are the default. Use -DENABLE_FFMPEG=ON to use FFmpeg instead.
+# Codec selection: FFmpeg vs Rust+native
+# Default: Rust handles WAV/MPEG/FLAC/OGG; C handles AAC/OPUS (fdk-aac, opusfile).
+# Use -DENABLE_FFMPEG=ON to use FFmpeg instead.
 # When using FFmpeg, install with: vcpkg install briskplayer[ffmpeg]
 # (ENABLE_FFMPEG and ENABLE_DISCORD_RPC options are declared near the top of
 # this file, before project(), so vcpkg can read them on first configure.)
@@ -305,39 +316,30 @@ if(ENABLE_FFMPEG)
     message(STATUS "Codec backend: FFmpeg")
     list(APPEND BRISK_SOURCES CPI_Player_CoDec_FFmpeg.c)
 else()
-    message(STATUS "Codec backend: native (libmad/vorbis/FLAC/opus/aac)")
+    message(STATUS "Codec backend: Rust (WAV/MPEG/FLAC/OGG) + C (AAC/OPUS)")
     list(APPEND BRISK_SOURCES
         CPI_Player_CoDec_AAC.c
         CPI_Player_CoDec_OPUS.c
     )
-    if(NOT ENABLE_RUST_CODECS)
-        list(APPEND BRISK_SOURCES
-            CPI_Player_CoDec_MPEG.c
-            CPI_Player_CoDec_FLAC.c
-            CPI_Player_CoDec_OGG.c
-        )
-    endif()
 endif()
 
 # ---------------------------------------------------------------------------
-# Rust codec support via Corrosion
+# Rust codec support via Corrosion (required — handles WAV, MPEG, FLAC, OGG)
 # Use find_package first so CI / power users can supply a pre-built Corrosion;
 # fall back to FetchContent so a plain checkout Just Works.
 # ---------------------------------------------------------------------------
-if(ENABLE_RUST_CODECS)
-    find_package(Corrosion QUIET)
-    if(NOT Corrosion_FOUND)
-        include(FetchContent)
-        FetchContent_Declare(
-            Corrosion
-            GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
-            GIT_TAG        v0.5.1
-        )
-        FetchContent_MakeAvailable(Corrosion)
-    endif()
-    corrosion_import_crate(MANIFEST_PATH ${CMAKE_CURRENT_SOURCE_DIR}/rust/Cargo.toml)
-    message(STATUS "Rust codecs: enabled (brisk_codecs — WAV, FLAC, OGG/Vorbis)")
+find_package(Corrosion QUIET)
+if(NOT Corrosion_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(
+        Corrosion
+        GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
+        GIT_TAG        v0.5.1
+    )
+    FetchContent_MakeAvailable(Corrosion)
 endif()
+corrosion_import_crate(MANIFEST_PATH ${CMAKE_CURRENT_SOURCE_DIR}/rust/Cargo.toml)
+message(STATUS "Rust codecs: WAV, MPEG, FLAC, OGG/Vorbis")
 
 # Find required libraries via vcpkg-provided CMake config files.
 # In manifest mode vcpkg installs all packages listed in vcpkg.json before
@@ -349,21 +351,7 @@ if(ENABLE_FFMPEG)
     # toolchain, so MODULE-mode find_package works without pkg-config.
     find_package(FFMPEG REQUIRED COMPONENTS avcodec avformat avutil swresample)
 else()
-    # Native codec libraries
-    find_package(mad CONFIG QUIET)
-    if(NOT mad_FOUND)
-        find_library(MAD_LIBRARY NAMES mad REQUIRED)
-        add_library(mad::mad UNKNOWN IMPORTED)
-        set_target_properties(mad::mad PROPERTIES IMPORTED_LOCATION "${MAD_LIBRARY}")
-        find_path(MAD_INCLUDE_DIR mad.h REQUIRED)
-        set_target_properties(mad::mad PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${MAD_INCLUDE_DIR}")
-    endif()
-
-    if(NOT ENABLE_RUST_CODECS)
-        find_package(Ogg CONFIG REQUIRED)
-        find_package(Vorbis CONFIG REQUIRED)
-    endif()
-    find_package(FLAC CONFIG REQUIRED)
+    # AAC and OPUS still use C implementations; WAV/MPEG/FLAC/OGG are handled by Rust.
     find_package(fdk-aac CONFIG REQUIRED)
     find_package(opusfile CONFIG REQUIRED)
 endif()
@@ -461,6 +449,10 @@ if(MSVC)
     set_source_files_properties(CPI_AlbumArtTooltip.c PROPERTIES LANGUAGE CXX)
 
     set_target_properties(briskplayer PROPERTIES LINK_FLAGS "/MANIFEST:NO")
+    # /LTCG completes the /GL whole-program optimization pipeline at link time.
+    target_link_options(briskplayer PRIVATE
+        $<$<CONFIG:Release,RelWithDebInfo>:/LTCG>
+    )
 else()
     # For MinGW, compile resource file separately
     if(MINGW)
@@ -550,36 +542,15 @@ if(ENABLE_FFMPEG)
         target_link_libraries(briskplayer PRIVATE ${FFMPEG_LIBRARIES})
     endif()
 else()
-    # Native codec libraries
-    # mad and FLAC::FLAC are replaced by Rust codecs when ENABLE_RUST_CODECS=ON;
-    # omitting them avoids pulling in unused C library object code.
-    if(NOT ENABLE_RUST_CODECS)
-        if(TARGET mad::mad)
-            target_link_libraries(briskplayer PRIVATE mad::mad)
-        elseif(DEFINED MAD_LIBRARY)
-            target_link_libraries(briskplayer PRIVATE ${MAD_LIBRARY})
-        endif()
-    endif()
-    set(_flac_lib "")
-    set(_ogg_libs "")
-    if(NOT ENABLE_RUST_CODECS)
-        set(_flac_lib FLAC::FLAC)
-        set(_ogg_libs Ogg::ogg Vorbis::vorbis Vorbis::vorbisfile)
-    endif()
+    # AAC and OPUS C codecs; WAV/MPEG/FLAC/OGG are covered by the Rust static lib below.
     target_link_libraries(briskplayer PRIVATE
-        ${_ogg_libs}
-        ${_flac_lib}
         FDK-AAC::fdk-aac
         OpusFile::opusfile
     )
-    unset(_flac_lib)
-    unset(_ogg_libs)
 endif()
 
-# Link Rust codec static library (Corrosion target name = Cargo package name with - → _)
-if(ENABLE_RUST_CODECS)
-    target_link_libraries(briskplayer PRIVATE brisk_codecs)
-endif()
+# Rust codec static library (Corrosion target name = Cargo package name with - → _)
+target_link_libraries(briskplayer PRIVATE brisk_codecs)
 
 # Link Windows system libraries (after FAudio/FFmpeg which need them)
 target_link_libraries(briskplayer PRIVATE

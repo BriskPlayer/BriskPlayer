@@ -27,11 +27,7 @@ CPI_InterfacePart_Indicator.c
 CPI_Indicators.c
 CPI_Keyboard.c
 
-# Audio codecs
-CPI_Player_CoDec_FLAC.c
-CPI_Player_CoDec_MPEG.c
-CPI_Player_CoDec_OGG.c
-CPI_Player_CoDec_WAV.c
+# Audio codecs (WAV/MPEG/FLAC/OGG implemented in Rust; AAC/OPUS remain in C)
 CPI_Player_CoDec_AAC.c
 CPI_Player_CoDec_WinAmpPlugin.c
 

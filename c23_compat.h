@@ -33,6 +33,8 @@
 #ifdef _MSC_VER
     #define _Alignas(x) __declspec(align(x))
     #define _Alignof(x) __alignof(x)
+    // MSVC does not support GCC __attribute__ extensions — map to nothing.
+    #define __attribute__(x)
 #endif
 
 // C11/C17 static_assert (message is required)
