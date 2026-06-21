@@ -555,7 +555,6 @@ target_link_libraries(briskplayer PRIVATE brisk_codecs)
 # Link Windows system libraries (after FAudio/FFmpeg which need them)
 target_link_libraries(briskplayer PRIVATE
     ${WINDOWS_LIBRARIES}
-    gdiplus  # For album art decoding
 )
 
 # Explicitly link C++ standard library for MinGW-w64 cross-compilation.

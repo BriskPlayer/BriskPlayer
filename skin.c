@@ -61,7 +61,6 @@ static HBITMAP LoadImageFromPath(const char* pcFilePath)
 int main_set_default_skin(void)
 {
 
-	HINSTANCE hInstance;
 	float   positionpercentage;
 	
 	if (Skin.Object[PositionSlider].maxw == 1)
@@ -134,31 +133,20 @@ int main_set_default_skin(void)
 	main_skin_set_struct_value(FreqText, 316, 70, 6, 11, 4, 0, 0, 0, 0, "");
 	
 	Skin.transparentcolor = 0xff00ff;
-	hInstance = GetModuleHandle(NULL);
-	
-	// Load normal skin bitmaps from resources
+
+	// Load normal skin images from resources (PNG via WIC)
 	DeleteObject(graphics.bmp_main_up);
-	graphics.bmp_main_up =
-		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_MAINUP),
-							IMAGE_BITMAP, 0, 0, 0L);
+	graphics.bmp_main_up = WIC_LoadImageFromResource(IDB_MAINUP, NULL, NULL);
 	DeleteObject(graphics.bmp_main_down);
-	graphics.bmp_main_down =
-		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_MAINDOWN),
-							IMAGE_BITMAP, 0, 0, 0L);
+	graphics.bmp_main_down = WIC_LoadImageFromResource(IDB_MAINDOWN, NULL, NULL);
 	DeleteObject(graphics.bmp_main_switch);
-	graphics.bmp_main_switch =
-		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_MAINSW),
-							IMAGE_BITMAP, 0, 0, 0L);
+	graphics.bmp_main_switch = WIC_LoadImageFromResource(IDB_MAINSW, NULL, NULL);
 	DeleteObject(graphics.bmp_main_time_font);
-	graphics.bmp_main_time_font =
-		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_MAINBIGFONT),
-							IMAGE_BITMAP, 0, 0, 0L);
+	graphics.bmp_main_time_font = WIC_LoadImageFromResource(IDB_MAINBIGFONT, NULL, NULL);
 	graphics.bmp_main_track_font = graphics.bmp_main_time_font;
 	DeleteObject(graphics.bmp_main_title_font);
-	graphics.bmp_main_title_font =
-		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_MAINSMALLFONT),
-							IMAGE_BITMAP, 0, 0, 0L);
-	                        
+	graphics.bmp_main_title_font = WIC_LoadImageFromResource(IDB_MAINSMALLFONT, NULL, NULL);
+
 	if (Skin.Object[PositionSlider].maxw == 1)
 	{
 		globals.main_int_track_position =
@@ -186,7 +174,6 @@ int main_set_default_skin(void)
 // Set the built-in shade (compact) skin
 int main_set_shade_skin(void)
 {
-	HINSTANCE hInstance;
 	float   positionpercentage;
 	
 	if (Skin.Object[PositionSlider].maxw == 1)
@@ -243,31 +230,20 @@ int main_set_shade_skin(void)
 	main_skin_set_struct_value(FreqText, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
 	
 	Skin.transparentcolor = 0xff00ff;
-	hInstance = GetModuleHandle(NULL);
-	
-	// Load shade mode bitmaps from resources
+
+	// Load shade mode images from resources (PNG via WIC)
 	DeleteObject(graphics.bmp_main_up);
-	graphics.bmp_main_up =
-		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_SHADEUP),
-							IMAGE_BITMAP, 0, 0, 0L);
+	graphics.bmp_main_up = WIC_LoadImageFromResource(IDB_SHADEUP, NULL, NULL);
 	DeleteObject(graphics.bmp_main_down);
-	graphics.bmp_main_down =
-		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_SHADEDOWN),
-							IMAGE_BITMAP, 0, 0, 0L);
+	graphics.bmp_main_down = WIC_LoadImageFromResource(IDB_SHADEDOWN, NULL, NULL);
 	DeleteObject(graphics.bmp_main_switch);
-	graphics.bmp_main_switch =
-		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_SHADESW),
-							IMAGE_BITMAP, 0, 0, 0L);
+	graphics.bmp_main_switch = WIC_LoadImageFromResource(IDB_SHADESW, NULL, NULL);
 	DeleteObject(graphics.bmp_main_time_font);
-	graphics.bmp_main_time_font =
-		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_SHADETIMEFONT),
-							IMAGE_BITMAP, 0, 0, 0L);
+	graphics.bmp_main_time_font = WIC_LoadImageFromResource(IDB_SHADETIMEFONT, NULL, NULL);
 	graphics.bmp_main_track_font = graphics.bmp_main_time_font;
 	DeleteObject(graphics.bmp_main_title_font);
-	graphics.bmp_main_title_font =
-		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_SHADETEXTFONT),
-							IMAGE_BITMAP, 0, 0, 0L);
-	                        
+	graphics.bmp_main_title_font = WIC_LoadImageFromResource(IDB_SHADETEXTFONT, NULL, NULL);
+
 	if (Skin.Object[PositionSlider].maxw == 1)
 	{
 		globals.main_int_track_position =
@@ -294,7 +270,6 @@ int main_set_shade_skin(void)
 // Set the built-in EQ skin (with EQ panel visible)
 int main_set_eq_skin(void)
 {
-	HINSTANCE hInstance;
 	float   positionpercentage;
 	
 	if (Skin.Object[PositionSlider].maxw == 1)
@@ -348,31 +323,20 @@ int main_set_eq_skin(void)
 	main_skin_set_struct_value(FreqText, 316, 70, 6, 11, 4, 0, 0, 0, 0, "");
 	
 	Skin.transparentcolor = 0xff00ff;
-	hInstance = GetModuleHandle(NULL);
-	
-	// Load EQ skin bitmaps from resources (shares down/sw with normal mode)
+
+	// Load EQ skin images from resources (PNG via WIC; shares down/sw with normal mode)
 	DeleteObject(graphics.bmp_main_up);
-	graphics.bmp_main_up =
-		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_EQUP),
-							IMAGE_BITMAP, 0, 0, 0L);
+	graphics.bmp_main_up = WIC_LoadImageFromResource(IDB_EQUP, NULL, NULL);
 	DeleteObject(graphics.bmp_main_down);
-	graphics.bmp_main_down =
-		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_MAINDOWN),
-							IMAGE_BITMAP, 0, 0, 0L);
+	graphics.bmp_main_down = WIC_LoadImageFromResource(IDB_MAINDOWN, NULL, NULL);
 	DeleteObject(graphics.bmp_main_switch);
-	graphics.bmp_main_switch =
-		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_MAINSW),
-							IMAGE_BITMAP, 0, 0, 0L);
+	graphics.bmp_main_switch = WIC_LoadImageFromResource(IDB_MAINSW, NULL, NULL);
 	DeleteObject(graphics.bmp_main_time_font);
-	graphics.bmp_main_time_font =
-		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_EQTIMEFONT),
-							IMAGE_BITMAP, 0, 0, 0L);
+	graphics.bmp_main_time_font = WIC_LoadImageFromResource(IDB_EQTIMEFONT, NULL, NULL);
 	graphics.bmp_main_track_font = graphics.bmp_main_time_font;
 	DeleteObject(graphics.bmp_main_title_font);
-	graphics.bmp_main_title_font =
-		(HBITMAP) LoadImage(hInstance, MAKEINTRESOURCE(IDB_EQTEXTFONT),
-							IMAGE_BITMAP, 0, 0, 0L);
-	                        
+	graphics.bmp_main_title_font = WIC_LoadImageFromResource(IDB_EQTEXTFONT, NULL, NULL);
+
 	if (Skin.Object[PositionSlider].maxw == 1)
 	{
 		globals.main_int_track_position =

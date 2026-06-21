@@ -429,6 +429,21 @@ cleanup:
     return hBitmap;
 }
 
+HBITMAP WIC_LoadImageFromResource(UINT uiResourceID, int* pWidth, int* pHeight)
+{
+    HRSRC hRes = FindResource(GetModuleHandle(NULL), MAKEINTRESOURCE(uiResourceID), RT_RCDATA);
+    if (!hRes) return NULL;
+
+    HGLOBAL hMem = LoadResource(GetModuleHandle(NULL), hRes);
+    if (!hMem) return NULL;
+
+    DWORD dwSize = SizeofResource(GetModuleHandle(NULL), hRes);
+    void* pData = LockResource(hMem);
+    if (!pData || dwSize == 0) return NULL;
+
+    return WIC_LoadImageFromMemory(pData, (size_t)dwSize, pWidth, pHeight);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Background Worker Implementation

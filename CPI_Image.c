@@ -107,30 +107,24 @@ CPs_Image* CPIG_CreateImage_FromSubFile(CP_COMPOSITEFILE hmComposite, const char
 //
 CPs_Image* CPIG_CreateImage_FromResource(const UINT uiResourceID)
 {
-	HBITMAP hbmLoad;
-	BITMAP bmLoad;
+	int width, height;
 	CPs_Image* pNewImage;
-	
-	hbmLoad = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(uiResourceID));
-	
+
+	HBITMAP hbmLoad = WIC_LoadImageFromResource(uiResourceID, &width, &height);
 	if (!hbmLoad)
 		return NULL;
-		
-	// Get bitmap properties
-	GetObject(hbmLoad, sizeof(bmLoad), &bmLoad);
-	
-	// Setup Image struct
+
 	pNewImage = (CPs_Image*)SAFE_MALLOC(sizeof(CPs_Image));
 	if (!pNewImage)
 	{
 		DeleteObject(hbmLoad);
 		return NULL;
 	}
-	
+
 	pNewImage->m_hbmImage = hbmLoad;
-	pNewImage->m_szSize.cx = bmLoad.bmWidth;
-	pNewImage->m_szSize.cy = bmLoad.bmHeight;
-	
+	pNewImage->m_szSize.cx = width;
+	pNewImage->m_szSize.cy = height;
+
 	return pNewImage;
 }
 

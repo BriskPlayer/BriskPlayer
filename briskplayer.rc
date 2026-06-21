@@ -29,29 +29,29 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Bitmap
+// Images (PNG embedded as RCDATA, decoded at runtime via WIC)
 //
 
-// Built-in normal mode skin bitmaps
-IDB_MAINUP              BITMAP                  "res/normal_up.bmp"
-IDB_MAINDOWN            BITMAP                  "res/eq_down.bmp"
-IDB_MAINSW              BITMAP                  "res/eq_sw.bmp"
-IDB_MAINBIGFONT         BITMAP                  "res/normal_numbers.bmp"
-IDB_MAINSMALLFONT       BITMAP                  "res/normal_text.bmp"
-IDB_SYSICON             BITMAP                  "res/SysIcon.bmp"
+// Built-in normal mode skin images (PNG via WIC; embedded as raw data)
+IDB_MAINUP              RCDATA                  "res/normal_up.png"
+IDB_MAINDOWN            RCDATA                  "res/eq_down.png"
+IDB_MAINSW              RCDATA                  "res/eq_sw.png"
+IDB_MAINBIGFONT         RCDATA                  "res/normal_numbers.png"
+IDB_MAINSMALLFONT       RCDATA                  "res/normal_text.png"
+IDB_SYSICON             RCDATA                  "res/SysIcon.png"
 IDB_SYSICON_MASK        BITMAP                  "res/SysIcon_Mask.bmp"
 
-// Built-in shade mode skin bitmaps
-IDB_SHADEUP             BITMAP                  "res/shade_up.bmp"
-IDB_SHADEDOWN           BITMAP                  "res/shade_down.bmp"
-IDB_SHADESW             BITMAP                  "res/shade_sw.bmp"
-IDB_SHADETIMEFONT       BITMAP                  "res/shade_time.bmp"
-IDB_SHADETEXTFONT       BITMAP                  "res/shade_text.bmp"
+// Built-in shade mode skin images
+IDB_SHADEUP             RCDATA                  "res/shade_up.png"
+IDB_SHADEDOWN           RCDATA                  "res/shade_down.png"
+IDB_SHADESW             RCDATA                  "res/shade_sw.png"
+IDB_SHADETIMEFONT       RCDATA                  "res/shade_time.png"
+IDB_SHADETEXTFONT       RCDATA                  "res/shade_text.png"
 
-// Built-in EQ mode skin bitmaps (shares down/sw with normal mode)
-IDB_EQUP                BITMAP                  "res/eq_up.bmp"
-IDB_EQTIMEFONT          BITMAP                  "res/eq_numbers.bmp"
-IDB_EQTEXTFONT          BITMAP                  "res/eq_text.bmp"
+// Built-in EQ mode skin images (shares down/sw with normal mode)
+IDB_EQUP                RCDATA                  "res/eq_up.png"
+IDB_EQTIMEFONT          RCDATA                  "res/eq_numbers.png"
+IDB_EQTEXTFONT          RCDATA                  "res/eq_text.png"
 
 
 /////////////////////////////////////////////////////////////////////////////
