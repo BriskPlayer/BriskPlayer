@@ -141,9 +141,10 @@ unsafe fn cstr_opt(ptr: *const c_char) -> Option<&'static str> {
 }
 
 fn stri_cmp(a: Option<&str>, b: Option<&str>) -> std::cmp::Ordering {
-    let a = a.unwrap_or("").to_ascii_lowercase();
-    let b = b.unwrap_or("").to_ascii_lowercase();
-    a.cmp(&b)
+    let a = a.unwrap_or("").bytes();
+    let b = b.unwrap_or("").bytes();
+    a.map(|c| c.to_ascii_lowercase())
+     .cmp(b.map(|c| c.to_ascii_lowercase()))
 }
 
 // CIC_TRACKSTACK_UNSTACKED (0xEFFFFFFF as signed i32)
@@ -304,7 +305,7 @@ pub unsafe extern "C" fn CPL_GetActiveItem(h: HPlaylist) -> HItem {
 pub unsafe extern "C" fn CPL_FindPlaylistItem(h: HPlaylist, pcPath: *const c_char) -> HItem {
     if pcPath.is_null() { return std::ptr::null_mut(); }
     let target = match CStr::from_ptr(pcPath).to_str() {
-        Ok(s) => s.to_ascii_lowercase(),
+        Ok(s) => s,
         Err(_) => return std::ptr::null_mut(),
     };
 
@@ -314,7 +315,7 @@ pub unsafe extern "C" fn CPL_FindPlaylistItem(h: HPlaylist, pcPath: *const c_cha
         let path_ptr = CPLI_GetPath(cursor);
         if !path_ptr.is_null() {
             if let Ok(s) = CStr::from_ptr(path_ptr).to_str() {
-                if s.to_ascii_lowercase() == target {
+                if stri_cmp(Some(s), Some(target)).is_eq() {
                     return cursor;
                 }
             }
@@ -342,7 +343,7 @@ pub unsafe extern "C" fn CPL_AddSingleFile_pt2(h: HPlaylist, hNewFile: HItem, dw
     let path_ptr = CPLI_GetPath(hNewFile);
     if path_ptr.is_null() { CPLI_DestroyItem(hNewFile); return; }
     let path_str = match CStr::from_ptr(path_ptr).to_str() {
-        Ok(s) => s.to_owned(),
+        Ok(s) => s,
         Err(_) => { CPLI_DestroyItem(hNewFile); return; }
     };
     let path_lc = path_str.to_ascii_lowercase();
@@ -369,7 +370,7 @@ pub unsafe extern "C" fn CPL_AddSingleFile_pt2(h: HPlaylist, hNewFile: HItem, dw
 
     // If no track name was read from tags, derive one from the filename
     if CPLI_GetTrackName(hNewFile).is_null() {
-        let name = derive_track_name(&path_str, CP_IsURL(path_ptr) != FALSE);
+        let name = derive_track_name(path_str, CP_IsURL(path_ptr) != FALSE);
         if let Ok(cs) = std::ffi::CString::new(name) {
             CPLI_SetTrackName(hNewFile, cs.as_ptr());
         }

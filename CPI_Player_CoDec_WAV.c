@@ -60,11 +60,12 @@ typedef struct __CPs_CoDec_Wave
 	HANDLE m_hFile;
 	unsigned int m_iStartOfWavData;
 	unsigned int m_iLengthOfWavData;
-	
+
 	// Format
 	CPs_FileInfo m_FileInfo;
 	int m_iBytesPerSecond;
-	
+	int m_iBytesPerFrame;  // channels * (bits_per_sample/8) — used for seek alignment
+
 	// Offset
 	int m_iCurrentOffset_Secs;
 	int m_iCurrentOffset_Fraction_Bytes;
@@ -246,9 +247,10 @@ BOOL CPP_OMWAV_OpenFile(CPs_CoDecModule* pModule, const char* pcFilename, DWORD_
 		pContext->m_FileInfo.m_iFreq_Hz = pFormat->wf.nSamplesPerSec;
 		pContext->m_FileInfo.m_bStereo = pFormat->wf.nChannels == 2 ? TRUE : FALSE;
 		pContext->m_FileInfo.m_b16bit = pFormat->wBitsPerSample == 16 ? TRUE : FALSE;
+		pContext->m_iBytesPerFrame = (pContext->m_FileInfo.m_bStereo == TRUE ? 2 : 1)
+		                             * (pContext->m_FileInfo.m_b16bit == TRUE ? 2 : 1);
 		pContext->m_iBytesPerSecond = pContext->m_FileInfo.m_iFreq_Hz
-									  * (pContext->m_FileInfo.m_bStereo == TRUE ? 2 : 1)
-									  * (pContext->m_FileInfo.m_b16bit == TRUE ? 2 : 1);
+		                              * pContext->m_iBytesPerFrame;
 		                              
 		free(pFormat);
 	}
@@ -333,9 +335,11 @@ void CPP_OMWAV_Seek(CPs_CoDecModule* pModule, const int iNumerator, const int iD
 	// Real quick and dirty - but good enough (we are not a sound editing
 	// suite after all!)
 	iSeekPos = (int)(((float)iNumerator / (float)iDenominator) * (float)pContext->m_iLengthOfWavData);
-	
-	// Round seek pos to nearest sample
-	iSeekPos &= ~0x3;
+
+	// Align to a sample-frame boundary so we never start mid-sample.
+	// m_iBytesPerFrame is always a power of two (1, 2, or 4).
+	if (pContext->m_iBytesPerFrame > 1)
+		iSeekPos &= ~(pContext->m_iBytesPerFrame - 1);
 	
 	// Setup our progress
 	progress = div(iSeekPos, pContext->m_iBytesPerSecond);

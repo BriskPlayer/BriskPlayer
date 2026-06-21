@@ -56,6 +56,7 @@ typedef struct OggContext {
     // Audio format information
     uint32_t sample_rate;
     uint8_t channels;
+    uint32_t bytes_per_frame;   // channels * sizeof(int16) — pre-computed once on open
     uint32_t bitrate_nominal;
     uint32_t bitrate_upper;
     uint32_t bitrate_lower;
@@ -95,9 +96,8 @@ static size_t ogg_read_callback(void* buffer, size_t size, size_t count, void* s
         return 0;
     }
     
-    // Enhanced bounds checking
     const size_t total_bytes = size * count;
-    if (total_bytes == 0 || total_bytes > 65536) {  // Reasonable upper limit
+    if (total_bytes == 0) {
         return 0;
     }
     
@@ -242,6 +242,7 @@ static BOOL CPP_OMOGG_OpenFile(CPs_CoDecModule* module,
     // Extract format information with validation
     context->sample_rate = (uint32_t)info->rate;
     context->channels = (uint8_t)info->channels;
+    context->bytes_per_frame = (uint32_t)info->channels * 2u; // 16-bit samples
     context->bitrate_nominal = (uint32_t)info->bitrate_nominal;
     context->bitrate_upper = (uint32_t)info->bitrate_upper;
     context->bitrate_lower = (uint32_t)info->bitrate_lower;
@@ -327,7 +328,7 @@ static BOOL CPP_OMOGG_GetPCMBlock(CPs_CoDecModule* module, void* block, DWORD* b
         } else {
             // Successful read
             bytes_read += (DWORD)result;
-            context->current_sample += result / (context->channels * 2);  // 16-bit samples
+            context->current_sample += result / context->bytes_per_frame;
         }
     }
     

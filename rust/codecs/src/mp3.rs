@@ -40,7 +40,11 @@ struct Mp3Context {
     seekable:         bool,
 
     input_buf:        Vec<u8>,
+    /// Read position within input_buf; avoids O(n) drain on every frame.
+    input_read_pos:   usize,
     decoder:          Decoder,
+    /// Reusable scratch buffer for one frame of f32 PCM from nanomp3.
+    pcm_scratch:      Vec<f32>,
     pcm_queue:        Vec<i16>,
 
     sample_rate:         u32,
@@ -58,7 +62,9 @@ impl Mp3Context {
             stream_start:        0,
             seekable:            false,
             input_buf:           Vec::with_capacity(INPUT_BUF_TARGET * 2),
+            input_read_pos:      0,
             decoder:             Decoder::new(),
+            pcm_scratch:         vec![0f32; MAX_SAMPLES_PER_FRAME],
             pcm_queue:           Vec::new(),
             sample_rate:         0,
             channels:            0,
@@ -69,8 +75,16 @@ impl Mp3Context {
     }
 
     /// Pull more compressed data from the stream into input_buf.
+    /// Compacts consumed bytes first to keep the live window at the front.
     fn refill_input(&mut self) {
         let stream = match self.stream.as_mut() { Some(s) => s, None => return };
+
+        // Compact: drop already-consumed bytes so the live data is at [0..].
+        if self.input_read_pos > 0 {
+            self.input_buf.drain(..self.input_read_pos);
+            self.input_read_pos = 0;
+        }
+
         let have   = self.input_buf.len();
         let needed = INPUT_BUF_TARGET.saturating_sub(have);
         if needed == 0 { return; }
@@ -84,21 +98,23 @@ impl Mp3Context {
 
     /// Decode one MP3 frame and append i16 PCM to pcm_queue.
     fn decode_one(&mut self) -> bool {
-        if self.input_buf.len() < INPUT_BUF_TARGET / 2 {
+        let unread = self.input_buf.len() - self.input_read_pos;
+        if unread < INPUT_BUF_TARGET / 2 {
             self.refill_input();
         }
-        if self.input_buf.is_empty() { return false; }
+        if self.input_read_pos >= self.input_buf.len() { return false; }
 
-        let mut pcm_scratch = vec![0f32; MAX_SAMPLES_PER_FRAME];
-        let (consumed, maybe_info) = self.decoder.decode(&self.input_buf, &mut pcm_scratch);
+        let (consumed, maybe_info) =
+            self.decoder.decode(&self.input_buf[self.input_read_pos..], &mut self.pcm_scratch);
 
         if consumed == 0 {
             self.refill_input();
             return false;
         }
 
-        self.input_buf.drain(..consumed);
-        self.bytes_consumed += consumed as u64;
+        // Advance read cursor — no memmove until the next compaction in refill_input.
+        self.input_read_pos   += consumed;
+        self.bytes_consumed   += consumed as u64;
 
         if let Some(info) = maybe_info {
             if self.sample_rate == 0 {
@@ -115,10 +131,9 @@ impl Mp3Context {
                 }
             }
             let n = info.samples_produced * info.channels.num() as usize;
-            for &s in &pcm_scratch[..n] {
-                let i = (s * 32767.0).clamp(-32768.0, 32767.0) as i16;
-                self.pcm_queue.push(i);
-            }
+            self.pcm_queue.extend(
+                self.pcm_scratch[..n].iter().map(|&s| (s * 32767.0).clamp(-32768.0, 32767.0) as i16)
+            );
             true
         } else {
             false
@@ -187,6 +202,7 @@ unsafe extern "C" fn mp3_open_file(
 
     ctx.stream = None; // RAII: calls uninitialise on any previously open stream
     ctx.input_buf.clear();
+    ctx.input_read_pos   = 0;
     ctx.pcm_queue.clear();
     ctx.decoder          = Decoder::new();
     ctx.sample_rate      = 0;
@@ -246,6 +262,7 @@ unsafe extern "C" fn mp3_close_file(pModule: *mut CPs_CoDecModule) {
     let ctx = &mut *((*pModule).m_pModuleCookie as *mut Mp3Context);
     ctx.stream = None; // RAII: calls uninitialise
     ctx.input_buf.clear();
+    ctx.input_read_pos = 0;
     ctx.pcm_queue.clear();
 }
 
@@ -268,8 +285,9 @@ unsafe extern "C" fn mp3_seek(
 
     stream.seek(SeekFrom::Start(stream_pos)).ok(); // Seek::seek is safe
 
-    ctx.bytes_consumed = target_offset;
+    ctx.bytes_consumed  = target_offset;
     ctx.input_buf.clear();
+    ctx.input_read_pos  = 0;
     ctx.pcm_queue.clear();
     ctx.decoder = Decoder::new();
 }

@@ -27,6 +27,7 @@
 #include "CPI_Player_CoDec_C23.h"
 #include "CPI_Stream.h"
 #include <opus/opusfile.h>
+#include <math.h>
 #include <string.h>
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -209,10 +210,8 @@ static BOOL CPP_OMOPUS_GetPCMBlock(CPs_CoDecModule* module, void* block, DWORD* 
 
             // Convert float [-1.0, 1.0] to int16 [-32768, 32767]
             for (int i = 0; i < total_values; i++) {
-                int v = (int)(float_buf[i] * 32768.0f);
-                if (v > 32767) v = 32767;
-                if (v < -32768) v = -32768;
-                dst[i] = (opus_int16)v;
+                float fv = float_buf[i] * 32768.0f;
+                dst[i] = (opus_int16)(int)fmaxf(-32768.0f, fminf(32767.0f, fv));
             }
 
             DWORD bytes = (DWORD)(total_values * sizeof(opus_int16));

@@ -45,6 +45,8 @@ struct FlacContext {
     total_samples:           u64,
     file_size_bytes:         u64,
     total_duration_secs:     u32,
+    /// Reusable scratch buffer for non-16-bit FLAC block conversion.
+    native_buf:              Vec<u8>,
 }
 
 impl FlacContext {
@@ -60,6 +62,7 @@ impl FlacContext {
             total_samples:           0,
             file_size_bytes:         0,
             total_duration_secs:     0,
+            native_buf:              Vec::new(),
         }
     }
 }
@@ -245,15 +248,15 @@ unsafe extern "C" fn flac_get_pcm_block(
     pdwBlockSize: *mut DWORD,
 ) -> BOOL {
     // SAFETY: all pointers are valid when called from C.
-    let ctx    = &mut *((*pModule).m_pModuleCookie as *mut FlacContext);
-    let reader = match ctx.reader.as_mut() {
-        Some(r) => r,
-        None    => { *pdwBlockSize = 0; return FALSE; }
-    };
+    let ctx = &mut *((*pModule).m_pModuleCookie as *mut FlacContext);
 
     let requested_out_bytes = *pdwBlockSize as usize;
 
     if ctx.bytes_per_native_sample == 2 {
+        let reader = match ctx.reader.as_mut() {
+            Some(r) => r,
+            None    => { *pdwBlockSize = 0; return FALSE; }
+        };
         // SAFETY: pBlock points to a buffer of at least requested_out_bytes bytes.
         let buf = std::slice::from_raw_parts_mut(pBlock as *mut u8, requested_out_bytes);
         match reader.read(buf) { // Read::read on FlacByteReader — safe
@@ -266,8 +269,15 @@ unsafe extern "C" fn flac_get_pcm_block(
         let out_samples   = requested_out_bytes / 2;
         let native_needed = out_samples * native_bps;
 
-        let mut native_buf = vec![0u8; native_needed];
-        let n_native = match reader.read(&mut native_buf) { // safe
+        // Resize the reusable scratch buffer before borrowing the reader.
+        ctx.native_buf.resize(native_needed, 0);
+
+        // Borrow reader after native_buf is resized to avoid split-borrow conflict.
+        let reader = match ctx.reader.as_mut() {
+            Some(r) => r,
+            None    => { *pdwBlockSize = 0; return FALSE; }
+        };
+        let n_native = match reader.read(&mut ctx.native_buf) { // safe
             Ok(0) | Err(_) => { *pdwBlockSize = 0; return FALSE; }
             Ok(n)          => n,
         };
@@ -281,7 +291,7 @@ unsafe extern "C" fn flac_get_pcm_block(
             let start = i * native_bps;
             let mut raw = 0u32;
             for b in 0..native_bps {
-                raw |= (native_buf[start + b] as u32) << (b * 8);
+                raw |= (ctx.native_buf[start + b] as u32) << (b * 8);
             }
             let signed: i32 = if bps < 32 {
                 let up = 32 - bps;
