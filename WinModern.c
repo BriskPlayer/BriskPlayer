@@ -320,14 +320,26 @@ HBITMAP WIC_LoadImageFromFile(const wchar_t* pwcFilePath, int* pWidth, int* pHei
                 DeleteObject(hBitmap);
                 hBitmap = NULL;
             }
+            else
+            {
+                // Remap fully-transparent pixels to opaque magenta so the color-key
+                // window region code (main_bitmap_to_region) excludes them correctly.
+                UINT32* px = (UINT32*)pBits;
+                UINT total = width * height;
+                for (UINT i = 0; i < total; i++)
+                {
+                    if ((px[i] >> 24) == 0)
+                        px[i] = 0xFFFF00FF;  // BGRA: B=FF G=00 R=FF A=FF (magenta opaque)
+                }
+            }
         }
     }
-    
+
 cleanup:
     if (pConverter) pConverter->lpVtbl->Release(pConverter);
     if (pFrame) pFrame->lpVtbl->Release(pFrame);
     if (pDecoder) pDecoder->lpVtbl->Release(pDecoder);
-    
+
     return hBitmap;
 }
 
@@ -417,15 +429,27 @@ HBITMAP WIC_LoadImageFromMemory(const void* pData, size_t dataSize, int* pWidth,
                 DeleteObject(hBitmap);
                 hBitmap = NULL;
             }
+            else
+            {
+                // Remap fully-transparent pixels to opaque magenta so the color-key
+                // window region code (main_bitmap_to_region) excludes them correctly.
+                UINT32* px = (UINT32*)pBits;
+                UINT total = width * height;
+                for (UINT i = 0; i < total; i++)
+                {
+                    if ((px[i] >> 24) == 0)
+                        px[i] = 0xFFFF00FF;  // BGRA: B=FF G=00 R=FF A=FF (magenta opaque)
+                }
+            }
         }
     }
-    
+
 cleanup:
     if (pConverter) pConverter->lpVtbl->Release(pConverter);
     if (pFrame) pFrame->lpVtbl->Release(pFrame);
     if (pDecoder) pDecoder->lpVtbl->Release(pDecoder);
     if (pStream) pStream->lpVtbl->Release(pStream);
-    
+
     return hBitmap;
 }
 
