@@ -16,193 +16,359 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#. Context: Application name and description
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer - Blazing fast audio player"
 msgstr "BriskPlayer – Pemutar audio secepat kilat"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Audio file"
 msgstr "BriskPlayer Berkas audio"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Playlist"
 msgstr "BriskPlayer Daftar putar"
 
+#. Context: Menu items
+#, fuzzy
+msgctxt "menu"
 msgid "Open File..."
 msgstr "Buka berkas..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Open URL..."
 msgstr "Buka URL..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Add Files..."
 msgstr "Tambah berkas..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "Editor daftar putar"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Skin"
 msgstr "Tampilan"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Default"
 msgstr "Bawaan"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Language"
 msgstr "Bahasa"
 
+#, fuzzy
+msgctxt "menu"
 msgid "English"
 msgstr "Inggris"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Deutsch"
 msgstr "Jerman"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playback"
 msgstr "Pemutaran"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Play"
 msgstr "Putar"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Stop"
 msgstr "Berhenti"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Pause"
 msgstr "Jeda"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Next"
 msgstr "Berikutnya"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Previous"
 msgstr "Sebelumnya"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Options..."
 msgstr "Opsi..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "About"
 msgstr "Tentang"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Exit"
 msgstr "Keluar"
 
+#. Context: Dialog titles
+#, fuzzy
+msgctxt "dialog"
 msgid "About BriskPlayer"
 msgstr "Tentang BriskPlayer"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "BriskPlayer Options"
 msgstr "Opsi BriskPlayer"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Open URL"
 msgstr "Buka URL"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Quick Find"
 msgstr "Temukan cepat"
 
+#. Context: About dialog
+#, fuzzy
+msgctxt "dialog"
 msgid "&About"
 msgstr "&Tentang"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "&Keyboard Shortcuts"
 msgstr "&Pintasan keyboard"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&hanges"
 msgstr "&Perubahan"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&lose"
 msgstr "&Tutup"
 
+#. Context: Options dialog
+#, fuzzy
+msgctxt "options"
 msgid "General"
 msgstr "Umum"
 
+#, fuzzy
+msgctxt "options"
 msgid "Always on top"
 msgstr "Selalu di atas"
 
+#, fuzzy
+msgctxt "options"
 msgid "Exit after playing"
 msgstr "Keluar setelah diputar"
 
+#, fuzzy
+msgctxt "options"
 msgid "Rotate systemtray icon"
 msgstr "Putar ikon baki sistem"
 
+#, fuzzy
+msgctxt "options"
 msgid "Scroll Songtitle"
 msgstr "Gulir judul lagu"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow file once in playlist"
 msgstr "Izinkan setiap berkas satu kali dalam daftar"
 
+#, fuzzy
+msgctxt "options"
 msgid "Autoplay on startup"
 msgstr "Putar otomatis saat mulai"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow multiple instances"
 msgstr "Izinkan beberapa instans"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show remaining time"
 msgstr "Tampilkan waktu tersisa"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show on taskbar"
 msgstr "Tampilkan di bilah tugas"
 
-
+#, fuzzy
+msgctxt "options"
 msgid "Sticky windows"
 msgstr "Jendela menempel"
 
+#, fuzzy
+msgctxt "options"
 msgid "Discord Rich Presence"
 msgstr "Discord Rich Presence"
 
+msgctxt "replaygain"
+msgid "Off"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Track"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Album"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Prevent clipping"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "ReplayGain"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Mode"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Preamp (dB)"
+msgstr ""
+
+msgctxt "playback"
+msgid "Gapless playback"
+msgstr ""
+
+#, fuzzy
+msgctxt "options"
 msgid "Register Filetypes"
 msgstr "Daftarkan jenis berkas"
 
+#, fuzzy
+msgctxt "options"
 msgid "Add to Start Menu"
 msgstr "Tambahkan ke Menu Mulai"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag (if any)"
 msgstr "Baca tag ID3 (jika ada)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag of selected"
 msgstr "Baca tag ID3 yang dipilih"
 
+#, fuzzy
+msgctxt "options"
 msgid "Support ID3v2"
 msgstr "Dukungan ID3v2"
 
+#, fuzzy
+msgctxt "options"
 msgid "Prefer native OGG tags"
 msgstr "Utamakan tag OGG asli"
 
+#, fuzzy
+msgctxt "options"
 msgid "Load ID3 tags in background"
 msgstr "Muat tag ID3 di latar belakang"
 
+#, fuzzy
+msgctxt "options"
 msgid "Work out track lengths"
 msgstr "Hitung panjang trek"
 
+#, fuzzy
+msgctxt "options"
 msgid "Easy move"
 msgstr "Pindah mudah"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember playlist"
 msgstr "Ingat daftar putar"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember last played"
 msgstr "Ingat yang terakhir diputar"
 
+#, fuzzy
+msgctxt "options"
 msgid "Track Delay (sec)"
 msgstr "Penundaan trek (dtk)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Skinlist length"
 msgstr "Panjang daftar tampilan"
 
+#, fuzzy
+msgctxt "options"
 msgid "Flush"
 msgstr "Hapus"
 
+#, fuzzy
+msgctxt "options"
 msgid "Output"
 msgstr "Keluaran"
 
+#, fuzzy
+msgctxt "options"
 msgid "Volume controls"
 msgstr "Kontrol volume"
 
+#, fuzzy
+msgctxt "options"
+msgid "Skin"
+msgstr "Tampilan"
+
+#, fuzzy
+msgctxt "options"
 msgid "Player"
 msgstr "Pemutar"
 
+#, fuzzy
+msgctxt "options"
 msgid "Open"
 msgstr "Buka"
 
+#, fuzzy
+msgctxt "options"
 msgid "OK"
 msgstr "OK"
 
+#, fuzzy
+msgctxt "options"
 msgid "Cancel"
 msgstr "Batal"
 
+#. Context: URL dialog
 msgid ""
 "Type the URL you would like to play. Supported formats are MP3 and OGG "
 "streaming, and M3U playlists."
@@ -213,6 +379,7 @@ msgstr ""
 msgid "&URL:"
 msgstr "&URL:"
 
+#. Context: Quick Find dialog
 msgid "Find Text"
 msgstr "Cari teks"
 
@@ -228,15 +395,25 @@ msgstr "Nama &artis"
 msgid "&Album Names"
 msgstr "Nama &album"
 
+#. Context: Volume control options
+#, fuzzy
+msgctxt "audio"
 msgid "System MASTER volume"
 msgstr "Volume UTAMA sistem"
 
+#, fuzzy
+msgctxt "audio"
 msgid "System WAVE volume"
 msgstr "Volume WAVE sistem"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Internal volume"
 msgstr "Volume internal"
 
+#. Context: Status messages
+#, fuzzy
+msgctxt "status"
 msgid ""
 "Filetypes are registered.\n"
 "You can doubleclick a supported file to run BriskPlayer."
@@ -245,102 +422,134 @@ msgstr ""
 "Anda dapat mengklik dua kali berkas yang didukung untuk menjalankan "
 "BriskPlayer."
 
+#, fuzzy
+msgctxt "status"
 msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
 msgstr "Ikon untuk BriskPlayer telah dibuat di Menu Mulai dan Desktop."
 
+#. Context: File filters
 msgid "BriskPlayer Skin Initialization Files (*.ini)"
 msgstr "Berkas inisialisasi tampilan BriskPlayer (*.ini)"
 
 msgid "All Files (*.*)"
 msgstr "Semua berkas (*.*)"
 
+#. Context: Audio format strings
+#, fuzzy
+msgctxt "audio"
 msgid "Bitrate: %d kbps"
 msgstr "Kecepatan bit: %d kbps"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Sample rate: %.1f kHz"
 msgstr "Frekuensi sampling: %.1f kHz"
 
+#. Context: Time format (plural forms example)
+#, fuzzy
+msgctxt "time"
 msgid "Found %d file"
 msgid_plural "Found %d files"
 msgstr[0] "Ditemukan %d berkas"
 msgstr[1] "Ditemukan %d berkas"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] "%d detik"
 msgstr[1] "%d detik"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d minute"
 msgid_plural "%d minutes"
 msgstr[0] "%d menit"
 msgstr[1] "%d menit"
 
+#. Context: Error messages
+#, fuzzy
+msgctxt "error"
 msgid "Failed to initialize audio device"
 msgstr "Gagal menginisialisasi perangkat audio"
 
+#, fuzzy
+msgctxt "error"
 msgid "Unable to load audio file"
 msgstr "Tidak dapat memuat berkas audio"
 
+#, fuzzy
+msgctxt "error"
 msgid "Invalid String ID"
 msgstr "ID string tidak valid"
 
+#, fuzzy
+msgctxt "error"
 msgid "Audio Error"
 msgstr "Kesalahan audio"
 
+#, fuzzy
+msgctxt "error"
 msgid "File Error"
 msgstr "Kesalahan berkas"
 
+#. Context: Processing messages
+#, fuzzy
+msgctxt "status"
 msgid "Processing audio..."
 msgstr "Memproses audio..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Loading..."
 msgstr "Memuat..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Ready"
 msgstr "Siap"
 
-msgid "Rotate system tray icon"
-msgstr "Putar ikon baki sistem"
+#~ msgid "Rotate system tray icon"
+#~ msgstr "Putar ikon baki sistem"
 
-msgid "Scroll title"
-msgstr "Gulir judul"
+#~ msgid "Scroll title"
+#~ msgstr "Gulir judul"
 
-msgid "Only add file once to playlist"
-msgstr "Hanya tambahkan file satu kali ke daftar putar"
+#~ msgid "Only add file once to playlist"
+#~ msgstr "Hanya tambahkan file satu kali ke daftar putar"
 
-msgid "Read ID3 tags"
-msgstr "Baca tag ID3"
+#~ msgid "Read ID3 tags"
+#~ msgstr "Baca tag ID3"
 
-msgid "Read ID3 for selected files"
-msgstr "Baca tag ID3 file yang dipilih"
+#~ msgid "Read ID3 for selected files"
+#~ msgstr "Baca tag ID3 file yang dipilih"
 
-msgid "Read ID3 in background"
-msgstr "Baca tag ID3 di latar belakang"
+#~ msgid "Read ID3 in background"
+#~ msgstr "Baca tag ID3 di latar belakang"
 
-msgid "Calculate track lengths"
-msgstr "Hitung panjang lagu"
+#~ msgid "Calculate track lengths"
+#~ msgstr "Hitung panjang lagu"
 
-msgid "Easy move mode"
-msgstr "Mode perpindahan mudah"
+#~ msgid "Easy move mode"
+#~ msgstr "Mode perpindahan mudah"
 
-msgid "Register file types"
-msgstr "Daftarkan jenis file"
+#~ msgid "Register file types"
+#~ msgstr "Daftarkan jenis file"
 
-msgid "Track delay (seconds)"
-msgstr "Penundaan lagu (detik)"
+#~ msgid "Track delay (seconds)"
+#~ msgstr "Penundaan lagu (detik)"
 
-msgid "Skin list length"
-msgstr "Panjang daftar tema"
+#~ msgid "Skin list length"
+#~ msgstr "Panjang daftar tema"
 
-msgid "Open..."
-msgstr "Buka..."
+#~ msgid "Open..."
+#~ msgstr "Buka..."
 
+#~ msgid "DSP Plugins"
+#~ msgstr "Plugin DSP"
 
-msgid "DSP Plugins"
-msgstr "Plugin DSP"
+#~ msgid "None (Disabled)"
+#~ msgstr "Tidak Ada (Nonaktif)"
 
-msgid "None (Disabled)"
-msgstr "Tidak Ada (Nonaktif)"
-
-msgid "Configure..."
-msgstr "Konfigurasi..."
+#~ msgid "Configure..."
+#~ msgstr "Konfigurasi..."

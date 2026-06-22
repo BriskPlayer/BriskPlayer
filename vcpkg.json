@@ -25,12 +25,8 @@
       ]
     },
     "native-codecs": {
-      "description": "Use native codec libraries (libmad, vorbis, FLAC, fdk-aac, opusfile)",
+      "description": "C codec libraries for AAC and OPUS (WAV/MPEG/FLAC/OGG handled by Rust)",
       "dependencies": [
-        "libmad",
-        "libogg",
-        "libvorbis",
-        "libflac",
         "fdk-aac",
         {
           "name": "opusfile",

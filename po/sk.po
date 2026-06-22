@@ -16,193 +16,359 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 
+#. Context: Application name and description
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer - Blazing fast audio player"
 msgstr "BriskPlayer – Bleskovýchly hudobný prehrávač"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Audio file"
 msgstr "BriskPlayer Zvukový súbor"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Playlist"
 msgstr "BriskPlayer Zoznam skladieb"
 
+#. Context: Menu items
+#, fuzzy
+msgctxt "menu"
 msgid "Open File..."
 msgstr "Otvoriť súbor..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Open URL..."
 msgstr "Otvoriť URL..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Add Files..."
 msgstr "Pridať súbory..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "Editor zoznamu skladieb"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Skin"
 msgstr "Vzhľad"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Default"
 msgstr "Predvolené"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Language"
 msgstr "Jazyk"
 
+#, fuzzy
+msgctxt "menu"
 msgid "English"
 msgstr "Angličtina"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Deutsch"
 msgstr "Nemčina"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playback"
 msgstr "Prehrávanie"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Play"
 msgstr "Prehrať"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Stop"
 msgstr "Zastaviť"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Pause"
 msgstr "Pozastaviť"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Next"
 msgstr "Ďalší"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Previous"
 msgstr "Predchádzajúci"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Options..."
 msgstr "Možnosti..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "About"
 msgstr "O programe"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Exit"
 msgstr "Ukončiť"
 
+#. Context: Dialog titles
+#, fuzzy
+msgctxt "dialog"
 msgid "About BriskPlayer"
 msgstr "O BriskPlayer"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "BriskPlayer Options"
 msgstr "Možnosti BriskPlayer"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Open URL"
 msgstr "Otvoriť URL"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Quick Find"
 msgstr "Rýchle hľadanie"
 
+#. Context: About dialog
+#, fuzzy
+msgctxt "dialog"
 msgid "&About"
 msgstr "&O programe"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "&Keyboard Shortcuts"
 msgstr "&Klávesové skratky"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&hanges"
 msgstr "&Zmeny"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&lose"
 msgstr "&Zavrieť"
 
+#. Context: Options dialog
+#, fuzzy
+msgctxt "options"
 msgid "General"
 msgstr "Všeobecné"
 
+#, fuzzy
+msgctxt "options"
 msgid "Always on top"
 msgstr "Vždy navrchu"
 
+#, fuzzy
+msgctxt "options"
 msgid "Exit after playing"
 msgstr "Ukončiť po prehraní"
 
+#, fuzzy
+msgctxt "options"
 msgid "Rotate systemtray icon"
 msgstr "Otáčať ikonu systémovej lišty"
 
+#, fuzzy
+msgctxt "options"
 msgid "Scroll Songtitle"
 msgstr "Rolovať názov skladby"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow file once in playlist"
 msgstr "Povoliť každý súbor v zozname raz"
 
+#, fuzzy
+msgctxt "options"
 msgid "Autoplay on startup"
 msgstr "Automaticky prehrávať pri spustení"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow multiple instances"
 msgstr "Povoliť viacero inštancií"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show remaining time"
 msgstr "Zobraziť zostatok času"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show on taskbar"
 msgstr "Zobraziť na paneli úloh"
 
-
+#, fuzzy
+msgctxt "options"
 msgid "Sticky windows"
 msgstr "Priľnavé okná"
 
+#, fuzzy
+msgctxt "options"
 msgid "Discord Rich Presence"
 msgstr "Discord Rich Presence"
 
+msgctxt "replaygain"
+msgid "Off"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Track"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Album"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Prevent clipping"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "ReplayGain"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Mode"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Preamp (dB)"
+msgstr ""
+
+msgctxt "playback"
+msgid "Gapless playback"
+msgstr ""
+
+#, fuzzy
+msgctxt "options"
 msgid "Register Filetypes"
 msgstr "Zaregistrovať typy súborov"
 
+#, fuzzy
+msgctxt "options"
 msgid "Add to Start Menu"
 msgstr "Pridať do ponuky Štart"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag (if any)"
 msgstr "Čítať ID3 tag (ak existuje)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag of selected"
 msgstr "Čítať ID3 tag vybraného"
 
+#, fuzzy
+msgctxt "options"
 msgid "Support ID3v2"
 msgstr "Podpora ID3v2"
 
+#, fuzzy
+msgctxt "options"
 msgid "Prefer native OGG tags"
 msgstr "Uprednostniť natívne OGG tagy"
 
+#, fuzzy
+msgctxt "options"
 msgid "Load ID3 tags in background"
 msgstr "Načítať ID3 tagy na pozadí"
 
+#, fuzzy
+msgctxt "options"
 msgid "Work out track lengths"
 msgstr "Vypočítať dĺžky skladieb"
 
+#, fuzzy
+msgctxt "options"
 msgid "Easy move"
 msgstr "Jednoduché presúvanie"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember playlist"
 msgstr "Pamätať zoznam skladieb"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember last played"
 msgstr "Pamätať naposledy prehrané"
 
+#, fuzzy
+msgctxt "options"
 msgid "Track Delay (sec)"
 msgstr "Oneskorenie skladby (sek)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Skinlist length"
 msgstr "Dĺžka zoznamu vzhľadov"
 
+#, fuzzy
+msgctxt "options"
 msgid "Flush"
 msgstr "Vyčistiť"
 
+#, fuzzy
+msgctxt "options"
 msgid "Output"
 msgstr "Výstup"
 
+#, fuzzy
+msgctxt "options"
 msgid "Volume controls"
 msgstr "Ovládanie hlasitosti"
 
+#, fuzzy
+msgctxt "options"
+msgid "Skin"
+msgstr "Vzhľad"
+
+#, fuzzy
+msgctxt "options"
 msgid "Player"
 msgstr "Prehrávač"
 
+#, fuzzy
+msgctxt "options"
 msgid "Open"
 msgstr "Otvoriť"
 
+#, fuzzy
+msgctxt "options"
 msgid "OK"
 msgstr "OK"
 
+#, fuzzy
+msgctxt "options"
 msgid "Cancel"
 msgstr "Zrušiť"
 
+#. Context: URL dialog
 msgid ""
 "Type the URL you would like to play. Supported formats are MP3 and OGG "
 "streaming, and M3U playlists."
@@ -213,6 +379,7 @@ msgstr ""
 msgid "&URL:"
 msgstr "&URL:"
 
+#. Context: Quick Find dialog
 msgid "Find Text"
 msgstr "Nájsť text"
 
@@ -228,15 +395,25 @@ msgstr "Mená &interpretov"
 msgid "&Album Names"
 msgstr "Názvy &albumov"
 
+#. Context: Volume control options
+#, fuzzy
+msgctxt "audio"
 msgid "System MASTER volume"
 msgstr "Systémová HLAVNÁ hlasitosť"
 
+#, fuzzy
+msgctxt "audio"
 msgid "System WAVE volume"
 msgstr "Systémová WAVE hlasitosť"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Internal volume"
 msgstr "Interná hlasitosť"
 
+#. Context: Status messages
+#, fuzzy
+msgctxt "status"
 msgid ""
 "Filetypes are registered.\n"
 "You can doubleclick a supported file to run BriskPlayer."
@@ -244,105 +421,137 @@ msgstr ""
 "Typy súborov sú zaregistrované.\n"
 "Dvojitým kliknutím na podporovaný súbor spustíte BriskPlayer."
 
+#, fuzzy
+msgctxt "status"
 msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
 msgstr "Ikona BriskPlayer bola vytvorená v ponuke Štart a na ploche."
 
+#. Context: File filters
 msgid "BriskPlayer Skin Initialization Files (*.ini)"
 msgstr "Inicializačné súbory vzhľadu BriskPlayer (*.ini)"
 
 msgid "All Files (*.*)"
 msgstr "Všetky súbory (*.*)"
 
+#. Context: Audio format strings
+#, fuzzy
+msgctxt "audio"
 msgid "Bitrate: %d kbps"
 msgstr "Bitrate: %d kbps"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Sample rate: %.1f kHz"
 msgstr "Vzorkovacia frekvencia: %.1f kHz"
 
+#. Context: Time format (plural forms example)
+#, fuzzy
+msgctxt "time"
 msgid "Found %d file"
 msgid_plural "Found %d files"
 msgstr[0] "Nájdený %d súbor"
 msgstr[1] "Nájdené %d súbory"
 msgstr[2] "Nájdených %d súborov"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] "%d sekunda"
 msgstr[1] "%d sekundy"
 msgstr[2] "%d sekúnd"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d minute"
 msgid_plural "%d minutes"
 msgstr[0] "%d minúta"
 msgstr[1] "%d minúty"
 msgstr[2] "%d minút"
 
+#. Context: Error messages
+#, fuzzy
+msgctxt "error"
 msgid "Failed to initialize audio device"
 msgstr "Nepodarilo sa inicializovať zvukové zariadenie"
 
+#, fuzzy
+msgctxt "error"
 msgid "Unable to load audio file"
 msgstr "Nepodarilo sa načítať zvukový súbor"
 
+#, fuzzy
+msgctxt "error"
 msgid "Invalid String ID"
 msgstr "Neplatné ID reťazca"
 
+#, fuzzy
+msgctxt "error"
 msgid "Audio Error"
 msgstr "Chyba zvuku"
 
+#, fuzzy
+msgctxt "error"
 msgid "File Error"
 msgstr "Chyba súboru"
 
+#. Context: Processing messages
+#, fuzzy
+msgctxt "status"
 msgid "Processing audio..."
 msgstr "Spracováva sa zvuk..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Loading..."
 msgstr "Načítava sa..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Ready"
 msgstr "Pripravený"
 
-msgid "Rotate system tray icon"
-msgstr "Otáčať ikonu v systémovej lište"
+#~ msgid "Rotate system tray icon"
+#~ msgstr "Otáčať ikonu v systémovej lište"
 
-msgid "Scroll title"
-msgstr "Posúvať nadpis"
+#~ msgid "Scroll title"
+#~ msgstr "Posúvať nadpis"
 
-msgid "Only add file once to playlist"
-msgstr "Pridať súbor do zoznamu len raz"
+#~ msgid "Only add file once to playlist"
+#~ msgstr "Pridať súbor do zoznamu len raz"
 
-msgid "Read ID3 tags"
-msgstr "Čítať ID3 tagy"
+#~ msgid "Read ID3 tags"
+#~ msgstr "Čítať ID3 tagy"
 
-msgid "Read ID3 for selected files"
-msgstr "Čítať ID3 tagy vybraných súborov"
+#~ msgid "Read ID3 for selected files"
+#~ msgstr "Čítať ID3 tagy vybraných súborov"
 
-msgid "Read ID3 in background"
-msgstr "Čítať ID3 tagy na pozadí"
+#~ msgid "Read ID3 in background"
+#~ msgstr "Čítať ID3 tagy na pozadí"
 
-msgid "Calculate track lengths"
-msgstr "Vypočítať dĺžky skladieb"
+#~ msgid "Calculate track lengths"
+#~ msgstr "Vypočítať dĺžky skladieb"
 
-msgid "Easy move mode"
-msgstr "Jednoduchý režim presúvania"
+#~ msgid "Easy move mode"
+#~ msgstr "Jednoduchý režim presúvania"
 
-msgid "Register file types"
-msgstr "Zaregistrovať typy súborov"
+#~ msgid "Register file types"
+#~ msgstr "Zaregistrovať typy súborov"
 
-msgid "Track delay (seconds)"
-msgstr "Oneskorenie skladby (sekundy)"
+#~ msgid "Track delay (seconds)"
+#~ msgstr "Oneskorenie skladby (sekundy)"
 
-msgid "Skin list length"
-msgstr "Dĺžka zoznamu vzhľadov"
+#~ msgid "Skin list length"
+#~ msgstr "Dĺžka zoznamu vzhľadov"
 
-msgid "Open..."
-msgstr "Otvoriť..."
+#~ msgid "Open..."
+#~ msgstr "Otvoriť..."
 
+#~ msgid "DSP Plugins"
+#~ msgstr "DSP zásuvné moduly"
 
-msgid "DSP Plugins"
-msgstr "DSP zásuvné moduly"
+#~ msgid "None (Disabled)"
+#~ msgstr "Žiadny (Zakázané)"
 
-msgid "None (Disabled)"
-msgstr "Žiadny (Zakázané)"
-
-msgid "Configure..."
-msgstr "Konfigurovať..."
+#~ msgid "Configure..."
+#~ msgstr "Konfigurovať..."

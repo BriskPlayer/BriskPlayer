@@ -16,193 +16,359 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#. Context: Application name and description
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer - Blazing fast audio player"
 msgstr "BriskPlayer – Αστραπιαία γρήγορος αναπαραγωγέας ήχου"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Audio file"
 msgstr "BriskPlayer Αρχείο ήχου"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Playlist"
 msgstr "BriskPlayer Λίστα αναπαραγωγής"
 
+#. Context: Menu items
+#, fuzzy
+msgctxt "menu"
 msgid "Open File..."
 msgstr "Άνοιγμα αρχείου..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Open URL..."
 msgstr "Άνοιγμα URL..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Add Files..."
 msgstr "Προσθήκη αρχείων..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "Επεξεργαστής λίστας"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Skin"
 msgstr "Θέμα"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Default"
 msgstr "Προεπιλογή"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Language"
 msgstr "Γλώσσα"
 
+#, fuzzy
+msgctxt "menu"
 msgid "English"
 msgstr "Αγγλικά"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Deutsch"
 msgstr "Γερμανικά"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playback"
 msgstr "Αναπαραγωγή"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Play"
 msgstr "Αναπαραγωγή"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Stop"
 msgstr "Διακοπή"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Pause"
 msgstr "Παύση"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Next"
 msgstr "Επόμενο"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Previous"
 msgstr "Προηγούμενο"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Options..."
 msgstr "Επιλογές..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "About"
 msgstr "Σχετικά"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Exit"
 msgstr "Έξοδος"
 
+#. Context: Dialog titles
+#, fuzzy
+msgctxt "dialog"
 msgid "About BriskPlayer"
 msgstr "Σχετικά με το BriskPlayer"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "BriskPlayer Options"
 msgstr "Επιλογές BriskPlayer"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Open URL"
 msgstr "Άνοιγμα URL"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Quick Find"
 msgstr "Γρήγορη αναζήτηση"
 
+#. Context: About dialog
+#, fuzzy
+msgctxt "dialog"
 msgid "&About"
 msgstr "&Σχετικά"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "&Keyboard Shortcuts"
 msgstr "&Συντομεύσεις πληκτρολογίου"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&hanges"
 msgstr "&Αλλαγές"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&lose"
 msgstr "&Κλείσιμο"
 
+#. Context: Options dialog
+#, fuzzy
+msgctxt "options"
 msgid "General"
 msgstr "Γενικά"
 
+#, fuzzy
+msgctxt "options"
 msgid "Always on top"
 msgstr "Πάντα στην κορυφή"
 
+#, fuzzy
+msgctxt "options"
 msgid "Exit after playing"
 msgstr "Έξοδος μετά την αναπαραγωγή"
 
+#, fuzzy
+msgctxt "options"
 msgid "Rotate systemtray icon"
 msgstr "Περιστροφή εικονιδίου γραμμής συστήματος"
 
+#, fuzzy
+msgctxt "options"
 msgid "Scroll Songtitle"
 msgstr "Κύλιση τίτλου τραγουδιού"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow file once in playlist"
 msgstr "Να επιτρέπεται κάθε αρχείο μόνο μία φορά στη λίστα"
 
+#, fuzzy
+msgctxt "options"
 msgid "Autoplay on startup"
 msgstr "Αυτόματη αναπαραγωγή κατά την εκκίνηση"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow multiple instances"
 msgstr "Να επιτρέπονται πολλαπλές εκτελέσεις"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show remaining time"
 msgstr "Εμφάνιση υπολειπόμενου χρόνου"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show on taskbar"
 msgstr "Εμφάνιση στη γραμμή εργασιών"
 
-
+#, fuzzy
+msgctxt "options"
 msgid "Sticky windows"
 msgstr "Κολλητικά παράθυρα"
 
+#, fuzzy
+msgctxt "options"
 msgid "Discord Rich Presence"
 msgstr "Discord Rich Presence"
 
+msgctxt "replaygain"
+msgid "Off"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Track"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Album"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Prevent clipping"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "ReplayGain"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Mode"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Preamp (dB)"
+msgstr ""
+
+msgctxt "playback"
+msgid "Gapless playback"
+msgstr ""
+
+#, fuzzy
+msgctxt "options"
 msgid "Register Filetypes"
 msgstr "Καταχώριση τύπων αρχείων"
 
+#, fuzzy
+msgctxt "options"
 msgid "Add to Start Menu"
 msgstr "Προσθήκη στο μενού Έναρξη"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag (if any)"
 msgstr "Ανάγνωση ετικέτας ID3 (εάν υπάρχει)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag of selected"
 msgstr "Ανάγνωση ετικέτας ID3 επιλεγμένου"
 
+#, fuzzy
+msgctxt "options"
 msgid "Support ID3v2"
 msgstr "Υποστήριξη ID3v2"
 
+#, fuzzy
+msgctxt "options"
 msgid "Prefer native OGG tags"
 msgstr "Προτίμηση native ετικετών OGG"
 
+#, fuzzy
+msgctxt "options"
 msgid "Load ID3 tags in background"
 msgstr "Φόρτωση ετικετών ID3 στο παρασκήνιο"
 
+#, fuzzy
+msgctxt "options"
 msgid "Work out track lengths"
 msgstr "Υπολογισμός διάρκειας κομματιών"
 
+#, fuzzy
+msgctxt "options"
 msgid "Easy move"
 msgstr "Εύκολη μετακίνηση"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember playlist"
 msgstr "Αποθήκευση λίστας αναπαραγωγής"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember last played"
 msgstr "Αποθήκευση τελευταίου αρχείου"
 
+#, fuzzy
+msgctxt "options"
 msgid "Track Delay (sec)"
 msgstr "Καθυστέρηση κομματιού (δευτ)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Skinlist length"
 msgstr "Μήκος λίστας θεμάτων"
 
+#, fuzzy
+msgctxt "options"
 msgid "Flush"
 msgstr "Εκκαθάριση"
 
+#, fuzzy
+msgctxt "options"
 msgid "Output"
 msgstr "Έξοδος"
 
+#, fuzzy
+msgctxt "options"
 msgid "Volume controls"
 msgstr "Έλεγχος έντασης"
 
+#, fuzzy
+msgctxt "options"
+msgid "Skin"
+msgstr "Θέμα"
+
+#, fuzzy
+msgctxt "options"
 msgid "Player"
 msgstr "Αναπαραγωγέας"
 
+#, fuzzy
+msgctxt "options"
 msgid "Open"
 msgstr "Άνοιγμα"
 
+#, fuzzy
+msgctxt "options"
 msgid "OK"
 msgstr "OK"
 
+#, fuzzy
+msgctxt "options"
 msgid "Cancel"
 msgstr "Ακύρωση"
 
+#. Context: URL dialog
 msgid ""
 "Type the URL you would like to play. Supported formats are MP3 and OGG "
 "streaming, and M3U playlists."
@@ -213,6 +379,7 @@ msgstr ""
 msgid "&URL:"
 msgstr "&URL:"
 
+#. Context: Quick Find dialog
 msgid "Find Text"
 msgstr "Εύρεση κειμένου"
 
@@ -228,15 +395,25 @@ msgstr "Ονόματα &καλλιτεχνών"
 msgid "&Album Names"
 msgstr "Ονόματα &άλμπουμ"
 
+#. Context: Volume control options
+#, fuzzy
+msgctxt "audio"
 msgid "System MASTER volume"
 msgstr "Κύρια ένταση συστήματος"
 
+#, fuzzy
+msgctxt "audio"
 msgid "System WAVE volume"
 msgstr "Ένταση WAVE συστήματος"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Internal volume"
 msgstr "Εσωτερική ένταση"
 
+#. Context: Status messages
+#, fuzzy
+msgctxt "status"
 msgid ""
 "Filetypes are registered.\n"
 "You can doubleclick a supported file to run BriskPlayer."
@@ -245,104 +422,136 @@ msgstr ""
 "Μπορείτε να κάνετε διπλό κλικ σε ένα υποστηριζόμενο αρχείο για να εκκινήσετε "
 "το BriskPlayer."
 
+#, fuzzy
+msgctxt "status"
 msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
 msgstr ""
 "Ένα εικονίδιο για το BriskPlayer έχει δημιουργηθεί στο μενού Έναρξη και στην "
 "Επιφάνεια εργασίας."
 
+#. Context: File filters
 msgid "BriskPlayer Skin Initialization Files (*.ini)"
 msgstr "Αρχεία αρχικοποίησης θέματος BriskPlayer (*.ini)"
 
 msgid "All Files (*.*)"
 msgstr "Όλα τα αρχεία (*.*)"
 
+#. Context: Audio format strings
+#, fuzzy
+msgctxt "audio"
 msgid "Bitrate: %d kbps"
 msgstr "Ρυθμός μετάδοσης: %d kbps"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Sample rate: %.1f kHz"
 msgstr "Συχνότητα δειγματοληψίας: %.1f kHz"
 
+#. Context: Time format (plural forms example)
+#, fuzzy
+msgctxt "time"
 msgid "Found %d file"
 msgid_plural "Found %d files"
 msgstr[0] "Βρέθηκε %d αρχείο"
 msgstr[1] "Βρέθηκαν %d αρχεία"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] "%d δευτερόλεπτο"
 msgstr[1] "%d δευτερόλεπτα"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d minute"
 msgid_plural "%d minutes"
 msgstr[0] "%d λεπτό"
 msgstr[1] "%d λεπτά"
 
+#. Context: Error messages
+#, fuzzy
+msgctxt "error"
 msgid "Failed to initialize audio device"
 msgstr "Αποτυχία αρχικοποίησης συσκευής ήχου"
 
+#, fuzzy
+msgctxt "error"
 msgid "Unable to load audio file"
 msgstr "Δεν είναι δυνατή η φόρτωση αρχείου ήχου"
 
+#, fuzzy
+msgctxt "error"
 msgid "Invalid String ID"
 msgstr "Μη έγκυρο αναγνωριστικό συμβολοσειράς"
 
+#, fuzzy
+msgctxt "error"
 msgid "Audio Error"
 msgstr "Σφάλμα ήχου"
 
+#, fuzzy
+msgctxt "error"
 msgid "File Error"
 msgstr "Σφάλμα αρχείου"
 
+#. Context: Processing messages
+#, fuzzy
+msgctxt "status"
 msgid "Processing audio..."
 msgstr "Επεξεργασία ήχου..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Loading..."
 msgstr "Φόρτωση..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Ready"
 msgstr "Έτοιμο"
 
-msgid "Rotate system tray icon"
-msgstr "Περιστροφή εικονιδίου γραμμής ειδοποιήσεων"
+#~ msgid "Rotate system tray icon"
+#~ msgstr "Περιστροφή εικονιδίου γραμμής ειδοποιήσεων"
 
-msgid "Scroll title"
-msgstr "Κύλιση τίτλου"
+#~ msgid "Scroll title"
+#~ msgstr "Κύλιση τίτλου"
 
-msgid "Only add file once to playlist"
-msgstr "Προσθήκη αρχείου στη λίστα αναπαραγωγής μόνο μία φορά"
+#~ msgid "Only add file once to playlist"
+#~ msgstr "Προσθήκη αρχείου στη λίστα αναπαραγωγής μόνο μία φορά"
 
-msgid "Read ID3 tags"
-msgstr "Ανάγνωση ετικετών ID3"
+#~ msgid "Read ID3 tags"
+#~ msgstr "Ανάγνωση ετικετών ID3"
 
-msgid "Read ID3 for selected files"
-msgstr "Ανάγνωση ετικετών ID3 επιλεγμένων αρχείων"
+#~ msgid "Read ID3 for selected files"
+#~ msgstr "Ανάγνωση ετικετών ID3 επιλεγμένων αρχείων"
 
-msgid "Read ID3 in background"
-msgstr "Ανάγνωση ετικετών ID3 στο παρασκήνιο"
+#~ msgid "Read ID3 in background"
+#~ msgstr "Ανάγνωση ετικετών ID3 στο παρασκήνιο"
 
-msgid "Calculate track lengths"
-msgstr "Υπολογισμός διάρκειας κομματιών"
+#~ msgid "Calculate track lengths"
+#~ msgstr "Υπολογισμός διάρκειας κομματιών"
 
-msgid "Easy move mode"
-msgstr "Εύκολη λειτουργία μετακίνησης"
+#~ msgid "Easy move mode"
+#~ msgstr "Εύκολη λειτουργία μετακίνησης"
 
-msgid "Register file types"
-msgstr "Καταχώριση τύπων αρχείων"
+#~ msgid "Register file types"
+#~ msgstr "Καταχώριση τύπων αρχείων"
 
-msgid "Track delay (seconds)"
-msgstr "Καθυστέρηση κομματιού (δευτερόλεπτα)"
+#~ msgid "Track delay (seconds)"
+#~ msgstr "Καθυστέρηση κομματιού (δευτερόλεπτα)"
 
-msgid "Skin list length"
-msgstr "Μήκος λίστας θεμάτων"
+#~ msgid "Skin list length"
+#~ msgstr "Μήκος λίστας θεμάτων"
 
-msgid "Open..."
-msgstr "Άνοιγμα..."
+#~ msgid "Open..."
+#~ msgstr "Άνοιγμα..."
 
+#~ msgid "DSP Plugins"
+#~ msgstr "Πρόσθετα DSP"
 
-msgid "DSP Plugins"
-msgstr "Πρόσθετα DSP"
+#~ msgid "None (Disabled)"
+#~ msgstr "Κανένα (Απενεργοποιημένο)"
 
-msgid "None (Disabled)"
-msgstr "Κανένα (Απενεργοποιημένο)"
-
-msgid "Configure..."
-msgstr "Ρύθμιση..."
+#~ msgid "Configure..."
+#~ msgstr "Ρύθμιση..."

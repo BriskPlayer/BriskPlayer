@@ -16,193 +16,359 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#. Context: Application name and description
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer - Blazing fast audio player"
 msgstr "BriskPlayer – Blixtsnabb mediaspelare"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Audio file"
 msgstr "BriskPlayer-ljudfil"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Playlist"
 msgstr "BriskPlayer-spellista"
 
+#. Context: Menu items
+#, fuzzy
+msgctxt "menu"
 msgid "Open File..."
 msgstr "Öppna fil..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Open URL..."
 msgstr "Öppna URL..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Add Files..."
 msgstr "Lägg till filer..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "Spellisteredaktör"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Skin"
 msgstr "Skal"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Default"
 msgstr "Standard"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Language"
 msgstr "Språk"
 
+#, fuzzy
+msgctxt "menu"
 msgid "English"
 msgstr "Engelska"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Deutsch"
 msgstr "Tyska"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playback"
 msgstr "Uppspelning"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Play"
 msgstr "Spela"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Stop"
 msgstr "Stoppa"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Pause"
 msgstr "Pausa"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Next"
 msgstr "Nästa"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Previous"
 msgstr "Föregående"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Options..."
 msgstr "Alternativ..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "About"
 msgstr "Om"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Exit"
 msgstr "Avsluta"
 
+#. Context: Dialog titles
+#, fuzzy
+msgctxt "dialog"
 msgid "About BriskPlayer"
 msgstr "Om BriskPlayer"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "BriskPlayer Options"
 msgstr "BriskPlayer-alternativ"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Open URL"
 msgstr "Öppna URL"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Quick Find"
 msgstr "Snabbsökning"
 
+#. Context: About dialog
+#, fuzzy
+msgctxt "dialog"
 msgid "&About"
 msgstr "&Om"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "&Keyboard Shortcuts"
 msgstr "&Tangentbordsgenvägar"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&hanges"
 msgstr "Ä&ndringar"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&lose"
 msgstr "&Stäng"
 
+#. Context: Options dialog
+#, fuzzy
+msgctxt "options"
 msgid "General"
 msgstr "Allmänt"
 
+#, fuzzy
+msgctxt "options"
 msgid "Always on top"
 msgstr "Alltid överst"
 
+#, fuzzy
+msgctxt "options"
 msgid "Exit after playing"
 msgstr "Avsluta efter uppspelning"
 
+#, fuzzy
+msgctxt "options"
 msgid "Rotate systemtray icon"
 msgstr "Rotera systemfältsikon"
 
+#, fuzzy
+msgctxt "options"
 msgid "Scroll Songtitle"
 msgstr "Scrolla låttitel"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow file once in playlist"
 msgstr "Tillåt varje fil en gång i spellistan"
 
+#, fuzzy
+msgctxt "options"
 msgid "Autoplay on startup"
 msgstr "Spela automatiskt vid start"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow multiple instances"
 msgstr "Tillåt flera instanser"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show remaining time"
 msgstr "Visa återstående tid"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show on taskbar"
 msgstr "Visa i aktivitetsfältet"
 
-
+#, fuzzy
+msgctxt "options"
 msgid "Sticky windows"
 msgstr "Fästande fönster"
 
+#, fuzzy
+msgctxt "options"
 msgid "Discord Rich Presence"
 msgstr "Discord Rich Presence"
 
+msgctxt "replaygain"
+msgid "Off"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Track"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Album"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Prevent clipping"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "ReplayGain"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Mode"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Preamp (dB)"
+msgstr ""
+
+msgctxt "playback"
+msgid "Gapless playback"
+msgstr ""
+
+#, fuzzy
+msgctxt "options"
 msgid "Register Filetypes"
 msgstr "Registrera filtyper"
 
+#, fuzzy
+msgctxt "options"
 msgid "Add to Start Menu"
 msgstr "Lägg till i Startmenyn"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag (if any)"
 msgstr "Läs ID3-tagg (om någon)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag of selected"
 msgstr "Läs ID3-tagg för valt spår"
 
+#, fuzzy
+msgctxt "options"
 msgid "Support ID3v2"
 msgstr "Stöd ID3v2"
 
+#, fuzzy
+msgctxt "options"
 msgid "Prefer native OGG tags"
 msgstr "Föredra inbyggda OGG-taggar"
 
+#, fuzzy
+msgctxt "options"
 msgid "Load ID3 tags in background"
 msgstr "Läs in ID3-taggar i bakgrunden"
 
+#, fuzzy
+msgctxt "options"
 msgid "Work out track lengths"
 msgstr "Beräkna spårlängder"
 
+#, fuzzy
+msgctxt "options"
 msgid "Easy move"
 msgstr "Enkel flytt"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember playlist"
 msgstr "Kom ihåg spellistan"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember last played"
 msgstr "Kom ihåg senast spelade"
 
+#, fuzzy
+msgctxt "options"
 msgid "Track Delay (sec)"
 msgstr "Fördröjning mellan spår (sek)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Skinlist length"
 msgstr "Skallistas längd"
 
+#, fuzzy
+msgctxt "options"
 msgid "Flush"
 msgstr "Töm"
 
+#, fuzzy
+msgctxt "options"
 msgid "Output"
 msgstr "Utdata"
 
+#, fuzzy
+msgctxt "options"
 msgid "Volume controls"
 msgstr "Volymkontroller"
 
+#, fuzzy
+msgctxt "options"
+msgid "Skin"
+msgstr "Skal"
+
+#, fuzzy
+msgctxt "options"
 msgid "Player"
 msgstr "Spelare"
 
+#, fuzzy
+msgctxt "options"
 msgid "Open"
 msgstr "Öppna"
 
+#, fuzzy
+msgctxt "options"
 msgid "OK"
 msgstr "OK"
 
+#, fuzzy
+msgctxt "options"
 msgid "Cancel"
 msgstr "Avbryt"
 
+#. Context: URL dialog
 msgid ""
 "Type the URL you would like to play. Supported formats are MP3 and OGG "
 "streaming, and M3U playlists."
@@ -213,6 +379,7 @@ msgstr ""
 msgid "&URL:"
 msgstr "&URL:"
 
+#. Context: Quick Find dialog
 msgid "Find Text"
 msgstr "Sök text"
 
@@ -228,15 +395,25 @@ msgstr "Artistn&amn"
 msgid "&Album Names"
 msgstr "&Albumnamn"
 
+#. Context: Volume control options
+#, fuzzy
+msgctxt "audio"
 msgid "System MASTER volume"
 msgstr "System-MASTER-volym"
 
+#, fuzzy
+msgctxt "audio"
 msgid "System WAVE volume"
 msgstr "System-WAVE-volym"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Internal volume"
 msgstr "Intern volym"
 
+#. Context: Status messages
+#, fuzzy
+msgctxt "status"
 msgid ""
 "Filetypes are registered.\n"
 "You can doubleclick a supported file to run BriskPlayer."
@@ -244,102 +421,134 @@ msgstr ""
 "Filtyper är registrerade.\n"
 "Du kan dubbelklicka på en filen som stöds för att köra BriskPlayer."
 
+#, fuzzy
+msgctxt "status"
 msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
 msgstr "En ikon för BriskPlayer har skapats i Startmenyn och på Skrivbordet."
 
+#. Context: File filters
 msgid "BriskPlayer Skin Initialization Files (*.ini)"
 msgstr "BriskPlayer-skalinitieringsfiler (*.ini)"
 
 msgid "All Files (*.*)"
 msgstr "Alla filer (*.*)"
 
+#. Context: Audio format strings
+#, fuzzy
+msgctxt "audio"
 msgid "Bitrate: %d kbps"
 msgstr "Bithastighet: %d kbps"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Sample rate: %.1f kHz"
 msgstr "Samplingsfrekvens: %.1f kHz"
 
+#. Context: Time format (plural forms example)
+#, fuzzy
+msgctxt "time"
 msgid "Found %d file"
 msgid_plural "Found %d files"
 msgstr[0] "%d fil hittades"
 msgstr[1] "%d filer hittades"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] "%d sekund"
 msgstr[1] "%d sekunder"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d minute"
 msgid_plural "%d minutes"
 msgstr[0] "%d minut"
 msgstr[1] "%d minuter"
 
+#. Context: Error messages
+#, fuzzy
+msgctxt "error"
 msgid "Failed to initialize audio device"
 msgstr "Det gick inte att initiera ljudenheten"
 
+#, fuzzy
+msgctxt "error"
 msgid "Unable to load audio file"
 msgstr "Det gick inte att läsa in ljudfilen"
 
+#, fuzzy
+msgctxt "error"
 msgid "Invalid String ID"
 msgstr "Ogiltigt sträng-ID"
 
+#, fuzzy
+msgctxt "error"
 msgid "Audio Error"
 msgstr "Ljudfel"
 
+#, fuzzy
+msgctxt "error"
 msgid "File Error"
 msgstr "Filfel"
 
+#. Context: Processing messages
+#, fuzzy
+msgctxt "status"
 msgid "Processing audio..."
 msgstr "Bearbetar ljud..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Loading..."
 msgstr "Läser in..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Ready"
 msgstr "Redo"
 
-msgid "Rotate system tray icon"
-msgstr "Rotera systemfältsikonen"
+#~ msgid "Rotate system tray icon"
+#~ msgstr "Rotera systemfältsikonen"
 
-msgid "Scroll title"
-msgstr "Scrolla titel"
+#~ msgid "Scroll title"
+#~ msgstr "Scrolla titel"
 
-msgid "Only add file once to playlist"
-msgstr "Lägg bara till filen en gång i spellistan"
+#~ msgid "Only add file once to playlist"
+#~ msgstr "Lägg bara till filen en gång i spellistan"
 
-msgid "Read ID3 tags"
-msgstr "Läs ID3-taggar"
+#~ msgid "Read ID3 tags"
+#~ msgstr "Läs ID3-taggar"
 
-msgid "Read ID3 for selected files"
-msgstr "Läs ID3-taggar för valda filer"
+#~ msgid "Read ID3 for selected files"
+#~ msgstr "Läs ID3-taggar för valda filer"
 
-msgid "Read ID3 in background"
-msgstr "Läs ID3-taggar i bakgrunden"
+#~ msgid "Read ID3 in background"
+#~ msgstr "Läs ID3-taggar i bakgrunden"
 
-msgid "Calculate track lengths"
-msgstr "Beräkna spårlängder"
+#~ msgid "Calculate track lengths"
+#~ msgstr "Beräkna spårlängder"
 
-msgid "Easy move mode"
-msgstr "Enkelt rörelsläge"
+#~ msgid "Easy move mode"
+#~ msgstr "Enkelt rörelsläge"
 
-msgid "Register file types"
-msgstr "Registrera filtyper"
+#~ msgid "Register file types"
+#~ msgstr "Registrera filtyper"
 
-msgid "Track delay (seconds)"
-msgstr "Spårfördröjning (sekunder)"
+#~ msgid "Track delay (seconds)"
+#~ msgstr "Spårfördröjning (sekunder)"
 
-msgid "Skin list length"
-msgstr "Skinlistans längd"
+#~ msgid "Skin list length"
+#~ msgstr "Skinlistans längd"
 
-msgid "Open..."
-msgstr "Öppna..."
+#~ msgid "Open..."
+#~ msgstr "Öppna..."
 
+#~ msgid "DSP Plugins"
+#~ msgstr "DSP-insticksprogram"
 
-msgid "DSP Plugins"
-msgstr "DSP-insticksprogram"
+#~ msgid "None (Disabled)"
+#~ msgstr "Ingen (Inaktiverad)"
 
-msgid "None (Disabled)"
-msgstr "Ingen (Inaktiverad)"
-
-msgid "Configure..."
-msgstr "Konfigurera..."
+#~ msgid "Configure..."
+#~ msgstr "Konfigurera..."

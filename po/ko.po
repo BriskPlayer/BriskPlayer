@@ -16,193 +16,359 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+#. Context: Application name and description
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer - Blazing fast audio player"
 msgstr "BriskPlayer – 초고속 오디오 플레이어"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Audio file"
 msgstr "BriskPlayer 오디오 파일"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Playlist"
 msgstr "BriskPlayer 재생 목록"
 
+#. Context: Menu items
+#, fuzzy
+msgctxt "menu"
 msgid "Open File..."
 msgstr "파일 열기..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Open URL..."
 msgstr "URL 열기..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Add Files..."
 msgstr "파일 추가..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "재생 목록 편집기"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Skin"
 msgstr "스킨"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Default"
 msgstr "기본값"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Language"
 msgstr "언어"
 
+#, fuzzy
+msgctxt "menu"
 msgid "English"
 msgstr "영어"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Deutsch"
 msgstr "독일어"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playback"
 msgstr "재생"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Play"
 msgstr "재생"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Stop"
 msgstr "정지"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Pause"
 msgstr "일시 정지"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Next"
 msgstr "다음"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Previous"
 msgstr "이전"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Options..."
 msgstr "옵션..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "About"
 msgstr "정보"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Exit"
 msgstr "종료"
 
+#. Context: Dialog titles
+#, fuzzy
+msgctxt "dialog"
 msgid "About BriskPlayer"
 msgstr "BriskPlayer 정보"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "BriskPlayer Options"
 msgstr "BriskPlayer 옵션"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Open URL"
 msgstr "URL 열기"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Quick Find"
 msgstr "빠른 찾기"
 
+#. Context: About dialog
+#, fuzzy
+msgctxt "dialog"
 msgid "&About"
 msgstr "정보(&A)"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "&Keyboard Shortcuts"
 msgstr "키보드 단축키(&K)"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&hanges"
 msgstr "변경 사항(&H)"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&lose"
 msgstr "닫기(&L)"
 
+#. Context: Options dialog
+#, fuzzy
+msgctxt "options"
 msgid "General"
 msgstr "일반"
 
+#, fuzzy
+msgctxt "options"
 msgid "Always on top"
 msgstr "항상 위"
 
+#, fuzzy
+msgctxt "options"
 msgid "Exit after playing"
 msgstr "재생 후 종료"
 
+#, fuzzy
+msgctxt "options"
 msgid "Rotate systemtray icon"
 msgstr "시스템 트레이 아이콘 회전"
 
+#, fuzzy
+msgctxt "options"
 msgid "Scroll Songtitle"
 msgstr "곡 제목 스크롤"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow file once in playlist"
 msgstr "재생 목록에 각 파일 한 번만 허용"
 
+#, fuzzy
+msgctxt "options"
 msgid "Autoplay on startup"
 msgstr "시작 시 자동 재생"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow multiple instances"
 msgstr "여러 인스턴스 허용"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show remaining time"
 msgstr "남은 시간 표시"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show on taskbar"
 msgstr "작업 표시줄에 표시"
 
-
+#, fuzzy
+msgctxt "options"
 msgid "Sticky windows"
 msgstr "창 자석 효과"
 
+#, fuzzy
+msgctxt "options"
 msgid "Discord Rich Presence"
 msgstr "Discord Rich Presence"
 
+msgctxt "replaygain"
+msgid "Off"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Track"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Album"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Prevent clipping"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "ReplayGain"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Mode"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Preamp (dB)"
+msgstr ""
+
+msgctxt "playback"
+msgid "Gapless playback"
+msgstr ""
+
+#, fuzzy
+msgctxt "options"
 msgid "Register Filetypes"
 msgstr "파일 형식 등록"
 
+#, fuzzy
+msgctxt "options"
 msgid "Add to Start Menu"
 msgstr "시작 메뉴에 추가"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag (if any)"
 msgstr "ID3 태그 읽기 (있는 경우)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag of selected"
 msgstr "선택한 항목의 ID3 태그 읽기"
 
+#, fuzzy
+msgctxt "options"
 msgid "Support ID3v2"
 msgstr "ID3v2 지원"
 
+#, fuzzy
+msgctxt "options"
 msgid "Prefer native OGG tags"
 msgstr "기본 OGG 태그 선호"
 
+#, fuzzy
+msgctxt "options"
 msgid "Load ID3 tags in background"
 msgstr "백그라운드에서 ID3 태그 로드"
 
+#, fuzzy
+msgctxt "options"
 msgid "Work out track lengths"
 msgstr "트랙 길이 계산"
 
+#, fuzzy
+msgctxt "options"
 msgid "Easy move"
 msgstr "쉬운 이동"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember playlist"
 msgstr "재생 목록 기억"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember last played"
 msgstr "마지막 재생 기억"
 
+#, fuzzy
+msgctxt "options"
 msgid "Track Delay (sec)"
 msgstr "트랙 지연 (초)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Skinlist length"
 msgstr "스킨 목록 길이"
 
+#, fuzzy
+msgctxt "options"
 msgid "Flush"
 msgstr "비우기"
 
+#, fuzzy
+msgctxt "options"
 msgid "Output"
 msgstr "출력"
 
+#, fuzzy
+msgctxt "options"
 msgid "Volume controls"
 msgstr "볼륨 조절"
 
+#, fuzzy
+msgctxt "options"
+msgid "Skin"
+msgstr "스킨"
+
+#, fuzzy
+msgctxt "options"
 msgid "Player"
 msgstr "플레이어"
 
+#, fuzzy
+msgctxt "options"
 msgid "Open"
 msgstr "열기"
 
+#, fuzzy
+msgctxt "options"
 msgid "OK"
 msgstr "확인"
 
+#, fuzzy
+msgctxt "options"
 msgid "Cancel"
 msgstr "취소"
 
+#. Context: URL dialog
 msgid ""
 "Type the URL you would like to play. Supported formats are MP3 and OGG "
 "streaming, and M3U playlists."
@@ -213,6 +379,7 @@ msgstr ""
 msgid "&URL:"
 msgstr "URL(&U):"
 
+#. Context: Quick Find dialog
 msgid "Find Text"
 msgstr "텍스트 찾기"
 
@@ -228,15 +395,25 @@ msgstr "아티스트 이름(&N)"
 msgid "&Album Names"
 msgstr "앨범 이름(&A)"
 
+#. Context: Volume control options
+#, fuzzy
+msgctxt "audio"
 msgid "System MASTER volume"
 msgstr "시스템 MASTER 볼륨"
 
+#, fuzzy
+msgctxt "audio"
 msgid "System WAVE volume"
 msgstr "시스템 WAVE 볼륨"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Internal volume"
 msgstr "내부 볼륨"
 
+#. Context: Status messages
+#, fuzzy
+msgctxt "status"
 msgid ""
 "Filetypes are registered.\n"
 "You can doubleclick a supported file to run BriskPlayer."
@@ -244,99 +421,131 @@ msgstr ""
 "파일 형식이 등록되었습니다.\n"
 "지원되는 파일을 더블 클릭하면 BriskPlayer가 실행됩니다."
 
+#, fuzzy
+msgctxt "status"
 msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
 msgstr "BriskPlayer 아이콘이 시작 메뉴와 바탕 화면에 생성되었습니다."
 
+#. Context: File filters
 msgid "BriskPlayer Skin Initialization Files (*.ini)"
 msgstr "BriskPlayer 스킨 초기화 파일 (*.ini)"
 
 msgid "All Files (*.*)"
 msgstr "모든 파일 (*.*)"
 
+#. Context: Audio format strings
+#, fuzzy
+msgctxt "audio"
 msgid "Bitrate: %d kbps"
 msgstr "비트레이트: %d kbps"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Sample rate: %.1f kHz"
 msgstr "샘플레이트: %.1f kHz"
 
+#. Context: Time format (plural forms example)
+#, fuzzy
+msgctxt "time"
 msgid "Found %d file"
 msgid_plural "Found %d files"
 msgstr[0] "파일 %d개 찾음"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] "%d초"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d minute"
 msgid_plural "%d minutes"
 msgstr[0] "%d분"
 
+#. Context: Error messages
+#, fuzzy
+msgctxt "error"
 msgid "Failed to initialize audio device"
 msgstr "오디오 장치 초기화 실패"
 
+#, fuzzy
+msgctxt "error"
 msgid "Unable to load audio file"
 msgstr "오디오 파일을 로드할 수 없음"
 
+#, fuzzy
+msgctxt "error"
 msgid "Invalid String ID"
 msgstr "잘못된 문자열 ID"
 
+#, fuzzy
+msgctxt "error"
 msgid "Audio Error"
 msgstr "오디오 오류"
 
+#, fuzzy
+msgctxt "error"
 msgid "File Error"
 msgstr "파일 오류"
 
+#. Context: Processing messages
+#, fuzzy
+msgctxt "status"
 msgid "Processing audio..."
 msgstr "오디오 처리 중..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Loading..."
 msgstr "로딩 중..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Ready"
 msgstr "준비완료"
 
-msgid "Rotate system tray icon"
-msgstr "시스템 트레이 아이콘 회전"
+#~ msgid "Rotate system tray icon"
+#~ msgstr "시스템 트레이 아이콘 회전"
 
-msgid "Scroll title"
-msgstr "제목 스크롤"
+#~ msgid "Scroll title"
+#~ msgstr "제목 스크롤"
 
-msgid "Only add file once to playlist"
-msgstr "파일을 재생목록에 한 번만 추가"
+#~ msgid "Only add file once to playlist"
+#~ msgstr "파일을 재생목록에 한 번만 추가"
 
-msgid "Read ID3 tags"
-msgstr "ID3 태그 읽기"
+#~ msgid "Read ID3 tags"
+#~ msgstr "ID3 태그 읽기"
 
-msgid "Read ID3 for selected files"
-msgstr "선택한 파일의 ID3 태그 읽기"
+#~ msgid "Read ID3 for selected files"
+#~ msgstr "선택한 파일의 ID3 태그 읽기"
 
-msgid "Read ID3 in background"
-msgstr "백그라운드에서 ID3 태그 읽기"
+#~ msgid "Read ID3 in background"
+#~ msgstr "백그라운드에서 ID3 태그 읽기"
 
-msgid "Calculate track lengths"
-msgstr "트랙 길이 계산"
+#~ msgid "Calculate track lengths"
+#~ msgstr "트랙 길이 계산"
 
-msgid "Easy move mode"
-msgstr "간편 이동 모드"
+#~ msgid "Easy move mode"
+#~ msgstr "간편 이동 모드"
 
-msgid "Register file types"
-msgstr "파일 형식 등록"
+#~ msgid "Register file types"
+#~ msgstr "파일 형식 등록"
 
-msgid "Track delay (seconds)"
-msgstr "트랙 지연 (초)"
+#~ msgid "Track delay (seconds)"
+#~ msgstr "트랙 지연 (초)"
 
-msgid "Skin list length"
-msgstr "스킨 목록 길이"
+#~ msgid "Skin list length"
+#~ msgstr "스킨 목록 길이"
 
-msgid "Open..."
-msgstr "열기..."
+#~ msgid "Open..."
+#~ msgstr "열기..."
 
+#~ msgid "DSP Plugins"
+#~ msgstr "DSP 플러그인"
 
-msgid "DSP Plugins"
-msgstr "DSP 플러그인"
+#~ msgid "None (Disabled)"
+#~ msgstr "없음 (비활성화)"
 
-msgid "None (Disabled)"
-msgstr "없음 (비활성화)"
-
-msgid "Configure..."
-msgstr "구성..."
+#~ msgid "Configure..."
+#~ msgstr "구성..."

@@ -16,193 +16,359 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+#. Context: Application name and description
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer - Blazing fast audio player"
 msgstr "BriskPlayer – Yıldırım hızında ses çalar"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Audio file"
 msgstr "BriskPlayer Ses dosyası"
 
+#, fuzzy
+msgctxt "app"
 msgid "BriskPlayer Playlist"
 msgstr "BriskPlayer Çalma listesi"
 
+#. Context: Menu items
+#, fuzzy
+msgctxt "menu"
 msgid "Open File..."
 msgstr "Dosya aç..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Open URL..."
 msgstr "URL aç..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Add Files..."
 msgstr "Dosya ekle..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "Çalma listesi düzenleyici"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Skin"
 msgstr "Tema"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Default"
 msgstr "Varsayılan"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Language"
 msgstr "Dil"
 
+#, fuzzy
+msgctxt "menu"
 msgid "English"
 msgstr "İngilizce"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Deutsch"
 msgstr "Almanca"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Playback"
 msgstr "Oynatma"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Play"
 msgstr "Oynat"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Stop"
 msgstr "Durdur"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Pause"
 msgstr "Duraklat"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Next"
 msgstr "Sonraki"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Previous"
 msgstr "Önceki"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Options..."
 msgstr "Seçenekler..."
 
+#, fuzzy
+msgctxt "menu"
 msgid "About"
 msgstr "Hakkında"
 
+#, fuzzy
+msgctxt "menu"
 msgid "Exit"
 msgstr "Çıkış"
 
+#. Context: Dialog titles
+#, fuzzy
+msgctxt "dialog"
 msgid "About BriskPlayer"
 msgstr "BriskPlayer Hakkında"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "BriskPlayer Options"
 msgstr "BriskPlayer Seçenekleri"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Open URL"
 msgstr "URL Aç"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "Quick Find"
 msgstr "Hızlı Bul"
 
+#. Context: About dialog
+#, fuzzy
+msgctxt "dialog"
 msgid "&About"
 msgstr "&Hakkında"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "&Keyboard Shortcuts"
 msgstr "&Klavye Kısayolları"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&hanges"
 msgstr "&Değişiklikler"
 
+#, fuzzy
+msgctxt "dialog"
 msgid "C&lose"
 msgstr "&Kapat"
 
+#. Context: Options dialog
+#, fuzzy
+msgctxt "options"
 msgid "General"
 msgstr "Genel"
 
+#, fuzzy
+msgctxt "options"
 msgid "Always on top"
 msgstr "Her zaman üstte"
 
+#, fuzzy
+msgctxt "options"
 msgid "Exit after playing"
 msgstr "Çalma bittikten sonra çık"
 
+#, fuzzy
+msgctxt "options"
 msgid "Rotate systemtray icon"
 msgstr "Sistem tepsisi simgesini döndür"
 
+#, fuzzy
+msgctxt "options"
 msgid "Scroll Songtitle"
 msgstr "Şarkı başlığını kaydır"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow file once in playlist"
 msgstr "Her dosyayı çalma listesinde yalnızca bir kez izin ver"
 
+#, fuzzy
+msgctxt "options"
 msgid "Autoplay on startup"
 msgstr "Başlangıçta otomatik çal"
 
+#, fuzzy
+msgctxt "options"
 msgid "Allow multiple instances"
 msgstr "Birden fazla örneğe izin ver"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show remaining time"
 msgstr "Kalan süreyi göster"
 
+#, fuzzy
+msgctxt "options"
 msgid "Show on taskbar"
 msgstr "Görev çubuğunda göster"
 
-
+#, fuzzy
+msgctxt "options"
 msgid "Sticky windows"
 msgstr "Yapışkan pencereler"
 
+#, fuzzy
+msgctxt "options"
 msgid "Discord Rich Presence"
 msgstr "Discord Rich Presence"
 
+msgctxt "replaygain"
+msgid "Off"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Track"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Album"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Prevent clipping"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "ReplayGain"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Mode"
+msgstr ""
+
+msgctxt "replaygain"
+msgid "Preamp (dB)"
+msgstr ""
+
+msgctxt "playback"
+msgid "Gapless playback"
+msgstr ""
+
+#, fuzzy
+msgctxt "options"
 msgid "Register Filetypes"
 msgstr "Dosya türlerini kaydet"
 
+#, fuzzy
+msgctxt "options"
 msgid "Add to Start Menu"
 msgstr "Başlat menüsüne ekle"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag (if any)"
 msgstr "ID3 etiketini oku (varsa)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Read ID3 Tag of selected"
 msgstr "Seçili dosyanın ID3 etiketini oku"
 
+#, fuzzy
+msgctxt "options"
 msgid "Support ID3v2"
 msgstr "ID3v2 desteği"
 
+#, fuzzy
+msgctxt "options"
 msgid "Prefer native OGG tags"
 msgstr "Yerel OGG etiketlerini tercih et"
 
+#, fuzzy
+msgctxt "options"
 msgid "Load ID3 tags in background"
 msgstr "Arka planda ID3 etiketlerini yükle"
 
+#, fuzzy
+msgctxt "options"
 msgid "Work out track lengths"
 msgstr "Parça uzunluklarını hesapla"
 
+#, fuzzy
+msgctxt "options"
 msgid "Easy move"
 msgstr "Kolay taşı"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember playlist"
 msgstr "Çalma listesini hatırla"
 
+#, fuzzy
+msgctxt "options"
 msgid "Remember last played"
 msgstr "Son çalınanı hatırla"
 
+#, fuzzy
+msgctxt "options"
 msgid "Track Delay (sec)"
 msgstr "Parça gecikmesi (sn)"
 
+#, fuzzy
+msgctxt "options"
 msgid "Skinlist length"
 msgstr "Tema listesi uzunluğu"
 
+#, fuzzy
+msgctxt "options"
 msgid "Flush"
 msgstr "Temizle"
 
+#, fuzzy
+msgctxt "options"
 msgid "Output"
 msgstr "Çıktı"
 
+#, fuzzy
+msgctxt "options"
 msgid "Volume controls"
 msgstr "Ses kontrolleri"
 
+#, fuzzy
+msgctxt "options"
+msgid "Skin"
+msgstr "Tema"
+
+#, fuzzy
+msgctxt "options"
 msgid "Player"
 msgstr "Oynatıcı"
 
+#, fuzzy
+msgctxt "options"
 msgid "Open"
 msgstr "Aç"
 
+#, fuzzy
+msgctxt "options"
 msgid "OK"
 msgstr "Tamam"
 
+#, fuzzy
+msgctxt "options"
 msgid "Cancel"
 msgstr "İptal"
 
+#. Context: URL dialog
 msgid ""
 "Type the URL you would like to play. Supported formats are MP3 and OGG "
 "streaming, and M3U playlists."
@@ -213,6 +379,7 @@ msgstr ""
 msgid "&URL:"
 msgstr "&URL:"
 
+#. Context: Quick Find dialog
 msgid "Find Text"
 msgstr "Metin Bul"
 
@@ -228,15 +395,25 @@ msgstr "Sanatçı &Adları"
 msgid "&Album Names"
 msgstr "&Albüm Adları"
 
+#. Context: Volume control options
+#, fuzzy
+msgctxt "audio"
 msgid "System MASTER volume"
 msgstr "Sistem ANA ses düzeyi"
 
+#, fuzzy
+msgctxt "audio"
 msgid "System WAVE volume"
 msgstr "Sistem WAVE ses düzeyi"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Internal volume"
 msgstr "Dahili ses düzeyi"
 
+#. Context: Status messages
+#, fuzzy
+msgctxt "status"
 msgid ""
 "Filetypes are registered.\n"
 "You can doubleclick a supported file to run BriskPlayer."
@@ -244,99 +421,131 @@ msgstr ""
 "Dosya türleri kaydedildi.\n"
 "BriskPlayer'ı başlatmak için desteklenen bir dosyaya çift tıklayabilirsiniz."
 
+#, fuzzy
+msgctxt "status"
 msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
 msgstr "BriskPlayer için Başlat menüsüne ve Masaüstüne simge oluşturuldu."
 
+#. Context: File filters
 msgid "BriskPlayer Skin Initialization Files (*.ini)"
 msgstr "BriskPlayer Tema Başlatma Dosyaları (*.ini)"
 
 msgid "All Files (*.*)"
 msgstr "Tüm Dosyalar (*.*)"
 
+#. Context: Audio format strings
+#, fuzzy
+msgctxt "audio"
 msgid "Bitrate: %d kbps"
 msgstr "Bit hızı: %d kbps"
 
+#, fuzzy
+msgctxt "audio"
 msgid "Sample rate: %.1f kHz"
 msgstr "Örnekleme hızı: %.1f kHz"
 
+#. Context: Time format (plural forms example)
+#, fuzzy
+msgctxt "time"
 msgid "Found %d file"
 msgid_plural "Found %d files"
 msgstr[0] "%d dosya bulundu"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d second"
 msgid_plural "%d seconds"
 msgstr[0] "%d saniye"
 
+#, fuzzy
+msgctxt "time"
 msgid "%d minute"
 msgid_plural "%d minutes"
 msgstr[0] "%d dakika"
 
+#. Context: Error messages
+#, fuzzy
+msgctxt "error"
 msgid "Failed to initialize audio device"
 msgstr "Ses aygıtı başlatılamadı"
 
+#, fuzzy
+msgctxt "error"
 msgid "Unable to load audio file"
 msgstr "Ses dosyası yüklenemiyor"
 
+#, fuzzy
+msgctxt "error"
 msgid "Invalid String ID"
 msgstr "Geçersiz dize kimliği"
 
+#, fuzzy
+msgctxt "error"
 msgid "Audio Error"
 msgstr "Ses hatası"
 
+#, fuzzy
+msgctxt "error"
 msgid "File Error"
 msgstr "Dosya hatası"
 
+#. Context: Processing messages
+#, fuzzy
+msgctxt "status"
 msgid "Processing audio..."
 msgstr "Ses işleniyor..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Loading..."
 msgstr "Yükleniyor..."
 
+#, fuzzy
+msgctxt "status"
 msgid "Ready"
 msgstr "Hazır"
 
-msgid "Rotate system tray icon"
-msgstr "Sistem tepsisi simgesini döndür"
+#~ msgid "Rotate system tray icon"
+#~ msgstr "Sistem tepsisi simgesini döndür"
 
-msgid "Scroll title"
-msgstr "Başlığı kaydır"
+#~ msgid "Scroll title"
+#~ msgstr "Başlığı kaydır"
 
-msgid "Only add file once to playlist"
-msgstr "Çalma listesine dosyayı yalnızca bir kez ekle"
+#~ msgid "Only add file once to playlist"
+#~ msgstr "Çalma listesine dosyayı yalnızca bir kez ekle"
 
-msgid "Read ID3 tags"
-msgstr "ID3 etiketlerini oku"
+#~ msgid "Read ID3 tags"
+#~ msgstr "ID3 etiketlerini oku"
 
-msgid "Read ID3 for selected files"
-msgstr "Seçili dosyaların ID3 etiketlerini oku"
+#~ msgid "Read ID3 for selected files"
+#~ msgstr "Seçili dosyaların ID3 etiketlerini oku"
 
-msgid "Read ID3 in background"
-msgstr "ID3 etiketlerini arka planda oku"
+#~ msgid "Read ID3 in background"
+#~ msgstr "ID3 etiketlerini arka planda oku"
 
-msgid "Calculate track lengths"
-msgstr "Parça sürelerini hesapla"
+#~ msgid "Calculate track lengths"
+#~ msgstr "Parça sürelerini hesapla"
 
-msgid "Easy move mode"
-msgstr "Kolay taşıma modu"
+#~ msgid "Easy move mode"
+#~ msgstr "Kolay taşıma modu"
 
-msgid "Register file types"
-msgstr "Dosya türlerini kaydet"
+#~ msgid "Register file types"
+#~ msgstr "Dosya türlerini kaydet"
 
-msgid "Track delay (seconds)"
-msgstr "Parça gecikmesi (saniye)"
+#~ msgid "Track delay (seconds)"
+#~ msgstr "Parça gecikmesi (saniye)"
 
-msgid "Skin list length"
-msgstr "Tema listesi uzunluğu"
+#~ msgid "Skin list length"
+#~ msgstr "Tema listesi uzunluğu"
 
-msgid "Open..."
-msgstr "Aç..."
+#~ msgid "Open..."
+#~ msgstr "Aç..."
 
+#~ msgid "DSP Plugins"
+#~ msgstr "DSP Eklentileri"
 
-msgid "DSP Plugins"
-msgstr "DSP Eklentileri"
+#~ msgid "None (Disabled)"
+#~ msgstr "Hiçbiri (Devre Dışı)"
 
-msgid "None (Disabled)"
-msgstr "Hiçbiri (Devre Dışı)"
-
-msgid "Configure..."
-msgstr "Yapılandır..."
+#~ msgid "Configure..."
+#~ msgstr "Yapılandır..."

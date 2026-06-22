@@ -11,21 +11,23 @@
  *   2. Calling InStream::open (wraps CP_CreateInStream).
  *   3. Box::from_raw / slice::from_raw_parts_mut in the uninitialise and
  *      get_pcm_block callbacks.
- * The stream cleanup is RAII: dropping FlacByteReader<InStream> automatically
- * drops InStream, which calls uninitialise on the C stream.
+ * The stream cleanup is RAII: dropping FlacByteReader<BufReader<InStream>>
+ * automatically drops BufReader<InStream> → InStream → calls uninitialise.
  */
 
 use super::ffi::*;
 use flac_codec::byteorder::LittleEndian;
 use flac_codec::decode::FlacByteReader;
-use std::io::{Read, Seek, SeekFrom};
+use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::os::raw::{c_char, c_int, c_void};
 
 // ---------------------------------------------------------------------------
-// Type alias
+// Type alias — BufReader batches small FLAC bitstream reads into 64 KB chunks,
+// dramatically reducing FFI crossings from the flac-codec crate's many small
+// reads down to ~2–3 per second during normal playback.
 // ---------------------------------------------------------------------------
 
-type FlacReader = FlacByteReader<InStream, LittleEndian>;
+type FlacReader = FlacByteReader<BufReader<InStream>, LittleEndian>;
 
 // ---------------------------------------------------------------------------
 // Internal codec state
@@ -33,8 +35,8 @@ type FlacReader = FlacByteReader<InStream, LittleEndian>;
 
 struct FlacContext {
     seekable:                bool,
-    /// InStream is owned by FlacByteReader.  Setting reader = None drops it,
-    /// which drops InStream and calls uninitialise — no manual cleanup needed.
+    /// InStream is owned by BufReader which is owned by FlacByteReader.
+    /// Setting reader = None drops the whole chain and calls uninitialise.
     reader:                  Option<FlacReader>,
 
     sample_rate:             u32,
@@ -45,6 +47,10 @@ struct FlacContext {
     total_samples:           u64,
     file_size_bytes:         u64,
     total_duration_secs:     u32,
+    /// Running count of decoded native-PCM bytes; updated in get_pcm_block
+    /// and reset/adjusted in open/seek.  Used by get_current_pos_secs to
+    /// avoid seek(Current(0)) which would flush the BufReader on every poll.
+    pcm_byte_pos:            u64,
     /// Reusable scratch buffer for non-16-bit FLAC block conversion.
     native_buf:              Vec<u8>,
 }
@@ -62,6 +68,7 @@ impl FlacContext {
             total_samples:           0,
             file_size_bytes:         0,
             total_duration_secs:     0,
+            pcm_byte_pos:            0,
             native_buf:              Vec::new(),
         }
     }
@@ -97,9 +104,9 @@ pub unsafe extern "C" fn CP_InitialiseCodec_FLAC(pCoDec: *mut CPs_CoDecModule) {
 // Codec entry points
 // ---------------------------------------------------------------------------
 
-/// Drop the reader (which owns the InStream) to trigger cleanup.  Safe Rust.
+/// Drop the reader (which owns BufReader → InStream) to trigger cleanup.
 fn close_stream(ctx: &mut FlacContext) {
-    ctx.reader = None; // Drop FlacByteReader → Drop InStream → calls uninitialise
+    ctx.reader = None;
 }
 
 unsafe extern "C" fn flac_uninitialise(pModule: *mut CPs_CoDecModule) {
@@ -108,9 +115,9 @@ unsafe extern "C" fn flac_uninitialise(pModule: *mut CPs_CoDecModule) {
     let m = &mut *pModule;
     if !m.m_pModuleCookie.is_null() {
         {
-            // SAFETY: m_pModuleCookie was set to Box::into_raw(FlacContext) in CP_InitialiseCodec_FLAC.
+            // SAFETY: m_pModuleCookie was set to Box::into_raw(FlacContext).
             let ctx = &mut *(m.m_pModuleCookie as *mut FlacContext);
-            close_stream(ctx); // safe
+            close_stream(ctx);
         }
         // SAFETY: same Box::into_raw provenance.
         drop(Box::from_raw(m.m_pModuleCookie as *mut FlacContext));
@@ -128,7 +135,7 @@ unsafe extern "C" fn flac_open_file(
     // SAFETY: pModule and m_pModuleCookie are valid.
     let ctx = &mut *((*pModule).m_pModuleCookie as *mut FlacContext);
 
-    close_stream(ctx); // safe
+    close_stream(ctx);
     ctx.sample_rate             = 0;
     ctx.channels                = 0;
     ctx.bits_per_sample         = 0;
@@ -137,6 +144,7 @@ unsafe extern "C" fn flac_open_file(
     ctx.total_samples           = 0;
     ctx.file_size_bytes         = 0;
     ctx.total_duration_secs     = 0;
+    ctx.pcm_byte_pos            = 0;
 
     // SAFETY: pcFilename is a valid null-terminated C string; hwnd_owner is a valid HWND or null.
     let stream = match InStream::open(pcFilename, hwnd_owner) {
@@ -144,20 +152,23 @@ unsafe extern "C" fn flac_open_file(
         None    => return FALSE,
     };
 
-    let raw_len  = stream.length(); // safe method
-    let seekable = stream.seekable; // safe field
+    let raw_len  = stream.length();
+    let seekable = stream.seekable;
     ctx.seekable = seekable;
     ctx.file_size_bytes = if raw_len < 0xFFFF_FFFF { raw_len } else { 0 };
 
-    // Pass ownership of stream into FlacByteReader.  If construction fails,
-    // stream is dropped automatically → uninitialise called.
+    // Wrap the raw stream in a BufReader so the flac-codec crate's many small
+    // bitstream reads are batched into 64 KB chunks — this is the main fix for
+    // audio stutters caused by per-byte FFI crossings into the C InStream.
+    let buffered = BufReader::with_capacity(65536, stream);
+
     let reader: FlacReader = if seekable {
-        match FlacByteReader::new_seekable(stream) {
+        match FlacByteReader::new_seekable(buffered) {
             Ok(r)  => r,
             Err(_) => return FALSE,
         }
     } else {
-        match FlacByteReader::new(stream) {
+        match FlacByteReader::new(buffered) {
             Ok(r)  => r,
             Err(_) => return FALSE,
         }
@@ -171,7 +182,6 @@ unsafe extern "C" fn flac_open_file(
     let total_samples = info.total_samples.map(|n| n.get()).unwrap_or(0);
 
     if sample_rate == 0 || channels == 0 || bps == 0 {
-        // reader (and stream inside it) dropped here automatically
         return FALSE;
     }
 
@@ -198,7 +208,7 @@ unsafe extern "C" fn flac_open_file(
 unsafe extern "C" fn flac_close_file(pModule: *mut CPs_CoDecModule) {
     // SAFETY: m_pModuleCookie is valid.
     let ctx = &mut *((*pModule).m_pModuleCookie as *mut FlacContext);
-    close_stream(ctx); // safe
+    close_stream(ctx);
 }
 
 unsafe extern "C" fn flac_seek(
@@ -220,7 +230,10 @@ unsafe extern "C" fn flac_seek(
     let target_sample = target_sample.min(ctx.total_samples.saturating_sub(1));
     let seek_byte     = target_sample * ctx.bytes_per_native_frame;
 
-    let _ = reader.seek(SeekFrom::Start(seek_byte)); // Seek::seek on FlacByteReader — safe
+    // Seeking discards the BufReader's buffer; the next read refills it.
+    if reader.seek(SeekFrom::Start(seek_byte)).is_ok() {
+        ctx.pcm_byte_pos = seek_byte;
+    }
 }
 
 unsafe extern "C" fn flac_get_file_info(
@@ -259,9 +272,13 @@ unsafe extern "C" fn flac_get_pcm_block(
         };
         // SAFETY: pBlock points to a buffer of at least requested_out_bytes bytes.
         let buf = std::slice::from_raw_parts_mut(pBlock as *mut u8, requested_out_bytes);
-        match reader.read(buf) { // Read::read on FlacByteReader — safe
-            Ok(n) if n > 0 => { *pdwBlockSize = n as DWORD; TRUE }
-            _              => { *pdwBlockSize = 0; FALSE }
+        match reader.read(buf) {
+            Ok(n) if n > 0 => {
+                ctx.pcm_byte_pos += n as u64;
+                *pdwBlockSize = n as DWORD;
+                TRUE
+            }
+            _ => { *pdwBlockSize = 0; FALSE }
         }
     } else {
         let bps           = ctx.bits_per_sample as usize;
@@ -277,7 +294,7 @@ unsafe extern "C" fn flac_get_pcm_block(
             Some(r) => r,
             None    => { *pdwBlockSize = 0; return FALSE; }
         };
-        let n_native = match reader.read(&mut ctx.native_buf) { // safe
+        let n_native = match reader.read(&mut ctx.native_buf) {
             Ok(0) | Err(_) => { *pdwBlockSize = 0; return FALSE; }
             Ok(n)          => n,
         };
@@ -303,6 +320,7 @@ unsafe extern "C" fn flac_get_pcm_block(
             out_i16[i] = s16.clamp(-32768, 32767) as i16;
         }
 
+        ctx.pcm_byte_pos += n_native as u64;
         *pdwBlockSize = (n_samples * 2) as DWORD;
         TRUE
     }
@@ -310,18 +328,15 @@ unsafe extern "C" fn flac_get_pcm_block(
 
 unsafe extern "C" fn flac_get_current_pos_secs(pModule: *mut CPs_CoDecModule) -> c_int {
     // SAFETY: m_pModuleCookie is valid.
-    let ctx    = &mut *((*pModule).m_pModuleCookie as *mut FlacContext);
-    let reader = match ctx.reader.as_mut() { Some(r) => r, None => return 0 };
+    let ctx = &*((*pModule).m_pModuleCookie as *const FlacContext);
 
-    if ctx.bytes_per_native_frame == 0 || ctx.sample_rate == 0 { return 0; }
+    if ctx.bytes_per_native_frame == 0 || ctx.sample_rate == 0 || ctx.reader.is_none() {
+        return 0;
+    }
 
-    // SeekFrom::Current(0) returns the tracked position for both seekable and
-    // non-seekable streams (InStream counts bytes read).  Seek::seek is safe.
-    let current_byte = match reader.seek(SeekFrom::Current(0)) {
-        Ok(pos) => pos,
-        Err(_)  => return 0,
-    };
-
-    let current_sample = current_byte / ctx.bytes_per_native_frame;
+    // Use the locally-tracked byte position rather than seek(Current(0)).
+    // seek(Current(0)) on a BufReader flushes the read-ahead buffer, causing
+    // an extra InStream read on every UI position poll (~10 times/second).
+    let current_sample = ctx.pcm_byte_pos / ctx.bytes_per_native_frame;
     (current_sample / ctx.sample_rate as u64) as c_int
 }

@@ -59,6 +59,9 @@ HBITMAP WIC_LoadImageFromFile(const wchar_t* pwcFilePath, int* pWidth, int* pHei
 // Load image from memory buffer
 HBITMAP WIC_LoadImageFromMemory(const void* pData, size_t dataSize, int* pWidth, int* pHeight);
 
+// Load image from an RCDATA resource embedded in the executable
+HBITMAP WIC_LoadImageFromResource(UINT uiResourceID, int* pWidth, int* pHeight);
+
 // Check if WIC is available on this system
 BOOL WIC_IsAvailable(void);
 

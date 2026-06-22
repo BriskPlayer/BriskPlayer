@@ -20,6 +20,7 @@
 
 #include "stdafx.h"
 #include "globals.h"
+#include "WinModern.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -52,8 +53,7 @@ CP_HSYSICON CPSYSICON_Create(HWND hWnd)
 	if (!pSysIconData)
 		return NULL;
 	
-	pSysIconData->m_bmStrip = LoadBitmap(GetModuleHandle(NULL),
-										 MAKEINTRESOURCE(IDB_SYSICON));
+	pSysIconData->m_bmStrip = WIC_LoadImageFromResource(IDB_SYSICON, NULL, NULL);
 	pSysIconData->m_bmStrip_Mask = LoadImage(GetModuleHandle(NULL),
 								   MAKEINTRESOURCE(IDB_SYSICON_MASK), IMAGE_BITMAP, 0, 0, LR_MONOCHROME);
 	pSysIconData->m_iCurrentFrame = 0;
