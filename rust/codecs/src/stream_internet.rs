@@ -73,6 +73,14 @@ struct StreamContext {
     filler_thread: Option<std::thread::JoinHandle<()>>,
 }
 
+// SAFETY: unlike the other `unsafe impl Send`s in this crate, this one is
+// NOT "only ever touched from one thread" — `circle_buffer` is genuinely
+// shared: the filler thread (FillerContext, below) writes into it via
+// CPCB_Write while the player/main thread reads from it via CPCB_Read on
+// this StreamContext, concurrently, by design. Soundness depends entirely
+// on the C-side CPCB_* functions (CPI_Stream_Internet.c) being internally
+// synchronized — this Rust struct only carries the pointer across the
+// thread boundary, it does not itself provide any synchronization.
 unsafe impl Send for StreamContext {}
 
 struct FillerContext {
@@ -84,6 +92,11 @@ struct FillerContext {
     audio_bytes_read: u32,
 }
 
+// SAFETY: see StreamContext above — `circle_buffer` here is the same
+// pointer, moved onto the filler thread specifically so it can write into
+// the buffer the main thread reads from. Relies on the C-side CPCB_*
+// functions being internally synchronized. The other fields (Arc<AtomicBool>,
+// an HWND handle, an owned String, plain integers) are all trivially Send.
 unsafe impl Send for FillerContext {}
 
 // ---------------------------------------------------------------------------

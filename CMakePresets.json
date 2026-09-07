@@ -25,7 +25,10 @@
       "name": "_mingw-base",
       "hidden": true,
       "inherits": "_base",
-      "generator": "Ninja"
+      "generator": "Ninja",
+      "cacheVariables": {
+        "VCPKG_HOST_TRIPLET": "x64-mingw-static"
+      }
     },
 
     {

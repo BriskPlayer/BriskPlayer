@@ -130,9 +130,21 @@ extern "C" {
 // Internal helpers
 // ---------------------------------------------------------------------------
 
+// Returns a raw pointer, NOT a `&mut Playlist` reference. Every field/method
+// access below goes through `(*p).field` at the point of use rather than
+// binding a named `&mut Playlist`. This matters because many functions here
+// call other #[no_mangle] functions that themselves call `pl(h)` again on
+// the very same handle (e.g. CPL_Empty -> CPL_UnlinkItem, CPL_RemoveItem ->
+// CPL_Stack_Remove -> CPL_Stack_Renumber, CPL_Stack_SetCursor ->
+// CPL_Stack_Append, and others). A held `&'static mut Playlist` across such
+// a nested call is two simultaneously-live exclusive references to the same
+// object — a Stacked-Borrows/Tree-Borrows aliasing violation (Miri-flagged
+// UB) even though it doesn't miscompile under today's LLVM. A raw pointer
+// is Copy and never creates an exclusive borrow, so it can be freely reused
+// before and after any nested call with no aliasing concern.
 #[inline]
-unsafe fn pl(h: HPlaylist) -> &'static mut Playlist {
-    &mut *(h as *mut Playlist)
+unsafe fn pl(h: HPlaylist) -> *mut Playlist {
+    h as *mut Playlist
 }
 
 #[inline]
@@ -175,58 +187,59 @@ pub unsafe extern "C" fn CPPL_FreePlaylist(h: HPlaylist) {
 #[no_mangle]
 pub unsafe extern "C" fn CPPL_SetWorkerThread(h: HPlaylist, handle: usize, thread_id: u32) {
     let p = pl(h);
-    p.worker_thread    = handle;
-    p.worker_thread_id = thread_id;
+    (*p).worker_thread    = handle;
+    (*p).worker_thread_id = thread_id;
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CPPL_SetHostThreadID(h: HPlaylist, host_id: u32) {
-    pl(h).host_thread_id = host_id;
+    (*pl(h)).host_thread_id = host_id;
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CPPL_GetWorkerThread(h: HPlaylist) -> usize {
-    pl(h).worker_thread
+    (*pl(h)).worker_thread
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CPPL_GetWorkerThreadID(h: HPlaylist) -> u32 {
-    pl(h).worker_thread_id
+    (*pl(h)).worker_thread_id
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CPPL_GetHostThreadID(h: HPlaylist) -> u32 {
-    pl(h).host_thread_id
+    (*pl(h)).host_thread_id
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CPPL_GetBatchID(h: HPlaylist) -> u32 {
-    pl(h).batch_id
+    (*pl(h)).batch_id
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CPPL_IncrBatchID(h: HPlaylist) {
-    pl(h).batch_id = pl(h).batch_id.wrapping_add(1);
+    let p = pl(h);
+    (*p).batch_id = (*p).batch_id.wrapping_add(1);
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CPPL_GetSyncLoadNextFile(h: HPlaylist) -> BOOL {
-    if pl(h).sync_load_next_file { TRUE } else { FALSE }
+    if (*pl(h)).sync_load_next_file { TRUE } else { FALSE }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CPPL_SetSyncLoadNextFile(h: HPlaylist, val: BOOL) {
-    pl(h).sync_load_next_file = val != FALSE;
+    (*pl(h)).sync_load_next_file = val != FALSE;
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CPPL_GetAutoActivateInitial(h: HPlaylist) -> BOOL {
-    if pl(h).auto_activate_initial { TRUE } else { FALSE }
+    if (*pl(h)).auto_activate_initial { TRUE } else { FALSE }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CPPL_SetAutoActivateInitial(h: HPlaylist, val: BOOL) {
-    pl(h).auto_activate_initial = val != FALSE;
+    (*pl(h)).auto_activate_initial = val != FALSE;
 }
 
 // ---------------------------------------------------------------------------
@@ -236,33 +249,33 @@ pub unsafe extern "C" fn CPPL_SetAutoActivateInitial(h: HPlaylist, val: BOOL) {
 #[no_mangle]
 pub unsafe extern "C" fn CPL_Empty(h: HPlaylist) {
     let p = pl(h);
-    p.batch_id = p.batch_id.wrapping_add(1);
+    (*p).batch_id = (*p).batch_id.wrapping_add(1);
 
     // If current item is still live in the list, unlink and mark for deferred destroy
-    if !p.current.is_null() && CPLI_IsDestroyOnDeactivate(p.current) == FALSE {
-        CPL_UnlinkItem(h, p.current);
-        CPLI_SetNext(p.current, std::ptr::null_mut());
-        CPLI_SetPrev(p.current, std::ptr::null_mut());
-        CPLI_SetDestroyOnDeactivate(p.current, TRUE);
-        CPL_cb_OnPlaylistActivationChange(p.current, FALSE);
-        CPLI_SetCookie(p.current, INVALID_ITEM);
+    if !(*p).current.is_null() && CPLI_IsDestroyOnDeactivate((*p).current) == FALSE {
+        CPL_UnlinkItem(h, (*p).current);
+        CPLI_SetNext((*p).current, std::ptr::null_mut());
+        CPLI_SetPrev((*p).current, std::ptr::null_mut());
+        CPLI_SetDestroyOnDeactivate((*p).current, TRUE);
+        CPL_cb_OnPlaylistActivationChange((*p).current, FALSE);
+        CPLI_SetCookie((*p).current, INVALID_ITEM);
     }
 
     CPL_cb_OnPlaylistEmpty();
 
     // Destroy all remaining items in the list
-    let mut cursor = p.first;
+    let mut cursor = (*p).first;
     while !cursor.is_null() {
         let next = CPLI_Next(cursor);
         CPLI_DestroyItem(cursor);
         cursor = next;
     }
 
-    p.first = std::ptr::null_mut();
-    p.last  = std::ptr::null_mut();
-    p.path_hash.clear();
-    p.stack.clear();
-    p.stack_cursor = 0;
+    (*p).first = std::ptr::null_mut();
+    (*p).last  = std::ptr::null_mut();
+    (*p).path_hash.clear();
+    (*p).stack.clear();
+    (*p).stack_cursor = 0;
 }
 
 #[no_mangle]
@@ -275,30 +288,30 @@ pub unsafe extern "C" fn CPL_UnlinkItem(h: HPlaylist, hItem: HItem) {
         CPLI_SetNext(prev, next);
     } else {
         // hItem was the first item
-        p.first = next;
+        (*p).first = next;
     }
 
     if !next.is_null() {
         CPLI_SetPrev(next, prev);
     } else {
         // hItem was the last item
-        p.last = prev;
+        (*p).last = prev;
     }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CPL_GetFirstItem(h: HPlaylist) -> HItem {
-    pl(h).first
+    (*pl(h)).first
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CPL_GetLastItem(h: HPlaylist) -> HItem {
-    pl(h).last
+    (*pl(h)).last
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CPL_GetActiveItem(h: HPlaylist) -> HItem {
-    pl(h).current
+    (*pl(h)).current
 }
 
 #[no_mangle]
@@ -310,7 +323,7 @@ pub unsafe extern "C" fn CPL_FindPlaylistItem(h: HPlaylist, pcPath: *const c_cha
     };
 
     let p = pl(h);
-    let mut cursor = p.first;
+    let mut cursor = (*p).first;
     while !cursor.is_null() {
         let path_ptr = CPLI_GetPath(cursor);
         if !path_ptr.is_null() {
@@ -334,7 +347,7 @@ pub unsafe extern "C" fn CPL_AddSingleFile_pt2(h: HPlaylist, hNewFile: HItem, dw
     let p = pl(h);
 
     // Discard if our batch has moved on (playlist was cleared during load)
-    if dwBatchID != p.batch_id {
+    if dwBatchID != (*p).batch_id {
         CPLI_DestroyItem(hNewFile);
         return;
     }
@@ -348,25 +361,25 @@ pub unsafe extern "C" fn CPL_AddSingleFile_pt2(h: HPlaylist, hNewFile: HItem, dw
     };
     let path_lc = path_str.to_ascii_lowercase();
 
-    if CP_opt_allow_file_once() != FALSE && p.path_hash.contains(&path_lc) {
+    if CP_opt_allow_file_once() != FALSE && (*p).path_hash.contains(&path_lc) {
         CPLI_DestroyItem(hNewFile);
         return;
     }
 
     // Append to linked list tail
-    CPLI_SetPrev(hNewFile, p.last);
+    CPLI_SetPrev(hNewFile, (*p).last);
     CPLI_SetNext(hNewFile, std::ptr::null_mut());
 
-    if !p.last.is_null() {
-        CPLI_SetNext(p.last, hNewFile);
+    if !(*p).last.is_null() {
+        CPLI_SetNext((*p).last, hNewFile);
     }
-    p.last = hNewFile;
-    if p.first.is_null() {
-        p.first = hNewFile;
+    (*p).last = hNewFile;
+    if (*p).first.is_null() {
+        (*p).first = hNewFile;
     }
 
     // Record path for future duplicate checks
-    p.path_hash.insert(path_lc);
+    (*p).path_hash.insert(path_lc);
 
     // If no track name was read from tags, derive one from the filename
     if CPLI_GetTrackName(hNewFile).is_null() {
@@ -405,7 +418,7 @@ unsafe fn derive_track_name(path: &str, is_url: bool) -> String {
 #[no_mangle]
 pub unsafe extern "C" fn CPL_RemoveDuplicates(h: HPlaylist) {
     let mut seen: HashSet<String> = HashSet::new();
-    let mut cursor = pl(h).first;
+    let mut cursor = (*pl(h)).first;
     while !cursor.is_null() {
         let next = CPLI_Next(cursor);
         let path_ptr = CPLI_GetPath(cursor);
@@ -435,7 +448,7 @@ pub unsafe extern "C" fn CPL_RemoveItem(h: HPlaylist, hItem: HItem) {
     let path_ptr = CPLI_GetPath(hItem);
     if !path_ptr.is_null() {
         if let Ok(s) = CStr::from_ptr(path_ptr).to_str() {
-            p.path_hash.remove(&s.to_ascii_lowercase());
+            (*p).path_hash.remove(&s.to_ascii_lowercase());
         }
     }
 
@@ -443,7 +456,7 @@ pub unsafe extern "C" fn CPL_RemoveItem(h: HPlaylist, hItem: HItem) {
     CPL_UnlinkItem(h, hItem);
     CPL_Stack_Remove(h, hItem);
 
-    if hItem == p.current {
+    if hItem == (*p).current {
         // Active item: defer destruction until activation changes
         CPLI_SetNext(hItem, std::ptr::null_mut());
         CPLI_SetPrev(hItem, std::ptr::null_mut());
@@ -459,21 +472,21 @@ pub unsafe extern "C" fn CPL_RemoveItem(h: HPlaylist, hItem: HItem) {
 pub unsafe extern "C" fn CPL_SetActiveItem(h: HPlaylist, hItem: HItem) {
     let p = pl(h);
 
-    if p.current == hItem { return; }
+    if (*p).current == hItem { return; }
 
     // Deactivate old current
-    if !p.current.is_null() {
-        if CPLI_IsDestroyOnDeactivate(p.current) != FALSE {
-            CPLI_DestroyItem(p.current);
+    if !(*p).current.is_null() {
+        if CPLI_IsDestroyOnDeactivate((*p).current) != FALSE {
+            CPLI_DestroyItem((*p).current);
         } else {
-            CPL_cb_OnPlaylistActivationChange(p.current, FALSE);
+            CPL_cb_OnPlaylistActivationChange((*p).current, FALSE);
         }
     }
 
-    p.current = hItem;
+    (*p).current = hItem;
 
-    if !p.current.is_null() {
-        CPL_cb_OnPlaylistActivationChange(p.current, TRUE);
+    if !(*p).current.is_null() {
+        CPL_cb_OnPlaylistActivationChange((*p).current, TRUE);
         if CP_opt_read_id3_tag_of_selected() != FALSE {
             CPLI_ReadTag(hItem);
         }
@@ -481,9 +494,9 @@ pub unsafe extern "C" fn CPL_SetActiveItem(h: HPlaylist, hItem: HItem) {
         CPL_cb_OnPlaylistActivationEmpty();
     }
 
-    CPL_Stack_SetCursor(h, p.current);
+    CPL_Stack_SetCursor(h, (*p).current);
 
-    if !p.current.is_null() {
+    if !(*p).current.is_null() {
         let path = CPLI_GetPath(hItem);
         if !path.is_null() {
             CP_opt_set_initial_file(path);
@@ -506,7 +519,7 @@ pub unsafe extern "C" fn CPL_InsertItemBefore(h: HPlaylist, hAnchor: HItem, hToM
         CPLI_SetNext(anchor_prev, hToMove);
         CPLI_SetPrev(hToMove, anchor_prev);
     } else {
-        p.first = hToMove;
+        (*p).first = hToMove;
         CPLI_SetPrev(hToMove, std::ptr::null_mut());
     }
 
@@ -525,7 +538,7 @@ pub unsafe extern "C" fn CPL_InsertItemAfter(h: HPlaylist, hAnchor: HItem, hToMo
         CPLI_SetPrev(anchor_next, hToMove);
         CPLI_SetNext(hToMove, anchor_next);
     } else {
-        p.last = hToMove;
+        (*p).last = hToMove;
         CPLI_SetNext(hToMove, std::ptr::null_mut());
     }
 
@@ -553,11 +566,11 @@ const PISE_LENGTH:          c_int = 10;
 #[no_mangle]
 pub unsafe extern "C" fn CPL_SortList(h: HPlaylist, enElement: c_int, bDesc: BOOL) {
     let p = pl(h);
-    if p.first.is_null() { return; }
+    if (*p).first.is_null() { return; }
 
     // Collect into a Vec
     let mut items: Vec<HItem> = Vec::new();
-    let mut cursor = p.first;
+    let mut cursor = (*p).first;
     while !cursor.is_null() {
         items.push(cursor);
         cursor = CPLI_Next(cursor);
@@ -595,21 +608,21 @@ pub unsafe extern "C" fn CPL_SortList(h: HPlaylist, enElement: c_int, bDesc: BOO
     });
 
     // Relink the list
-    p.first = std::ptr::null_mut();
-    p.last  = std::ptr::null_mut();
+    (*p).first = std::ptr::null_mut();
+    (*p).last  = std::ptr::null_mut();
     let mut prev: HItem = std::ptr::null_mut();
     for &item in &items {
         CPLI_SetPrev(item, prev);
         if !prev.is_null() {
             CPLI_SetNext(prev, item);
         } else {
-            p.first = item;
+            (*p).first = item;
         }
         prev = item;
     }
     if !prev.is_null() {
         CPLI_SetNext(prev, std::ptr::null_mut());
-        p.last = prev;
+        (*p).last = prev;
     }
 
     CPL_cb_SetWindowToReflectList();
@@ -633,12 +646,12 @@ pub unsafe extern "C" fn CPL_Stack_Append(h: HPlaylist, hItem: HItem) {
     let p = pl(h);
 
     // Clamp cursor before adding
-    if p.stack_cursor > p.stack.len() {
-        p.stack_cursor = p.stack.len();
+    if (*p).stack_cursor > (*p).stack.len() {
+        (*p).stack_cursor = (*p).stack.len();
     }
 
-    let item_number = (p.stack.len() as i32) - (p.stack_cursor as i32);
-    p.stack.push(hItem);
+    let item_number = ((*p).stack.len() as i32) - ((*p).stack_cursor as i32);
+    (*p).stack.push(hItem);
     CPLI_SetTrackStackPos(hItem, item_number);
 
     CPL_cb_TrackStackChanged();
@@ -647,8 +660,8 @@ pub unsafe extern "C" fn CPL_Stack_Append(h: HPlaylist, hItem: HItem) {
 #[no_mangle]
 pub unsafe extern "C" fn CPL_Stack_Renumber(h: HPlaylist) {
     let p = pl(h);
-    let cursor = p.stack_cursor as i32;
-    for (i, &item) in p.stack.iter().enumerate() {
+    let cursor = (*p).stack_cursor as i32;
+    for (i, &item) in (*p).stack.iter().enumerate() {
         CPLI_SetTrackStackPos(item, (i as i32) - cursor);
     }
     CPL_cb_TrackStackChanged();
@@ -659,10 +672,10 @@ pub unsafe extern "C" fn CPL_Stack_Remove(h: HPlaylist, hItem: HItem) {
     let p = pl(h);
     CPLI_SetTrackStackPos(hItem, TRACKSTACK_UNSTACKED);
 
-    if let Some(idx) = p.stack.iter().position(|&x| x == hItem) {
-        p.stack.remove(idx);
-        if idx < p.stack_cursor && p.stack_cursor > 0 {
-            p.stack_cursor -= 1;
+    if let Some(idx) = (*p).stack.iter().position(|&x| x == hItem) {
+        (*p).stack.remove(idx);
+        if idx < (*p).stack_cursor && (*p).stack_cursor > 0 {
+            (*p).stack_cursor -= 1;
         }
         CPL_Stack_Renumber(h);
         CPL_cb_TrackStackChanged();
@@ -674,40 +687,40 @@ pub unsafe extern "C" fn CPL_Stack_SetCursor(h: HPlaylist, hItem: HItem) {
     let p = pl(h);
     if hItem.is_null() { return; }
 
-    if let Some(idx) = p.stack.iter().position(|&x| x == hItem) {
-        p.stack_cursor = idx;
+    if let Some(idx) = (*p).stack.iter().position(|&x| x == hItem) {
+        (*p).stack_cursor = idx;
     } else {
         // Item not in stack — append it and set cursor to it
         CPL_Stack_Append(h, hItem);
-        p.stack_cursor = p.stack.len().saturating_sub(1);
+        (*p).stack_cursor = (*p).stack.len().saturating_sub(1);
     }
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CPL_Stack_Clear(h: HPlaylist) {
     let p = pl(h);
-    for &item in &p.stack {
+    for &item in &(*p).stack {
         CPLI_SetTrackStackPos(item, TRACKSTACK_UNSTACKED);
     }
-    p.stack.clear();
-    p.stack_cursor = 0;
+    (*p).stack.clear();
+    (*p).stack_cursor = 0;
     CPL_cb_TrackStackChanged();
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CPL_Stack_RestackAll(h: HPlaylist) {
     let p = pl(h);
-    p.stack.clear();
-    p.stack_cursor = 0;
+    (*p).stack.clear();
+    (*p).stack_cursor = 0;
 
-    let mut cursor = p.first;
+    let mut cursor = (*p).first;
     while !cursor.is_null() {
         CPL_Stack_Append(h, cursor);
         cursor = CPLI_Next(cursor);
     }
 
-    if !p.current.is_null() {
-        CPL_Stack_SetCursor(h, p.current);
+    if !(*p).current.is_null() {
+        CPL_Stack_SetCursor(h, (*p).current);
     }
 }
 
@@ -720,11 +733,11 @@ const ISS_STACKED:      c_int = 3;
 #[no_mangle]
 pub unsafe extern "C" fn CPL_Stack_GetItemState(h: HPlaylist, hItem: HItem) -> c_int {
     let p = pl(h);
-    for (i, &x) in p.stack.iter().enumerate() {
+    for (i, &x) in (*p).stack.iter().enumerate() {
         if x == hItem {
-            return if i < p.stack_cursor {
+            return if i < (*p).stack_cursor {
                 ISS_PLAYED
-            } else if i == p.stack_cursor {
+            } else if i == (*p).stack_cursor {
                 ISS_STACKED_TOP
             } else {
                 ISS_STACKED
@@ -737,29 +750,29 @@ pub unsafe extern "C" fn CPL_Stack_GetItemState(h: HPlaylist, hItem: HItem) -> c
 #[no_mangle]
 pub unsafe extern "C" fn CPL_Stack_Shuffle(h: HPlaylist, bForceCurrentToHead: BOOL) {
     let p = pl(h);
-    if p.stack.is_empty() { return; }
+    if (*p).stack.is_empty() { return; }
 
     // Fisher-Yates shuffle using C rand()
-    let n = p.stack.len();
+    let n = (*p).stack.len();
     for i in (1..n).rev() {
         let j = (rand() as usize).wrapping_rem(i + 1);
-        p.stack.swap(i, j);
+        (*p).stack.swap(i, j);
     }
 
-    p.stack_cursor = 0;
+    (*p).stack_cursor = 0;
 
-    let current = p.current;
+    let current = (*p).current;
     if !current.is_null() {
         if bForceCurrentToHead != FALSE {
             // Move current to position 0
-            if let Some(idx) = p.stack.iter().position(|&x| x == current) {
-                p.stack.swap(0, idx);
+            if let Some(idx) = (*p).stack.iter().position(|&x| x == current) {
+                (*p).stack.swap(0, idx);
             }
         } else {
             // If current ended up at [0], swap it to the last slot to avoid double-play
-            if p.stack[0] == current {
+            if (&(*p).stack)[0] == current {
                 let last = n - 1;
-                p.stack.swap(0, last);
+                (*p).stack.swap(0, last);
             }
         }
     }
@@ -770,12 +783,12 @@ pub unsafe extern "C" fn CPL_Stack_Shuffle(h: HPlaylist, bForceCurrentToHead: BO
 #[no_mangle]
 pub unsafe extern "C" fn CPL_Stack_ClipFromCurrent(h: HPlaylist) {
     let p = pl(h);
-    if p.stack.is_empty() || p.stack_cursor >= p.stack.len() { return; }
+    if (*p).stack.is_empty() || (*p).stack_cursor >= (*p).stack.len() { return; }
 
-    for i in (p.stack_cursor + 1)..p.stack.len() {
-        CPLI_SetTrackStackPos(p.stack[i], TRACKSTACK_UNSTACKED);
+    for i in ((*p).stack_cursor + 1)..(*p).stack.len() {
+        CPLI_SetTrackStackPos((&(*p).stack)[i], TRACKSTACK_UNSTACKED);
     }
-    p.stack.truncate(p.stack_cursor + 1);
+    (*p).stack.truncate((*p).stack_cursor + 1);
 
     CPL_cb_TrackStackChanged();
 }
@@ -783,21 +796,21 @@ pub unsafe extern "C" fn CPL_Stack_ClipFromCurrent(h: HPlaylist) {
 #[no_mangle]
 pub unsafe extern "C" fn CPL_Stack_ClipFromItem(h: HPlaylist, hItem: HItem) {
     let p = pl(h);
-    if p.stack.is_empty() { return; }
+    if (*p).stack.is_empty() { return; }
 
-    let found_idx = p.stack.iter().position(|&x| x == hItem);
+    let found_idx = (*p).stack.iter().position(|&x| x == hItem);
     let clip_start = match found_idx {
         Some(i) => i + 1,
         None    => return,
     };
 
-    for i in clip_start..p.stack.len() {
-        CPLI_SetTrackStackPos(p.stack[i], TRACKSTACK_UNSTACKED);
+    for i in clip_start..(*p).stack.len() {
+        CPLI_SetTrackStackPos((&(*p).stack)[i], TRACKSTACK_UNSTACKED);
     }
-    p.stack.truncate(clip_start);
+    (*p).stack.truncate(clip_start);
 
-    if p.stack_cursor >= p.stack.len() && !p.stack.is_empty() {
-        p.stack_cursor = p.stack.len() - 1;
+    if (*p).stack_cursor >= (*p).stack.len() && !(*p).stack.is_empty() {
+        (*p).stack_cursor = (*p).stack.len() - 1;
     }
 
     CPL_cb_TrackStackChanged();
@@ -810,18 +823,18 @@ pub unsafe extern "C" fn CPL_Stack_PlayNext(h: HPlaylist, hItem: HItem) {
     let p = pl(h);
 
     // If cursor is past the end or stack is empty, just append
-    if p.stack_cursor >= p.stack.len() || p.stack.is_empty() {
+    if (*p).stack_cursor >= (*p).stack.len() || (*p).stack.is_empty() {
         CPL_Stack_Append(h, hItem);
         return;
     }
 
     // Insert at cursor+1, shifting everything above up
-    let insert_at = p.stack_cursor + 1;
-    p.stack.insert(insert_at, hItem);
+    let insert_at = (*p).stack_cursor + 1;
+    (*p).stack.insert(insert_at, hItem);
 
     // Renumber from insert point
-    let cursor = p.stack_cursor as i32;
-    for (i, &x) in p.stack.iter().enumerate() {
+    let cursor = (*p).stack_cursor as i32;
+    for (i, &x) in (*p).stack.iter().enumerate() {
         CPLI_SetTrackStackPos(x, (i as i32) - cursor);
     }
 
@@ -835,23 +848,23 @@ pub unsafe extern "C" fn CPL_Stack_PlayNext(h: HPlaylist, hItem: HItem) {
 #[no_mangle]
 pub unsafe extern "C" fn CPL_PeekNextItem(h: HPlaylist) -> HItem {
     let p = pl(h);
-    let current = p.current;
-    let cursor  = p.stack_cursor;
-    let len     = p.stack.len();
+    let current = (*p).current;
+    let cursor  = (*p).stack_cursor;
+    let len     = (*p).stack.len();
 
     // If current != stack[cursor], next is stack[cursor]
-    if !current.is_null() && cursor < len && p.stack[cursor] != current {
-        return p.stack[cursor];
+    if !current.is_null() && cursor < len && (&(*p).stack)[cursor] != current {
+        return (&(*p).stack)[cursor];
     }
 
     // Next is stack[cursor+1]
     if cursor + 1 < len {
-        return p.stack[cursor + 1];
+        return (&(*p).stack)[cursor + 1];
     }
 
     // Wrap with repeat
-    if CP_opt_repeat_playlist() != FALSE && !p.stack.is_empty() {
-        return p.stack[0];
+    if CP_opt_repeat_playlist() != FALSE && !(*p).stack.is_empty() {
+        return (&(*p).stack)[0];
     }
 
     std::ptr::null_mut()
@@ -866,62 +879,59 @@ const PM_PREV:    c_int = 2;
 pub unsafe extern "C" fn CPL_PlayItem(h: HPlaylist, bStopFirst: BOOL, enPlayMode: c_int) {
     let p = pl(h);
     let mut hPlay: HItem = std::ptr::null_mut();
-    let cursor = p.stack_cursor;
-    let len    = p.stack.len();
-    let current = p.current;
+    let cursor = (*p).stack_cursor;
+    let len    = (*p).stack.len();
+    let current = (*p).current;
 
     match enPlayMode {
         PM_CURRENT => {
             if !current.is_null() {
                 if bStopFirst != FALSE || CPLI_IsDestroyOnDeactivate(current) != FALSE {
-                    hPlay = if cursor < len { p.stack[cursor] }
-                            else if !p.stack.is_empty() { p.stack[0] }
+                    hPlay = if cursor < len { (&(*p).stack)[cursor] }
+                            else if !(*p).stack.is_empty() { (&(*p).stack)[0] }
                             else { std::ptr::null_mut() };
                 } else {
                     hPlay = current;
                 }
             } else if cursor < len {
-                hPlay = p.stack[cursor];
+                hPlay = (&(*p).stack)[cursor];
             } else {
                 if CP_opt_shuffle_play() != FALSE {
                     CPL_Stack_Shuffle(h, FALSE);
                 }
-                hPlay = if !p.stack.is_empty() { p.stack[0] } else { std::ptr::null_mut() };
+                hPlay = if !(*p).stack.is_empty() { (&(*p).stack)[0] } else { std::ptr::null_mut() };
             }
         }
         PM_NEXT => {
             // If current != stack[cursor], play stack[cursor]
-            if !current.is_null() && cursor < len && p.stack[cursor] != current {
-                hPlay = p.stack[cursor];
+            if !current.is_null() && cursor < len && (&(*p).stack)[cursor] != current {
+                hPlay = (&(*p).stack)[cursor];
             }
             if hPlay.is_null() {
                 // Advance cursor
-                let p2 = pl(h);
-                if p2.stack_cursor < p2.stack.len() {
-                    p2.stack_cursor += 1;
+                if (*p).stack_cursor < (*p).stack.len() {
+                    (*p).stack_cursor += 1;
                 }
-                let cursor2 = p2.stack_cursor;
-                let len2    = p2.stack.len();
+                let cursor2 = (*p).stack_cursor;
+                let len2    = (*p).stack.len();
                 if cursor2 < len2 {
-                    hPlay = p2.stack[cursor2];
+                    hPlay = (&(*p).stack)[cursor2];
                 }
             }
             if hPlay.is_null() && CP_opt_repeat_playlist() != FALSE {
                 if CP_opt_shuffle_play() != FALSE {
                     CPL_Stack_Shuffle(h, FALSE);
                 }
-                let p3 = pl(h);
-                hPlay = if !p3.stack.is_empty() { p3.stack[0] } else { std::ptr::null_mut() };
+                hPlay = if !(*p).stack.is_empty() { (&(*p).stack)[0] } else { std::ptr::null_mut() };
             }
         }
         PM_PREV => {
-            let p = pl(h);
-            if p.stack_cursor > 0 {
-                hPlay = p.stack[p.stack_cursor - 1];
-            } else if CP_opt_repeat_playlist() != FALSE && !p.stack.is_empty() {
-                hPlay = p.stack[p.stack.len() - 1];
-            } else if !p.stack.is_empty() {
-                hPlay = p.stack[0];
+            if (*p).stack_cursor > 0 {
+                hPlay = (&(*p).stack)[(*p).stack_cursor - 1];
+            } else if CP_opt_repeat_playlist() != FALSE && !(*p).stack.is_empty() {
+                hPlay = (&(*p).stack)[(*p).stack.len() - 1];
+            } else if !(*p).stack.is_empty() {
+                hPlay = (&(*p).stack)[0];
             }
         }
         _ => {}
@@ -938,25 +948,25 @@ pub unsafe extern "C" fn CPL_AdvanceToNextItem(h: HPlaylist) {
 
     {
         let p = pl(h);
-        let current = p.current;
-        let cursor  = p.stack_cursor;
-        let len     = p.stack.len();
+        let current = (*p).current;
+        let cursor  = (*p).stack_cursor;
+        let len     = (*p).stack.len();
 
-        if !current.is_null() && cursor < len && p.stack[cursor] != current {
+        if !current.is_null() && cursor < len && (&(*p).stack)[cursor] != current {
             // Current was behind the cursor — cursor stays
         } else {
-            if p.stack_cursor < p.stack.len() {
-                p.stack_cursor += 1;
+            if (*p).stack_cursor < (*p).stack.len() {
+                (*p).stack_cursor += 1;
             }
             // Wrap around with repeat + optional reshuffle
-            if p.stack_cursor >= p.stack.len()
+            if (*p).stack_cursor >= (*p).stack.len()
                 && CP_opt_repeat_playlist() != FALSE
-                && !p.stack.is_empty()
+                && !(*p).stack.is_empty()
             {
                 if CP_opt_shuffle_play() != FALSE {
                     CPL_Stack_Shuffle(h, FALSE);
                 }
-                p.stack_cursor = 0;
+                (*p).stack_cursor = 0;
             }
         }
     }

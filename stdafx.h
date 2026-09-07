@@ -58,9 +58,10 @@ void* __cdecl  memcpy(void*, const void*, size_t);
 void* __cdecl memset(void*, int, size_t);
 #ifdef __MINGW32__
 void* __cdecl memmove(void*, const void*, size_t);
-char* __cdecl strchr(const char*, int) ;
-char* __cdecl strrchr(const char*, int) ;
-char* __cdecl strstr(const char*, const char*);
+// strchr/strrchr/strstr are intentionally NOT redeclared here: mingw-w64's
+// own <string.h> (included above) already declares them, including the
+// const-correct C++ overload pair. Redeclaring with a single `char*`
+// signature collides with that overload set (differs only by return type).
 // int __cdecl _stricmp(const char*, const char*); // Commented out to avoid dllimport conflict
 // int __cdecl _strnicmp(const char*, const char*, size_t); // Commented out to avoid dllimport conflict
 // int __cdecl tolower(int); // Commented out to avoid dllimport conflict

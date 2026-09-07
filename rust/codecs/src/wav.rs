@@ -99,6 +99,89 @@ fn skip_to_chunk<R: Read + Seek>(f: &mut R, target: &[u8; 4]) -> io::Result<u32>
     Err(io::Error::new(io::ErrorKind::NotFound, "chunk not found"))
 }
 
+/// Returns whether a parsed fmt-chunk describes a WAV file wav_open_file
+/// can safely play: PCM only, and a non-zero sample rate. Pulled out as a
+/// pure function (no I/O, no InStream/CP_CreateInStream dependency) so the
+/// zero-sample-rate regression — a corrupt fmt chunk that used to be
+/// accepted here and then crashed wav_seek() via divide-by-zero — has a
+/// unit test that doesn't need the C build to run.
+fn fmt_chunk_is_valid(format_tag: u16, n_samples_per_sec: u32) -> bool {
+    format_tag == 1 && n_samples_per_sec != 0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rejects_zero_sample_rate() {
+        // A zeroed nSamplesPerSec used to pass the old check (which only
+        // looked at format_tag), making ctx.bytes_per_second zero and
+        // crashing wav_seek()'s unconditional divide/modulo by it.
+        assert!(!fmt_chunk_is_valid(1, 0));
+    }
+
+    #[test]
+    fn accepts_valid_pcm_fmt_chunk() {
+        assert!(fmt_chunk_is_valid(1, 44100));
+    }
+
+    #[test]
+    fn rejects_non_pcm_format_tag() {
+        assert!(!fmt_chunk_is_valid(3, 44100)); // e.g. IEEE float — unsupported
+    }
+
+    /// Exercises the actual generic RIFF-parsing helpers (skip_to_chunk,
+    /// read_u16_le, read_u32_le) against a hand-built in-memory WAV byte
+    /// stream, the same way wav_open_file uses them — just against a
+    /// Cursor<Vec<u8>> instead of an InStream, since these helpers are
+    /// generic over Read/Read+Seek and never touch CP_CreateInStream.
+    #[test]
+    fn parses_minimal_wav_header() {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(b"RIFF");
+        bytes.extend_from_slice(&0u32.to_le_bytes()); // RIFF size — unused by skip_to_chunk
+        bytes.extend_from_slice(b"WAVE");
+        bytes.extend_from_slice(b"fmt ");
+        bytes.extend_from_slice(&16u32.to_le_bytes());     // fmt chunk length
+        bytes.extend_from_slice(&1u16.to_le_bytes());      // format_tag = PCM
+        bytes.extend_from_slice(&2u16.to_le_bytes());      // channels
+        bytes.extend_from_slice(&44100u32.to_le_bytes());  // samples/sec
+        bytes.extend_from_slice(&176400u32.to_le_bytes()); // avg bytes/sec
+        bytes.extend_from_slice(&4u16.to_le_bytes());      // block align
+        bytes.extend_from_slice(&16u16.to_le_bytes());     // bits/sample
+        bytes.extend_from_slice(b"data");
+        bytes.extend_from_slice(&8u32.to_le_bytes());      // data length
+        bytes.extend_from_slice(&[0u8; 8]);                // 8 bytes of "audio"
+
+        let mut cursor = std::io::Cursor::new(bytes);
+
+        let mut riff = [0u8; 12];
+        cursor.read_exact(&mut riff).unwrap();
+        assert_eq!(&riff[0..4], b"RIFF");
+        assert_eq!(&riff[8..12], b"WAVE");
+
+        let fmt_len = skip_to_chunk(&mut cursor, b"fmt ").unwrap();
+        assert_eq!(fmt_len, 16);
+
+        let format_tag        = read_u16_le(&mut cursor).unwrap();
+        let n_channels        = read_u16_le(&mut cursor).unwrap();
+        let n_samples_per_sec = read_u32_le(&mut cursor).unwrap();
+        assert_eq!(format_tag, 1);
+        assert_eq!(n_channels, 2);
+        assert_eq!(n_samples_per_sec, 44100);
+
+        cursor.seek(SeekFrom::Current(6)).unwrap(); // avgBytesPerSec + blockAlign
+        let bits_per_sample = read_u16_le(&mut cursor).unwrap();
+        assert_eq!(bits_per_sample, 16);
+
+        assert!(fmt_chunk_is_valid(format_tag, n_samples_per_sec));
+
+        let data_len = skip_to_chunk(&mut cursor, b"data").unwrap();
+        assert_eq!(data_len, 8);
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Exported initialiser
 // ---------------------------------------------------------------------------
@@ -222,8 +305,8 @@ unsafe extern "C" fn wav_open_file(
 
     let bits_per_sample = read_u16!();
 
-    if format_tag != 1 {
-        return FALSE; // only PCM supported
+    if !fmt_chunk_is_valid(format_tag, n_samples_per_sec) {
+        return FALSE; // unsupported format, or corrupt/zeroed sample rate
     }
 
     if fmt_len > 16 {
@@ -277,6 +360,7 @@ unsafe extern "C" fn wav_seek(
     // SAFETY: m_pModuleCookie is valid.
     let ctx = &mut *((*pModule).m_pModuleCookie as *mut WavContext);
     if !ctx.open || !ctx.seekable { return; }
+    if iDenominator == 0 || ctx.bytes_per_second == 0 { return; }
 
     let stream = match ctx.stream.as_mut() { Some(s) => s, None => return };
 

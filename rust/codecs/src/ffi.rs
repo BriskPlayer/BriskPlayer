@@ -34,6 +34,20 @@ pub struct CPs_FileInfo {
     pub m_b16bit:           BOOL,
 }
 
+// Compile-time ABI-drift tripwire: if globals.h's _CPs_FileInfo gains, loses,
+// or reorders a field without this mirror being updated to match, these
+// fail the build immediately instead of silently desyncing the layout at
+// runtime. Checked in terms of size_of::<u32>() (not hardcoded byte counts)
+// since every field here happens to be 4 bytes on both the x86 and x64
+// triplets this project builds.
+const _: () = assert!(std::mem::size_of::<CPs_FileInfo>() == 5 * std::mem::size_of::<u32>(),
+    "CPs_FileInfo size mismatch — update ffi.rs to match globals.h's _CPs_FileInfo");
+const _: () = assert!(std::mem::offset_of!(CPs_FileInfo, m_iFileLength_Secs) == 0 * std::mem::size_of::<u32>());
+const _: () = assert!(std::mem::offset_of!(CPs_FileInfo, m_iBitRate_Kbs)     == 1 * std::mem::size_of::<u32>());
+const _: () = assert!(std::mem::offset_of!(CPs_FileInfo, m_iFreq_Hz)         == 2 * std::mem::size_of::<u32>());
+const _: () = assert!(std::mem::offset_of!(CPs_FileInfo, m_bStereo)          == 3 * std::mem::size_of::<u32>());
+const _: () = assert!(std::mem::offset_of!(CPs_FileInfo, m_b16bit)           == 4 * std::mem::size_of::<u32>());
+
 // ---------------------------------------------------------------------------
 // CPs_CoDecModule  (CPI_Player_CoDec.h)
 // ---------------------------------------------------------------------------
@@ -54,6 +68,22 @@ pub struct CPs_CoDecModule {
 // SAFETY: All access is from the single-threaded player engine; this matches
 // the guarantees made by the original C code.
 unsafe impl Send for CPs_CoDecModule {}
+
+// Compile-time ABI-drift tripwire — see the CPs_FileInfo one above for why.
+// Every field here is pointer-sized (7 fn ptrs + 2 void*), so this holds on
+// both the x86 and x64 triplets this project builds without needing an
+// architecture cfg gate.
+const _: () = assert!(std::mem::size_of::<CPs_CoDecModule>() == 9 * std::mem::size_of::<usize>(),
+    "CPs_CoDecModule size mismatch — update ffi.rs to match CPI_Player_CoDec.h's _CPs_CoDecModule");
+const _: () = assert!(std::mem::offset_of!(CPs_CoDecModule, Uninitialise)            == 0 * std::mem::size_of::<usize>());
+const _: () = assert!(std::mem::offset_of!(CPs_CoDecModule, OpenFile)                == 1 * std::mem::size_of::<usize>());
+const _: () = assert!(std::mem::offset_of!(CPs_CoDecModule, CloseFile)               == 2 * std::mem::size_of::<usize>());
+const _: () = assert!(std::mem::offset_of!(CPs_CoDecModule, Seek)                    == 3 * std::mem::size_of::<usize>());
+const _: () = assert!(std::mem::offset_of!(CPs_CoDecModule, GetFileInfo)             == 4 * std::mem::size_of::<usize>());
+const _: () = assert!(std::mem::offset_of!(CPs_CoDecModule, GetPCMBlock)             == 5 * std::mem::size_of::<usize>());
+const _: () = assert!(std::mem::offset_of!(CPs_CoDecModule, GetCurrentPos_secs)      == 6 * std::mem::size_of::<usize>());
+const _: () = assert!(std::mem::offset_of!(CPs_CoDecModule, m_pModuleCookie)         == 7 * std::mem::size_of::<usize>());
+const _: () = assert!(std::mem::offset_of!(CPs_CoDecModule, m_pFileAssociationCookie)== 8 * std::mem::size_of::<usize>());
 
 // ---------------------------------------------------------------------------
 // File-association helpers — defined in CPI_Player_FileAssoc.c
@@ -90,6 +120,18 @@ pub struct CpsInStream {
 
 // Access is always from the player thread, matching the C threading model.
 unsafe impl Send for CpsInStream {}
+
+// Compile-time ABI-drift tripwire — see the CPs_FileInfo one above for why.
+// Every field here is pointer-sized (6 fn ptrs + 1 void*).
+const _: () = assert!(std::mem::size_of::<CpsInStream>() == 7 * std::mem::size_of::<usize>(),
+    "CpsInStream size mismatch — update ffi.rs to match CPI_Stream.h's _CPs_InStream");
+const _: () = assert!(std::mem::offset_of!(CpsInStream, uninitialise) == 0 * std::mem::size_of::<usize>());
+const _: () = assert!(std::mem::offset_of!(CpsInStream, read)         == 1 * std::mem::size_of::<usize>());
+const _: () = assert!(std::mem::offset_of!(CpsInStream, seek)         == 2 * std::mem::size_of::<usize>());
+const _: () = assert!(std::mem::offset_of!(CpsInStream, tell)        == 3 * std::mem::size_of::<usize>());
+const _: () = assert!(std::mem::offset_of!(CpsInStream, get_length)   == 4 * std::mem::size_of::<usize>());
+const _: () = assert!(std::mem::offset_of!(CpsInStream, is_seekable)  == 5 * std::mem::size_of::<usize>());
+const _: () = assert!(std::mem::offset_of!(CpsInStream, cookie)       == 6 * std::mem::size_of::<usize>());
 
 extern "C" {
     /// Dispatches to CP_CreateInStream_LocalFile or CP_CreateInStream_Internet

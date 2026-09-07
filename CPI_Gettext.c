@@ -21,6 +21,7 @@
 #include "stdafx.h"
 #include "CPI_Gettext.h"
 #include "WindowsOS.h"
+#include "safe_string.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -242,9 +243,9 @@ int CPG_EnumerateLanguages(LanguageInfo* languages, int maxLanguages)
     // Add built-in English
     if (count < maxLanguages) {
         LanguageInfo* lang = &languages[count];
-        strcpy(lang->code, "en");
-        strcpy(lang->name, "English");
-        strcpy(lang->region, "US");
+        CP_STRCPY(lang->code, "en");
+        CP_STRCPY(lang->name, "English");
+        CP_STRCPY(lang->region, "US");
         lang->available = true;
         count++;
     }
@@ -275,98 +276,98 @@ int CPG_EnumerateLanguages(LanguageInfo* languages, int maxLanguages)
                     
                     // Map language codes to display names
                     if (strcmp(findData.cFileName, "de") == 0) {
-                        strcpy(lang->name, "Deutsch");
-                        strcpy(lang->region, "DE");
+                        CP_STRCPY(lang->name, "Deutsch");
+                        CP_STRCPY(lang->region, "DE");
                     } else if (strcmp(findData.cFileName, "fr") == 0) {
-                        strcpy(lang->name, "Français");
-                        strcpy(lang->region, "FR");
+                        CP_STRCPY(lang->name, "Français");
+                        CP_STRCPY(lang->region, "FR");
                     } else if (strcmp(findData.cFileName, "es") == 0) {
-                        strcpy(lang->name, "Español");
-                        strcpy(lang->region, "ES");
+                        CP_STRCPY(lang->name, "Español");
+                        CP_STRCPY(lang->region, "ES");
                     } else if (strcmp(findData.cFileName, "it") == 0) {
-                        strcpy(lang->name, "Italiano");
-                        strcpy(lang->region, "IT");
+                        CP_STRCPY(lang->name, "Italiano");
+                        CP_STRCPY(lang->region, "IT");
                     } else if (strcmp(findData.cFileName, "pt") == 0) {
-                        strcpy(lang->name, "Português");
-                        strcpy(lang->region, "PT");
+                        CP_STRCPY(lang->name, "Português");
+                        CP_STRCPY(lang->region, "PT");
                     } else if (strcmp(findData.cFileName, "ru") == 0) {
-                        strcpy(lang->name, "Русский");
-                        strcpy(lang->region, "RU");
+                        CP_STRCPY(lang->name, "Русский");
+                        CP_STRCPY(lang->region, "RU");
                     } else if (strcmp(findData.cFileName, "ja") == 0) {
-                        strcpy(lang->name, "日本語");
-                        strcpy(lang->region, "JP");
+                        CP_STRCPY(lang->name, "日本語");
+                        CP_STRCPY(lang->region, "JP");
                     } else if (strcmp(findData.cFileName, "zh") == 0) {
-                        strcpy(lang->name, "中文");
-                        strcpy(lang->region, "CN");
+                        CP_STRCPY(lang->name, "中文");
+                        CP_STRCPY(lang->region, "CN");
                     } else if (strcmp(findData.cFileName, "ko") == 0) {
-                        strcpy(lang->name, "한국어");
-                        strcpy(lang->region, "KR");
+                        CP_STRCPY(lang->name, "한국어");
+                        CP_STRCPY(lang->region, "KR");
                     } else if (strcmp(findData.cFileName, "nl") == 0) {
-                        strcpy(lang->name, "Nederlands");
-                        strcpy(lang->region, "NL");
+                        CP_STRCPY(lang->name, "Nederlands");
+                        CP_STRCPY(lang->region, "NL");
                     } else if (strcmp(findData.cFileName, "sv") == 0) {
-                        strcpy(lang->name, "Svenska");
-                        strcpy(lang->region, "SE");
+                        CP_STRCPY(lang->name, "Svenska");
+                        CP_STRCPY(lang->region, "SE");
                     } else if (strcmp(findData.cFileName, "no") == 0) {
-                        strcpy(lang->name, "Norsk");
-                        strcpy(lang->region, "NO");
+                        CP_STRCPY(lang->name, "Norsk");
+                        CP_STRCPY(lang->region, "NO");
                     } else if (strcmp(findData.cFileName, "da") == 0) {
-                        strcpy(lang->name, "Dansk");
-                        strcpy(lang->region, "DK");
+                        CP_STRCPY(lang->name, "Dansk");
+                        CP_STRCPY(lang->region, "DK");
                     } else if (strcmp(findData.cFileName, "fi") == 0) {
-                        strcpy(lang->name, "Suomi");
-                        strcpy(lang->region, "FI");
+                        CP_STRCPY(lang->name, "Suomi");
+                        CP_STRCPY(lang->region, "FI");
                     } else if (strcmp(findData.cFileName, "pl") == 0) {
-                        strcpy(lang->name, "Polski");
-                        strcpy(lang->region, "PL");
+                        CP_STRCPY(lang->name, "Polski");
+                        CP_STRCPY(lang->region, "PL");
                     } else if (strcmp(findData.cFileName, "cs") == 0) {
-                        strcpy(lang->name, "Čeština");
-                        strcpy(lang->region, "CZ");
+                        CP_STRCPY(lang->name, "Čeština");
+                        CP_STRCPY(lang->region, "CZ");
                     } else if (strcmp(findData.cFileName, "sk") == 0) {
-                        strcpy(lang->name, "Slovenčina");
-                        strcpy(lang->region, "SK");
+                        CP_STRCPY(lang->name, "Slovenčina");
+                        CP_STRCPY(lang->region, "SK");
                     } else if (strcmp(findData.cFileName, "hu") == 0) {
-                        strcpy(lang->name, "Magyar");
-                        strcpy(lang->region, "HU");
+                        CP_STRCPY(lang->name, "Magyar");
+                        CP_STRCPY(lang->region, "HU");
                     } else if (strcmp(findData.cFileName, "ro") == 0) {
-                        strcpy(lang->name, "Română");
-                        strcpy(lang->region, "RO");
+                        CP_STRCPY(lang->name, "Română");
+                        CP_STRCPY(lang->region, "RO");
                     } else if (strcmp(findData.cFileName, "bg") == 0) {
-                        strcpy(lang->name, "Български");
-                        strcpy(lang->region, "BG");
+                        CP_STRCPY(lang->name, "Български");
+                        CP_STRCPY(lang->region, "BG");
                     } else if (strcmp(findData.cFileName, "el") == 0) {
-                        strcpy(lang->name, "Ελληνικά");
-                        strcpy(lang->region, "GR");
+                        CP_STRCPY(lang->name, "Ελληνικά");
+                        CP_STRCPY(lang->region, "GR");
                     } else if (strcmp(findData.cFileName, "uk") == 0) {
-                        strcpy(lang->name, "Українська");
-                        strcpy(lang->region, "UA");
+                        CP_STRCPY(lang->name, "Українська");
+                        CP_STRCPY(lang->region, "UA");
                     } else if (strcmp(findData.cFileName, "tr") == 0) {
-                        strcpy(lang->name, "Türkçe");
-                        strcpy(lang->region, "TR");
+                        CP_STRCPY(lang->name, "Türkçe");
+                        CP_STRCPY(lang->region, "TR");
                     } else if (strcmp(findData.cFileName, "ar") == 0) {
-                        strcpy(lang->name, "العربية");
-                        strcpy(lang->region, "AR");
+                        CP_STRCPY(lang->name, "العربية");
+                        CP_STRCPY(lang->region, "AR");
                     } else if (strcmp(findData.cFileName, "he") == 0) {
-                        strcpy(lang->name, "עברית");
-                        strcpy(lang->region, "IL");
+                        CP_STRCPY(lang->name, "עברית");
+                        CP_STRCPY(lang->region, "IL");
                     } else if (strcmp(findData.cFileName, "vi") == 0) {
-                        strcpy(lang->name, "Tiếng Việt");
-                        strcpy(lang->region, "VN");
+                        CP_STRCPY(lang->name, "Tiếng Việt");
+                        CP_STRCPY(lang->region, "VN");
                     } else if (strcmp(findData.cFileName, "id") == 0) {
-                        strcpy(lang->name, "Indonesia");
-                        strcpy(lang->region, "ID");
+                        CP_STRCPY(lang->name, "Indonesia");
+                        CP_STRCPY(lang->region, "ID");
                     } else if (strcmp(findData.cFileName, "nb") == 0) {
-                        strcpy(lang->name, "Norsk");
-                        strcpy(lang->region, "NO");
+                        CP_STRCPY(lang->name, "Norsk");
+                        CP_STRCPY(lang->region, "NO");
                     } else if (strcmp(findData.cFileName, "pt_BR") == 0) {
-                        strcpy(lang->name, "Português");
-                        strcpy(lang->region, "BR");
+                        CP_STRCPY(lang->name, "Português");
+                        CP_STRCPY(lang->region, "BR");
                     } else if (strcmp(findData.cFileName, "zh_CN") == 0) {
-                        strcpy(lang->name, "中文");
-                        strcpy(lang->region, "CN");
+                        CP_STRCPY(lang->name, "中文");
+                        CP_STRCPY(lang->region, "CN");
                     } else if (strcmp(findData.cFileName, "zh_TW") == 0) {
-                        strcpy(lang->name, "中文");
-                        strcpy(lang->region, "TW");
+                        CP_STRCPY(lang->name, "中文");
+                        CP_STRCPY(lang->region, "TW");
                     } else {
                         // Generic fallback - capitalize first letter
                         strncpy(lang->name, findData.cFileName, sizeof(lang->name) - 1);

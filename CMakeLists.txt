@@ -112,6 +112,25 @@ set(VCPKG_MANIFEST_FEATURES "${VCPKG_MANIFEST_FEATURES}" CACHE STRING "" FORCE)
 # CXX language required: CPI_TagLib.c uses WIC COM interfaces (C++ method call syntax).
 project(briskplayer VERSION 3.0.3 LANGUAGES C CXX)
 
+# Default CMAKE_BUILD_TYPE for single-config generators (Ninja, Makefiles)
+# when the user configures without one (e.g. a bare `cmake -B build -G
+# Ninja` that bypasses CMakePresets.json, which sets it explicitly per
+# preset). Left alone for multi-config generators (Visual Studio), where
+# CMAKE_CONFIGURATION_TYPES governs this instead and per-config selection
+# happens at build time via --config.
+#
+# This matters beyond just optimization level: corrosion_import_crate()
+# below (no explicit PROFILE argument) infers which cargo profile to build
+# the Rust codecs crate with from CMAKE_BUILD_TYPE. Left unset, it silently
+# falls back to cargo's "dev" profile — quietly dropping the
+# panic-abort/LTO hardening rust/Cargo.toml's [profile.release] specifically
+# opted into (see that file's comments on why a malformed media file should
+# abort cleanly rather than unwind into the C stack).
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo" "MinSizeRel")
+endif()
+
 # Calculate build number from version (MAJOR * 100 + MINOR * 10 + PATCH)
 math(EXPR CP_BUILD_NUMBER "${PROJECT_VERSION_MAJOR} * 100 + ${PROJECT_VERSION_MINOR} * 10 + ${PROJECT_VERSION_PATCH}")
 
@@ -334,7 +353,7 @@ if(NOT Corrosion_FOUND)
     FetchContent_Declare(
         Corrosion
         GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
-        GIT_TAG        v0.5.1
+        GIT_TAG        v0.6.1
     )
     FetchContent_MakeAvailable(Corrosion)
 endif()

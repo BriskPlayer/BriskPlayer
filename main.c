@@ -2164,7 +2164,7 @@ int     main_play_control(WORD wParam, HWND hWnd)
 			if (options.use_default_skin == FALSE)
 			{
 				char    skinpathje[MAX_PATH];
-				strcpy(skinpathje, (const char*)options.main_skin_file);
+				strcpy_s(skinpathje, sizeof(skinpathje), (const char*)options.main_skin_file);
 				
 				if (main_skin_open((char*)options.main_skin_file) == FALSE)
 					main_set_default_skin();
@@ -2331,11 +2331,14 @@ int     cmdline_parse_options(int argc, char **argv, HWND hWnd)
 			if (value == &options.use_default_skin)
 			{
 				i++;
-				
+
+				if (i >= argc)
+					break;
+
 				if (stricmp(argv[i], "default") == 0)
 					*value = TRUE;
 				else
-					strcpy((char*)options.main_skin_file, argv[i]);
+					strcpy_s((char*)options.main_skin_file, sizeof(options.main_skin_file), argv[i]);
 			}
 			
 			if (value == &globals.main_int_show_minimized)
@@ -2647,7 +2650,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (*options.main_skin_file && options.use_default_skin == FALSE)
 	{
 		char    lastskinfile[MAX_PATH];
-		strcpy(lastskinfile, (const char*)options.main_skin_file);
+		strcpy_s(lastskinfile, sizeof(lastskinfile), (const char*)options.main_skin_file);
 		
 		if (main_skin_open((char*)options.main_skin_file) == FALSE)
 		{

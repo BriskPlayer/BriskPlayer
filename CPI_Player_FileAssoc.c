@@ -186,23 +186,53 @@ void CPFA_AssociateWithEXE(CPs_CoDecModule* pCoDec)
 		}
 		pDotExt[0] = '.';
 		strcpy(pDotExt + 1, pCursor->m_pcExtension);
-		
+
 		CP_TRACE1("Associating extension: \"%s\"", pCursor->m_pcExtension);
-		
-		// Setup registry
-		RegCreateKeyEx(HKEY_CLASSES_ROOT, pDotExt, 0, NULL,
-					   REG_OPTION_NON_VOLATILE,
-					   KEY_ALL_ACCESS, NULL, &hKey,
-					   &dwDisposition);
-		RegSetValueEx(hKey, NULL, 0, REG_SZ, (const BYTE*)CIC_BRISKPLAYER_FILETYPE, sizeof(CIC_BRISKPLAYER_FILETYPE));
-		RegCloseKey(hKey);
-		
+
+		// Setup registry. HKEY_CURRENT_USER\Software\Classes is writable by
+		// any user account without elevation, unlike HKEY_CLASSES_ROOT,
+		// which for a standard (non-elevated) user resolves through
+		// HKEY_LOCAL_MACHINE\Software\Classes and fails with
+		// ERROR_ACCESS_DENIED. It is merged into the same effective view
+		// Explorer/common dialogs read via HKEY_CLASSES_ROOT, with per-user
+		// entries taking precedence, so this is both correct without
+		// requiring admin rights and sufficient for the lookup to work.
+		{
+			static const char szClassesPrefix[] = "Software\\Classes\\";
+			char* pSubKey = (char*)malloc(sizeof(szClassesPrefix) - 1 + strlen(pDotExt) + 1);
+			if (pSubKey)
+			{
+				LONG lResult;
+				memcpy(pSubKey, szClassesPrefix, sizeof(szClassesPrefix) - 1);
+				strcpy(pSubKey + sizeof(szClassesPrefix) - 1, pDotExt);
+
+				lResult = RegCreateKeyEx(HKEY_CURRENT_USER, pSubKey, 0, NULL,
+							   REG_OPTION_NON_VOLATILE,
+							   KEY_ALL_ACCESS, NULL, &hKey,
+							   &dwDisposition);
+				if (lResult == ERROR_SUCCESS)
+				{
+					RegSetValueEx(hKey, NULL, 0, REG_SZ, (const BYTE*)CIC_BRISKPLAYER_FILETYPE, sizeof(CIC_BRISKPLAYER_FILETYPE));
+					RegCloseKey(hKey);
+				}
+				else
+				{
+					CP_TRACE2("Failed to register file association for \"%s\" (error %ld)", pDotExt, lResult);
+				}
+				free(pSubKey);
+			}
+		}
+
 		// Cleanup
 		free(pDotExt);
-		
+
 		// Move to next extension
 		pCursor = (CPs_FileAssociation*)pCursor->m_pNext;
 	}
+
+	// Let Explorer pick up the new association(s) immediately instead of
+	// waiting for the next login or explorer.exe restart.
+	SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
 }
 
 //

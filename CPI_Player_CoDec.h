@@ -87,6 +87,23 @@ typedef struct _CPs_CoDecModule
 	void* m_pFileAssociationCookie;
 } CPs_CoDecModule;
 
+// Validate structure layout and size. This mirrors an identical set of
+// assertions in rust/codecs/src/ffi.rs's CPs_CoDecModule — if either side's
+// struct changes without updating the other, one of the two builds fails
+// immediately instead of silently desyncing the shared vtable ABI at
+// runtime. Expressed via sizeof(void*) (every field here is pointer-sized)
+// rather than a hardcoded byte count so it holds on both x86 and x64.
+static_assert(sizeof(CPs_CoDecModule) == 9 * sizeof(void*), "CPs_CoDecModule size mismatch - update rust/codecs/src/ffi.rs to match");
+static_assert(offsetof(CPs_CoDecModule, Uninitialise)             == 0 * sizeof(void*), "CPs_CoDecModule field order mismatch");
+static_assert(offsetof(CPs_CoDecModule, OpenFile)                 == 1 * sizeof(void*), "CPs_CoDecModule field order mismatch");
+static_assert(offsetof(CPs_CoDecModule, CloseFile)                == 2 * sizeof(void*), "CPs_CoDecModule field order mismatch");
+static_assert(offsetof(CPs_CoDecModule, Seek)                     == 3 * sizeof(void*), "CPs_CoDecModule field order mismatch");
+static_assert(offsetof(CPs_CoDecModule, GetFileInfo)              == 4 * sizeof(void*), "CPs_CoDecModule field order mismatch");
+static_assert(offsetof(CPs_CoDecModule, GetPCMBlock)              == 5 * sizeof(void*), "CPs_CoDecModule field order mismatch");
+static_assert(offsetof(CPs_CoDecModule, GetCurrentPos_secs)       == 6 * sizeof(void*), "CPs_CoDecModule field order mismatch");
+static_assert(offsetof(CPs_CoDecModule, m_pModuleCookie)          == 7 * sizeof(void*), "CPs_CoDecModule field order mismatch");
+static_assert(offsetof(CPs_CoDecModule, m_pFileAssociationCookie) == 8 * sizeof(void*), "CPs_CoDecModule field order mismatch");
+
 //
 ////////////////////////////////////////////////////////////////////////////////
 

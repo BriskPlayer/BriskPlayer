@@ -62,8 +62,23 @@ typedef struct _CPs_InStream
 	
 	// Public variables
 	void* m_pModuleCookie;  // This is a pointer to any private data the module may want to maintain
-	
+
 } CPs_InStream;
+
+// Validate structure layout and size. This mirrors an identical set of
+// assertions in rust/codecs/src/ffi.rs's CpsInStream — if either side's
+// struct changes without updating the other, one of the two builds fails
+// immediately instead of silently desyncing the shared vtable ABI at
+// runtime. Expressed via sizeof(void*) (every field here is pointer-sized)
+// rather than a hardcoded byte count so it holds on both x86 and x64.
+static_assert(sizeof(CPs_InStream) == 7 * sizeof(void*), "CPs_InStream size mismatch - update rust/codecs/src/ffi.rs to match");
+static_assert(offsetof(CPs_InStream, Uninitialise)   == 0 * sizeof(void*), "CPs_InStream field order mismatch");
+static_assert(offsetof(CPs_InStream, Read)           == 1 * sizeof(void*), "CPs_InStream field order mismatch");
+static_assert(offsetof(CPs_InStream, Seek)           == 2 * sizeof(void*), "CPs_InStream field order mismatch");
+static_assert(offsetof(CPs_InStream, Tell)           == 3 * sizeof(void*), "CPs_InStream field order mismatch");
+static_assert(offsetof(CPs_InStream, GetLength)      == 4 * sizeof(void*), "CPs_InStream field order mismatch");
+static_assert(offsetof(CPs_InStream, IsSeekable)     == 5 * sizeof(void*), "CPs_InStream field order mismatch");
+static_assert(offsetof(CPs_InStream, m_pModuleCookie)== 6 * sizeof(void*), "CPs_InStream field order mismatch");
 
 //
 ////////////////////////////////////////////////////////////////////////////////

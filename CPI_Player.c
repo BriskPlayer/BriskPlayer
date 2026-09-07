@@ -111,11 +111,13 @@ void CPI_Player__Destroy(CP_HPLAYER hPlayer)
 	{
 		// TerminateThread is intentionally avoided here: it does not release
 		// critical sections, unwind COM, or flush buffers and can corrupt the
-		// process heap.  Close the handle and free state so we don't leak
-		// OS resources, even though the thread itself continues until exit.
-		CP_TRACE0("Player thread did not exit within timeout; closing handle without terminating");
+		// process heap. We also deliberately do NOT free pPlayEngine: the
+		// thread may still be running and dereferencing it at any point, so
+		// freeing it here would be a use-after-free. Leak it instead — this
+		// path should be rare, and losing a small allocation beats a
+		// use-after-free or heap corruption.
+		CP_TRACE0("Player thread did not exit within timeout; leaking engine state instead of risking a use-after-free");
 		CloseHandle(pPlayEngine->m_hThread);
-		free(pPlayEngine);
 		return;
 	}
 	

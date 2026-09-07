@@ -22,3 +22,9 @@ mod playlist;
 mod stream_internet;
 mod tags;
 mod wav;
+
+// Link-only stand-ins for the C-side functions these modules call into, so
+// `cargo test`'s test-harness binary (which links the whole crate, not just
+// the module under test) can actually link. See test_stubs.rs for why.
+#[cfg(test)]
+mod test_stubs;

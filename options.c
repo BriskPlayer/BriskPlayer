@@ -309,7 +309,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 				
 				// Convert initial directory to Unicode
 				char pathbuffie[MAX_PATH];
-				strcpy(pathbuffie, (char*)options.main_skin_file);
+				strcpy_s(pathbuffie, sizeof(pathbuffie), (char*)options.main_skin_file);
 				(void)path_remove_filespec(pathbuffie);
 				WCHAR* pwcInitialDir = STR_ConvertToUnicode(pathbuffie);
 				

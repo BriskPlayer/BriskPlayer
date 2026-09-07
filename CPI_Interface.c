@@ -523,8 +523,30 @@ LRESULT CALLBACK exp_InterfaceWindowProc(HWND hWnd, UINT uiMessage, WPARAM wPara
 			return HTCAPTION;
 		} // end WM_NCHITTEST
 		
+		case WM_DPICHANGED:
+		{
+			// This is a real top-level WS_POPUP window and, per the app's
+			// Per-Monitor-V2 manifest, gets its own WM_DPICHANGED when
+			// dragged to a monitor whose DPI differs from whichever window
+			// last drove the (process-wide) DPI state in CPI_DpiScale.c.
+			// Without this handler, DPI_Scale() here keeps returning the
+			// stale scale factor and the window never re-lays-out itself.
+			DPI_UpdateForWindow(hWnd);
+
+			const RECT* prcNewWindow = (const RECT*)lParam;
+			SetWindowPos(hWnd, NULL,
+			             prcNewWindow->left, prcNewWindow->top,
+			             prcNewWindow->right - prcNewWindow->left,
+			             prcNewWindow->bottom - prcNewWindow->top,
+			             SWP_NOZORDER | SWP_NOACTIVATE);
+			// The SetWindowPos above triggers WM_WINDOWPOSCHANGED below,
+			// which already calls pState->m_hndlr_onPosChange to re-layout
+			// subparts/controls using the DPI we just updated.
+			return 0;
+		} // end WM_DPICHANGED
+
 		case WM_WINDOWPOSCHANGED:
-		
+
 		{
 			const WINDOWPOS* pWP = (const WINDOWPOS*)lParam;
 			RECT rNewPos;

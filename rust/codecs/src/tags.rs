@@ -15,6 +15,7 @@
 
 use super::ffi::{BOOL, FALSE, TRUE};
 use lofty::config::WriteOptions;
+use lofty::error::LoftyError;
 use lofty::file::FileType;
 use lofty::picture::{MimeType, Picture, PictureType};
 use lofty::prelude::*;
@@ -22,6 +23,27 @@ use lofty::tag::{ItemKey, Tag};
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_int, c_uint, c_uchar, c_ushort};
 use std::ptr;
+
+// ---------------------------------------------------------------------------
+// Error logging
+// ---------------------------------------------------------------------------
+
+// Every CPTL_* function here returns a bare BOOL across the FFI boundary —
+// there is no channel for the caller to learn *why* a read/write failed
+// ("file not found" vs "unsupported format" vs "corrupt tag" vs "permission
+// denied" are all just FALSE). Changing that return type is a bigger, more
+// invasive change (it's part of the C-visible ABI, see CPI_TagLib.h), so
+// this is a minimal, additive fix: log the discarded LoftyError via
+// OutputDebugStringA (the same debugger-Output-window channel the C side's
+// CP_TRACE/_CrtDbgReport macros use) before returning FALSE, so the
+// information is at least available to a developer, instead of vanishing
+// entirely.
+fn log_lofty_err(err: &LoftyError) {
+    let msg = format!("BriskPlayer tags.rs: lofty error: {err}\0");
+    unsafe {
+        windows_sys::Win32::System::Diagnostics::Debug::OutputDebugStringA(msg.as_ptr() as _);
+    }
+}
 
 // ---------------------------------------------------------------------------
 // C-compatible struct mirrors
@@ -319,7 +341,7 @@ pub unsafe extern "C" fn CPTL_ReadAllMetadata(
 
     let tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
 
     if let Some(tag) = tagged_file.primary_tag().or_else(|| tagged_file.first_tag()) {
@@ -352,7 +374,7 @@ pub unsafe extern "C" fn CPTL_ReadBasicMetadataOnly(
 
     let tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
 
     if let Some(tag) = tagged_file.primary_tag().or_else(|| tagged_file.first_tag()) {
@@ -379,7 +401,7 @@ pub unsafe extern "C" fn CPTL_ReadExtendedMetadataOnly(
 
     let tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
 
     if let Some(tag) = tagged_file.primary_tag().or_else(|| tagged_file.first_tag()) {
@@ -439,7 +461,7 @@ pub unsafe extern "C" fn CPTL_ReadTags(
 
     let tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
 
     let tag = match tagged_file.primary_tag().or_else(|| tagged_file.first_tag()) {
@@ -512,7 +534,7 @@ pub unsafe extern "C" fn CPTL_WriteTags(
 
     let mut tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
 
     let tag = if tagged_file.primary_tag().is_some() {
@@ -556,7 +578,7 @@ pub unsafe extern "C" fn CPTL_WriteTags(
 
     match tagged_file.save_to_path(&path, WriteOptions::default()) {
         Ok(_)  => TRUE,
-        Err(_) => FALSE,
+        Err(e) => { log_lofty_err(&e); FALSE },
     }
 }
 
@@ -587,7 +609,7 @@ pub unsafe extern "C" fn CPTL_ReadExtendedTags(
     };
     let tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
     let tag = match tagged_file.primary_tag().or_else(|| tagged_file.first_tag()) {
         Some(t) => t,
@@ -642,7 +664,7 @@ pub unsafe extern "C" fn CPTL_WriteExtendedTags(
     };
     let mut tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
     let tag = if tagged_file.primary_tag().is_some() {
         tagged_file.primary_tag_mut().unwrap()
@@ -677,7 +699,7 @@ pub unsafe extern "C" fn CPTL_WriteExtendedTags(
 
     match tagged_file.save_to_path(&path, WriteOptions::default()) {
         Ok(_)  => TRUE,
-        Err(_) => FALSE,
+        Err(e) => { log_lofty_err(&e); FALSE },
     }
 }
 
@@ -704,7 +726,7 @@ pub unsafe extern "C" fn CPTL_ReadReplayGain(
     };
     let tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
     let tag = match tagged_file.primary_tag().or_else(|| tagged_file.first_tag()) {
         Some(t) => t,
@@ -740,7 +762,7 @@ pub unsafe extern "C" fn CPTL_WriteReplayGain(
     };
     let mut tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
     let tag = if tagged_file.primary_tag().is_some() {
         tagged_file.primary_tag_mut().unwrap()
@@ -758,7 +780,7 @@ pub unsafe extern "C" fn CPTL_WriteReplayGain(
 
     match tagged_file.save_to_path(&path, WriteOptions::default()) {
         Ok(_)  => TRUE,
-        Err(_) => FALSE,
+        Err(e) => { log_lofty_err(&e); FALSE },
     }
 }
 
@@ -791,7 +813,7 @@ pub unsafe extern "C" fn CPTL_ReadAudioProperties(
     };
     let tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
 
     let props = tagged_file.properties();
@@ -829,7 +851,7 @@ pub unsafe extern "C" fn CPTL_ReadMultipleArtists(
     };
     let tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
     let tag = match tagged_file.primary_tag().or_else(|| tagged_file.first_tag()) {
         Some(t) => t,
@@ -854,7 +876,7 @@ pub unsafe extern "C" fn CPTL_WriteMultipleArtists(
     };
     let mut tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
     let tag = if tagged_file.primary_tag().is_some() {
         tagged_file.primary_tag_mut().unwrap()
@@ -881,7 +903,7 @@ pub unsafe extern "C" fn CPTL_WriteMultipleArtists(
 
     match tagged_file.save_to_path(&path, WriteOptions::default()) {
         Ok(_)  => TRUE,
-        Err(_) => FALSE,
+        Err(e) => { log_lofty_err(&e); FALSE },
     }
 }
 
@@ -913,7 +935,7 @@ pub unsafe extern "C" fn CPTL_ReadMusicBrainzIDs(
     };
     let tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
     let tag = match tagged_file.primary_tag().or_else(|| tagged_file.first_tag()) {
         Some(t) => t,
@@ -943,7 +965,7 @@ pub unsafe extern "C" fn CPTL_WriteMusicBrainzIDs(
     };
     let mut tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
     let tag = if tagged_file.primary_tag().is_some() {
         tagged_file.primary_tag_mut().unwrap()
@@ -971,7 +993,7 @@ pub unsafe extern "C" fn CPTL_WriteMusicBrainzIDs(
 
     match tagged_file.save_to_path(&path, WriteOptions::default()) {
         Ok(_)  => TRUE,
-        Err(_) => FALSE,
+        Err(e) => { log_lofty_err(&e); FALSE },
     }
 }
 
@@ -993,7 +1015,7 @@ pub unsafe extern "C" fn CPTL_ReadAlbumArt(
     };
     let tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
     let tag = match tagged_file.primary_tag().or_else(|| tagged_file.first_tag()) {
         Some(t) => t,
@@ -1008,12 +1030,15 @@ pub unsafe extern "C" fn CPTL_ReadAlbumArt(
     let raw = pic.data();
     if raw.is_empty() { return FALSE; }
 
-    let mut owned = raw.to_vec();
-    owned.shrink_to_fit();
-    let len = owned.len();
-    art.m_pImageData = owned.as_mut_ptr();
+    // into_boxed_slice() is documented to reallocate to an *exact*-capacity
+    // buffer when needed, unlike shrink_to_fit() (only a best-effort hint —
+    // the allocator may still leave excess capacity). CPTL_FreeAlbumArt
+    // reconstructs this with Vec::from_raw_parts(ptr, len, len), which is
+    // only sound if capacity == len exactly.
+    let boxed: Box<[u8]> = raw.to_vec().into_boxed_slice();
+    let len = boxed.len();
+    art.m_pImageData = Box::into_raw(boxed) as *mut u8;
     art.m_iImageSize = len as c_uint;
-    std::mem::forget(owned);
 
     let mime_str = pic.mime_type().map(|m| m.as_str()).unwrap_or("image/jpeg");
     art.m_pcMimeType = alloc_str(mime_str);
@@ -1025,8 +1050,10 @@ pub unsafe extern "C" fn CPTL_ReadAlbumArt(
 pub unsafe extern "C" fn CPTL_FreeAlbumArt(pAlbumArt: *mut CPs_AlbumArt) {
     let art = match pAlbumArt.as_mut() { Some(a) => a, None => return };
     if !art.m_pImageData.is_null() {
+        // Matches the Box<[u8]>::into_raw() allocation in CPTL_ReadAlbumArt.
         let len = art.m_iImageSize as usize;
-        drop(Vec::from_raw_parts(art.m_pImageData, len, len));
+        let slice_ptr = ptr::slice_from_raw_parts_mut(art.m_pImageData, len);
+        drop(Box::from_raw(slice_ptr));
     }
     free_str(art.m_pcMimeType);
     ptr::write_bytes(pAlbumArt, 0, 1);
@@ -1047,7 +1074,7 @@ pub unsafe extern "C" fn CPTL_WriteAlbumArt(
     };
     let mut tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
     let tag = if tagged_file.primary_tag().is_some() {
         tagged_file.primary_tag_mut().unwrap()
@@ -1077,7 +1104,7 @@ pub unsafe extern "C" fn CPTL_WriteAlbumArt(
 
     match tagged_file.save_to_path(&path, WriteOptions::default()) {
         Ok(_)  => TRUE,
-        Err(_) => FALSE,
+        Err(e) => { log_lofty_err(&e); FALSE },
     }
 }
 
@@ -1089,7 +1116,7 @@ pub unsafe extern "C" fn CPTL_HasAlbumArt(pcFilePath: *const c_char) -> BOOL {
     };
     let tagged_file = match lofty::read_from_path(&path) {
         Ok(f)  => f,
-        Err(_) => return FALSE,
+        Err(e) => { log_lofty_err(&e); return FALSE; },
     };
     if let Some(tag) = tagged_file.primary_tag().or_else(|| tagged_file.first_tag()) {
         if !tag.pictures().is_empty() { return TRUE; }

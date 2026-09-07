@@ -5,7 +5,11 @@ edition = "2021"
 
 [lib]
 name       = "brisk_codecs"
-crate-type = ["staticlib"]
+# "rlib" is needed so `cargo test` can build a test harness that links
+# against this crate as an ordinary Rust library; "staticlib" is what the
+# C/CMake build (Corrosion) actually consumes. Having both does not change
+# what Corrosion picks up.
+crate-type = ["staticlib", "rlib"]
 
 [dependencies]
 flac-codec = "1"
@@ -15,6 +19,7 @@ lofty = "0.24"
 windows-sys = { version = "0.52", features = [
     "Win32_Foundation",
     "Win32_Networking_WinInet",
+    "Win32_System_Diagnostics_Debug",
     "Win32_System_Threading",
     "Win32_UI_WindowsAndMessaging",
 ] }

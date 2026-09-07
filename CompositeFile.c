@@ -399,10 +399,6 @@ BOOL CP_BuildDirectory(CP_COMPOSITEFILE hComposite)
 			return FALSE;
 		}
 		
-		pNewSubFile->m_pNext = pContext->m_pFirstSubFile;
-		
-		pContext->m_pFirstSubFile = pNewSubFile;
-		
 		// Init subfile members
 		pNewSubFile->m_pcName = (char*)SAFE_MALLOC(pHeader->m_wFilenameLen + 1);
 		if (!pNewSubFile->m_pcName)
@@ -412,7 +408,7 @@ BOOL CP_BuildDirectory(CP_COMPOSITEFILE hComposite)
 			return FALSE;
 		}
 		memcpy(pNewSubFile->m_pcName, pContext->m_pFileBase + iOffset + sizeof(*pHeader), pHeader->m_wFilenameLen);
-		
+
 		pNewSubFile->m_pcName[pHeader->m_wFilenameLen] = '\0';
 		pNewSubFile->m_wMethod = pHeader->m_wMethod;
 		pNewSubFile->m_dwCRC32 = pHeader->m_dwCRC32;
@@ -420,7 +416,13 @@ BOOL CP_BuildDirectory(CP_COMPOSITEFILE hComposite)
 		pNewSubFile->m_iUncompressedSize = pHeader->m_dwDecompressedSize;
 		pNewSubFile->m_iFileOffset = iOffset + sizeof(*pHeader) + pHeader->m_wFilenameLen + pHeader->m_wExtraFieldLen;
 		CP_TRACE1("SubFile:\"%s\"", pNewSubFile->m_pcName);
-		
+
+		// Link into the list only now that the node is fully initialized,
+		// so a failed allocation above never leaves a freed node reachable
+		// from pContext->m_pFirstSubFile (was a use-after-free).
+		pNewSubFile->m_pNext = pContext->m_pFirstSubFile;
+		pContext->m_pFirstSubFile = pNewSubFile;
+
 		// Skip to next file (overflow already checked above)
 		iOffset += iEntrySize;
 	}

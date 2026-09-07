@@ -276,9 +276,16 @@ typedef struct _CPs_FileInfo
 	BOOL m_bStereo;
 	BOOL m_b16bit;
 } CPs_FileInfo;
-// Validate structure layout and size
-static_assert(sizeof(CPs_FileInfo) <= 32, "FileInfo should remain compact");
-static_assert(offsetof(CPs_FileInfo, m_iFileLength_Secs) == 0, "FileLength should be first for performance");
+// Validate structure layout and size. This mirrors an identical set of
+// assertions in rust/codecs/src/ffi.rs's CPs_FileInfo — if either side's
+// struct changes without updating the other, one of the two builds fails
+// immediately instead of silently desyncing the shared ABI at runtime.
+static_assert(sizeof(CPs_FileInfo) == 5 * sizeof(UINT), "CPs_FileInfo size mismatch - update rust/codecs/src/ffi.rs to match");
+static_assert(offsetof(CPs_FileInfo, m_iFileLength_Secs) == 0 * sizeof(UINT), "FileLength should be first for performance");
+static_assert(offsetof(CPs_FileInfo, m_iBitRate_Kbs)     == 1 * sizeof(UINT), "CPs_FileInfo field order mismatch");
+static_assert(offsetof(CPs_FileInfo, m_iFreq_Hz)         == 2 * sizeof(UINT), "CPs_FileInfo field order mismatch");
+static_assert(offsetof(CPs_FileInfo, m_bStereo)          == 3 * sizeof(UINT), "CPs_FileInfo field order mismatch");
+static_assert(offsetof(CPs_FileInfo, m_b16bit)           == 4 * sizeof(UINT), "CPs_FileInfo field order mismatch");
 
 //
 // EQ settings

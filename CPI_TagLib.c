@@ -621,7 +621,7 @@ HBITMAP CPTL_CreateBitmapFromImageData(const BYTE* pImageData,
     void* pBits = NULL;
     HDC  hScreenDC = NULL;
 
-    CoInitialize(NULL);
+    HRESULT hrCoInit = CoInitialize(NULL);
 
     HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, NULL,
                                   CLSCTX_INPROC_SERVER,
@@ -717,6 +717,12 @@ cleanup:
     if (pDecoder)   pDecoder->Release();
     if (pStream)    pStream->Release();
     if (pFactory)   pFactory->Release();
+    // Only uninitialize if this call actually incremented the apartment's
+    // ref count (S_OK: initialized here; S_FALSE: already initialized on
+    // this thread, still needs balancing). RPC_E_CHANGED_MODE means
+    // CoInitialize failed due to a mode conflict and changed nothing.
+    if (SUCCEEDED(hrCoInit))
+        CoUninitialize();
     return hBitmap;
 }
 
