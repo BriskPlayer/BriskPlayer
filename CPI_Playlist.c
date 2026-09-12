@@ -181,7 +181,16 @@ void CPL_DestroyPlaylist(CP_HPLAYLIST hPlaylist)
 	{
 		DWORD dwWait = WaitForSingleObject((HANDLE)CPPL_GetWorkerThread(hPlaylist), 5000);
 		if (dwWait == WAIT_TIMEOUT)
-			CP_TRACE0("Worker thread did not exit gracefully within timeout");
+		{
+			// The worker thread may still be running and dereferencing
+			// hPlaylist (e.g. mid-CPLI_ReadTag) — freeing it below, as this
+			// used to do unconditionally, would be a use-after-free the
+			// instant the thread resumes and calls back into it. Leak the
+			// playlist and its thread handle instead: this path should be
+			// rare, and losing an allocation beats a use-after-free.
+			CP_TRACE0("Worker thread did not exit gracefully within timeout; leaking playlist instead of risking a use-after-free");
+			return;
+		}
 	}
 
 	CloseHandle((HANDLE)CPPL_GetWorkerThread(hPlaylist));

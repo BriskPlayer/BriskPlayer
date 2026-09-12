@@ -99,14 +99,28 @@ fn skip_to_chunk<R: Read + Seek>(f: &mut R, target: &[u8; 4]) -> io::Result<u32>
     Err(io::Error::new(io::ErrorKind::NotFound, "chunk not found"))
 }
 
+/// Largest sample rate that can't make `bytes_per_second` (sample rate
+/// times up to 4, for 16-bit stereo) overflow i32 and wrap to negative.
+/// No real WAV file gets remotely close to this — it exists purely as an
+/// overflow backstop against a corrupt/adversarial header.
+const MAX_SANE_SAMPLE_RATE: u32 = (i32::MAX as u32) / 4;
+
 /// Returns whether a parsed fmt-chunk describes a WAV file wav_open_file
-/// can safely play: PCM only, and a non-zero sample rate. Pulled out as a
-/// pure function (no I/O, no InStream/CP_CreateInStream dependency) so the
-/// zero-sample-rate regression — a corrupt fmt chunk that used to be
-/// accepted here and then crashed wav_seek() via divide-by-zero — has a
-/// unit test that doesn't need the C build to run.
+/// can safely play: PCM only, a non-zero sample rate, and a sample rate
+/// small enough that computing bytes_per_second from it can't overflow.
+/// Pulled out as a pure function (no I/O, no InStream/CP_CreateInStream
+/// dependency) so both regressions below have a unit test that doesn't
+/// need the C build to run:
+///   - zero-sample-rate: a corrupt fmt chunk was accepted here and then
+///     crashed wav_seek() via divide-by-zero.
+///   - overflow: a sample rate near u32::MAX passed the `!= 0` check, but
+///     `n_samples_per_sec as i32 * up-to-4` wrapped to a *negative*
+///     bytes_per_second, which wav_seek()'s `== 0` guard didn't catch
+///     (unlike its sibling guards, which correctly use `> 0`) — dividing
+///     by that negative value silently produced wrong seek/position
+///     bookkeeping.
 fn fmt_chunk_is_valid(format_tag: u16, n_samples_per_sec: u32) -> bool {
-    format_tag == 1 && n_samples_per_sec != 0
+    format_tag == 1 && n_samples_per_sec != 0 && n_samples_per_sec <= MAX_SANE_SAMPLE_RATE
 }
 
 #[cfg(test)]
@@ -119,6 +133,16 @@ mod tests {
         // looked at format_tag), making ctx.bytes_per_second zero and
         // crashing wav_seek()'s unconditional divide/modulo by it.
         assert!(!fmt_chunk_is_valid(1, 0));
+    }
+
+    #[test]
+    fn rejects_sample_rate_that_would_overflow_bytes_per_second() {
+        // n_samples_per_sec near u32::MAX passed the old `!= 0`-only check,
+        // but `n_samples_per_sec as i32 * up-to-4` wrapped to a negative
+        // bytes_per_second that wav_seek()'s old `== 0` guard didn't catch.
+        assert!(!fmt_chunk_is_valid(1, u32::MAX));
+        assert!(!fmt_chunk_is_valid(1, MAX_SANE_SAMPLE_RATE + 1));
+        assert!(fmt_chunk_is_valid(1, MAX_SANE_SAMPLE_RATE));
     }
 
     #[test]
@@ -360,7 +384,11 @@ unsafe extern "C" fn wav_seek(
     // SAFETY: m_pModuleCookie is valid.
     let ctx = &mut *((*pModule).m_pModuleCookie as *mut WavContext);
     if !ctx.open || !ctx.seekable { return; }
-    if iDenominator == 0 || ctx.bytes_per_second == 0 { return; }
+    // `> 0` (not `== 0`) to also reject a negative bytes_per_second, matching
+    // the guards in wav_open_file/wav_get_pcm_block — belt-and-suspenders
+    // alongside fmt_chunk_is_valid's overflow check, in case this field is
+    // ever populated through another path in the future.
+    if iDenominator == 0 || ctx.bytes_per_second <= 0 { return; }
 
     let stream = match ctx.stream.as_mut() { Some(s) => s, None => return };
 

@@ -686,7 +686,13 @@ void    main_skin_check_ini_value(char *textposition,
 	sscanf_s(textposition, "%s %d %d %d %d %d %d %d %d %d %s",
 		   name, (unsigned)sizeof(name), &x, &y, &w, &h, &maxw, &x2, &y2, &w2, &h2, tooltip, (unsigned)sizeof(tooltip));
 	       
-	for (teller = 0; teller < Lastone; teller++)
+	// Bounded by ReducedSize, not Lastone: `associate[]` (built in the
+	// caller) has exactly ReducedSize entries (PlaySwitch..FreqText);
+	// Lastone is ReducedSize + 1, so `teller < Lastone` read one element
+	// past the end of the array on every skin .ini line parsed.
+	// (Note: `associate` is a pointer parameter here, not the array itself —
+	// sizeof(associate) would give sizeof(Associate*), not the real count.)
+	for (teller = 0; teller < ReducedSize; teller++)
 	{
 		if (stricmp(name, associate[teller].name) == 0)
 		{

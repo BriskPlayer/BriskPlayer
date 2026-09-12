@@ -895,8 +895,13 @@ void CPLI_SetTrackNum_AsText(CP_HPLAYLISTITEM hItem, const char* pcNewValue)
 		free(pItem->m_pcTrackNum_AsText);
 		
 	pItem->m_pcTrackNum_AsText = CALLOC_TYPE(char, CPC_TRACKNUMASTEXTBUFFERSIZE);
-	strncpy(pItem->m_pcTrackNum_AsText, pcNewValue, CPC_TRACKNUMASTEXTBUFFERSIZE);
-	
+	// Plain strncpy does NOT null-terminate when pcNewValue is >= the
+	// destination size — reachable from the UI, since (unlike the
+	// Title/Artist in-place editors) the TrackNum column editor has no
+	// EM_LIMITTEXT length cap, only ES_NUMBER restricting to digits.
+	// cp_strncpy_s always null-terminates.
+	cp_strncpy_s(pItem->m_pcTrackNum_AsText, CPC_TRACKNUMASTEXTBUFFERSIZE, pcNewValue, CPC_TRACKNUMASTEXTBUFFERSIZE - 1);
+
 	pItem->m_bID3Tag_SaveRequired = TRUE;
 	
 	CPL_cb_OnItemUpdated(hItem);
@@ -1592,14 +1597,13 @@ void CPLI_CalculateLength_MP3(CPs_PlaylistItem* pItem)
 					    FILE_SHARE_READ, 0,
 					    OPEN_EXISTING, 0, 0);
 	free(pwcFilename);
-	
-	dwFileSize = GetFileSize(hFile, NULL);
-	
+
 	// Cannot open - fail silently
-	
 	if (hFile == INVALID_HANDLE_VALUE)
 		return;
-		
+
+	dwFileSize = GetFileSize(hFile, NULL);
+
 	// Read the first 64K of the file (that should contain the first frame header!)
 	ReadFile(hFile, pbBuffer, sizeof(pbBuffer), &dwBufferSize, NULL);
 	
@@ -1623,17 +1627,23 @@ void CPLI_CalculateLength_MP3(CPs_PlaylistItem* pItem)
 	
 	// Seek to the start of the first frame
 	bFoundFrameHeader = FALSE;
-	
-	while (iBufferCursor < (dwBufferSize - 4))
+
+	// dwBufferSize is unsigned; for a file under 4 bytes (truncated/empty),
+	// `dwBufferSize - 4` would wrap to a huge value and scan the loop far
+	// past pbBuffer's actual 0x8000-byte bounds.
+	if (dwBufferSize >= 4)
 	{
-		if (pbBuffer[iBufferCursor] == 0xFF
-				&& (pbBuffer[iBufferCursor+1] & 0xE0) == 0xE0)
+		while (iBufferCursor < (dwBufferSize - 4))
 		{
-			bFoundFrameHeader = TRUE;
-			break;
+			if (pbBuffer[iBufferCursor] == 0xFF
+					&& (pbBuffer[iBufferCursor+1] & 0xE0) == 0xE0)
+			{
+				bFoundFrameHeader = TRUE;
+				break;
+			}
+
+			iBufferCursor++;
 		}
-		
-		iBufferCursor++;
 	}
 	
 	if (bFoundFrameHeader == FALSE)
@@ -2206,8 +2216,10 @@ BOOL CPLI_GrowFile(HANDLE hFile, const DWORD dwStartOffset, const unsigned int i
 	DWORD dwFileSize;
 	unsigned int iFileCursor;
 	DWORD dwBytesTransferred;
-	BYTE* pbReadBlock[0x10000];
-	
+	BYTE pbReadBlock[0x10000]; // was `BYTE*[0x10000]` — a stray '*' turned a 64KB
+	                           // byte buffer into a 512KB/256KB array of pointers
+	                           // (matches the correctly-typed sibling CPLI_ShrinkFile's pBuffer)
+
 	dwFileSize = GetFileSize(hFile, NULL);
 	CP_TRACE1("Enlarging file by %d bytes", iNumBytes);
 	
@@ -2267,9 +2279,16 @@ BOOL CPLI_GrowFile(HANDLE hFile, const DWORD dwStartOffset, const unsigned int i
 void CPLI_ReadTag_TagLib(CPs_PlaylistItem* pItem)
 {
 	CPs_AllMetadata metadata;
-	
-	if (!pItem || !pItem->m_pcPath)
+
+	if (!pItem)
+		return;
+
+	if (!pItem->m_pcPath)
 	{
+		// CPLII_RemoveTagInfo() and the field write below both dereference
+		// pItem with no NULL check of their own — the combined
+		// `!pItem || !pItem->m_pcPath` guard used to call them even in the
+		// pItem == NULL case, defeating the very check it was doing.
 		CPLII_RemoveTagInfo(pItem);
 		pItem->m_enTagType = ttNone;
 		return;

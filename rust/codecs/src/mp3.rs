@@ -104,6 +104,7 @@ impl Mp3Context {
         }
         if self.input_read_pos >= self.input_buf.len() { return false; }
 
+        let slice_len = self.input_buf.len() - self.input_read_pos;
         let (consumed, maybe_info) =
             self.decoder.decode(&self.input_buf[self.input_read_pos..], &mut self.pcm_scratch);
 
@@ -111,6 +112,15 @@ impl Mp3Context {
             self.refill_input();
             return false;
         }
+
+        // Defensive: decode() should never report consuming more bytes than
+        // it was given the slice_len it was given, but nanomp3 is a ~6300-
+        // line c2rust translation of minimp3 that isn't independently
+        // re-verified here — clamp rather than trust, so a violation of
+        // that invariant can't turn the next call's slice-start into an
+        // out-of-range index (a panic/process-abort on a malformed file,
+        // the same failure mode as the wav.rs divide-by-zero bug).
+        let consumed = consumed.min(slice_len);
 
         // Advance read cursor — no memmove until the next compaction in refill_input.
         self.input_read_pos   += consumed;

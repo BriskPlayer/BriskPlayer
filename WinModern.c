@@ -721,40 +721,63 @@ wchar_t* FileDialog_OpenFile(HWND hWndOwner,
             // Multiple files selected - format: dir\0file1\0file2\0\0
             // Convert to: dir\file1|dir\file2
             size_t dirLen = wcslen(pBuffer);
-            wchar_t* pResult = (wchar_t*)malloc(bufferSize * sizeof(wchar_t));
+            BOOL bNeedsBackslash = (dirLen == 0 || pBuffer[dirLen - 1] != L'\\');
+
+            // Compute the exact output length before allocating: the
+            // reconstructed string duplicates the full directory path once
+            // per selected file, so reusing the original 64KB
+            // GetOpenFileNameW buffer size (as this used to do) silently
+            // overflows once enough files are selected from one directory
+            // (a few hundred — easily reached selecting a whole album
+            // folder) to exceed it.
+            size_t totalLen = 0;
+            {
+                wchar_t* pFile = pSecond;
+                BOOL bFirst = TRUE;
+                while (*pFile)
+                {
+                    size_t fileLen = wcslen(pFile);
+                    if (!bFirst) totalLen += 1; // '|'
+                    bFirst = FALSE;
+                    totalLen += dirLen + (bNeedsBackslash ? 1 : 0) + fileLen;
+                    pFile += fileLen + 1;
+                }
+            }
+
+            wchar_t* pResult = (wchar_t*)malloc((totalLen + 1) * sizeof(wchar_t));
             if (!pResult)
             {
                 free(pBuffer);
                 return NULL;
             }
-            
+
             wchar_t* pOut = pResult;
             wchar_t* pFile = pSecond;
             BOOL bFirst = TRUE;
-            
+
             while (*pFile)
             {
                 if (!bFirst)
                     *pOut++ = L'|';
                 bFirst = FALSE;
-                
+
                 // Copy directory
                 wcscpy(pOut, pBuffer);
                 pOut += dirLen;
-                
+
                 // Add backslash if needed
-                if (pBuffer[dirLen - 1] != L'\\')
+                if (bNeedsBackslash)
                     *pOut++ = L'\\';
-                
+
                 // Copy filename
                 size_t fileLen = wcslen(pFile);
                 wcscpy(pOut, pFile);
                 pOut += fileLen;
-                
+
                 pFile += fileLen + 1;
             }
             *pOut = L'\0';
-            
+
             free(pBuffer);
             return pResult;
         }

@@ -408,7 +408,8 @@ BOOL CircleBufferRead(CPs_CircleBuffer* pCBuffer, void* pDestBuffer, const size_
 			// Re-check after wait
 			used_space = CircleGetUsedSpace(pCBuffer);
 			bComplete = atomic_load(&pCBuffer->m_bComplete);
-		
+		}
+
 		// Perform actual read operation (C23 version)
 		if (used_space > 0) {
 			size_t read_cursor = atomic_load(&pCBuffer->m_iReadCursor);

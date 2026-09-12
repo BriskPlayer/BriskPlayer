@@ -26,21 +26,18 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-// C23 threading and atomic includes with fallback support
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L && defined(__STDC_NO_THREADS__) && __STDC_NO_THREADS__ == 0
-    // Check if threads.h is actually available
-    #if __has_include(<threads.h>)
-        #include <threads.h>
-        #include <stdatomic.h>
-        #define HAVE_C23_THREADING 1
-    #else
-        // threads.h not available, fall back to Windows threading
-        #define HAVE_C23_THREADING 0
-    #endif
-#else
-    // Fallback to Windows threading for older compilers or when threads not supported
-    #define HAVE_C23_THREADING 0
-#endif
+// C23 threading and atomic includes with fallback support.
+//
+// This used to duplicate its own detection here, but the condition was
+// backwards: `defined(__STDC_NO_THREADS__) && __STDC_NO_THREADS__ == 0`
+// can never be true under a standards-conforming compiler — that macro is
+// only ever defined at all to indicate threads.h is *un*supported — so
+// HAVE_C23_THREADING was permanently 0 here regardless of actual compiler
+// support, silently disabling this whole file's C23 path. Deferring to
+// threading_compat.h's detection (which gets this right, and already
+// includes <threads.h>/<stdatomic.h> when HAVE_C23_THREADING resolves to 1)
+// avoids maintaining two copies of the same logic that can drift apart.
+#include "threading_compat.h"
 
 // Forward reference
 struct _CPs_CircleBuffer;
