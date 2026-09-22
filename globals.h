@@ -414,7 +414,6 @@ typedef struct
 	BOOL    read_id3_tag_of_selected;
 	BOOL    read_id3_tag_in_background;
 	BOOL    support_id3v2;
-	BOOL    prefer_native_ogg_tags;
 	BOOL    work_out_track_lengths;
 	BOOL    show_remaining_time;
 	BOOL    remember_playlist;

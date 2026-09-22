@@ -28,23 +28,11 @@
 #include "CPI_PlaylistItem_Internal.h"
 #include "CPI_TagLib.h"
 #include "CPString.h"
-#ifdef HAVE_OGG_CODEC
-#include "ogg/ogg.h"
-#include "vorbis/codec.h"
-#include "vorbis/vorbisfile.h"
-#endif
 #include "CP_RIFFStructs.h"
 
-#ifdef HAVE_OGG_CODEC
-void CPLI_OGG_SkipOverTab(FILE* pFile);
-#endif
 void CPLI_SetPath(CPs_PlaylistItem* pItem, const char* pcNewPath);
 void CPLI_ReadTag_TagLib(CPs_PlaylistItem* pItem);
 void CPLI_WriteTag_TagLib(CPs_PlaylistItem* pItem);
-#ifdef HAVE_OGG_CODEC
-void CPLI_ReadTag_OGG(CPs_PlaylistItem* pItem);
-void CPLI_CalculateLength_OGG(CPs_PlaylistItem* pItem);
-#endif
 void CPLI_CalculateLength_MP3(CPs_PlaylistItem* pItem);
 void CPLI_CalculateLength_WAV(CPs_PlaylistItem* pItem);
 ////////////////////////////////////////////////////////////////////////////////
@@ -502,16 +490,7 @@ void CPLI_ReadTag(CP_HPLAYLISTITEM hItem)
 		
 	// Use TagLib to read metadata
 	CPLI_ReadTag_TagLib(pItem);
-	
-#ifdef HAVE_OGG_CODEC
-	// Override information with any OGG tags that may be there (if native OGG tags are preferred)
-	if (options.prefer_native_ogg_tags
-			&& stricmp(".ogg", CPLI_GetExtension(hItem)) == 0)
-	{
-		CPLI_ReadTag_OGG(pItem);
-	}
-#endif
-	
+
 	// Update interface
 	CPL_cb_OnItemUpdated(hItem);
 }
@@ -1392,12 +1371,7 @@ void CPLI_CalculateLength(CP_HPLAYLISTITEM hItem)
 	CP_CHECKOBJECT(pItem);
 	
 	pcExtension = CPLI_GetExtension(hItem);
-	
-#ifdef HAVE_OGG_CODEC
-	if (stricmp(pcExtension, ".ogg") == 0)
-		CPLI_CalculateLength_OGG(pItem);
-	else
-#endif
+
 	if (stricmp(pcExtension, ".mp3") == 0
 			 || stricmp(pcExtension, ".mp2") == 0)
 	{
@@ -1411,37 +1385,6 @@ void CPLI_CalculateLength(CP_HPLAYLISTITEM hItem)
 //    pItem->m_bID3Tag_SaveRequired = TRUE;
 	CPL_cb_OnItemUpdated(hItem);
 }
-
-#ifdef HAVE_OGG_CODEC
-//
-//
-//
-void CPLI_CalculateLength_OGG(CPs_PlaylistItem* pItem)
-{
-	FILE *hFile;
-	OggVorbis_File vorbisfileinfo;
-	
-	errno_t err = fopen_s(&hFile, pItem->m_pcPath, "rb");
-	
-	if (err != 0 || hFile == NULL)
-		return;
-		
-	CPLI_OGG_SkipOverTab(hFile);
-	
-	memset(&vorbisfileinfo, 0, sizeof(vorbisfileinfo));
-	
-	if (ov_open(hFile, &vorbisfileinfo, NULL, 0) < 0)
-	{
-		fclose(hFile);
-		return;
-	}
-	
-	CPLI_DecodeLength(pItem, (int)ov_time_total(&vorbisfileinfo, -1));
-	
-	ov_clear(&vorbisfileinfo);
-	fclose(hFile);
-}
-#endif
 
 //
 //
@@ -1958,157 +1901,6 @@ const char* CPLI_GetExtension(const CP_HPLAYLISTITEM hItem)
 		
 	return pcLastDot;
 }
-
-#ifdef HAVE_OGG_CODEC
-//
-//
-//
-void CPLI_OGG_SkipOverTab(FILE* pFile)
-{
-	char tag_header[10];
-	int iStreamStart = 0;
-	
-	if (fread(tag_header, 1, 10, pFile) == 10 && memcmp(tag_header, "ID3", 3) == 0)
-	{
-		// Simple ID3v2 tag size calculation (sync-safe format)
-		iStreamStart = 10; // Header size
-		iStreamStart += ((tag_header[6] & 0x7F) << 21)
-						| ((tag_header[7] & 0x7F) << 14)
-						| ((tag_header[8] & 0x7F) << 7)
-						| (tag_header[9] & 0x7F);
-	}
-	
-	fseek(pFile, iStreamStart, SEEK_SET);
-}
-
-//
-//
-//
-void CPLI_OGG_DecodeString(char** ppcString, const char* pcNewValue)
-{
-	int iStringLength;
-	
-	if (*ppcString)
-		free(*ppcString);
-		
-	iStringLength = strlen(pcNewValue);
-	
-	*ppcString = CALLOC_TYPE(char, iStringLength + 1);
-	
-	memcpy(*ppcString, pcNewValue, iStringLength + 1);
-}
-#endif // HAVE_OGG_CODEC (CPLI_OGG_SkipOverTab, CPLI_OGG_DecodeString)
-
-#ifdef HAVE_OGG_CODEC
-//
-//
-//
-void CPLI_ReadTag_OGG(CPs_PlaylistItem* pItem)
-{
-	FILE *hFile;
-	OggVorbis_File vorbisfileinfo;
-	vorbis_comment* pComment;
-	
-	errno_t err = fopen_s(&hFile, pItem->m_pcPath, "rb");
-	
-	if (err != 0 || hFile == NULL)
-		return;
-		
-	CPLI_OGG_SkipOverTab(hFile);
-	
-	memset(&vorbisfileinfo, 0, sizeof(vorbisfileinfo));
-	
-	if (ov_open(hFile, &vorbisfileinfo, NULL, 0) < 0)
-	{
-		fclose(hFile);
-		return;
-	}
-	
-	// While we have the file open - we may as well get the length
-	CPLI_DecodeLength(pItem, (int)ov_time_total(&vorbisfileinfo, -1));
-	
-	pComment = ov_comment(&vorbisfileinfo, -1);
-	
-	if (pComment)
-	{
-		int iCommentIDX;
-		
-		for (iCommentIDX = 0; iCommentIDX < pComment->comments; iCommentIDX++)
-		{
-			char* cTag = CALLOC_TYPE(char, pComment->comment_lengths[iCommentIDX]+8);
-			char* cValue = CALLOC_TYPE(char, pComment->comment_lengths[iCommentIDX]+8);
-
-			// find "=" character to parse tag and value data		
-			{
-				int i = 0;
-				int equals_pos = 0;
-				char* comment = pComment->user_comments[iCommentIDX];
-
-				while (i < pComment->comment_lengths[iCommentIDX])
-				{
-					if (comment[i] == '=')
-					{
-						equals_pos = i;
-						break;
-					}
-
-					i++;
-				}
-
-				if (equals_pos)
-				{
-					strncpy(cTag, comment, equals_pos+1);
-					strncpy(cValue, comment+equals_pos+1, pComment->comment_lengths[iCommentIDX] - equals_pos);
-				}
-				else
-					goto bottom_loop;
-			}
-
-			// SECURITY: rewritten due to exploit at
-			// http://www.frsirt.com/english/advisories/2008/0008
-			// original code used following commented line
-            //if(sscanf(pComment->user_comments[iCommentIDX], " %[^= ] = %[^=]", cTag, cValue) == 2)
-			{
-				if (stricmp(cTag, "TITLE") == 0)
-					CPLI_OGG_DecodeString(&pItem->m_pcTrackName, cValue);
-				else if (stricmp(cTag, "ARTIST") == 0)
-					CPLI_OGG_DecodeString(&pItem->m_pcArtist, cValue);
-				else if (stricmp(cTag, "ALBUM") == 0)
-					CPLI_OGG_DecodeString(&pItem->m_pcAlbum, cValue);
-				else if (stricmp(cTag, "TRACKNUMBER") == 0)
-				{
-					CPLI_OGG_DecodeString(&pItem->m_pcTrackNum_AsText, cValue);
-					pItem->m_cTrackNum = (unsigned char)atoi(pItem->m_pcTrackNum_AsText);
-				}
-				
-				else if (stricmp(cTag, "GENRE") == 0)
-				{
-					// Search for this genre among the ID3v1 genres (don't read it if we cannot find it)
-					int iGenreIDX;
-					
-					for (iGenreIDX = 0; iGenreIDX < CIC_NUMGENRES; iGenreIDX++)
-					{
-						if (stricmp(cValue, glb_pcGenres[iGenreIDX]) == 0)
-						{
-							pItem->m_cGenre = (unsigned char)iGenreIDX;
-							break;
-						}
-					}
-				}
-			}
-
-bottom_loop:
-			free(cTag);
-			free(cValue);
-
-		} // end for loop
-	}
-	
-	ov_clear(&vorbisfileinfo);
-	
-	fclose(hFile);
-}
-#endif // HAVE_OGG_CODEC
 
 //
 //

@@ -92,7 +92,6 @@
 #define IDC_ABOUTRADIO                  1047
 #define IDC_READTRACKTIME               1047
 #define IDC_KEYBOARDRADIO               1048
-#define IDC_PREFERNATIVEOGGTAGS         1048
 #define IDC_REMEMBERSKIN                1049
 #define IDC_CHANGELOG                   1049
 #define IDC_REMSKINVAL                  1050

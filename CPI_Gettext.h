@@ -161,7 +161,6 @@
 #define STR_OPTIONS_READ_ID3_TAG "Read ID3 tags"
 #define STR_OPTIONS_READ_ID3_SELECTED "Read ID3 for selected files"
 #define STR_OPTIONS_SUPPORT_ID3V2 "Support ID3v2"
-#define STR_OPTIONS_PREFER_NATIVE_OGG "Prefer native OGG tags"
 #define STR_OPTIONS_READ_ID3_BACKGROUND "Read ID3 in background"
 #define STR_OPTIONS_WORK_OUT_LENGTHS "Calculate track lengths"
 #define STR_OPTIONS_EASY_MOVE "Easy move mode"

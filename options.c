@@ -157,7 +157,6 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			SetDlgItemText(hwndDlg, IDC_READTAG, T(STR_OPTIONS_READ_ID3_TAG));
 			SetDlgItemText(hwndDlg, IDC_READSELTAG, T(STR_OPTIONS_READ_ID3_SELECTED));
 			SetDlgItemText(hwndDlg, IDC_SUPPORTID3_V2, T(STR_OPTIONS_SUPPORT_ID3V2));
-			SetDlgItemText(hwndDlg, IDC_PREFERNATIVEOGGTAGS, T(STR_OPTIONS_PREFER_NATIVE_OGG));
 			SetDlgItemText(hwndDlg, IDC_READID3INBACKGROUND, T(STR_OPTIONS_READ_ID3_BACKGROUND));
 			SetDlgItemText(hwndDlg, IDC_READTRACKTIME, T(STR_OPTIONS_WORK_OUT_LENGTHS));
 			SetDlgItemText(hwndDlg, IDC_EASYMOVE, T(STR_OPTIONS_EASY_MOVE));
@@ -202,9 +201,6 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			                   
 			SendDlgItemMessage(hwndDlg, IDC_SUPPORTID3_V2, BM_SETCHECK,
 							   options.support_id3v2, 0);
-			                   
-			SendDlgItemMessage(hwndDlg, IDC_PREFERNATIVEOGGTAGS, BM_SETCHECK,
-							   options.prefer_native_ogg_tags, 0);
 			                   
 			SendDlgItemMessage(hwndDlg, IDC_READTRACKTIME, BM_SETCHECK,
 							   options.work_out_track_lengths, 0);
@@ -395,9 +391,6 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 										   0, 0);
 					options.support_id3v2 =
 						(BOOL)SendDlgItemMessage(hwndDlg, IDC_SUPPORTID3_V2, BM_GETCHECK,
-										   0, 0);
-					options.prefer_native_ogg_tags =
-						(BOOL)SendDlgItemMessage(hwndDlg, IDC_PREFERNATIVEOGGTAGS, BM_GETCHECK,
 										   0, 0);
 					options.read_id3_tag_in_background =
 						(BOOL)SendDlgItemMessage(hwndDlg, IDC_READID3INBACKGROUND, BM_GETCHECK,

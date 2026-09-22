@@ -111,7 +111,6 @@ void    options_read(void)
 	options.show_remaining_time = CPConfig_GetInt("Misc", "Remaining", 0);
 	options.read_id3_tag = CPConfig_GetInt("Misc", "ReadID3tag", 1);
 	options.support_id3v2 = CPConfig_GetInt("Misc", "SuportID3v2", 1);
-	options.prefer_native_ogg_tags = CPConfig_GetInt("Misc", "PreferNativeOGGtags", 1);
 	options.read_id3_tag_in_background = CPConfig_GetInt("Misc", "BackgroundReadID3", 1);
 	options.work_out_track_lengths = CPConfig_GetInt("Misc", "WorkOutTrackLengths", 1);
 	options.allow_multiple_instances = CPConfig_GetInt("Misc", "AllowMultipleInstances", 0);
@@ -279,7 +278,6 @@ void    options_write(void)
 	CPConfig_SetInt("Misc", "ReadID3tag", options.read_id3_tag);
 	CPConfig_SetInt("Misc", "ReadSelID3tag", options.read_id3_tag_of_selected);
 	CPConfig_SetInt("Misc", "SuportID3v2", options.support_id3v2);
-	CPConfig_SetInt("Misc", "PreferNativeOGGtags", options.prefer_native_ogg_tags);
 	CPConfig_SetInt("Misc", "BackgroundReadID3", options.read_id3_tag_in_background);
 	CPConfig_SetInt("Misc", "WorkOutTrackLengths", options.work_out_track_lengths);
 	CPConfig_SetInt("Misc", "AllowMultipleInstances", options.allow_multiple_instances);
