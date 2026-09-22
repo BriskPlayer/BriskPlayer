@@ -162,6 +162,64 @@ fn file_type_bitrate_mode(ft: FileType) -> &'static str {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_gain_reads_leading_numeric_token() {
+        // Real-world ReplayGain tag values look like "-6.30 dB".
+        assert_eq!(parse_gain("-6.30 dB"), -6.30);
+        assert_eq!(parse_gain("3.5 dB"), 3.5);
+        assert_eq!(parse_gain("0 dB"), 0.0);
+    }
+
+    #[test]
+    fn parse_gain_accepts_bare_number_with_no_unit() {
+        assert_eq!(parse_gain("-1.25"), -1.25);
+    }
+
+    #[test]
+    fn parse_gain_falls_back_to_zero_on_garbage() {
+        // Missing/corrupt ReplayGain tags must not crash metadata reading —
+        // they should silently read as "no gain applied" (0.0), not panic
+        // or propagate a parse error across the FFI boundary.
+        assert_eq!(parse_gain(""), 0.0);
+        assert_eq!(parse_gain("   "), 0.0);
+        assert_eq!(parse_gain("not a number"), 0.0);
+        assert_eq!(parse_gain("dB"), 0.0);
+    }
+
+    #[test]
+    fn file_type_codec_covers_all_named_formats() {
+        assert_eq!(file_type_codec(FileType::Mpeg), "MP3");
+        assert_eq!(file_type_codec(FileType::Flac), "FLAC");
+        assert_eq!(file_type_codec(FileType::Vorbis), "Vorbis");
+        assert_eq!(file_type_codec(FileType::Wav), "WAV/PCM");
+        assert_eq!(file_type_codec(FileType::Opus), "Opus");
+    }
+
+    #[test]
+    fn file_type_codec_falls_back_to_unknown() {
+        // The only FileType variant not explicitly matched is Custom(_),
+        // registered via lofty's register_custom_resolver.
+        assert_eq!(file_type_codec(FileType::Custom("made-up-format")), "Unknown");
+    }
+
+    #[test]
+    fn file_type_bitrate_mode_matches_known_cbr_formats() {
+        assert_eq!(file_type_bitrate_mode(FileType::Mpeg), "CBR");
+        assert_eq!(file_type_bitrate_mode(FileType::Wav), "CBR");
+        assert_eq!(file_type_bitrate_mode(FileType::Aiff), "CBR");
+    }
+
+    #[test]
+    fn file_type_bitrate_mode_defaults_to_vbr() {
+        assert_eq!(file_type_bitrate_mode(FileType::Flac), "VBR");
+        assert_eq!(file_type_bitrate_mode(FileType::Vorbis), "VBR");
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Tag-fill helpers (operate on a lofty Tag reference)
 // ---------------------------------------------------------------------------

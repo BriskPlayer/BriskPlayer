@@ -159,6 +159,47 @@ fn stri_cmp(a: Option<&str>, b: Option<&str>) -> std::cmp::Ordering {
      .cmp(b.map(|c| c.to_ascii_lowercase()))
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::cmp::Ordering;
+
+    #[test]
+    fn case_insensitive_equality() {
+        // Used to sort/group playlist entries (artist, album, title) without
+        // "Abba" and "ABBA" landing in different buckets.
+        assert_eq!(stri_cmp(Some("Abba"), Some("ABBA")), Ordering::Equal);
+        assert_eq!(stri_cmp(Some("abba"), Some("ABBA")), Ordering::Equal);
+    }
+
+    #[test]
+    fn orders_by_lowercased_byte_value() {
+        assert_eq!(stri_cmp(Some("Apple"), Some("banana")), Ordering::Less);
+        assert_eq!(stri_cmp(Some("Zebra"), Some("apple")), Ordering::Greater);
+    }
+
+    #[test]
+    fn none_is_treated_as_empty_string() {
+        // A missing tag field (no artist/album) must sort before any real
+        // value, and compare equal to another missing field, rather than
+        // panicking on the unwrap.
+        assert_eq!(stri_cmp(None, None), Ordering::Equal);
+        assert_eq!(stri_cmp(None, Some("a")), Ordering::Less);
+        assert_eq!(stri_cmp(Some("a"), None), Ordering::Greater);
+        assert_eq!(stri_cmp(None, Some("")), Ordering::Equal);
+    }
+
+    #[test]
+    fn only_ascii_case_is_folded() {
+        // to_ascii_lowercase() is a byte-level ASCII fold, not full Unicode
+        // case-folding — the non-ASCII UTF-8 bytes of 'é'/'É' pass through
+        // unchanged and differ, so these do NOT compare equal despite being
+        // the same letter in different cases. Documented here as the actual
+        // (if limited) behavior rather than an oversight to silently rely on.
+        assert_ne!(stri_cmp(Some("café"), Some("CAFÉ")), Ordering::Equal);
+    }
+}
+
 // CIC_TRACKSTACK_UNSTACKED (0xEFFFFFFF as signed i32)
 const TRACKSTACK_UNSTACKED: c_int = 0xEFFFFFFFu32 as i32;
 // CPC_INVALIDITEM from CLV_ListView.h

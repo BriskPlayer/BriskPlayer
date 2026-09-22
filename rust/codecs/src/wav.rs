@@ -281,12 +281,8 @@ unsafe extern "C" fn wav_open_file(
     // Seekable streams only: skip any leading ID3v2 tag.
     if seekable {
         let mut hdr = [0u8; 10];
-        let stream_start = if stream.read_exact(&mut hdr).is_ok() && hdr.starts_with(b"ID3") {
-            let sz = ((hdr[6] as u64 & 0x7F) << 21)
-                   | ((hdr[7] as u64 & 0x7F) << 14)
-                   | ((hdr[8] as u64 & 0x7F) <<  7)
-                   |  (hdr[9] as u64 & 0x7F);
-            10 + sz
+        let stream_start = if stream.read_exact(&mut hdr).is_ok() {
+            id3v2_skip_len(&hdr)
         } else {
             0u64
         };

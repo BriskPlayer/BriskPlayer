@@ -230,3 +230,66 @@ impl Seek for InStream {
 
 // SAFETY: all access is from the single-threaded player engine.
 unsafe impl Send for InStream {}
+
+// ---------------------------------------------------------------------------
+// ID3v2 header helper — shared by wav.rs and mp3.rs, which both skip a
+// leading ID3v2 tag on seekable streams before parsing their own format's
+// header (wav.rs so RIFF/WAVE parsing starts at the right offset, mp3.rs so
+// its bitrate-based duration estimate uses audio bytes, not tag bytes).
+// ---------------------------------------------------------------------------
+
+/// Given the first 10 bytes read from a stream, returns the total byte
+/// length to skip — the 10-byte header plus the tag body — if they form an
+/// ID3v2 header, or 0 if they don't ("ID3" magic missing).
+///
+/// The size field is a 28-bit "synchsafe" integer: 4 bytes, each holding only
+/// 7 usable bits (top bit always 0), so masking each byte with 0x7F before
+/// shifting is required by the format itself, not just defensive coding.
+pub fn id3v2_skip_len(hdr: &[u8; 10]) -> u64 {
+    if !hdr.starts_with(b"ID3") {
+        return 0;
+    }
+    let sz = ((hdr[6] as u64 & 0x7F) << 21)
+           | ((hdr[7] as u64 & 0x7F) << 14)
+           | ((hdr[8] as u64 & 0x7F) <<  7)
+           |  (hdr[9] as u64 & 0x7F);
+    10 + sz
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn non_id3_header_skips_nothing() {
+        assert_eq!(id3v2_skip_len(&[0u8; 10]), 0);
+        assert_eq!(id3v2_skip_len(b"RIFF\0\0\0\0\0\0"), 0);
+    }
+
+    #[test]
+    fn zero_size_id3_header_skips_just_the_header() {
+        let mut hdr = [0u8; 10];
+        hdr[0..3].copy_from_slice(b"ID3");
+        assert_eq!(id3v2_skip_len(&hdr), 10);
+    }
+
+    #[test]
+    fn typical_tag_size_is_decoded_as_synchsafe() {
+        // Size bytes 0x00 0x00 0x02 0x01 -> (2 << 7) | 1 = 257 body bytes.
+        let mut hdr = [0u8; 10];
+        hdr[0..3].copy_from_slice(b"ID3");
+        hdr[6..10].copy_from_slice(&[0x00, 0x00, 0x02, 0x01]);
+        assert_eq!(id3v2_skip_len(&hdr), 10 + 257);
+    }
+
+    #[test]
+    fn top_bit_of_each_size_byte_is_masked_out() {
+        // 0xFF bytes: only the low 7 bits of each count, per the ID3v2 spec's
+        // synchsafe-integer encoding (top bit is a sync-avoidance marker,
+        // never part of the value).
+        let mut hdr = [0u8; 10];
+        hdr[0..3].copy_from_slice(b"ID3");
+        hdr[6..10].copy_from_slice(&[0xFF, 0xFF, 0xFF, 0xFF]);
+        assert_eq!(id3v2_skip_len(&hdr), 10 + 0x0FFF_FFFF);
+    }
+}

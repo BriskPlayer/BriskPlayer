@@ -153,6 +153,64 @@ impl Mp3Context {
     fn pcm_available(&self) -> usize { self.pcm_queue.len() }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Builds a context with no open stream (so refill_input is a no-op)
+    /// and the given bytes preloaded as the decoder's input window — the
+    /// same state decode_one() sees mid-stream, without needing a real
+    /// InStream/CP_CreateInStream (stubbed to return null in cargo test).
+    fn ctx_with_input(bytes: &[u8]) -> Mp3Context {
+        let mut ctx = Mp3Context::new();
+        ctx.input_buf.extend_from_slice(bytes);
+        ctx
+    }
+
+    #[test]
+    fn decode_one_on_empty_input_does_not_panic() {
+        let mut ctx = ctx_with_input(&[]);
+        assert!(!ctx.decode_one());
+        assert_eq!(ctx.pcm_available(), 0);
+    }
+
+    #[test]
+    fn decode_one_on_all_zero_bytes_does_not_panic() {
+        // No MPEG frame sync (0xFF Ex) anywhere in here — nanomp3 should
+        // report zero bytes consumed and no frame decoded.
+        for len in [1usize, 3, 100, INPUT_BUF_TARGET] {
+            let mut ctx = ctx_with_input(&vec![0u8; len]);
+            let progressed = ctx.decode_one();
+            assert!(!progressed);
+            assert_eq!(ctx.pcm_available(), 0);
+            // decode_one's defensive clamp (consumed.min(slice_len)) must
+            // hold even on garbage input: the read cursor can never be
+            // pushed past the end of what was actually handed to decode().
+            assert!(ctx.input_read_pos <= len);
+        }
+    }
+
+    #[test]
+    fn decode_one_on_random_garbage_does_not_panic() {
+        // A fixed, arbitrary byte pattern (not all-zero, not a real MPEG
+        // frame) — exercises decode()'s sync-search over non-trivial data
+        // without depending on any external test-vector file.
+        let bytes: Vec<u8> = (0u32..4096).map(|i| (i.wrapping_mul(2654435761) >> 24) as u8).collect();
+        let len = bytes.len();
+        let mut ctx = ctx_with_input(&bytes);
+        // Repeatedly decode until no more progress is made, mirroring the
+        // loop in mp3_get_pcm_block — must terminate, never panic, and never
+        // advance the read cursor past the input it was given.
+        for _ in 0..64 {
+            let pos_before = ctx.input_read_pos;
+            if !ctx.decode_one() && ctx.input_read_pos == pos_before {
+                break;
+            }
+            assert!(ctx.input_read_pos <= len);
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Exported initialiser
 // ---------------------------------------------------------------------------
@@ -238,15 +296,7 @@ unsafe extern "C" fn mp3_open_file(
     if ctx.seekable {
         let mut hdr = [0u8; 10];
         let n = stream.read(&mut hdr).unwrap_or(0); // Read::read is safe
-        let stream_start = if n == 10 && hdr.starts_with(b"ID3") {
-            let sz = ((hdr[6] as u64 & 0x7F) << 21)
-                   | ((hdr[7] as u64 & 0x7F) << 14)
-                   | ((hdr[8] as u64 & 0x7F) <<  7)
-                   |  (hdr[9] as u64 & 0x7F);
-            10 + sz
-        } else {
-            0u64
-        };
+        let stream_start = if n == 10 { id3v2_skip_len(&hdr) } else { 0u64 };
         stream.seek(SeekFrom::Start(stream_start)).ok(); // Seek::seek is safe
         ctx.stream_start = stream_start;
     }
