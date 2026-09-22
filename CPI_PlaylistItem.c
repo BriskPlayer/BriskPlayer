@@ -1539,8 +1539,21 @@ void CPLI_CalculateLength_WAV(CPs_PlaylistItem* pItem)
 		
 		// Setup file info struct - this is re-read every second
 		bps = (pFormat->wBitsPerSample * pFormat->wf.nChannels * pFormat->wf.nSamplesPerSec) / 8;
-		
+
 		free(pFormat);
+
+		// A corrupt/zeroed nSamplesPerSec (or 0 channels/bit depth) makes bps
+		// 0, which divides-by-zero below when computing iFileLength_Secs -
+		// an unguarded hardware exception that crashes the whole process,
+		// not something any Rust-side panic=abort guard can catch since this
+		// is a separate, independent WAV parser (see the file comment above).
+		if (bps == 0)
+		{
+			CP_TRACE0("Invalid WAV format (zero bytes-per-second) - cannot calculate length");
+			CloseHandle(hFile);
+			hFile = INVALID_HANDLE_VALUE;
+			return;
+		}
 	}
 	
 	// Dip into the DATA chunk
