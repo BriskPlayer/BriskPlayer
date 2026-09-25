@@ -352,7 +352,8 @@ int     cmdline_parse_options(int argc, char **argv, HWND hWnd);
 int     main_add_tooltips(HWND hWnd, BOOL update);
 int     main_play_control(WORD wParam, HWND hWnd);
 int     main_set_default_skin(void);
-int     main_skin_open(char *name);
+void    main_skin_switch(const char* pcSkinPath);
+void    main_skin_get_display_name(const char* pcSkinPath, char* pcOut, size_t cbOut);
 int     main_skin_set_struct_value(int object, int x, int y, int w, int h,
 								   int maxw, int x2, int y2, int w2,
 								   int h2, char *tooltip);
@@ -387,7 +388,6 @@ void    main_draw_vu_from_value(HWND hWnd, int vunummer, int vuwaarde);
 void    main_menuproc(HWND hWnd, LPPOINT points);
 void    main_reset_window(HWND hWnd);
 void    main_set_eq(void);
-void    main_skin_add_to_menu(char *name);
 void    main_skin_check_ini_value(char *textposition,
 								  Associate * associate);
 void    main_skin_select_menu(char *name);
@@ -425,13 +425,13 @@ typedef struct
 	BOOL    shuffle_play;
 	BOOL    sticky_windows;
 	BOOL    discord_rpc_enabled;
-	BOOL    use_default_skin;
 	int     replaygain_mode;        // 0=off, 1=track, 2=album
 	int     replaygain_preamp_db;   // -12 to +12
 	BOOL    replaygain_prevent_clipping;
 	BOOL    gapless_playback;
-	BOOL    use_playlist_skin;
 	char    last_used_directory[MAX_PATH];
+	char    skins_folder_path[MAX_PATH];   // user-configured folder to scan for *.CPSkin, "" = feature off
+	char    active_skin_path[MAX_PATH];    // full path of the active external skin, "" = embedded Default
 	char initial_file[MAX_PATH];
 	int     playlist_column_widths[PLAYLIST_last + 1];
 	int     playlist_column_seq[PLAYLIST_last + 1];
@@ -439,12 +439,8 @@ typedef struct
 	int     eq_settings[9];
 	int     show_playlist;
 	int     decoder_output_mode;
-	int     remember_skin_count;
 	POINT   main_window_pos;
 	RECT    playlist_window_pos;
-	short   last_selected_skin_number;
-	unsigned char playlist_skin_file[MAX_PATH];
-	unsigned char main_skin_file[MAX_PATH];
 	unsigned int seconds_delay_after_track;
 	char    preferred_language[8];
 	CPe_QuickFindTerm m_enQuickFindTerm;
@@ -465,7 +461,6 @@ typedef struct
 	char    main_text_frequency[FREQ_STRLEN];
 	char    main_text_bitrate[BITRATE_STRLEN];
 	unsigned long main_long_track_duration;
-	int     main_int_skin_last_number;
 	CPe_PlayerState m_enPlayerState;
 	int     main_drag_anchor_point;
 	unsigned char main_text_last_browsed_dir[MAX_PATH];
@@ -476,9 +471,7 @@ typedef struct
 	int mail_int_title_scroll_max_position;
 	BOOL    cmdline_bool_clear_playlist_first;
 	BOOL    main_bool_wavwrite_dir_already_known;
-	BOOL    main_bool_skin_next_is_default;
 	BOOL    main_bool_slider_keep_focus;
-	BOOL    playlist_bool_force_skin_from_options;
 	BuiltinSkinVariant builtin_skin_variant;  // Current built-in skin variant (Normal/Shade)
 	int     main_int_track_position;
 	RECT    playlist_rect;
@@ -498,7 +491,6 @@ typedef struct
 	BOOL m_bIP_InhibitUpdates;
 	unsigned int m_iInPlaceSubItem;
 	CP_HLISTVIEW m_hPlaylistViewControl;
-	BOOL m_bOptions_ChangedSkin;
 	CP_HSYSICON m_hSysIcon;
 	CPe_MixerMode m_enMixerMode;
 } globals_t;

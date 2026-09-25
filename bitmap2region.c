@@ -156,8 +156,13 @@ HRGN main_bitmap_to_region(HBITMAP hBmp, COLORREF cTransparentColor)
 	} // end for row
 	free(pBitmapBits);
 
-	// If there are some rects in this region - create the GDI object
-	if (bDetectedTransparentPixel == TRUE)
+	// If there are some rects in this region - create the GDI object.
+	// pRGNData is only ever allocated once a non-transparent pixel opens a
+	// strip; a bitmap that's entirely the transparent colour (e.g. a blank
+	// or broken skin image) sets bDetectedTransparentPixel without ever
+	// allocating pRGNData, so it must be checked here too - otherwise this
+	// dereferences a NULL pointer.
+	if (bDetectedTransparentPixel == TRUE && pRGNData != NULL)
 	{
 		pRGNData->rdh.dwSize = sizeof(RGNDATAHEADER);
 		pRGNData->rdh.iType = RDH_RECTANGLES;
@@ -319,8 +324,13 @@ HRGN main_bitmap_to_region_1bit(HBITMAP hBmp, COLORREF cTransparentColor)
 	} // end for row
 	free(pBitmapBits);
 
-	// If there are some rects in this region - create the GDI object
-	if (bDetectedTransparentPixel == TRUE)
+	// If there are some rects in this region - create the GDI object.
+	// pRGNData is only ever allocated once a non-transparent pixel opens a
+	// strip; a bitmap that's entirely the transparent colour (e.g. a blank
+	// or broken skin image) sets bDetectedTransparentPixel without ever
+	// allocating pRGNData, so it must be checked here too - otherwise this
+	// dereferences a NULL pointer.
+	if (bDetectedTransparentPixel == TRUE && pRGNData != NULL)
 	{
 		pRGNData->rdh.dwSize = sizeof(RGNDATAHEADER);
 		pRGNData->rdh.iType = RDH_RECTANGLES;

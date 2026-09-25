@@ -36,6 +36,12 @@
 //
 CP_COMPOSITEFILE CF_Create_FromFile(const char* pcPath);
 CP_COMPOSITEFILE CF_Create_FromResource(HMODULE hModule, UINT uiResourceID, const char* pcResourceType);
+// Opens the composite skin currently in effect: the external file named by
+// options.active_skin_path if one is set (falling back to the embedded
+// default and clearing that field in memory if the file can't be opened),
+// or the embedded default resource otherwise. Shared by skin.c and
+// CPSK_Skin.c so both the main-window and playlist skins stay in sync.
+CP_COMPOSITEFILE CF_Create_ForActiveSkin(void);
 void CF_Destroy(CP_COMPOSITEFILE hComposite);
 BOOL CF_GetSubFile(CP_COMPOSITEFILE hComposite, const char* pcSubfilename, void** ppSubFile_Uncompressed, unsigned int* piSubFile_Length);
 //

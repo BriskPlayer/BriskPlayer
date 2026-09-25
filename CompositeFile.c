@@ -25,6 +25,7 @@
 #include "globals.h"
 #include "CompositeFile.h"
 #include "CPString.h"
+#include "resource.h"
 #include <zlib.h>
 
 
@@ -219,6 +220,35 @@ CP_COMPOSITEFILE CF_Create_FromResource(HMODULE hModule, UINT uiResourceID, cons
 	
 	// Success
 	return pContext;
+}
+
+//
+//
+//
+CP_COMPOSITEFILE CF_Create_ForActiveSkin(void)
+{
+	CP_COMPOSITEFILE hComposite = NULL;
+
+	if (options.active_skin_path[0] != '\0')
+	{
+		hComposite = CF_Create_FromFile(options.active_skin_path);
+		if (!hComposite)
+		{
+			// Referenced file is gone or corrupt since last run. Self-heal
+			// in memory only - this stays a plain archive-reading function,
+			// not a persistence trigger. The app's normal shutdown-time
+			// options_write() picks up the cleared value; if it crashes
+			// first, the next startup just retries this same cheap failed
+			// open once and self-heals again.
+			CP_TRACE1("Active external skin '%s' failed to open, falling back to embedded", options.active_skin_path);
+			options.active_skin_path[0] = '\0';
+		}
+	}
+
+	if (!hComposite)
+		hComposite = CF_Create_FromResource(NULL, IDR_DEFAULTSKIN, "SKIN");
+
+	return hComposite;
 }
 
 //

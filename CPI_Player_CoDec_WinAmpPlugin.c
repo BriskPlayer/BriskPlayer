@@ -864,7 +864,13 @@ void CPP_OMAPLG_Seek(CPs_CoDecModule* pModule, const int iNumerator, const int i
 	int iStreamLength_ms;
 	CP_CHECKOBJECT(pContext);
 	CP_ASSERT(pContext->m_pActivePluginModule);
-	
+
+	// iDenominator is the skin's PositionSlider width/height (Skin.Object[PositionSlider].w/.h),
+	// untrusted data from the skin file - a skin defining that slider with size 0 would
+	// otherwise divide by zero here.
+	if (iDenominator == 0)
+		return;
+
 	iStreamLength_ms = pContext->m_pInModule->GetLength();
 	pContext->m_pInModule->SetOutputTime((iNumerator*iStreamLength_ms) / iDenominator);
 	WaitForSingleObject(glb_OutputData.m_evtSeekComplete, CIC_WAITTIMEOUT);

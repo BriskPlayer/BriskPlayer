@@ -135,9 +135,17 @@ CPs_Image_WithState* CPIG_CreateStateImage(CPs_Image* pSource, const int iNumSta
 {
 	CPs_Image_WithState* pNewIS;
 	int iStateIDX;
-	
+
+	// pSource is NULL whenever the skin references a sub-file that either
+	// isn't present in the composite skin archive (CF_GetSubFile failure)
+	// or that WIC couldn't decode (CPIG_CreateImage_FromSubFile returns
+	// NULL in both cases) - callers pass its result straight through, so a
+	// malformed/incomplete skin package must not crash here.
+	if (!pSource)
+		return NULL;
+
 	CP_ASSERT((iNumStates - 1) <= igsLast);
-	
+
 	pNewIS = (CPs_Image_WithState*)SAFE_MALLOC(sizeof(*pNewIS));
 	if (!pNewIS)
 		return NULL;

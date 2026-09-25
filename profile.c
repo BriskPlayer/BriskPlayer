@@ -44,12 +44,6 @@ static const char* const s_pcEqKeys[] = {
 	NULL,    /* index 0 = "ActivePreset", handled separately */
 	"Eq1","Eq2","Eq3","Eq4","Eq5","Eq6","Eq7","Eq8"
 };
-static const char* CPL_SkinKey(char *buf, size_t bufSz, int n)
-{
-	snprintf(buf, bufSz, "SkinFile%d", n);
-	return buf;
-}
-
 
 ////////////////////////////////////////////////////////////
 //
@@ -122,7 +116,6 @@ void    options_read(void)
 	                   sizeof(options.preferred_language));
 	
 	options.easy_move = CPConfig_GetInt("Misc", "Easymove", 1);
-	options.remember_skin_count = CPConfig_GetInt("Misc", "RememberSkins", 4);
 	options.allow_file_once_in_playlist = CPConfig_GetInt("Misc", "Fileonce", 1);
 	options.auto_play_when_started = CPConfig_GetInt("Misc", "Autoplay", 0);
 	options.show_on_taskbar = CPConfig_GetInt("Misc", "TaskBar", 1);
@@ -140,38 +133,13 @@ void    options_read(void)
 	if (*options.initial_file)
 		options.remember_last_played_track = TRUE;
 		
-	options.last_selected_skin_number = CPConfig_GetInt("Skin", "LastSkin", 0);
-	options.use_default_skin = CPConfig_GetInt("Skin", "UseDefault", 1);
-	options.use_playlist_skin = CPConfig_GetInt("Skin", "Useplaylistskin", 0);
 	globals.builtin_skin_variant = (BuiltinSkinVariant)CPConfig_GetInt("Skin", "BuiltinVariant", BUILTIN_SKIN_NORMAL);
 	if (globals.builtin_skin_variant < BUILTIN_SKIN_NORMAL || globals.builtin_skin_variant >= BUILTIN_SKIN_COUNT)
 		globals.builtin_skin_variant = BUILTIN_SKIN_NORMAL;
-	
-	{
-		int     teller;
-		
-		for (teller = MENU_SKIN_DEFAULT + 1; teller < MENU_SKIN_DEFAULT + 1 + options.remember_skin_count;
-				teller++)
-		{
-			char    SkinFileString[MAX_PATH];
-			char    skinpath[MAX_PATH];
-			CPL_SkinKey(SkinFileString, sizeof(SkinFileString), teller - MENU_SKIN_DEFAULT);
-			CPConfig_GetString("Skin", SkinFileString, "", skinpath, MAX_PATH);
-			
-			if (*skinpath != 0)
-			{
-				main_skin_add_to_menu(skinpath);
-				
-				if (options.last_selected_skin_number == teller - MENU_SKIN_DEFAULT)
-				{
-					strcpy_s((char*)options.main_skin_file, sizeof(options.main_skin_file), skinpath);
-				}
-			}
-		}
-	}
-	
-	CPConfig_GetString("Skin", "PlaylistSkin", "",
-	                   (char*)options.playlist_skin_file, MAX_PATH);
+
+	CPConfig_GetString("Skin", "SkinsFolder", "", options.skins_folder_path, MAX_PATH);
+	CPConfig_GetString("Skin", "ActiveSkinPath", "", options.active_skin_path, MAX_PATH);
+
 	options.equalizer = CPConfig_GetInt("Equalizer", "Active", 0);
 	options.eq_settings[0] = CPConfig_GetInt("Equalizer", "ActivePreset", -1);
 
@@ -229,44 +197,10 @@ void    options_write(void)
 	CPConfig_SetInt("WindowPos", "PlaylistH", options.playlist_window_pos.bottom - options.playlist_window_pos.top);
 	
 	CPConfig_SetString("LastDirectory", "Directory", options.last_used_directory);
-	CPConfig_SetString("Skin", "PlaylistSkin", (char*)options.playlist_skin_file);
-	
-	{
-		int     teller;
-		int     profileteller = 1;
-		char    SkinFileString[MAX_PATH];
-		
-		for (teller = MENU_SKIN_DEFAULT + 1; teller < MENU_SKIN_DEFAULT + 1 + options.remember_skin_count;
-				teller++)
-		{
-		
-			if (GetMenuString
-					(globals.main_menu_popup, teller, (char*)options.main_skin_file,
-					 MAX_PATH, MF_BYCOMMAND))
-			{
-			
-				if (GetMenuState
-						(globals.main_menu_popup, teller,
-						 MF_BYCOMMAND) & MF_CHECKED)
-				{
-					options.last_selected_skin_number = profileteller;
-				}
-				
-				CPL_SkinKey(SkinFileString, sizeof(SkinFileString), profileteller++);
-				CPConfig_SetString("Skin", SkinFileString, (char*)options.main_skin_file);
-			}
-			else
-			{
-				CPL_SkinKey(SkinFileString, sizeof(SkinFileString), profileteller++);
-				CPConfig_SetString("Skin", SkinFileString, NULL);
-			}
-		}
-	}
-	
-	CPConfig_SetInt("Skin", "LastSkin", options.last_selected_skin_number);
-	CPConfig_SetInt("Skin", "UsePlaylistSkin", options.use_playlist_skin);
-	CPConfig_SetInt("Skin", "UseDefault", options.use_default_skin);
+
 	CPConfig_SetInt("Skin", "BuiltinVariant", (int)globals.builtin_skin_variant);
+	CPConfig_SetString("Skin", "SkinsFolder", options.skins_folder_path);
+	CPConfig_SetString("Skin", "ActiveSkinPath", options.active_skin_path);
 	CPConfig_SetInt("Misc", "Repeat", options.repeat_playlist);
 	CPConfig_SetInt("Misc", "Shuffle", options.shuffle_play);
 	CPConfig_SetInt("Misc", "Easymove", options.easy_move);
@@ -299,7 +233,6 @@ void    options_write(void)
 	CPConfig_SetInt("Misc", "Autoplay", options.auto_play_when_started);
 	CPConfig_SetInt("Misc", "TaskBar", options.show_on_taskbar);
 	CPConfig_SetInt("Misc", "DelayTime", options.seconds_delay_after_track);
-	CPConfig_SetInt("Misc", "RememberSkins", options.remember_skin_count);
 	CPConfig_SetInt("Equalizer", "Active", options.equalizer);
 	CPConfig_SetInt("Equalizer", "ActivePreset", options.eq_settings[0]);
 

@@ -322,6 +322,18 @@ endif()
 # Resource file
 set(BRISK_RC briskplayer.rc)
 
+# briskplayer.rc embeds res/Default.CPSkin as a binary blob via a custom
+# "SKIN" resource type. windres reads that file's bytes at compile time, but
+# CMake/ninja's default dependency scan only tracks briskplayer.rc itself -
+# it has no way to know the .rc references another file's *contents* (unlike
+# #include, which the scanner does follow). Without this, regenerating
+# res/Default.CPSkin (e.g. via res/build_default_cpskin.ps1) without also
+# touching briskplayer.rc leaves the stale, previously-embedded archive
+# baked into the exe with no rebuild warning of any kind.
+set_source_files_properties(${BRISK_RC} PROPERTIES
+    OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/res/Default.CPSkin"
+)
+
 # ---------------------------------------------------------------------------
 # Codec selection: FFmpeg vs Rust+native
 # Default: Rust handles WAV/MPEG/FLAC/OGG; C handles AAC/OPUS (fdk-aac, opusfile).

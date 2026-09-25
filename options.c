@@ -55,6 +55,9 @@ static void TranslateStaticControls(HWND hwndDlg)
         else if (strcmp(buffer, "Skin") == 0) {
             SetWindowTextA(hChild, T(STR_OPTIONS_SKIN));
         }
+        else if (strcmp(buffer, "Skins Folder") == 0) {
+            SetWindowTextA(hChild, T(STR_OPTIONS_SKINS_FOLDER));
+        }
         else if (strcmp(buffer, "ReplayGain") == 0) {
             SetWindowTextA(hChild, T("ReplayGain"));
         }
@@ -162,22 +165,14 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			SetDlgItemText(hwndDlg, IDC_EASYMOVE, T(STR_OPTIONS_EASY_MOVE));
 			SetDlgItemText(hwndDlg, IDC_REMEMBERPLS, T(STR_OPTIONS_REMEMBER_PLAYLIST));
 			SetDlgItemText(hwndDlg, IDC_REMSONG, T(STR_OPTIONS_REMEMBER_LAST_PLAYED));
-			SetDlgItemText(hwndDlg, IDC_FLUSH_SKINLIST, T(STR_OPTIONS_FLUSH));
-			SetDlgItemText(hwndDlg, IDC_PLAYERSKINCHECK, T(STR_OPTIONS_PLAYER));
-			SetDlgItemText(hwndDlg, IDC_SKINBUTTON, T(STR_OPTIONS_OPEN));
+			SetDlgItemText(hwndDlg, IDC_SKINSFOLDER_BROWSE, T(STR_OPTIONS_BROWSE));
+			SetDlgItemText(hwndDlg, IDC_SKINSFOLDER, options.skins_folder_path);
 			SetDlgItemText(hwndDlg, IDOK, T(STR_OPTIONS_OK));
 			SetDlgItemText(hwndDlg, IDCANCEL, T(STR_OPTIONS_CANCEL));
-			
+
 			// Translate static text controls (these have ID -1, so we need to find them by text)
 			TranslateStaticControls(hwndDlg);
-			
-			if (options.use_default_skin == TRUE)
-				SendDlgItemMessage(hwndDlg, IDC_PLAYERSKINCHECK,
-								   BM_SETCHECK, BST_UNCHECKED, 0);
-			else
-				SendDlgItemMessage(hwndDlg, IDC_PLAYERSKINCHECK,
-								   BM_SETCHECK, BST_CHECKED, 0);
-				                   
+
 			SendDlgItemMessage(hwndDlg, IDC_EASYMOVE, BM_SETCHECK,
 							   options.easy_move, 0);
 			                   
@@ -248,25 +243,12 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			SendDlgItemMessage(hwndDlg, IDC_GAPLESS, BM_SETCHECK, options.gapless_playback, 0);
 			SetDlgItemText(hwndDlg, IDC_GAPLESS, T(STR_GAPLESS_PLAYBACK));
 
-			SendDlgItemMessage(hwndDlg, IDC_REMEMBERSKIN, UDM_SETRANGE,
-							   0, MAKELONG(50, 1));
-			                   
 			SendDlgItemMessage(hwndDlg, IDC_DELAYTIMES, UDM_SETRANGE, 0,
 							   MAKELONG(10, 0));
-			                   
-			SetDlgItemInt(hwndDlg, IDC_REMSKINVAL,
-						  options.remember_skin_count, FALSE);
-			              
+
 			SetDlgItemInt(hwndDlg, IDC_DELAYTIME,
 						  options.seconds_delay_after_track, FALSE);
-			              
-			SetDlgItemText(hwndDlg, IDC_LOADSKIN, (char*)options.main_skin_file);
-			
-			if (*options.playlist_skin_file)
-				SendDlgItemMessage(hwndDlg, IDC_PLAYLISTSKINCHECK,
-								   BM_SETCHECK, options.use_playlist_skin,
-								   0);
-				                   
+
 					SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_ADDSTRING, 0, (LPARAM)T(STR_VOLUME_SYSTEM_MASTER));
 			
 			SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_ADDSTRING, 0, (LPARAM)T(STR_VOLUME_SYSTEM_WAVE));
@@ -280,9 +262,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 				SendDlgItemMessage(hwndDlg, IDC_MIXER, CB_SETCURSEL, 2, 0);
 				
 			SAFE_PLAYER_CALL(CPI_Player__EnumOutputDevices);
-			
-			globals.m_bOptions_ChangedSkin = FALSE;
-			
+
 			return TRUE;
 		}
 
@@ -291,80 +271,6 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			switch (LOWORD(wParam))
 			{
 			
-			case IDC_SKINBUTTON:
-			{
-				OPENFILENAMEW fn;  // Unicode version
-				WCHAR filefilterW[512];
-				// Build Unicode filter string
-				char filterTemp[512];
-				snprintf(filterTemp, sizeof(filterTemp), "%s\\0*.ini\\0%s\\0*.*\\0", T(STR_FILTER_SKIN_FILES), T(STR_FILTER_ALL_FILES));
-				MultiByteToWideChar(CP_ACP, 0, filterTemp, -1, filefilterW, 512);
-				
-				BOOL returnval;
-				WCHAR initialfilenameW[MAX_PATH * 100] = L"";
-				
-				// Convert initial directory to Unicode
-				char pathbuffie[MAX_PATH];
-				strcpy_s(pathbuffie, sizeof(pathbuffie), (char*)options.main_skin_file);
-				(void)path_remove_filespec(pathbuffie);
-				WCHAR* pwcInitialDir = STR_ConvertToUnicode(pathbuffie);
-				
-				fn.lStructSize = sizeof(OPENFILENAMEW);
-				fn.hwndOwner = hwndDlg;
-				fn.hInstance = NULL;
-				fn.lpstrFilter = filefilterW;
-				fn.lpstrCustomFilter = NULL;
-				fn.nMaxCustFilter = 0;
-				fn.nFilterIndex = 0;
-				fn.lpstrFile = initialfilenameW;
-				fn.nMaxFile = MAX_PATH * 100;
-				fn.lpstrFileTitle = NULL;
-				fn.nMaxFileTitle = 0;
-				fn.lpstrInitialDir = pwcInitialDir;
-				fn.lpstrTitle = NULL;
-				fn.Flags =
-					OFN_HIDEREADONLY | OFN_EXPLORER | OFN_FILEMUSTEXIST
-					| OFN_PATHMUSTEXIST | OFN_ENABLESIZING;
-				fn.nFileOffset = 0;
-				fn.nFileExtension = 0;
-				fn.lpstrDefExt = NULL;
-				fn.lCustData = 0;
-				fn.lpfnHook = NULL;
-				fn.lpTemplateName = NULL;
-				returnval = GetOpenFileNameW(&fn);  // Unicode version
-				
-				free(pwcInitialDir);
-				
-				if (returnval != FALSE)
-				{
-					// Convert selected file back to ANSI for SetDlgItemText
-					char selectedFileA[MAX_PATH];
-					WideCharToMultiByte(CP_ACP, 0, fn.lpstrFile, -1, selectedFileA, MAX_PATH, NULL, NULL);
-					SetDlgItemText(hwndDlg, IDC_LOADSKIN, selectedFileA);
-					SendDlgItemMessage(hwndDlg, IDC_PLAYERSKINCHECK,
-									   BM_SETCHECK, BST_CHECKED, 0);
-					globals.m_bOptions_ChangedSkin = TRUE;
-				}
-				
-				break;
-			}				case IDC_FLUSH_SKINLIST:
-				
-				{
-					int     itemcounter =
-						GetMenuItemCount(GetSubMenu
-										 (globals.main_menu_popup, SKIN_SUBMENU_INDEX));
-					int     teller;
-					
-					for (teller = 0; teller < itemcounter - 1; teller++)
-					{
-						RemoveMenu(GetSubMenu(globals.main_menu_popup, SKIN_SUBMENU_INDEX), 0,
-								   MF_BYPOSITION);
-					}
-					
-				}
-				
-				break;
-				
 				case IDCANCEL:
 					EndDialog(hwndDlg, 1);
 					break;
@@ -375,8 +281,7 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 						options.allow_file_once_in_playlist;
 					int     index;
 					HWND    hWnd = GetParent(hwndDlg);
-					BOOL bSkinChosen;
-					
+
 					options.auto_exit_after_playing =
 						(BOOL)SendDlgItemMessage(hwndDlg, IDC_AUTOEXIT, BM_GETCHECK,
 										   0, 0);
@@ -475,8 +380,6 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 						(BOOL)SendDlgItemMessage(hwndDlg, IDC_REMSONG, BM_GETCHECK,
 										   0, 0);
 					                       
-					options.remember_skin_count =
-						GetDlgItemInt(hwndDlg, IDC_REMSKINVAL, NULL, FALSE);
 					options.seconds_delay_after_track =
 						GetDlgItemInt(hwndDlg, IDC_DELAYTIME, NULL, FALSE);
 					    
@@ -487,23 +390,9 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 						(BOOL)SendDlgItemMessage(hwndDlg, IDC_ONTOP, BM_GETCHECK, 0,
 										   0);
 						(void)window_set_always_on_top(hWnd, options.always_on_top);
-					
-					GetDlgItemText(hwndDlg, IDC_LOADSKIN,
-								   (char*)options.main_skin_file, MAX_PATH);
-					               
-					               
-					bSkinChosen = (BOOL)SendDlgItemMessage(hwndDlg, IDC_PLAYERSKINCHECK, BM_GETCHECK, 0, 0);
-					
-					if (bSkinChosen != !options.use_default_skin
-							|| globals.m_bOptions_ChangedSkin == TRUE)
-					{
-						options.use_default_skin = !bSkinChosen;
-						globals.main_bool_skin_next_is_default = options.use_default_skin;
-						
-						globals.playlist_bool_force_skin_from_options = TRUE;
-						main_play_control(ID_LOADSKIN, hWnd);
-					}
-					
+
+					GetDlgItemText(hwndDlg, IDC_SKINSFOLDER, options.skins_folder_path, MAX_PATH);
+
 					index = (int)SendDlgItemMessage(hwndDlg, IDC_OUTPUT, CB_GETCURSEL, 0, 0);
 					
 					if (options.decoder_output_mode != index)
@@ -562,7 +451,34 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 				
 				case IDC_ONTOP:
 					break;
-					
+
+				case IDC_SKINSFOLDER_BROWSE:
+				{
+					BROWSEINFO browseinfo;
+					LPITEMIDLIST itemlist;
+					char folderchoice[MAX_PATH];
+
+					browseinfo.hwndOwner = hwndDlg;
+					browseinfo.pidlRoot = NULL;
+					browseinfo.pszDisplayName = folderchoice;
+					browseinfo.lpszTitle = T(STR_OPTIONS_SKINS_FOLDER);
+					browseinfo.ulFlags = BIF_EDITBOX | BIF_RETURNONLYFSDIRS;
+					browseinfo.lpfn = NULL;
+					browseinfo.lParam = 0;
+					browseinfo.iImage = 0;
+
+					itemlist = SHBrowseForFolder(&browseinfo);
+
+					if (itemlist != NULL)
+					{
+						char pathbuf[MAX_PATH];
+						SHGetPathFromIDList(itemlist, pathbuf);
+						SetDlgItemText(hwndDlg, IDC_SKINSFOLDER, pathbuf);
+					}
+
+					break;
+				}
+
 				case IDC_REGFILETYPE:
 				{
 					HKEY    result;

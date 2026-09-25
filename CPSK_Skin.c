@@ -39,23 +39,28 @@ static void CPSK_ScaleImage(CPs_Image* pImage);
 static void CPSK_ScaleStateImage(CPs_Image_WithState* pIS);
 static void CPSK_ApplyDpiScaling(CPs_Skin* pSkin);
 
-void CPSK_Initialise(void)
+BOOL CPSK_Initialise(void)
 {
-	char* pcSkinFile;
-	unsigned int iFileSize;
-	
-	CP_COMPOSITEFILE hComposite;
-	
-	hComposite = CF_Create_FromResource(NULL, IDR_DEFAULTSKIN, "SKIN");
-	//hComposite = CF_Create_FromFile("P:\\Skin\\Default.CPSkin");
-	
-	CF_GetSubFile(hComposite, "Skin.def", (void **) &pcSkinFile, &iFileSize);
+	char* pcSkinFile = NULL;
+	unsigned int iFileSize = 0;
+
+	CP_COMPOSITEFILE hComposite = CF_Create_ForActiveSkin();
+	if (!hComposite)
+		return FALSE;
+
+	if (!CF_GetSubFile(hComposite, "Skin.def", (void **) &pcSkinFile, &iFileSize))
+	{
+		CF_Destroy(hComposite);
+		return FALSE;
+	}
+
 	glb_pSkin = CPSK_LoadSkin(hComposite, pcSkinFile, iFileSize);
-	
+
 	CPSK_ApplyDpiScaling(glb_pSkin);
-	
+
 	free(pcSkinFile);
 	CF_Destroy(hComposite);
+	return glb_pSkin != NULL;
 }
 
 //

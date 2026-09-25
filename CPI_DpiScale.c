@@ -215,26 +215,18 @@ void DPI_OnChanged(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	// Reload the current skin (which resets coords and reloads bitmaps
 	// at their original unscaled size). DPI_ApplySkinScaling() is called
 	// internally by each skin loader, so no need to call it again here.
-	if (options.use_default_skin)
+	switch (globals.builtin_skin_variant)
 	{
-		switch (globals.builtin_skin_variant)
-		{
-			case BUILTIN_SKIN_EQ:
-				main_set_eq_skin();
-				break;
-			case BUILTIN_SKIN_SHADE:
-				main_set_shade_skin();
-				break;
-			case BUILTIN_SKIN_NORMAL:
-			default:
-				main_set_default_skin();
-				break;
-		}
-	}
-	else
-	{
-		if (main_skin_open((char*)options.main_skin_file) == FALSE)
+		case BUILTIN_SKIN_EQ:
+			main_set_eq_skin();
+			break;
+		case BUILTIN_SKIN_SHADE:
+			main_set_shade_skin();
+			break;
+		case BUILTIN_SKIN_NORMAL:
+		default:
 			main_set_default_skin();
+			break;
 	}
 
 	// Use the suggested window rect from WM_DPICHANGED

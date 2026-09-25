@@ -48,10 +48,7 @@ void MainMenu_Initialize(HMENU hMenu)
     // Store reference in globals for compatibility
     globals.main_menu_popup = hMenu;
     g_LanguageCount = 0;
-    
-    // Initialize skin menu tracking
-    globals.main_int_skin_last_number = MENU_SKIN_DEFAULT + 1;
-    
+
     CP_LOG_DEBUG("MainMenu initialized\n");
 }
 
@@ -259,107 +256,3 @@ const char* MainMenu_GetLanguageFromMenuId(UINT menuId)
     return NULL;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Skin Menu
-////////////////////////////////////////////////////////////////////////////////
-
-void MainMenu_AddSkinToHistory(const char* skinName)
-{
-    if (!skinName || !*skinName) return;
-    
-    HMENU skinMenu = GetSubMenu(globals.main_menu_popup, SKIN_SUBMENU_INDEX);
-    if (!skinMenu) return;
-    
-    int itemCount = GetMenuItemCount(skinMenu);
-    
-    // Check if skin is already in menu
-    for (int i = 0; i < itemCount; i++) {
-        char skinstring[CPC_PATH_BUFFER];
-        if (GetMenuStringA(skinMenu, i, skinstring, CPC_PATH_BUFFER, MF_BYPOSITION)) {
-            if (strcmp(skinName, skinstring) == 0) {
-                return;  // Already exists
-            }
-        }
-    }
-    
-    // Add new skin entry
-    MENUITEMINFO menuinfo = {0};
-    menuinfo.cbSize = sizeof(MENUITEMINFO);
-    menuinfo.fMask = MIIM_TYPE | MIIM_ID;
-    menuinfo.fType = MFT_STRING | MFT_RADIOCHECK;
-    
-    // Wrap menu ID if we've reached the limit
-    if (globals.main_int_skin_last_number >= MENU_SKIN_DEFAULT + 1 + options.remember_skin_count) {
-        globals.main_int_skin_last_number = MENU_SKIN_DEFAULT + 1;
-    }
-    
-    menuinfo.wID = globals.main_int_skin_last_number++;
-    menuinfo.dwTypeData = (LPSTR)skinName;
-    menuinfo.cch = (UINT)strlen(skinName);
-    
-    InsertMenuItem(globals.main_menu_popup, MENU_SKIN_DEFAULT, FALSE, &menuinfo);
-    
-    // Remove oldest if over limit
-    if (itemCount > options.remember_skin_count) {
-        RemoveMenu(skinMenu, 0, MF_BYPOSITION);
-    }
-}
-
-void MainMenu_SelectSkin(const char* skinName)
-{
-    if (!skinName) return;
-    
-    HMENU skinMenu = GetSubMenu(globals.main_menu_popup, SKIN_SUBMENU_INDEX);
-    if (!skinMenu) return;
-    
-    int itemCount = GetMenuItemCount(skinMenu);
-    
-    for (int i = 0; i < itemCount; i++) {
-        char skinstring[CPC_PATH_BUFFER];
-        if (GetMenuStringA(skinMenu, i, skinstring, CPC_PATH_BUFFER, MF_BYPOSITION)) {
-            if (strcmp(skinName, skinstring) == 0) {
-                CheckMenuRadioItem(skinMenu, 0, itemCount, i, MF_BYPOSITION);
-                return;
-            }
-        }
-    }
-}
-
-void MainMenu_ClearSkinHistory(void)
-{
-    HMENU skinMenu = GetSubMenu(globals.main_menu_popup, SKIN_SUBMENU_INDEX);
-    if (!skinMenu) return;
-    
-    // Remove all items except the first (Default)
-    while (GetMenuItemCount(skinMenu) > 1) {
-        RemoveMenu(skinMenu, 1, MF_BYPOSITION);
-    }
-    
-    globals.main_int_skin_last_number = MENU_SKIN_DEFAULT + 1;
-}
-
-BOOL MainMenu_GetSkinFromMenuId(UINT menuId, char* pszBuffer, int bufferSize)
-{
-    if (!MainMenu_IsSkinMenuId(menuId) || !pszBuffer || bufferSize <= 0) {
-        return FALSE;
-    }
-    
-    HMENU skinMenu = GetSubMenu(globals.main_menu_popup, SKIN_SUBMENU_INDEX);
-    if (!skinMenu) return FALSE;
-    
-    // Find the menu item with this ID
-    int itemCount = GetMenuItemCount(skinMenu);
-    for (int i = 0; i < itemCount; i++) {
-        MENUITEMINFO mii = {0};
-        mii.cbSize = sizeof(MENUITEMINFO);
-        mii.fMask = MIIM_ID;
-        
-        if (GetMenuItemInfo(skinMenu, i, TRUE, &mii) && mii.wID == menuId) {
-            if (GetMenuStringA(skinMenu, i, pszBuffer, bufferSize, MF_BYPOSITION)) {
-                return TRUE;
-            }
-        }
-    }
-    
-    return FALSE;
-}

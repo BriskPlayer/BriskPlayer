@@ -169,6 +169,8 @@
 #define STR_OPTIONS_FLUSH "Flush"
 #define STR_OPTIONS_PLAYER "Player"
 #define STR_OPTIONS_OPEN "Open..."
+#define STR_OPTIONS_SKINS_FOLDER "Skins Folder"
+#define STR_OPTIONS_BROWSE "Browse..."
 
 // Volume control strings
 #define STR_VOLUME_SYSTEM_MASTER "System Master Volume"

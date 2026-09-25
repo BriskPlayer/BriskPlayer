@@ -31,16 +31,6 @@
 void CPSK_DestroySkin(CPs_Skin* pSkin);
 CPs_Skin* CPSK_LoadSkin(CP_COMPOSITEFILE hComposite, const char* pcSkinFile, const unsigned int iFileSize);
 
-// Forward declarations for image functions
-CPs_Image* CPIG_CreateImage_FromFile(const char* pcFilename);
-void CPIG_DestroyImage(CPs_Image* pImage);
-
-// Helper function to create CPs_Image from external file path
-CPs_Image* CreateImageFromExternalFile(const char* filePath);
-
-// Forward declaration for playlist INI skin loading
-void main_load_playlist_skin_from_ini(const char* iniFilePath);
-
 // Forward declarations for playlist window functions
 void CPlaylistWindow_Create(void);
 void CPlaylistWindow_Destroy(void);
@@ -49,315 +39,234 @@ void CPlaylistWindow_SetVisible(const BOOL bNewVisibleState);
 // Forward declarations for interface functions
 HWND IF_GetHWnd(CP_HINTERFACE hInterface);
 
-// Helper function to load image from file path using WIC
-// Supports PNG, JPEG, GIF, BMP, TIFF formats
-static HBITMAP LoadImageFromPath(const char* pcFilePath)
+// Name -> enum Objects table shared by every builtin variant's Skin.ini
+// parse (see main_skin_load_builtin_variant). File-scope const: built once,
+// not per call - previously this table was rebuilt on the stack inside the
+// now-removed external-file loader (main_skin_open) on every skin load.
+static const Associate kSkinAssociate[ReducedSize] =
 {
-	wchar_t wcFilePath[MAX_PATH];
-	MultiByteToWideChar(CP_UTF8, 0, pcFilePath, -1, wcFilePath, MAX_PATH);
-	return WIC_LoadImageFromFile(wcFilePath, NULL, NULL);
+	{ "PlaySwitch", PlaySwitch },
+	{ "StopSwitch", StopSwitch },
+	{ "PauseSwitch", PauseSwitch },
+	{ "EjectButton", EjectButton },
+	{ "RepeatSwitch", RepeatSwitch },
+	{ "ShuffleSwitch", ShuffleSwitch },
+	{ "EqSwitch", EqSwitch },
+	{ "NextButton", NextButton },
+	{ "PrevButton", PrevButton },
+	{ "PlaylistButton", PlaylistButton },
+	{ "MinimizeButton", MinimizeButton },
+	{ "NextSkinButton", NextSkinButton },
+	{ "ExitButton", ExitButton },
+	{ "MoveArea", MoveArea },
+	{ "VolumeSlider", VolumeSlider },
+	{ "PositionSlider", PositionSlider },
+	{ "Eq1", Eq1 },
+	{ "Eq2", Eq2 },
+	{ "Eq3", Eq3 },
+	{ "Eq4", Eq4 },
+	{ "Eq5", Eq5 },
+	{ "Eq6", Eq6 },
+	{ "Eq7", Eq7 },
+	{ "Eq8", Eq8 },
+	{ "SongtitleText", SongtitleText },
+	{ "TrackText", TrackText },
+	{ "TimeText", TimeText },
+	{ "BitrateText", BitrateText },
+	{ "FreqText", FreqText }
+};
+
+// Sub-file name of each builtin variant's Skin.ini inside res/Default.CPSkin
+// (IDR_DEFAULTSKIN). See res/build_default_cpskin.ps1 for how the archive
+// is packaged. Backslash separator: .NET's ZipFile.CreateFromDirectory
+// stores entry names with the OS-native separator on Windows, and
+// CF_FindFile does an exact stricmp - no path normalization - so this must
+// match the packaged archive's actual entry names byte-for-byte.
+static const char* const kBuiltinSkinIniSubfile[BUILTIN_SKIN_COUNT] =
+{
+	"Normal\\Skin.ini",	// BUILTIN_SKIN_NORMAL
+	"EQ\\Skin.ini",		// BUILTIN_SKIN_EQ
+	"Shade\\Skin.ini",	// BUILTIN_SKIN_SHADE
+};
+
+// Feeds each ini-style data line of raw (non-null-terminated) text pulled
+// from a CPSkin subfile into the unchanged main_skin_check_ini_value().
+// Replaces what GetPrivateProfileSection() used to provide for free when
+// skins lived as real files on disk: splits on \r/\n, skips blank lines and
+// ';'-comment/'['-section-header lines, and copies each line into a private
+// stack buffer so main_skin_check_ini_value()'s in-place '='/','->' '
+// mutation never touches the shared CF_GetSubFile buffer.
+static void main_skin_parse_ini_text(const char *pcText, unsigned int iLen)
+{
+	unsigned int lineStart = 0, i;
+
+	for (i = 0; i <= iLen; i++)
+	{
+		if (i != iLen && pcText[i] != '\r' && pcText[i] != '\n')
+			continue;
+
+		if (i > lineStart)
+		{
+			const char *p = pcText + lineStart;
+			unsigned int lineLen = i - lineStart;
+
+			while (lineLen && (*p == ' ' || *p == '\t'))
+			{
+				p++;
+				lineLen--;
+			}
+
+			if (lineLen && *p != ';' && *p != '[')
+			{
+				char line[512];
+				unsigned int copyLen = lineLen < sizeof(line) - 1 ? lineLen : sizeof(line) - 1;
+				memcpy(line, p, copyLen);
+				line[copyLen] = '\0';
+				main_skin_check_ini_value(line, (Associate*)kSkinAssociate);
+			}
+		}
+
+		lineStart = i + 1;
+	}
 }
 
-int main_set_default_skin(void)
+// Computes the label main_skin_select_menu()/the Skin submenu use for a
+// given skin: "Default" for the embedded skin (NULL/empty path), or the
+// external file's base name with ".CPSkin" stripped otherwise. Shared by
+// this file's menu-select call and main.c's menu population so the checked
+// label and the inserted label can never drift apart.
+void main_skin_get_display_name(const char* pcSkinPath, char* pcOut, size_t cbOut)
 {
+	const char* pcFileName;
+	size_t len, extlen;
+	static const char ext[] = ".CPSkin";
 
-	float   positionpercentage;
-	
+	if (!pcSkinPath || !pcSkinPath[0])
+	{
+		strcpy_s(pcOut, cbOut, "Default");
+		return;
+	}
+
+	pcFileName = strrchr(pcSkinPath, '\\');
+	pcFileName = pcFileName ? pcFileName + 1 : pcSkinPath;
+	strcpy_s(pcOut, cbOut, pcFileName);
+
+	len = strlen(pcOut);
+	extlen = sizeof(ext) - 1;
+	if (len > extlen && stricmp(pcOut + len - extlen, ext) == 0)
+		pcOut[len - extlen] = '\0';
+}
+
+// Loads one of the three builtin main/EQ/shade window skins from
+// res/Default.CPSkin (IDR_DEFAULTSKIN) - the same embedded CPSkin archive
+// CPSK_Initialise() already uses for the playlist skin. Coordinates come
+// from that variant's packaged Skin.ini (parsed via the classic, unchanged
+// main_skin_check_ini_value()); bitmaps come from the filenames that
+// parse just wrote into Skin.CoolUp/CoolDown/CoolSwitch/aTimeFont/
+// aTrackFont/aTextFont, loaded via CF_GetSubFile + WIC_LoadImageFromMemory -
+// the exact same pattern CPI_Image.c's CPIG_CreateImage_FromSubFile already
+// uses for the playlist's bitmaps.
+static int main_skin_load_builtin_variant(BuiltinSkinVariant variant)
+{
+	float positionpercentage;
+	CP_COMPOSITEFILE hComposite;
+	char *pcIniText = NULL;
+	unsigned int iIniLen = 0;
+	char errorbuf[4096] = "";
+
 	if (Skin.Object[PositionSlider].maxw == 1)
-	{
-		positionpercentage =
-			(float) globals.main_int_track_position /
-			(float) Skin.Object[PositionSlider].h;
-	}
-	
+		positionpercentage = (float)globals.main_int_track_position / (float)Skin.Object[PositionSlider].h;
 	else
-	{
-		positionpercentage =
-			(float) globals.main_int_track_position /
-			(float) Skin.Object[PositionSlider].w;
-	}
-	
+		positionpercentage = (float)globals.main_int_track_position / (float)Skin.Object[PositionSlider].w;
+
 	globals.main_int_title_scroll_position = 0;
 	globals.mail_int_title_scroll_max_position = 0;
 
 	memset(&Skin, 0, sizeof(Skin));
-	
-	main_skin_set_struct_value(PlaySwitch, 52, 108, 31, 32, 0, 52, 108, 31,
-							   32, "");
-	main_skin_set_struct_value(StopSwitch, 120, 113, 27, 27, 0, 120, 113, 27, 27,
-							   "");
-	main_skin_set_struct_value(PauseSwitch, 87, 111, 29, 29, 0, 87, 111,
-							   29, 29, "");
-	main_skin_set_struct_value(RepeatSwitch, 274, 33, 33, 32, 0, 274, 33,
-							   33, 32, "");
-	main_skin_set_struct_value(ShuffleSwitch, 306, 32, 30, 26, 0, 306, 32,
-							   30, 26, "");
-	main_skin_set_struct_value(EqSwitch, 359, 14, 51, 20, 0, 359, 14, 51, 20,
-							   "");
-	main_skin_set_struct_value(MinimizeButton, 262, 0, 27, 14, 0, 0, 0, 0, 0,
-							   "");
-	main_skin_set_struct_value(ExitButton, 315, 0, 28, 14, 0, 0, 0, 0, 0,
-							   "");
-	main_skin_set_struct_value(NextSkinButton, 288, 0, 28, 14, 0, 0, 0, 0,
-							   0, "");
-	main_skin_set_struct_value(EjectButton, 186, 113, 27, 28, 0, 0, 0, 0, 0,
-							   "");
-	main_skin_set_struct_value(NextButton, 151, 114, 26, 25, 0, 0, 0, 0, 0,
-							   "");
-	main_skin_set_struct_value(PrevButton, 22, 114, 26, 25, 0, 0, 0, 0, 0,
-							   "");
-	main_skin_set_struct_value(MoveArea, 0, 0, 229, 12, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(PlaylistButton, 214, 113, 28, 28, 0, 0, 0, 0,
-							   0, "");
-	main_skin_set_struct_value(VolumeSlider, 252, 121, 65, 11, 0, 252, 121, 20, 11,
-							   "");
-	main_skin_set_struct_value(PositionSlider, 19, 92, 298, 11, 0, 18, 92, 20,
-							   11, "");
-	main_skin_set_struct_value(Eq1, 360, 40, 9, 53, 1, 360, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq2, 378, 40, 9, 53, 1, 378, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq3, 396, 40, 9, 53, 1, 396, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq4, 414, 40, 9, 53, 1, 414, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq5, 432, 40, 9, 53, 1, 432, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq6, 450, 40, 9, 53, 1, 450, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq7, 468, 40, 9, 53, 1, 468, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq8, 486, 40, 9, 53, 1, 486, 40, 9, 11, "");
-	main_skin_set_struct_value(SongtitleText, 30, 70, 6, 11, 30, 0, 0, 0,
-							   0, "");
-	main_skin_set_struct_value(TrackText, 42, 37, 14, 21, 0, 0, 0, 0, 0,
-							   "");
-	main_skin_set_struct_value(TimeText, 105, 37, 14, 21, 0, 0, 0, 0, 0,
-							   "");
 
-	main_skin_set_struct_value(BitrateText, 280, 70, 6, 11, 4, 0, 0, 0, 0,
-							   "");
-	main_skin_set_struct_value(FreqText, 316, 70, 6, 11, 4, 0, 0, 0, 0, "");
-	
-	Skin.transparentcolor = 0xff00ff;
+	hComposite = CF_Create_ForActiveSkin();
+	if (!hComposite || !CF_GetSubFile(hComposite, kBuiltinSkinIniSubfile[variant],
+									  (void**)&pcIniText, &iIniLen))
+	{
+		if (hComposite)
+			CF_Destroy(hComposite);
+		MessageBoxA(GetForegroundWindow(), T(STR_ERR_INVALID_SKIN), T(STR_ERR_ERROR), MB_ICONERROR);
+		return FALSE;
+	}
 
-	// Load normal skin images from resources (PNG via WIC)
-	DeleteObject(graphics.bmp_main_up);
-	graphics.bmp_main_up = WIC_LoadImageFromResource(IDB_MAINUP, NULL, NULL);
-	DeleteObject(graphics.bmp_main_down);
-	graphics.bmp_main_down = WIC_LoadImageFromResource(IDB_MAINDOWN, NULL, NULL);
-	DeleteObject(graphics.bmp_main_switch);
-	graphics.bmp_main_switch = WIC_LoadImageFromResource(IDB_MAINSW, NULL, NULL);
-	DeleteObject(graphics.bmp_main_time_font);
-	graphics.bmp_main_time_font = WIC_LoadImageFromResource(IDB_MAINBIGFONT, NULL, NULL);
-	graphics.bmp_main_track_font = graphics.bmp_main_time_font;
-	DeleteObject(graphics.bmp_main_title_font);
-	graphics.bmp_main_title_font = WIC_LoadImageFromResource(IDB_MAINSMALLFONT, NULL, NULL);
+	main_skin_parse_ini_text(pcIniText, iIniLen);
+	free(pcIniText);
+
+#define LOAD_SKIN_BMP(dst, subfileNameField) \
+	do { \
+		void *pData_; unsigned int iLen_; \
+		DeleteObject(dst); \
+		dst = NULL; \
+		if (CF_GetSubFile(hComposite, (subfileNameField), &pData_, &iLen_)) \
+		{ \
+			dst = WIC_LoadImageFromMemory(pData_, iLen_, NULL, NULL); \
+			free(pData_); \
+		} \
+		if (!dst) \
+		{ \
+			strcat_s(errorbuf, sizeof(errorbuf), (subfileNameField)); \
+			strcat_s(errorbuf, sizeof(errorbuf), "\n"); \
+		} \
+	} while (0)
+
+	LOAD_SKIN_BMP(graphics.bmp_main_up,         Skin.CoolUp);
+	LOAD_SKIN_BMP(graphics.bmp_main_down,       Skin.CoolDown);
+	LOAD_SKIN_BMP(graphics.bmp_main_switch,     Skin.CoolSwitch);
+	LOAD_SKIN_BMP(graphics.bmp_main_time_font,  Skin.aTimeFont);
+	LOAD_SKIN_BMP(graphics.bmp_main_track_font, Skin.aTrackFont);
+	LOAD_SKIN_BMP(graphics.bmp_main_title_font, Skin.aTextFont);
+
+#undef LOAD_SKIN_BMP
+
+	CF_Destroy(hComposite);
+
+	if (!graphics.bmp_main_up || !graphics.bmp_main_down || !graphics.bmp_main_switch
+			|| !graphics.bmp_main_time_font || !graphics.bmp_main_track_font || !graphics.bmp_main_title_font)
+	{
+		char errorstring[5000];
+		snprintf(errorstring, sizeof(errorstring), "%s\n%s", T(STR_ERR_CANT_LOAD_BITMAPS), errorbuf);
+		MessageBoxA(GetForegroundWindow(), errorstring, T(STR_ERR_ERROR), MB_ICONERROR);
+		return FALSE;
+	}
 
 	if (Skin.Object[PositionSlider].maxw == 1)
-	{
-		globals.main_int_track_position =
-			(int)((float)(Skin.Object[PositionSlider].h) *
-				  positionpercentage);
-	}
-	
+		globals.main_int_track_position = (int)((float)(Skin.Object[PositionSlider].h) * positionpercentage);
 	else
-	{
-		globals.main_int_track_position =
-			(int)((float)(Skin.Object[PositionSlider].w) *
-				  positionpercentage);
-	}
-	
-	globals.main_bool_skin_next_is_default = TRUE;
-	globals.builtin_skin_variant = BUILTIN_SKIN_NORMAL;
-	
+		globals.main_int_track_position = (int)((float)(Skin.Object[PositionSlider].w) * positionpercentage);
+
+	globals.builtin_skin_variant = variant;
+
 	DPI_ApplySkinScaling();
 	main_update_title_text();
-	main_skin_select_menu("Default");
-	
+	{
+		char skin_label[MAX_PATH];
+		main_skin_get_display_name(options.active_skin_path, skin_label, sizeof(skin_label));
+		main_skin_select_menu(skin_label);
+	}
+
 	return TRUE;
+}
+
+int main_set_default_skin(void)
+{
+	return main_skin_load_builtin_variant(BUILTIN_SKIN_NORMAL);
 }
 
 // Set the built-in shade (compact) skin
 int main_set_shade_skin(void)
 {
-	float   positionpercentage;
-	
-	if (Skin.Object[PositionSlider].maxw == 1)
-	{
-		positionpercentage =
-			(float) globals.main_int_track_position /
-			(float) Skin.Object[PositionSlider].h;
-	}
-	else
-	{
-		positionpercentage =
-			(float) globals.main_int_track_position /
-			(float) Skin.Object[PositionSlider].w;
-	}
-	
-	globals.main_int_title_scroll_position = 0;
-	globals.mail_int_title_scroll_max_position = 0;
-
-	memset(&Skin, 0, sizeof(Skin));
-	
-	// Shade mode skin coordinates from CoolPlayer+Portable_shade.ini
-	main_skin_set_struct_value(PlaySwitch, 45, 2, 20, 20, 0, 45, 2, 20, 20, "");
-	main_skin_set_struct_value(StopSwitch, 84, 2, 20, 20, 0, 84, 2, 20, 20, "");
-	main_skin_set_struct_value(PauseSwitch, 65, 2, 20, 20, 0, 65, 2, 20, 20, "");
-	main_skin_set_struct_value(RepeatSwitch, 240, 0, 20, 12, 0, 240, 0, 20, 12, "");
-	main_skin_set_struct_value(ShuffleSwitch, 240, 13, 20, 12, 0, 240, 13, 20, 12, "");
-	// EqSwitch is disabled in shade mode - set to 0,0,0,0
-	main_skin_set_struct_value(EqSwitch, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(MinimizeButton, 262, 0, 27, 13, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(ExitButton, 315, 0, 27, 13, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(NextSkinButton, 288, 0, 28, 13, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(EjectButton, 221, 0, 20, 12, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(NextButton, 104, 2, 20, 20, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(PrevButton, 26, 2, 20, 20, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(MoveArea, 0, 0, 15, 25, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(PlaylistButton, 221, 13, 20, 12, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(VolumeSlider, 264, 16, 65, 6, 0, 264, 16, 11, 6, "");
-	main_skin_set_struct_value(PositionSlider, 132, 18, 73, 6, 0, 131, 18, 12, 6, "");
-	// No EQ sliders in shade mode
-	main_skin_set_struct_value(Eq1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(Eq2, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(Eq3, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(Eq4, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(Eq5, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(Eq6, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(Eq7, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(Eq8, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(SongtitleText, 176, 9, 5, 7, 6, 0, 0, 0, 0, "");
-	// TrackText is not used in shade mode
-	main_skin_set_struct_value(TrackText, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(TimeText, 134, 9, 5, 7, 0, 0, 0, 0, 0, "");
-	// No bitrate/freq display in shade mode
-	main_skin_set_struct_value(BitrateText, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(FreqText, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
-	
-	Skin.transparentcolor = 0xff00ff;
-
-	// Load shade mode images from resources (PNG via WIC)
-	DeleteObject(graphics.bmp_main_up);
-	graphics.bmp_main_up = WIC_LoadImageFromResource(IDB_SHADEUP, NULL, NULL);
-	DeleteObject(graphics.bmp_main_down);
-	graphics.bmp_main_down = WIC_LoadImageFromResource(IDB_SHADEDOWN, NULL, NULL);
-	DeleteObject(graphics.bmp_main_switch);
-	graphics.bmp_main_switch = WIC_LoadImageFromResource(IDB_SHADESW, NULL, NULL);
-	DeleteObject(graphics.bmp_main_time_font);
-	graphics.bmp_main_time_font = WIC_LoadImageFromResource(IDB_SHADETIMEFONT, NULL, NULL);
-	graphics.bmp_main_track_font = graphics.bmp_main_time_font;
-	DeleteObject(graphics.bmp_main_title_font);
-	graphics.bmp_main_title_font = WIC_LoadImageFromResource(IDB_SHADETEXTFONT, NULL, NULL);
-
-	if (Skin.Object[PositionSlider].maxw == 1)
-	{
-		globals.main_int_track_position =
-			(int)((float)(Skin.Object[PositionSlider].h) *
-				  positionpercentage);
-	}
-	else
-	{
-		globals.main_int_track_position =
-			(int)((float)(Skin.Object[PositionSlider].w) *
-				  positionpercentage);
-	}
-	
-	globals.main_bool_skin_next_is_default = TRUE;
-	globals.builtin_skin_variant = BUILTIN_SKIN_SHADE;
-	
-	DPI_ApplySkinScaling();
-	main_update_title_text();
-	main_skin_select_menu("Default");
-	
-	return TRUE;
+	return main_skin_load_builtin_variant(BUILTIN_SKIN_SHADE);
 }
 
 // Set the built-in EQ skin (with EQ panel visible)
 int main_set_eq_skin(void)
 {
-	float   positionpercentage;
-	
-	if (Skin.Object[PositionSlider].maxw == 1)
-	{
-		positionpercentage =
-			(float) globals.main_int_track_position /
-			(float) Skin.Object[PositionSlider].h;
-	}
-	else
-	{
-		positionpercentage =
-			(float) globals.main_int_track_position /
-			(float) Skin.Object[PositionSlider].w;
-	}
-	
-	globals.main_int_title_scroll_position = 0;
-	globals.mail_int_title_scroll_max_position = 0;
-
-	memset(&Skin, 0, sizeof(Skin));
-	
-	// EQ skin coordinates from CoolPlayer+Portable_EQ.ini
-	main_skin_set_struct_value(PlaySwitch, 52, 108, 31, 32, 0, 52, 108, 31, 32, "");
-	main_skin_set_struct_value(StopSwitch, 120, 113, 27, 27, 0, 120, 113, 27, 27, "");
-	main_skin_set_struct_value(PauseSwitch, 87, 111, 29, 29, 0, 87, 111, 29, 29, "");
-	main_skin_set_struct_value(RepeatSwitch, 274, 33, 33, 32, 0, 274, 33, 33, 32, "");
-	main_skin_set_struct_value(ShuffleSwitch, 306, 32, 30, 26, 0, 306, 32, 30, 26, "");
-	main_skin_set_struct_value(EqSwitch, 359, 14, 51, 20, 0, 359, 14, 51, 20, "");
-	main_skin_set_struct_value(MinimizeButton, 262, 0, 27, 14, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(ExitButton, 315, 0, 28, 14, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(NextSkinButton, 288, 0, 28, 14, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(EjectButton, 186, 113, 27, 28, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(NextButton, 151, 114, 26, 25, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(PrevButton, 22, 114, 26, 25, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(MoveArea, 0, 0, 15, 25, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(PlaylistButton, 214, 113, 28, 28, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(VolumeSlider, 252, 121, 65, 11, 0, 252, 121, 20, 11, "");
-	main_skin_set_struct_value(PositionSlider, 19, 92, 298, 11, 0, 18, 92, 20, 11, "");
-	// EQ sliders
-	main_skin_set_struct_value(Eq1, 360, 40, 9, 53, 1, 360, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq2, 378, 40, 9, 53, 1, 378, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq3, 396, 40, 9, 53, 1, 396, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq4, 414, 40, 9, 53, 1, 414, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq5, 432, 40, 9, 53, 1, 432, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq6, 450, 40, 9, 53, 1, 450, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq7, 468, 40, 9, 53, 1, 468, 40, 9, 11, "");
-	main_skin_set_struct_value(Eq8, 486, 40, 9, 53, 1, 486, 40, 9, 11, "");
-	main_skin_set_struct_value(SongtitleText, 30, 70, 6, 11, 30, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(TrackText, 42, 37, 14, 21, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(TimeText, 105, 37, 14, 21, 0, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(BitrateText, 280, 70, 6, 11, 4, 0, 0, 0, 0, "");
-	main_skin_set_struct_value(FreqText, 316, 70, 6, 11, 4, 0, 0, 0, 0, "");
-	
-	Skin.transparentcolor = 0xff00ff;
-
-	// Load EQ skin images from resources (PNG via WIC; shares down/sw with normal mode)
-	DeleteObject(graphics.bmp_main_up);
-	graphics.bmp_main_up = WIC_LoadImageFromResource(IDB_EQUP, NULL, NULL);
-	DeleteObject(graphics.bmp_main_down);
-	graphics.bmp_main_down = WIC_LoadImageFromResource(IDB_MAINDOWN, NULL, NULL);
-	DeleteObject(graphics.bmp_main_switch);
-	graphics.bmp_main_switch = WIC_LoadImageFromResource(IDB_MAINSW, NULL, NULL);
-	DeleteObject(graphics.bmp_main_time_font);
-	graphics.bmp_main_time_font = WIC_LoadImageFromResource(IDB_EQTIMEFONT, NULL, NULL);
-	graphics.bmp_main_track_font = graphics.bmp_main_time_font;
-	DeleteObject(graphics.bmp_main_title_font);
-	graphics.bmp_main_title_font = WIC_LoadImageFromResource(IDB_EQTEXTFONT, NULL, NULL);
-
-	if (Skin.Object[PositionSlider].maxw == 1)
-	{
-		globals.main_int_track_position =
-			(int)((float)(Skin.Object[PositionSlider].h) *
-				  positionpercentage);
-	}
-	else
-	{
-		globals.main_int_track_position =
-			(int)((float)(Skin.Object[PositionSlider].w) *
-				  positionpercentage);
-	}
-	
-	globals.main_bool_skin_next_is_default = TRUE;
-	globals.builtin_skin_variant = BUILTIN_SKIN_EQ;
-	
-	DPI_ApplySkinScaling();
-	main_update_title_text();
-	main_skin_select_menu("Default");
-	
-	return TRUE;
+	return main_skin_load_builtin_variant(BUILTIN_SKIN_EQ);
 }
 
 // Set the next built-in skin variant (cycles through Normal -> EQ -> Shade -> Normal)
@@ -365,7 +274,7 @@ int main_set_next_builtin_skin(void)
 {
 	// Cycle to the next variant
 	BuiltinSkinVariant nextVariant = (globals.builtin_skin_variant + 1) % BUILTIN_SKIN_COUNT;
-	
+
 	switch (nextVariant)
 	{
 		case BUILTIN_SKIN_EQ:
@@ -378,11 +287,59 @@ int main_set_next_builtin_skin(void)
 	}
 }
 
+// Switches the active skin: pcSkinPath NULL/"" reverts to the embedded
+// Default skin; otherwise it must be the full path of an external .CPSkin
+// file discovered in options.skins_folder_path. Reloads both the playlist
+// skin and whichever main-window variant (Normal/EQ/Shade) is currently on
+// screen. On failure, rolls back to the previously-active skin and shows an
+// error rather than silently landing on a different skin than the one the
+// user actually picked.
+void main_skin_switch(const char* pcSkinPath)
+{
+	char previous[MAX_PATH];
+	BOOL bSuccess;
+
+	strcpy_s(previous, sizeof(previous), options.active_skin_path);
+	strcpy_s(options.active_skin_path, sizeof(options.active_skin_path),
+			 (pcSkinPath && pcSkinPath[0]) ? pcSkinPath : "");
+
+	CPSK_Uninitialise();
+	bSuccess = CPSK_Initialise();
+
+	if (bSuccess)
+		bSuccess = main_skin_load_builtin_variant(globals.builtin_skin_variant);
+
+	// The playlist window is created once at startup and otherwise never
+	// rebuilt - it's not just holding a glb_pSkin pointer, its subparts
+	// (IF_AddSubPart_CommandButton, etc.) were wired up at creation time
+	// against the *old* glb_pSkin's CPs_CommandTarget/CPs_Image_WithState
+	// objects, which CPSK_Uninitialise() just freed. Destroying and
+	// recreating it rebuilds those subparts against whichever glb_pSkin
+	// ends up active below - without this, the window keeps referencing
+	// freed memory (visually looks unchanged, then crashes on the next
+	// hover/hit-test against a dangling pointer).
+	CPlaylistWindow_Destroy();
+
+	if (!bSuccess)
+	{
+		strcpy_s(options.active_skin_path, sizeof(options.active_skin_path), previous);
+		CPSK_Uninitialise();
+		CPSK_Initialise();
+		main_skin_load_builtin_variant(globals.builtin_skin_variant);
+		CPlaylistWindow_Create();
+		MessageBoxA(GetForegroundWindow(), T(STR_ERR_INVALID_SKIN), T(STR_ERR_ERROR), MB_ICONERROR);
+		return;
+	}
+
+	CPlaylistWindow_Create();
+	options_write();
+}
+
 int     main_add_tooltips(HWND hWnd, BOOL update)
 {
 
 	TOOLINFO ti;  // tool information
-	
+
 	char   *tips[] =
 	{
 		"Play",
@@ -399,43 +356,41 @@ int     main_add_tooltips(HWND hWnd, BOOL update)
 		"Skinswitch",
 		"Exit"
 	};
-	
+
 	int     teller;
 	ti.cbSize = sizeof(TOOLINFO);
 	ti.uFlags = 0;
 	ti.hwnd = hWnd;
 	ti.hinst = GetModuleHandle(NULL);
-	
+
 	for (teller = PlaySwitch; teller <= ExitButton; teller++)
 	{
 		ti.uId = (UINT) teller;
-		
+
 		if (*Skin.Object[teller].tooltip)
 			ti.lpszText = (LPSTR) Skin.Object[teller].tooltip;
 		else
 			ti.lpszText = (LPSTR) tips[teller];
-			
+
 		ti.rect.left = Skin.Object[teller].x;
 		ti.rect.top = Skin.Object[teller].y;
 		ti.rect.right = Skin.Object[teller].x + Skin.Object[teller].w;
 		ti.rect.bottom = Skin.Object[teller].y + Skin.Object[teller].h;
-		
+
 		SendMessage(windows.wnd_tooltip,
 					update ? TTM_NEWTOOLRECT : TTM_ADDTOOL, 0,
 					(LPARAM)(LPTOOLINFO) & ti);
-		            
+
 		if (update == TRUE)
 			SendMessage(windows.wnd_tooltip, TTM_UPDATETIPTEXT, 0,
 						(LPARAM)(LPTOOLINFO) & ti);
-			            
+
 	}
-	
+
 	return 1;
 }
 
 int
-
-
 
 main_skin_set_struct_value(int object, int x, int y, int w, int h, int maxw, int x2, int y2, int w2, int h2,
 						   char *tooltip)
@@ -450,219 +405,8 @@ main_skin_set_struct_value(int object, int x, int y, int w, int h, int maxw, int
 	Skin.Object[object].w2 = w2;
 	Skin.Object[object].h2 = h2;
 	strcpy_s(Skin.Object[object].tooltip, sizeof(Skin.Object[object].tooltip), tooltip);
-	
-	return TRUE;
-}
 
-int     main_skin_open(char *name)
-{
-	(void)name;  // Suppress unused parameter warning
-	char    pathbuf[MAX_PATH];
-	char    values[32768];
-	char   *textposition;
-	char    buffer[4096];
-	char    errorbuf[4096] = "";
-	// int     teller = 0;
-	int     returnval;
-	HINSTANCE hInstance;
-	
-	Associate associate[] =
-	{
-		{ "PlaySwitch", PlaySwitch },
-		{ "StopSwitch", StopSwitch },
-		{ "PauseSwitch", PauseSwitch },
-		{ "EjectButton", EjectButton },
-		{ "RepeatSwitch", RepeatSwitch },
-		{ "ShuffleSwitch", ShuffleSwitch },
-		{ "EqSwitch", EqSwitch },
-		{ "NextButton", NextButton },
-		{ "PrevButton", PrevButton },
-		{ "PlaylistButton", PlaylistButton },
-		{ "MinimizeButton", MinimizeButton },
-		{ "NextSkinButton", NextSkinButton },
-		{ "ExitButton", ExitButton },
-		{ "MoveArea", MoveArea },
-		{ "VolumeSlider", VolumeSlider },
-		{ "PositionSlider", PositionSlider },
-		{ "Eq1", Eq1 },
-		{ "Eq2", Eq2 },
-		{ "Eq3", Eq3 },
-		{ "Eq4", Eq4 },
-		{ "Eq5", Eq5 },
-		{ "Eq6", Eq6 },
-		{ "Eq7", Eq7 },
-		{ "Eq8", Eq8 },
-		{ "SongtitleText", SongtitleText },
-		{ "TrackText", TrackText },
-		{ "TimeText", TimeText },
-		{ "BitrateText", BitrateText },
-		{ "FreqText", FreqText }
-	};
-	float   positionpercentage;
-	
-	if (Skin.Object[PositionSlider].maxw == 1)
-	{
-		positionpercentage =
-			(float) globals.main_int_track_position /
-			(float) Skin.Object[PositionSlider].h;
-	}
-	
-	else
-	{
-		positionpercentage =
-			(float) globals.main_int_track_position /
-			(float) Skin.Object[PositionSlider].w;
-	}
-	
-	globals.main_int_title_scroll_position = 0;
-	globals.mail_int_title_scroll_max_position = 0;
-	
-	if (*options.main_skin_file == 0)
-	{
-		MessageBoxA(GetForegroundWindow(), T(STR_ERR_NO_SKIN_SELECTED),
-				   T(STR_ERR_ERROR), MB_ICONERROR);
-		options.use_default_skin = TRUE;
-		return FALSE;
-	}
-	
-	else
-		strcpy_s(pathbuf, sizeof(pathbuf), (char*)options.main_skin_file);
-		
-	memset(&Skin, 0, sizeof(Skin));
-	
-	GetPrivateProfileString(NULL, NULL, NULL,
-							buffer, sizeof(buffer), pathbuf);
-	                        
-	returnval = GetPrivateProfileSection("BriskPlayer Skin", // address of section name
-										 values, // address of return buffer
-										 32767, // size of return buffer
-										 pathbuf // address of initialization filename
-										);
-	                                    
-	if (returnval == 0)
-	{
-		char textbuf[MAX_PATH + 100];
-		snprintf(textbuf, sizeof(textbuf), "%s: %s", T(STR_ERR_INVALID_SKIN), pathbuf);
-		MessageBoxA(GetForegroundWindow(), textbuf, T(STR_ERR_ERROR), MB_ICONERROR);
-		options.use_default_skin = TRUE;
-		return FALSE;
-	}
-	
-	textposition = values;
-	
-	while (*textposition != 0)
-	{
-	
-		main_skin_check_ini_value(textposition, associate);
-		textposition = textposition + strlen(textposition) + 1;
-	}
-	
-	(void)path_remove_filespec(pathbuf);
-	
-	strcat_s(pathbuf, sizeof(pathbuf), Skin.CoolUp);
-	(void)hInstance;  // No longer needed for external files
-	DeleteObject(graphics.bmp_main_up);
-	graphics.bmp_main_up = LoadImageFromPath(pathbuf);
-	                        
-	if (!graphics.bmp_main_up)
-	{
-		strcat_s(errorbuf, sizeof(errorbuf), pathbuf);
-		strcat_s(errorbuf, sizeof(errorbuf), "\n");
-	}
-	
-	(void)path_remove_filespec(pathbuf);
-	
-	strcat_s(pathbuf, sizeof(pathbuf), Skin.CoolDown);
-	DeleteObject(graphics.bmp_main_down);
-	graphics.bmp_main_down = LoadImageFromPath(pathbuf);
-	                        
-	if (!graphics.bmp_main_down)
-	{
-		strcat_s(errorbuf, sizeof(errorbuf), pathbuf);
-		strcat_s(errorbuf, sizeof(errorbuf), "\n");
-	}
-	
-	(void)path_remove_filespec(pathbuf);
-	
-	strcat_s(pathbuf, sizeof(pathbuf), Skin.CoolSwitch);
-	DeleteObject(graphics.bmp_main_switch);
-	graphics.bmp_main_switch = LoadImageFromPath(pathbuf);
-	                        
-	if (!graphics.bmp_main_switch)
-	{
-		strcat_s(errorbuf, sizeof(errorbuf), pathbuf);
-		strcat_s(errorbuf, sizeof(errorbuf), "\n");
-	}
-	
-	(void)path_remove_filespec(pathbuf);
-	
-	strcat_s(pathbuf, sizeof(pathbuf), Skin.aTimeFont);
-	DeleteObject(graphics.bmp_main_time_font);
-	graphics.bmp_main_time_font = LoadImageFromPath(pathbuf);
-	                        
-	if (!graphics.bmp_main_time_font)
-	{
-		strcat_s(errorbuf, sizeof(errorbuf), pathbuf);
-		strcat_s(errorbuf, sizeof(errorbuf), "\n");
-	}
-	
-	(void)path_remove_filespec(pathbuf);
-	
-	strcat_s(pathbuf, sizeof(pathbuf), Skin.aTrackFont);
-	DeleteObject(graphics.bmp_main_track_font);
-	graphics.bmp_main_track_font = LoadImageFromPath(pathbuf);
-	                        
-	if (!graphics.bmp_main_track_font)
-	{
-		strcat_s(errorbuf, sizeof(errorbuf), pathbuf);
-		strcat_s(errorbuf, sizeof(errorbuf), "\n");
-	}
-	
-	(void)path_remove_filespec(pathbuf);
-	
-	strcat_s(pathbuf, sizeof(pathbuf), Skin.aTextFont);
-	DeleteObject(graphics.bmp_main_title_font);
-	graphics.bmp_main_title_font = LoadImageFromPath(pathbuf);
-	                        
-	if (!graphics.bmp_main_title_font)
-	{
-		strcat_s(errorbuf, sizeof(errorbuf), pathbuf);
-		strcat_s(errorbuf, sizeof(errorbuf), "\n");
-	}
-	
-	if (!graphics.bmp_main_up || !graphics.bmp_main_down
-			|| !graphics.bmp_main_switch || !graphics.bmp_main_time_font
-			|| !graphics.bmp_main_title_font || !graphics.bmp_main_track_font)
-	{
-		char errorstring[5000];
-		
-		snprintf(errorstring, sizeof(errorstring), "%s\n%s", T(STR_ERR_CANT_LOAD_BITMAPS), errorbuf);
-		MessageBoxA(GetForegroundWindow(), errorstring, T(STR_ERR_ERROR),
-				   MB_ICONERROR);
-		options.use_default_skin = TRUE;
-		return FALSE;
-		
-	}
-	
-	if (Skin.Object[PositionSlider].maxw == 1)
-	{
-		globals.main_int_track_position =
-			(int)((float)(Skin.Object[PositionSlider].h) *
-				  positionpercentage);
-		          
-	}
-	
-	else
-	{
-		globals.main_int_track_position =
-			(int)((float)(Skin.Object[PositionSlider].w) *
-				  positionpercentage);
-	}
-	
-	DPI_ApplySkinScaling();
-	main_update_title_text();
-	
-	return 1;
+	return TRUE;
 }
 
 void    main_skin_check_ini_value(char *textposition,
@@ -673,19 +417,19 @@ void    main_skin_check_ini_value(char *textposition,
 										 0, h2 = 0;
 	char    tooltip[100] = "";
 	int teller = 0;
-	
+
 	while (teller < strlen(textposition))
 	{
 		if (textposition[teller] == '=' || textposition[teller] == ',')
 			textposition[teller] = ' ';
-			
+
 		teller++;
 	}
-	
+
 	// sscanf(textposition, "%s %d %d %d %d %d %d %d %d %d %[^\0]",
 	sscanf_s(textposition, "%s %d %d %d %d %d %d %d %d %d %s",
 		   name, (unsigned)sizeof(name), &x, &y, &w, &h, &maxw, &x2, &y2, &w2, &h2, tooltip, (unsigned)sizeof(tooltip));
-	       
+
 	// Bounded by ReducedSize, not Lastone: `associate[]` (built in the
 	// caller) has exactly ReducedSize entries (PlaySwitch..FreqText);
 	// Lastone is ReducedSize + 1, so `teller < Lastone` read one element
@@ -700,25 +444,7 @@ void    main_skin_check_ini_value(char *textposition,
 									   h, maxw, x2, y2, w2, h2, tooltip);
 			return;
 		}
-		
-		if (stricmp(name, "PlaylistSkin") == 0)
-		{
-			char    pathbuf[MAX_PATH];
-			
-			if (path_is_relative(textposition + strlen(name) + 1))
-			{
-				strcpy_s(pathbuf, sizeof(pathbuf), (char*)options.main_skin_file);
-				(void)path_remove_filespec(pathbuf);
-				strcat_s(pathbuf, sizeof(pathbuf), textposition + strlen(name) + 1);
-			}
-			
-			else
-				strcpy_s(pathbuf, sizeof(pathbuf), textposition + strlen(name) + 1);
-				
-			if (!globals.playlist_bool_force_skin_from_options)
-				strcpy_s((char*)options.playlist_skin_file, sizeof(options.playlist_skin_file), pathbuf);
-		}
-		
+
 		if (stricmp(name, "transparentcolor") == 0)
 		{
 			unsigned int     colortext;
@@ -726,72 +452,31 @@ void    main_skin_check_ini_value(char *textposition,
 			Skin.transparentcolor = colortext;
 			return;
 		}
-		
-	
+
+
 	if (stricmp(name, "BmpCoolUp") == 0)
 	{
 		strcpy_s(Skin.CoolUp, sizeof(Skin.CoolUp), textposition + strlen(name) + 1);
-	}	
+	}
 	if (stricmp(name, "BmpCoolDown") == 0)
 	{
 		strcpy_s(Skin.CoolDown, sizeof(Skin.CoolDown), textposition + strlen(name) + 1);
-	}	
+	}
 	if (stricmp(name, "BmpCoolSwitch") == 0)
 	{
 		strcpy_s(Skin.CoolSwitch, sizeof(Skin.CoolSwitch), textposition + strlen(name) + 1);
-	}	
+	}
 	if (stricmp(name, "BmpTextFont") == 0)
 	{
 		strcpy_s(Skin.aTextFont, sizeof(Skin.aTextFont), textposition + strlen(name) + 1);
-	}	
+	}
 	if (stricmp(name, "BmpTimeFont") == 0)
 	{
 		strcpy_s(Skin.aTimeFont, sizeof(Skin.aTimeFont), textposition + strlen(name) + 1);
-	}	
+	}
 	if (stricmp(name, "BmpTrackFont") == 0)
 	{
 		strcpy_s(Skin.aTrackFont, sizeof(Skin.aTrackFont), textposition + strlen(name) + 1);
-	}		if (stricmp(name, "NextSkin") == 0)
-		{
-			if (stricmp(textposition + strlen(name) + 1, "default") == 0)
-			{
-				globals.main_bool_skin_next_is_default = TRUE;
-			}
-			
-			else
-			{
-				char    drive[_MAX_DRIVE];
-				char    fname[MAX_PATH];
-				char    modpathbuf[MAX_PATH];
-				char    ext[_MAX_EXT];
-				char    dir[_MAX_DIR];
-				char    skinfile2[MAX_PATH];
-				strcpy_s(skinfile2, sizeof(skinfile2), (char*)options.main_skin_file);
-				(void)path_remove_filespec(skinfile2);
-				
-				main_get_program_path(GetModuleHandle(NULL), modpathbuf,
-									  MAX_PATH);
-				_splitpath_s(textposition + strlen(name) + 1, drive, _MAX_DRIVE, dir, _MAX_DIR,
-						   fname, MAX_PATH, ext, _MAX_EXT);
-				           
-				if (strcmp(drive, "") == 0)
-				{
-					sprintf_s((char*)options.main_skin_file, sizeof(options.main_skin_file), "%s%s%s", skinfile2,
-							fname, ext);
-				}
-				
-				else
-					strcpy_s((char*)options.main_skin_file, sizeof(options.main_skin_file),
-						   textposition + strlen(name) + 1);
-					       
-				if (_access((char*)options.main_skin_file, 0) == -1)
-				{
-					sprintf_s((char*)options.main_skin_file, sizeof(options.main_skin_file), "%s%s%s%s", modpathbuf,
-							dir, fname, ext);
-				}
-				
-				globals.main_bool_skin_next_is_default = FALSE;
-			}
-		}
+	}
 	}
 }

@@ -50,6 +50,105 @@ void main_translate_menu(void);
 void main_populate_language_menu(void);
 void main_switch_language(const char* languageCode);
 void main_populate_dsp_menu(void);
+static void main_populate_skin_menu(void);
+static const char* main_get_discovered_skin_path(int menuId);
+
+////////////////////////////////////////////////////////////////////////////////
+// Skin Menu (external .CPSkin discovery)
+////////////////////////////////////////////////////////////////////////////////
+
+static char g_SkinPaths[CPC_MAX_MENU_ITEMS][MAX_PATH];
+static int  g_SkinCount = 0;
+
+// Scans options.skins_folder_path for *.CPSkin files and rebuilds the Skin
+// submenu (position 0 is the permanent "Default" item from the .rc; this
+// clears and repopulates everything after it). Called at startup and on
+// every WM_INITMENUPOPUP, same "always refresh before any submenu is shown"
+// policy already used for the language submenu.
+static void main_populate_skin_menu(void)
+{
+	HMENU skinMenu = GetSubMenu(globals.main_menu_popup, SKIN_SUBMENU_INDEX);
+	WIN32_FIND_DATA finddata;
+	HANDLE hFileFind;
+	char cWildCard[MAX_PATH];
+	int selectedIndex = 0; // position 0 = static "Default"
+
+	if (!skinMenu)
+		return;
+
+	while (GetMenuItemCount(skinMenu) > 1)
+		RemoveMenu(skinMenu, 1, MF_BYPOSITION);
+	g_SkinCount = 0;
+
+	// Give "Default" a radio bullet too - the .rc's plain MENUITEM doesn't
+	// set MFT_RADIOCHECK.
+	{
+		MENUITEMINFOW mii = {0};
+		mii.cbSize = sizeof(mii);
+		mii.fMask = MIIM_FTYPE;
+		GetMenuItemInfoW(skinMenu, 0, TRUE, &mii);
+		mii.fType |= MFT_RADIOCHECK;
+		SetMenuItemInfoW(skinMenu, 0, TRUE, &mii);
+	}
+
+	if (options.skins_folder_path[0] != '\0')
+	{
+		snprintf(cWildCard, sizeof(cWildCard), "%s\\*.CPSkin", options.skins_folder_path);
+		hFileFind = FindFirstFile(cWildCard, &finddata);
+
+		if (hFileFind != INVALID_HANDLE_VALUE)
+		{
+			do
+			{
+				char fullPath[MAX_PATH];
+				char label[MAX_PATH];
+				wchar_t wLabel[MAX_PATH];
+				MENUITEMINFOW mii = {0};
+
+				if (finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+					continue;
+				if (g_SkinCount >= CPC_MAX_MENU_ITEMS)
+					break;
+
+				snprintf(fullPath, sizeof(fullPath), "%s\\%s", options.skins_folder_path, finddata.cFileName);
+				strncpy_s(g_SkinPaths[g_SkinCount], MAX_PATH, fullPath, MAX_PATH - 1);
+
+				main_skin_get_display_name(fullPath, label, sizeof(label));
+				MultiByteToWideChar(CP_UTF8, 0, label, -1, wLabel, MAX_PATH);
+
+				mii.cbSize     = sizeof(mii);
+				mii.fMask      = MIIM_ID | MIIM_FTYPE | MIIM_STATE | MIIM_STRING;
+				mii.fType      = MFT_STRING | MFT_RADIOCHECK;
+				mii.fState     = MFS_ENABLED;
+				mii.wID        = MENU_SKIN_DEFAULT + g_SkinCount + 1;
+				mii.dwTypeData = wLabel;
+				InsertMenuItemW(skinMenu, 1 + g_SkinCount, TRUE, &mii);
+
+				if (stricmp(options.active_skin_path, fullPath) == 0)
+					selectedIndex = 1 + g_SkinCount;
+
+				g_SkinCount++;
+			}
+			while (FindNextFile(hFileFind, &finddata));
+
+			FindClose(hFileFind);
+		}
+		// else: folder missing/unreadable - leave only "Default", no error
+		// box (this is a passive background rescan, not a user action).
+	}
+
+	CheckMenuRadioItem(skinMenu, 0, GetMenuItemCount(skinMenu) - 1, selectedIndex, MF_BYPOSITION);
+}
+
+// Counterpart to MainMenu_GetLanguageFromMenuId: maps a dynamic Skin submenu
+// item's ID back to the full path main_populate_skin_menu() stored for it.
+static const char* main_get_discovered_skin_path(int menuId)
+{
+	int index = menuId - MENU_SKIN_DEFAULT - 1;
+	if (index < 0 || index >= g_SkinCount)
+		return NULL;
+	return g_SkinPaths[index];
+}
 
 // Function to populate language menu dynamically
 void main_populate_language_menu(void)
@@ -282,52 +381,6 @@ void    main_reset_window(HWND hWnd)
 	RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
 }
 
-void    main_skin_add_to_menu(char *name)
-{
-
-	MENUITEMINFO menuinfo;
-	int     itemcounter =
-		GetMenuItemCount(GetSubMenu(globals.main_menu_popup, SKIN_SUBMENU_INDEX));
-	int     teller;
-	
-	for (teller = 0; teller < itemcounter; teller++)
-	{
-		char    skinstring[MAX_PATH];
-		GetMenuString(GetSubMenu(globals.main_menu_popup, SKIN_SUBMENU_INDEX), teller,
-					  skinstring, MAX_PATH, MF_BYPOSITION);
-		              
-		if (strcmp(name, skinstring) == 0)
-			return;
-	}
-	
-	menuinfo.cbSize = sizeof(MENUITEMINFO);
-	
-	menuinfo.fMask = MIIM_TYPE | MIIM_ID;
-	menuinfo.fType = MFT_STRING | MFT_RADIOCHECK;
-	// menuinfo.fState;
-	
-	if (globals.main_int_skin_last_number == (5001 + options.remember_skin_count))
-		globals.main_int_skin_last_number = 5001;
-		
-	menuinfo.wID = globals.main_int_skin_last_number++;
-	
-	// menuinfo.hSubMenu;
-	// menuinfo.hbmpChecked;
-	// menuinfo.hbmpUnchecked;
-	// menuinfo.dwItemData;
-	menuinfo.cch = sizeof(menuinfo.dwTypeData);
-	
-	menuinfo.dwTypeData = name;
-	
-	InsertMenuItem(globals.main_menu_popup, MENU_SKIN_DEFAULT, FALSE,
-				   &menuinfo);
-	               
-	if (itemcounter > options.remember_skin_count)
-	{
-		RemoveMenu(GetSubMenu(globals.main_menu_popup, SKIN_SUBMENU_INDEX), 0,
-				   MF_BYPOSITION);
-	}
-}
 
 char   *str_trim(char *string)
 {
@@ -1365,9 +1418,16 @@ void    main_menuproc(HWND hWnd, LPPOINT points)
 
 		case MENU_SKIN_DEFAULT:
 		{
-			options.use_default_skin = TRUE;
-			globals.main_bool_skin_next_is_default = TRUE;
-			main_play_control(ID_LOADSKIN, hWnd);
+			main_skin_switch(NULL);
+
+			if (options.scroll_track_title)
+				SetTimer(hWnd, CPC_TIMERID_SCROLLTITLETEXT, 50, NULL);
+			else
+				KillTimer(hWnd, CPC_TIMERID_SCROLLTITLETEXT);
+
+			main_reset_window(hWnd);
+			main_add_tooltips(hWnd, TRUE);
+
 			break;
 		}
 		
@@ -1395,6 +1455,24 @@ void    main_menuproc(HWND hWnd, LPPOINT points)
 		// Handle other commands
 		default:
 		{
+			// Handle dynamic Skin submenu items (discovered external .CPSkin files)
+			if (retval > MENU_SKIN_DEFAULT && retval <= MENU_SKIN_DEFAULT + CPC_MAX_MENU_ITEMS) {
+				const char* pcSkinPath = main_get_discovered_skin_path((int)retval);
+				if (pcSkinPath)
+				{
+					main_skin_switch(pcSkinPath);
+
+					if (options.scroll_track_title)
+						SetTimer(hWnd, CPC_TIMERID_SCROLLTITLETEXT, 50, NULL);
+					else
+						KillTimer(hWnd, CPC_TIMERID_SCROLLTITLETEXT);
+
+					main_reset_window(hWnd);
+					main_add_tooltips(hWnd, TRUE);
+				}
+				break;
+			}
+
 			// Handle DSP plugin menu items
 			if (retval >= MENU_DSP_BASE && retval < MENU_DSP_BASE + 1001) {
 				if (CPDSP_HandleMenuCommand(retval, MENU_DSP_BASE)) {
@@ -1420,19 +1498,7 @@ void    main_menuproc(HWND hWnd, LPPOINT points)
 			
 			if (main_play_control((WORD) retval, hWnd) != -1)
 				break;
-				
-			if (GetMenuString
-					(globals.main_menu_popup, retval, NULL, 0, MF_BYCOMMAND))
-			{
-				GetMenuString(globals.main_menu_popup, retval,
-							  (char*)options.main_skin_file, MAX_PATH,
-							  MF_BYCOMMAND);
-				main_skin_select_menu((char*)options.main_skin_file);
-				options.use_default_skin = FALSE;
-				globals.main_bool_skin_next_is_default = FALSE;
-				main_play_control(ID_LOADSKIN, hWnd);
-			}
-			
+
 			break;
 		}
 	}
@@ -2043,6 +2109,7 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			// Always refresh the language submenu radio state before any
 			// submenu is shown — avoids stale state from previous calls.
 			main_populate_language_menu();
+			main_populate_skin_menu();
 			return 0;
 		}
 		
@@ -2156,30 +2223,9 @@ int     main_play_control(WORD wParam, HWND hWnd)
 		
 		case ID_LOADSKIN:
 		{
-			if (globals.main_bool_skin_next_is_default == TRUE)
-				options.use_default_skin = TRUE;
-			else
-				options.use_default_skin = FALSE;
-				
-			if (options.use_default_skin == FALSE)
-			{
-				char    skinpathje[MAX_PATH];
-				strcpy_s(skinpathje, sizeof(skinpathje), (const char*)options.main_skin_file);
-				
-				if (main_skin_open((char*)options.main_skin_file) == FALSE)
-					main_set_default_skin();
-				else
-				{
-					main_skin_add_to_menu(skinpathje);
-					main_skin_select_menu(skinpathje);
-				}
-			}
-			else
-			{
-				// Using built-in skin - cycle through variants (Normal -> Shade -> Normal)
-				main_set_next_builtin_skin();
-			}
-				
+			// Cycle through builtin variants (Normal -> EQ -> Shade -> Normal)
+			main_set_next_builtin_skin();
+
 			if (options.scroll_track_title)
 				SetTimer(hWnd, CPC_TIMERID_SCROLLTITLETEXT, 50, NULL);
 			else
@@ -2275,10 +2321,7 @@ int    *cmdline_get_argument(char *arg, HWND hWnd)
 		
 	if (_stricmp(arg, "output") == 0)
 		return &options.decoder_output_mode;
-		
-	if (_stricmp(arg, "skin") == 0)
-		return &options.use_default_skin;
-		
+
 	if (_stricmp(arg, "showplaylist") == 0)
 		return &options.show_playlist;
 		
@@ -2325,22 +2368,26 @@ int     cmdline_parse_options(int argc, char **argv, HWND hWnd)
 		
 		if (arg[0] == '-')
 		{
-			if ((value = cmdline_get_argument(arg + 1, hWnd)) != NULL)
-				* value = FALSE;
-				
-			if (value == &options.use_default_skin)
+			if (_stricmp(arg + 1, "skin") == 0)
 			{
 				i++;
 
 				if (i >= argc)
 					break;
 
-				if (stricmp(argv[i], "default") == 0)
-					*value = TRUE;
+				if (stricmp(argv[i], "eq") == 0)
+					globals.builtin_skin_variant = BUILTIN_SKIN_EQ;
+				else if (stricmp(argv[i], "shade") == 0)
+					globals.builtin_skin_variant = BUILTIN_SKIN_SHADE;
 				else
-					strcpy_s((char*)options.main_skin_file, sizeof(options.main_skin_file), argv[i]);
+					globals.builtin_skin_variant = BUILTIN_SKIN_NORMAL;
+
+				continue;
 			}
-			
+
+			if ((value = cmdline_get_argument(arg + 1, hWnd)) != NULL)
+				* value = FALSE;
+
 			if (value == &globals.main_int_show_minimized)
 			{
 				if (options.show_on_taskbar)
@@ -2576,8 +2623,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//  options.repeat_playlist = FALSE;
 	//    options.equalizer = FALSE;
 	globals.main_bool_slider_keep_focus = FALSE;
-	globals.main_int_skin_last_number = 5001;
-	
+
 	// Initialize windows structure
 	memset(&windows, 0, sizeof(windows));
 	windows.m_hWndFindDialog = NULL;
@@ -2620,7 +2666,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	// Populate language menu with available languages
 	main_populate_language_menu();
-	
+
+	// Populate skin menu with discovered external .CPSkin files, before the
+	// initial skin load below so main_skin_select_menu() has the right item
+	// to check.
+	main_populate_skin_menu();
+
 	// Translate menu items to current language
 	main_translate_menu();
 	
@@ -2646,41 +2697,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	globals.main_int_show_minimized = nCmdShow;
 	
 	cmdline_parse_options(__argc, __argv, hWndCoolPlayer);
-	
-	if (*options.main_skin_file && options.use_default_skin == FALSE)
+
+	switch (globals.builtin_skin_variant)
 	{
-		char    lastskinfile[MAX_PATH];
-		strcpy_s(lastskinfile, sizeof(lastskinfile), (const char*)options.main_skin_file);
-		
-		if (main_skin_open((char*)options.main_skin_file) == FALSE)
-		{
+		case BUILTIN_SKIN_EQ:
+			main_set_eq_skin();
+			break;
+		case BUILTIN_SKIN_SHADE:
+			main_set_shade_skin();
+			break;
+		case BUILTIN_SKIN_NORMAL:
+		default:
 			main_set_default_skin();
-		}
-		
-		else
-		{
-			main_skin_add_to_menu(lastskinfile);
-			main_skin_select_menu(lastskinfile);
-		}
+			break;
 	}
-	
-	else
-	{
-		switch (globals.builtin_skin_variant)
-		{
-			case BUILTIN_SKIN_EQ:
-				main_set_eq_skin();
-				break;
-			case BUILTIN_SKIN_SHADE:
-				main_set_shade_skin();
-				break;
-			case BUILTIN_SKIN_NORMAL:
-			default:
-				main_set_default_skin();
-				break;
-		}
-	}
-	
+
 	globals.main_bool_wavwrite_dir_already_known = FALSE;
 	
 	globals.main_int_track_position = 0;

@@ -568,21 +568,6 @@ void CPLI_DecodeLength(CPs_PlaylistItem* pItem, unsigned int iNewLength)
 //
 //
 //
-//
-//
-//
-// Temporary stub - old ID3v1 function replaced by TagLib  
-void CPLI_ReadTag_ID3v1(CPs_PlaylistItem* pItem, HANDLE hFile)
-{
-	// This function is deprecated - use CPLI_ReadTag_TagLib instead
-	(void)pItem;  // Suppress unused parameter warning
-	(void)hFile;  // Suppress unused parameter warning
-	return;
-}
-
-//
-//
-//
 BOOL CPLI_IsTagDirty(CP_HPLAYLISTITEM hItem)
 {
 	CPs_PlaylistItem* pItem = (CPs_PlaylistItem*)hItem;

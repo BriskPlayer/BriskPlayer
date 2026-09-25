@@ -43,7 +43,7 @@ int DPI_Scale(int px);
 
 // Apply DPI scaling to all skin coordinates and bitmaps.
 // Call this after every skin load (main_set_default_skin, main_set_eq_skin,
-// main_set_shade_skin, main_skin_open).
+// main_set_shade_skin).
 void DPI_ApplySkinScaling(void);
 
 // Handle WM_DPICHANGED: update scale factor and resize window

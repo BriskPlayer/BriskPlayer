@@ -68,23 +68,6 @@ void MainMenu_SwitchLanguage(const char* languageCode);
 const char* MainMenu_GetLanguageFromMenuId(UINT menuId);
 
 ////////////////////////////////////////////////////////////////////////////////
-// Skin Menu
-////////////////////////////////////////////////////////////////////////////////
-
-// Add a skin to the skin history menu
-void MainMenu_AddSkinToHistory(const char* skinName);
-
-// Select (check) a skin in the menu
-void MainMenu_SelectSkin(const char* skinName);
-
-// Clear all skin history items (except default)
-void MainMenu_ClearSkinHistory(void);
-
-// Get skin path from menu item ID
-// Returns FALSE if ID is not a skin menu item
-BOOL MainMenu_GetSkinFromMenuId(UINT menuId, char* pszBuffer, int bufferSize);
-
-////////////////////////////////////////////////////////////////////////////////
 // Menu ID Helpers
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -92,12 +75,6 @@ BOOL MainMenu_GetSkinFromMenuId(UINT menuId, char* pszBuffer, int bufferSize);
 static inline BOOL MainMenu_IsLanguageMenuId(UINT menuId)
 {
     return (menuId > MENU_LANGUAGE_BASE && menuId <= MENU_LANGUAGE_BASE + 100);
-}
-
-// Check if a menu ID is in the skin menu range  
-static inline BOOL MainMenu_IsSkinMenuId(UINT menuId)
-{
-    return (menuId > MENU_SKIN_DEFAULT && menuId < MENU_SKIN_DEFAULT + 100);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

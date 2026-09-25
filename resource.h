@@ -3,11 +3,6 @@
 // Used by briskplayer.rc
 //
 #define IDR_RT_MANIFEST                 1
-#define IDB_MAINUP                      101
-#define IDB_MAINDOWN                    132
-#define IDB_MAINSW                      133
-#define IDB_MAINSMALLFONT               115
-#define IDB_MAINBIGFONT                 116
 #define IDD_PLAYLIST                    108
 #define APP_ICON                        110
 #define IDR_MENU1                       111
@@ -27,16 +22,6 @@
 #define IDB_PLAYLIST_CURRENTTRACK       157
 #define IDD_QUICKFIND                   158
 #define IDR_DEFAULTSKIN                 192
-// Built-in skin variants (shade mode)
-#define IDB_SHADEUP                     193
-#define IDB_SHADEDOWN                   197
-#define IDB_SHADESW                     198
-#define IDB_SHADETIMEFONT               199
-#define IDB_SHADETEXTFONT               200
-// Built-in skin variants (EQ mode)
-#define IDB_EQUP                        201
-#define IDB_EQTIMEFONT                  204
-#define IDB_EQTEXTFONT                  205
 #define IDB_SYSICON                     194
 #define IDB_SYSICON_MASK                196
 #define IDC_PLAYLIST                    1000
@@ -79,12 +64,8 @@
 #define IDC_URL                         1037
 #define IDC_REMSONG                     1037
 #define IDC_FILEONCE                    1038
-#define IDC_LOADSKIN                    1039
 #define IDC_READSELTAG                  1040
-#define IDC_PLAYLISTSKIN                1041
 #define IDC_SUPPORTID3_V2               1041
-#define IDC_SKINBUTTON                  1042
-#define IDC_PLAYLISTSKINBUTTON          1043
 #define IDC_READID3INBACKGROUND         1043
 #define IDC_AUTOPLAY                    1044
 #define IDC_TASKBAR                     1045
@@ -92,16 +73,11 @@
 #define IDC_ABOUTRADIO                  1047
 #define IDC_READTRACKTIME               1047
 #define IDC_KEYBOARDRADIO               1048
-#define IDC_REMEMBERSKIN                1049
 #define IDC_CHANGELOG                   1049
-#define IDC_REMSKINVAL                  1050
-#define IDC_FLUSH_SKINLIST              1051
 #define IDC_MINIMIZE                    1052
 #define IDC_DELAYTIME                   1052
 #define IDC_MAXIMIZE                    1053
-#define IDC_PLAYERSKINCHECK             1053
 #define IDC_CLOSE                       1054
-#define IDC_PLAYLISTSKINCHECK           1054
 #define IDC_DELAYTIMES                  1055
 #define IDC_FND_TEXT                    1057
 #define IDC_QFND_TITLES                 1058
@@ -226,8 +202,10 @@
 #define IDC_EQ_VAL_6                    1125
 #define IDC_EQ_VAL_7                    1126
 #define IDC_EQ_VAL_8                    1127
+#define IDC_SKINSFOLDER                 1128
+#define IDC_SKINSFOLDER_BROWSE          1129
 
-// 
+//
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        200

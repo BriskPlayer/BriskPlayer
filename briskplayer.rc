@@ -32,26 +32,11 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Images (PNG embedded as RCDATA, decoded at runtime via WIC)
 //
 
-// Built-in normal mode skin images (PNG via WIC; embedded as raw data)
-IDB_MAINUP              RCDATA                  "res/normal_up.png"
-IDB_MAINDOWN            RCDATA                  "res/eq_down.png"
-IDB_MAINSW              RCDATA                  "res/eq_sw.png"
-IDB_MAINBIGFONT         RCDATA                  "res/normal_numbers.png"
-IDB_MAINSMALLFONT       RCDATA                  "res/normal_text.png"
+// Built-in main/EQ/shade window skin images now live inside the CPSkin
+// archive (IDR_DEFAULTSKIN, res/Default.CPSkin) instead of as raw RCDATA -
+// see skin.c's main_skin_load_builtin_variant().
 IDB_SYSICON             RCDATA                  "res/SysIcon.png"
 IDB_SYSICON_MASK        BITMAP                  "res/SysIcon_Mask.bmp"
-
-// Built-in shade mode skin images
-IDB_SHADEUP             RCDATA                  "res/shade_up.png"
-IDB_SHADEDOWN           RCDATA                  "res/shade_down.png"
-IDB_SHADESW             RCDATA                  "res/shade_sw.png"
-IDB_SHADETIMEFONT       RCDATA                  "res/shade_time.png"
-IDB_SHADETEXTFONT       RCDATA                  "res/shade_text.png"
-
-// Built-in EQ mode skin images (shares down/sw with normal mode)
-IDB_EQUP                RCDATA                  "res/eq_up.png"
-IDB_EQTIMEFONT          RCDATA                  "res/eq_numbers.png"
-IDB_EQTEXTFONT          RCDATA                  "res/eq_text.png"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -201,10 +186,6 @@ BEGIN
     EDITTEXT        IDC_DELAYTIME,210,138,24,15,ES_AUTOHSCROLL | ES_READONLY | ES_NUMBER
     CONTROL         "Spin1",IDC_DELAYTIMES,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,230,137,11,9
     LTEXT           "Track Delay (sec)",-1,245,140,80,8
-    EDITTEXT        IDC_REMSKINVAL,210,156,23,15,ES_AUTOHSCROLL | ES_READONLY | ES_NUMBER
-    CONTROL         "Spin1",IDC_REMEMBERSKIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,230,158,11,9
-    LTEXT           "Skinlist length",-1,245,158,80,11
-    PUSHBUTTON      "Flush",IDC_FLUSH_SKINLIST,330,156,40,15
     GROUPBOX        "Output",-1,7,195,406,55
     COMBOBOX        IDC_OUTPUT,15,206,390,81,CBS_DROPDOWNLIST | WS_TABSTOP
     LTEXT           "Volume controls",-1,15,225,80,12,SS_CENTERIMAGE
@@ -217,10 +198,9 @@ BEGIN
     CONTROL         "Spin1",IDC_REPLAYGAIN_PREAMP_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,210,268,11,9
     CONTROL         "Prevent clipping",IDC_REPLAYGAIN_NOCLIP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,240,270,80,10
     CONTROL         "Gapless playback",IDC_GAPLESS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,340,270,70,10
-    GROUPBOX        "Skin",-1,7,308,406,40,WS_GROUP
-    CONTROL         "Player",IDC_PLAYERSKINCHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,323,50,10
-    EDITTEXT        IDC_LOADSKIN,70,321,275,15,ES_AUTOHSCROLL | ES_READONLY
-    PUSHBUTTON      "Open",IDC_SKINBUTTON,355,321,50,15
+    GROUPBOX        "Skins Folder",-1,7,305,406,45
+    EDITTEXT        IDC_SKINSFOLDER,16,320,320,15,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse...",IDC_SKINSFOLDER_BROWSE,344,320,60,15
     DEFPUSHBUTTON   "OK",IDOK,219,363,70,15
     PUSHBUTTON      "Cancel",IDCANCEL,299,363,70,15
 END
