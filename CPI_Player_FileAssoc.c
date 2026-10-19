@@ -143,6 +143,28 @@ BOOL CPFA_IsAssociated(CPs_CoDecModule* pCoDec, const char* pcExtension, DWORD_P
 }
 
 //
+// Appends "*.ext;" for each extension this codec handles to a file dialog
+// pattern list, skipping ones already present.
+//
+void CPFA_AppendFilterPatterns(CPs_CoDecModule* pCoDec, WCHAR* pwcPatterns, size_t cchPatterns)
+{
+	CPs_FileAssociation* pCursor = (CPs_FileAssociation*)pCoDec->m_pFileAssociationCookie;
+
+	while (pCursor)
+	{
+		WCHAR wcPattern[32];
+		CP_CHECKOBJECT(pCursor);
+
+		if (_snwprintf(wcPattern, 32, L"*.%hs;", pCursor->m_pcExtension) > 0 &&
+				!wcsstr(pwcPatterns, wcPattern) &&
+				wcslen(pwcPatterns) + wcslen(wcPattern) < cchPatterns)
+			wcscat(pwcPatterns, wcPattern);
+
+		pCursor = (CPs_FileAssociation*)pCursor->m_pNext;
+	}
+}
+
+//
 //
 //
 void CPFA_AssociateWithEXE(CPs_CoDecModule* pCoDec)

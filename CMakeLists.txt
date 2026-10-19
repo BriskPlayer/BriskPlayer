@@ -88,7 +88,6 @@ endif()
 # Build options — declared here (before project()) so that the vcpkg feature
 # selection block below can read them on the very first configure run.
 # ---------------------------------------------------------------------------
-option(ENABLE_FFMPEG       "Use FFmpeg for audio decoding"              OFF)
 option(ENABLE_DISCORD_RPC  "Enable Discord Rich Presence integration"   ON)
 
 # ---------------------------------------------------------------------------
@@ -99,14 +98,12 @@ option(ENABLE_DISCORD_RPC  "Enable Discord Rich Presence integration"   ON)
 if(NOT DEFINED VCPKG_MANIFEST_FEATURES)
     set(VCPKG_MANIFEST_FEATURES "")
 endif()
-if(NOT ENABLE_FFMPEG)
-    list(APPEND VCPKG_MANIFEST_FEATURES "native-codecs")
-else()
-    list(APPEND VCPKG_MANIFEST_FEATURES "ffmpeg")
-endif()
+# Features from older configures that no longer exist in vcpkg.json
+list(REMOVE_ITEM VCPKG_MANIFEST_FEATURES "ffmpeg" "native-codecs")
 if(ENABLE_DISCORD_RPC)
     list(APPEND VCPKG_MANIFEST_FEATURES "discord-rpc")
 endif()
+list(REMOVE_DUPLICATES VCPKG_MANIFEST_FEATURES)
 set(VCPKG_MANIFEST_FEATURES "${VCPKG_MANIFEST_FEATURES}" CACHE STRING "" FORCE)
 
 # CXX language required: CPI_TagLib.c uses WIC COM interfaces (C++ method call syntax).
@@ -335,24 +332,18 @@ set_source_files_properties(${BRISK_RC} PROPERTIES
 )
 
 # ---------------------------------------------------------------------------
-# Codec selection: FFmpeg vs Rust+native
-# Default: Rust handles WAV/MPEG/FLAC/OGG; C handles AAC/OPUS (fdk-aac, opusfile).
-# Use -DENABLE_FFMPEG=ON to use FFmpeg instead.
-# When using FFmpeg, install with: vcpkg install briskplayer[ffmpeg]
-# (ENABLE_FFMPEG and ENABLE_DISCORD_RPC options are declared near the top of
-# this file, before project(), so vcpkg can read them on first configure.)
+# Codecs
+# Rust handles WAV/MPEG/FLAC/OGG; C handles AAC/OPUS (fdk-aac, opusfile).
+# FFmpeg is never linked: CPI_Player_CoDec_FFmpeg.c loads FFmpeg 7.x-9.x
+# shared libraries at runtime from an "ffmpeg" folder next to the executable
+# when present, and needs no FFmpeg headers or libraries to build.
 # ---------------------------------------------------------------------------
-
-if(ENABLE_FFMPEG)
-    message(STATUS "Codec backend: FFmpeg")
-    list(APPEND BRISK_SOURCES CPI_Player_CoDec_FFmpeg.c)
-else()
-    message(STATUS "Codec backend: Rust (WAV/MPEG/FLAC/OGG) + C (AAC/OPUS)")
-    list(APPEND BRISK_SOURCES
-        CPI_Player_CoDec_AAC.c
-        CPI_Player_CoDec_OPUS.c
-    )
-endif()
+list(APPEND BRISK_SOURCES
+    CPI_Player_CoDec_AAC.c
+    CPI_Player_CoDec_OPUS.c
+    CPI_Player_CoDec_FFmpeg.c
+)
+message(STATUS "Codecs: Rust (WAV/MPEG/FLAC/OGG) + C (AAC/OPUS) + optional runtime FFmpeg")
 
 # ---------------------------------------------------------------------------
 # Rust codec support via Corrosion (required — handles WAV, MPEG, FLAC, OGG)
@@ -377,15 +368,9 @@ message(STATUS "Rust codecs: WAV, MPEG, FLAC, OGG/Vorbis")
 # CMake's find_package calls are reached, so CONFIG-mode finds are reliable.
 find_package(ZLIB REQUIRED)
 
-if(ENABLE_FFMPEG)
-    # FFmpeg — vcpkg adds its FindFFmpeg.cmake module to CMAKE_MODULE_PATH via the
-    # toolchain, so MODULE-mode find_package works without pkg-config.
-    find_package(FFMPEG REQUIRED COMPONENTS avcodec avformat avutil swresample)
-else()
-    # AAC and OPUS still use C implementations; WAV/MPEG/FLAC/OGG are handled by Rust.
-    find_package(fdk-aac CONFIG REQUIRED)
-    find_package(opusfile CONFIG REQUIRED)
-endif()
+# AAC and OPUS use C implementations; WAV/MPEG/FLAC/OGG are handled by Rust.
+find_package(fdk-aac CONFIG REQUIRED)
+find_package(opusfile CONFIG REQUIRED)
 
 # FAudio — vcpkg installs a CMake config file
 find_package(FAudio CONFIG REQUIRED)
@@ -457,11 +442,6 @@ if(ENABLE_NLS)
     else()
         message(STATUS "Internationalization support: disabled (gettext-libintl not found)")
     endif()
-endif()
-
-# Codec compile-time flag
-if(ENABLE_FFMPEG)
-    add_compile_definitions(HAVE_FFMPEG_CODEC=1)
 endif()
 
 # Discord RPC compile-time flag
@@ -538,15 +518,10 @@ else()
 endif()
 
 # Include directories
-# FAudio include dirs are propagated automatically via imported targets;
-# only FFMPEG still uses plain variables.
+# FAudio include dirs are propagated automatically via imported targets.
 target_include_directories(briskplayer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
-
-if(ENABLE_FFMPEG AND DEFINED FFMPEG_INCLUDE_DIRS)
-    target_include_directories(briskplayer PRIVATE ${FFMPEG_INCLUDE_DIRS})
-endif()
 
 if(Intl_FOUND)
     target_include_directories(briskplayer PRIVATE ${Intl_INCLUDE_DIRS})
@@ -567,23 +542,16 @@ if(ENABLE_DISCORD_RPC)
     target_link_libraries(briskplayer PRIVATE discord-rpc::discord-rpc)
 endif()
 
-# Link FFmpeg or native codec libraries depending on ENABLE_FFMPEG
-if(ENABLE_FFMPEG)
-    if(FFMPEG_FOUND)
-        target_link_libraries(briskplayer PRIVATE ${FFMPEG_LIBRARIES})
-    endif()
-else()
-    # AAC and OPUS C codecs; WAV/MPEG/FLAC/OGG are covered by the Rust static lib below.
-    target_link_libraries(briskplayer PRIVATE
-        FDK-AAC::fdk-aac
-        OpusFile::opusfile
-    )
-endif()
+# AAC and OPUS C codecs; WAV/MPEG/FLAC/OGG are covered by the Rust static lib below.
+target_link_libraries(briskplayer PRIVATE
+    FDK-AAC::fdk-aac
+    OpusFile::opusfile
+)
 
 # Rust codec static library (Corrosion target name = Cargo package name with - → _)
 target_link_libraries(briskplayer PRIVATE brisk_codecs)
 
-# Link Windows system libraries (after FAudio/FFmpeg which need them)
+# Link Windows system libraries (after FAudio which needs them)
 target_link_libraries(briskplayer PRIVATE
     ${WINDOWS_LIBRARIES}
 )

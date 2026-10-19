@@ -73,6 +73,7 @@ void CPL_DestroyPlaylist(CP_HPLAYLIST hPlaylist);
 void CPL_Empty(CP_HPLAYLIST hPlaylist);
 void CPL_AddDroppedFiles(CP_HPLAYLIST hPlaylist, HDROP hDrop);
 void CPL_AddSingleFile(CP_HPLAYLIST hPlaylist, const char* pcPath, const char* pcTitle); // Will not check for a playlist
+void CPL_GetSupportedFilePatterns(WCHAR* pwcPatterns, size_t cchPatterns);
 void CPL_HandleAsyncNotify(CP_HPLAYLIST hPlaylist, WPARAM wParam, LPARAM lParam);
 void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcPath); // Will add a file or decode a playlist file
 void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char *pDirectory);

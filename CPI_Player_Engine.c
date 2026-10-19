@@ -200,23 +200,15 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 	CP_InitialiseCodec_WAV(&playercontext.m_CoDecs[CP_CODEC_WAV]);
 	CP_InitialiseCodec_WinAmpPlugin(&playercontext.m_CoDecs[CP_CODEC_WINAMPPLUGIN]);
 
-#ifdef HAVE_FFMPEG_CODEC
-	// FFmpeg handles all modern formats (MP3, AAC, OGG, FLAC, ...)
-	memset(&playercontext.m_CoDecs[CP_CODEC_MPEG], 0, sizeof(CPs_CoDecModule));
-	memset(&playercontext.m_CoDecs[CP_CODEC_OGG], 0, sizeof(CPs_CoDecModule));
-	memset(&playercontext.m_CoDecs[CP_CODEC_AAC], 0, sizeof(CPs_CoDecModule));
-	memset(&playercontext.m_CoDecs[CP_CODEC_FLAC], 0, sizeof(CPs_CoDecModule));
-	memset(&playercontext.m_CoDecs[CP_CODEC_OPUS], 0, sizeof(CPs_CoDecModule));
-	CP_InitialiseCodec_FFmpeg(&playercontext.m_CoDecs[CP_CODEC_FFMPEG]);
-#else
-	// Native codec path (MinGW builds without FFmpeg)
-	memset(&playercontext.m_CoDecs[CP_CODEC_FFMPEG], 0, sizeof(CPs_CoDecModule));
 	CP_InitialiseCodec_MPEG(&playercontext.m_CoDecs[CP_CODEC_MPEG]);
 	CP_InitialiseCodec_OGG(&playercontext.m_CoDecs[CP_CODEC_OGG]);
 	CP_InitialiseCodec_FLAC(&playercontext.m_CoDecs[CP_CODEC_FLAC]);
 	CP_InitialiseCodec_AAC(&playercontext.m_CoDecs[CP_CODEC_AAC]);
 	CP_InitialiseCodec_OPUS(&playercontext.m_CoDecs[CP_CODEC_OPUS]);
-#endif
+	// Optional: only active when FFmpeg DLLs are found in <exe dir>\ffmpeg.
+	// Being last in codec order, it covers formats the native codecs don't
+	// and retries files they fail to open.
+	CP_InitialiseCodec_FFmpeg(&playercontext.m_CoDecs[CP_CODEC_FFMPEG]);
 	
 	// Initialise output module
 	
@@ -843,11 +835,7 @@ CPs_CoDecModule* OpenCoDec(CPs_PlayerContext* pContext, const char* pcFilename)
 		CP_LOG_DEBUG("OpenCoDec: No extension found or no codec matched - trying fallback for streaming URL\n");
 		
 		// For streaming URLs, try codecs in order of likelihood
-#ifdef HAVE_FFMPEG_CODEC
-		int iFallbackOrder[] = { CP_CODEC_FFMPEG, CP_CODEC_WINAMPPLUGIN };
-#else
-		int iFallbackOrder[] = { CP_CODEC_MPEG, CP_CODEC_AAC, CP_CODEC_OGG, CP_CODEC_FLAC, CP_CODEC_OPUS, CP_CODEC_WINAMPPLUGIN };
-#endif
+		int iFallbackOrder[] = { CP_CODEC_MPEG, CP_CODEC_AAC, CP_CODEC_OGG, CP_CODEC_FLAC, CP_CODEC_OPUS, CP_CODEC_FFMPEG, CP_CODEC_WINAMPPLUGIN };
 		int iFallbackCount = sizeof(iFallbackOrder) / sizeof(iFallbackOrder[0]);
 		
 		for (int i = 0; i < iFallbackCount && !bOpenSucceeded; i++)

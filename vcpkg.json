@@ -6,34 +6,21 @@
   "dependencies": [
     "zlib",
     "faudio",
+    "fdk-aac",
+    {
+      "name": "opusfile",
+      "default-features": false
+    },
     "gettext-libintl",
     {
       "name": "gettext",
       "host": true,
-      "features": ["tools"]
+      "features": [
+        "tools"
+      ]
     }
   ],
   "features": {
-    "ffmpeg": {
-      "description": "Use FFmpeg for audio decoding (default on MSVC)",
-      "dependencies": [
-        {
-          "name": "ffmpeg",
-          "default-features": false,
-          "features": ["avcodec", "avformat", "swresample"]
-        }
-      ]
-    },
-    "native-codecs": {
-      "description": "C codec libraries for AAC and OPUS (WAV/MPEG/FLAC/OGG handled by Rust)",
-      "dependencies": [
-        "fdk-aac",
-        {
-          "name": "opusfile",
-          "default-features": false
-        }
-      ]
-    },
     "discord-rpc": {
       "description": "Discord Rich Presence integration (shows Now Playing in Discord)",
       "dependencies": [
@@ -41,5 +28,7 @@
       ]
     }
   },
-  "default-features": ["native-codecs", "discord-rpc"]
+  "default-features": [
+    "discord-rpc"
+  ]
 }

@@ -775,8 +775,7 @@ BOOL    path_is_directory(char *filename)
 int     playlist_open_file(BOOL clearlist)
 {
 	OPENFILENAMEW fn;
-	WCHAR filefilter[] =
-		L"All Supported files\0*.mp1;*.mp2;*.mp3;*.m3u;*.pls;*.wav;*.ogg;*.oga;*.flac;*.aac;*.m4a\0"
+	static const WCHAR fixedfilters[] =
 		L"AAC audio files (*.aac;*.m4a)\0*.aac;*.m4a\0"
 		L"MPEG audio files (*.mp1;*.mp2;*.mp3)\0*.mp1;*.mp2;*.mp3\0"
 		L"Vorbis files (*.ogg;*.oga)\0*.ogg;*.oga\0"
@@ -784,6 +783,18 @@ int     playlist_open_file(BOOL clearlist)
 		L"Playlist files (*.m3u;*.pls)\0*.m3u;*.pls\0"
 		L"WAV files (*.wav)\0*.wav\0"
 		L"All Files (*.*)\0*.*\0";
+	static const WCHAR allsupported[] = L"All Supported files";
+	// "All Supported files" comes from the loaded codecs so formats added
+	// at runtime (FFmpeg, Winamp plugins) are listed too.
+	WCHAR filefilter[2048 + ARRAYSIZE(allsupported) + ARRAYSIZE(fixedfilters)];
+	{
+		WCHAR* pwcCursor = filefilter;
+		wcscpy(pwcCursor, allsupported);
+		pwcCursor += ARRAYSIZE(allsupported);
+		CPL_GetSupportedFilePatterns(pwcCursor, 2048);
+		pwcCursor += wcslen(pwcCursor) + 1;
+		memcpy(pwcCursor, fixedfilters, sizeof(fixedfilters));
+	}
 	BOOL    returnval;
 	WCHAR    initialfilename[MAX_PATH * 200] = L"";
 	fn.lStructSize = sizeof(OPENFILENAMEW);

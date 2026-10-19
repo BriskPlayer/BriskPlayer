@@ -278,6 +278,35 @@ void CPL_HandleAsyncNotify(CP_HPLAYLIST hPlaylist, WPARAM wParam, LPARAM lParam)
 // Add a single audio file (may defer tag reading to the worker thread)
 ////////////////////////////////////////////////////////////////////////////////
 
+// Builds a file dialog pattern list ("*.mp3;*.ogg;...") of every extension
+// CPL_AddSingleFile will accept, so it tracks whichever codecs loaded
+// (Winamp plugins, runtime FFmpeg).
+void CPL_GetSupportedFilePatterns(WCHAR* pwcPatterns, size_t cchPatterns)
+{
+	CPs_PlayEngine* player = (CPs_PlayEngine*)globals.m_hPlayer;
+	CPs_PlayerContext* pContext = player ? (CPs_PlayerContext*)player->m_pContext : NULL;
+	size_t iLen;
+	int i;
+
+	if (cchPatterns == 0)
+		return;
+	pwcPatterns[0] = L'\0';
+
+	if (pContext)
+	{
+		for (i = 0; i <= CP_CODEC_last; i++)
+			CPFA_AppendFilterPatterns(&pContext->m_CoDecs[i], pwcPatterns, cchPatterns);
+	}
+
+	// Playlists are handled by the playlist loader, not a codec
+	if (wcslen(pwcPatterns) + 12 < cchPatterns)
+		wcscat(pwcPatterns, L"*.m3u;*.pls;");
+
+	iLen = wcslen(pwcPatterns);
+	if (iLen > 0 && pwcPatterns[iLen - 1] == L';')
+		pwcPatterns[iLen - 1] = L'\0';
+}
+
 void CPL_AddSingleFile(CP_HPLAYLIST hPlaylist, const char* pcPath, const char* pcTitle)
 {
 	CP_HPLAYLISTITEM hNewFile;

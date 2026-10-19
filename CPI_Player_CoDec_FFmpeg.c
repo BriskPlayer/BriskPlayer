@@ -20,759 +20,959 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// C23 Enhanced FFmpeg Decoder
-// Universal audio decoder supporting multiple formats through FFmpeg
+// Optional FFmpeg decoder, loaded at runtime
+//
+// BriskPlayer neither links against FFmpeg nor needs its headers to build.
+// At engine startup this module looks for a set of FFmpeg shared libraries
+// in an "ffmpeg" folder next to the executable:
+//
+//     briskplayer.exe
+//     ffmpeg\avutil-NN.dll
+//     ffmpeg\swresample-NN.dll
+//     ffmpeg\avcodec-NN.dll
+//     ffmpeg\avformat-NN.dll
+//     ffmpeg\<any further DLLs those depend on>
+//
+// ffmpeg\bin\ and ffmpeg\<subfolder>\bin\ are searched too, so an FFmpeg
+// release archive can be extracted into the folder as-is.
+//
+// If a supported set is found, every entry point is resolved through
+// GetProcAddress and the codec registers its file associations. If not, the
+// module stays zeroed, exactly as if it had never been compiled in, and the
+// engine skips it.
+//
+// ABI: FFmpeg only guarantees struct layouts within a major version, so this
+// file must not depend on anything that moves between majors. Values on
+// AVCodecContext are read by name through AVOptions ("ar", "b", "ch_layout").
+// The handful of fields read directly (FF_* prefix structs below) were checked
+// to be byte-identical in FFmpeg 7.x, 8.x and 9.x; any other major version is
+// rejected at load time. Before adding a row to ffmpeg_known_sets[], re-check
+// those prefixes against that release's headers.
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "CPI_Player_CoDec_C23.h"
 #include "CPI_Stream.h"
-#include "threading_compat.h"
-#include "debug.h"  // For CP_LOG macros
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libavutil/avutil.h>
-#include <libavutil/opt.h>
-#include <libswresample/swresample.h>
-#include <string.h>
-#include <assert.h>
+#include "debug.h"
+#include <errno.h>
+#include <stdio.h>
 
 ////////////////////////////////////////////////////////////////////////////////
-// C23 Enhanced FFmpeg Context with Better Type Safety
+// Minimal FFmpeg declarations (see ABI note above)
 
-// FFmpeg decoder state with C23 enums
-typedef enum {
-    FFMPEG_STATE_UNINITIALIZED = 0,
-    FFMPEG_STATE_READY,
-    FFMPEG_STATE_DECODING,
-    FFMPEG_STATE_END_OF_STREAM,
-    FFMPEG_STATE_ERROR
-} FFmpegDecoderState;
+typedef struct { int num, den; } FF_Rational;
 
-// Enhanced FFmpeg context structure with alignment
+typedef struct {
+    int order;          // enum AVChannelOrder
+    int nb_channels;
+    union { uint64_t mask; void* map; } u;
+    void* opaque;
+} FF_ChannelLayout;
+
+typedef struct {        // AVIOContext prefix
+    const void* av_class;
+    unsigned char* buffer;
+} FF_IOContext;
+
+typedef struct {        // AVStream prefix
+    const void* av_class;
+    int index;
+    int id;
+    void* codecpar;
+    void* priv_data;
+    FF_Rational time_base;
+    int64_t start_time;
+    int64_t duration;
+} FF_Stream;
+
+typedef struct {        // AVFormatContext prefix
+    const void* av_class;
+    const void* iformat;
+    const void* oformat;
+    void* priv_data;
+    FF_IOContext* pb;
+    int ctx_flags;
+    unsigned int nb_streams;
+    FF_Stream** streams;
+    unsigned int nb_stream_groups;
+    void** stream_groups;
+    unsigned int nb_chapters;
+    void** chapters;
+    char* url;
+    int64_t start_time;
+    int64_t duration;
+} FF_FormatContext;
+
+typedef struct {        // AVFrame prefix
+    uint8_t* data[8];
+    int linesize[8];
+    uint8_t** extended_data;
+    int width, height;
+    int nb_samples;
+    int format;
+} FF_Frame;
+
+typedef struct {        // AVPacket prefix
+    void* buf;
+    int64_t pts;
+    int64_t dts;
+    uint8_t* data;
+    int size;
+    int stream_index;
+} FF_Packet;
+
+typedef struct FF_CodecContext FF_CodecContext;   // opaque, accessed via AVOptions
+typedef struct FF_Codec FF_Codec;                 // opaque
+typedef struct FF_SwrContext FF_SwrContext;       // opaque
+
+#define FF_MKTAG(a, b, c, d)    ((a) | ((b) << 8) | ((c) << 16) | ((unsigned)(d) << 24))
+#define FF_AVERROR_EOF          (-(int)FF_MKTAG('E', 'O', 'F', ' '))
+#define FF_AVERROR_EAGAIN       (-EAGAIN)
+#define FF_NOPTS_VALUE          INT64_MIN
+#define FF_TIME_BASE            1000000
+#define FF_MEDIA_TYPE_AUDIO     1
+#define FF_SAMPLE_FMT_S16       1
+#define FF_SEEK_FLAG_BACKWARD   1
+#define FF_AVSEEK_SIZE          0x10000
+#define FF_AVSEEK_FORCE         0x20000
+#define FF_LOG_QUIET            (-8)
+
+////////////////////////////////////////////////////////////////////////////////
+// Runtime-resolved entry points
+
+typedef struct FFmpegAPI {
+    HMODULE hAvutil, hSwresample, hAvcodec, hAvformat;
+
+    // avutil
+    unsigned (*avutil_version)(void);
+    void* (*av_malloc)(size_t size);
+    void (*av_freep)(void* ptr);
+    int (*av_strerror)(int errnum, char* errbuf, size_t errbuf_size);
+    void (*av_log_set_level)(int level);
+    FF_Frame* (*av_frame_alloc)(void);
+    void (*av_frame_free)(FF_Frame** frame);
+    void (*av_frame_unref)(FF_Frame* frame);
+    int (*av_opt_get_int)(void* obj, const char* name, int search_flags, int64_t* out_val);
+    int (*av_opt_get_chlayout)(void* obj, const char* name, int search_flags, FF_ChannelLayout* layout);
+    void (*av_channel_layout_default)(FF_ChannelLayout* ch_layout, int nb_channels);
+    void (*av_channel_layout_uninit)(FF_ChannelLayout* channel_layout);
+
+    // swresample
+    unsigned (*swresample_version)(void);
+    int (*swr_alloc_set_opts2)(FF_SwrContext** ps,
+                               const FF_ChannelLayout* out_ch_layout, int out_sample_fmt, int out_sample_rate,
+                               const FF_ChannelLayout* in_ch_layout, int in_sample_fmt, int in_sample_rate,
+                               int log_offset, void* log_ctx);
+    int (*swr_init)(FF_SwrContext* s);
+    void (*swr_free)(FF_SwrContext** s);
+    int (*swr_convert)(FF_SwrContext* s, uint8_t* const* out, int out_count,
+                       const uint8_t* const* in, int in_count);
+    int (*swr_get_out_samples)(FF_SwrContext* s, int in_samples);
+
+    // avcodec
+    unsigned (*avcodec_version)(void);
+    FF_CodecContext* (*avcodec_alloc_context3)(const FF_Codec* codec);
+    void (*avcodec_free_context)(FF_CodecContext** avctx);
+    int (*avcodec_parameters_to_context)(FF_CodecContext* codec, const void* par);
+    int (*avcodec_open2)(FF_CodecContext* avctx, const FF_Codec* codec, void** options);
+    int (*avcodec_send_packet)(FF_CodecContext* avctx, const FF_Packet* avpkt);
+    int (*avcodec_receive_frame)(FF_CodecContext* avctx, FF_Frame* frame);
+    void (*avcodec_flush_buffers)(FF_CodecContext* avctx);
+    FF_Packet* (*av_packet_alloc)(void);
+    void (*av_packet_free)(FF_Packet** pkt);
+    void (*av_packet_unref)(FF_Packet* pkt);
+
+    // avformat
+    unsigned (*avformat_version)(void);
+    FF_FormatContext* (*avformat_alloc_context)(void);
+    int (*avformat_open_input)(FF_FormatContext** ps, const char* url, const void* fmt, void** options);
+    int (*avformat_find_stream_info)(FF_FormatContext* ic, void** options);
+    int (*av_find_best_stream)(FF_FormatContext* ic, int type, int wanted_stream_nb,
+                               int related_stream, const FF_Codec** decoder_ret, int flags);
+    int (*av_read_frame)(FF_FormatContext* s, FF_Packet* pkt);
+    int (*av_seek_frame)(FF_FormatContext* s, int stream_index, int64_t timestamp, int flags);
+    void (*avformat_close_input)(FF_FormatContext** s);
+    FF_IOContext* (*avio_alloc_context)(unsigned char* buffer, int buffer_size, int write_flag, void* opaque,
+                                        int (*read_packet)(void* opaque, uint8_t* buf, int buf_size),
+                                        int (*write_packet)(void* opaque, const uint8_t* buf, int buf_size),
+                                        int64_t (*seek)(void* opaque, int64_t offset, int whence));
+    void (*avio_context_free)(FF_IOContext** s);
+} FFmpegAPI;
+
+// One FFmpeg release's library set. The library majors move in lockstep per
+// release, so the DLL names and the runtime version checks both come from here.
+typedef struct {
+    const char* release;
+    unsigned avutil, swresample, avcodec, avformat;
+} FFmpegLibSet;
+
+static const FFmpegLibSet ffmpeg_known_sets[] = {   // newest first
+    { "9.x", 61, 7, 63, 63 },
+    { "8.x", 60, 6, 62, 62 },
+    { "7.x", 59, 5, 61, 61 },
+};
+
+#ifndef LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR
+#define LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR 0x00000100
+#endif
+#ifndef LOAD_LIBRARY_SEARCH_DEFAULT_DIRS
+#define LOAD_LIBRARY_SEARCH_DEFAULT_DIRS 0x00001000
+#endif
+
+// Loads <dir>\<name>-<major>.dll. Dependencies resolve from the same folder
+// first, so a self-contained FFmpeg build (or one with extra runtime DLLs
+// such as libwinpthread) works without touching PATH.
+static HMODULE ffmpeg_load_dll(const WCHAR* dir, const WCHAR* name, unsigned major)
+{
+    WCHAR path[MAX_PATH];
+    if (_snwprintf(path, MAX_PATH, L"%ls\\%ls-%u.dll", dir, name, major) < 0)
+        return NULL;
+    path[MAX_PATH - 1] = L'\0';
+
+    if (GetFileAttributesW(path) == INVALID_FILE_ATTRIBUTES)
+        return NULL;
+
+    HMODULE h = LoadLibraryExW(path, NULL,
+                               LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+    // Windows 7 without KB2533623 rejects the LOAD_LIBRARY_SEARCH_* flags.
+    if (!h && GetLastError() == ERROR_INVALID_PARAMETER)
+        h = LoadLibraryExW(path, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+    if (!h)
+        CP_LOG_WARNING("FFmpeg: found %ls but could not load it (error %lu)\n", path, GetLastError());
+    return h;
+}
+
+static void ffmpeg_unload(FFmpegAPI* api)
+{
+    if (api->hAvformat)   FreeLibrary(api->hAvformat);
+    if (api->hAvcodec)    FreeLibrary(api->hAvcodec);
+    if (api->hSwresample) FreeLibrary(api->hSwresample);
+    if (api->hAvutil)     FreeLibrary(api->hAvutil);
+    memset(api, 0, sizeof(*api));
+}
+
+// memcpy rather than a cast: converting FARPROC to an unrelated function
+// pointer type draws -Wcast-function-type on GCC/Clang.
+#define FF_SYM(lib, name) \
+    do { \
+        FARPROC proc_ = GetProcAddress(api->lib, #name); \
+        if (!proc_) { missing = #name; goto fail; } \
+        static_assert(sizeof(api->name) == sizeof(proc_), "function pointer size"); \
+        memcpy(&api->name, &proc_, sizeof(proc_)); \
+    } while (0)
+
+// Tries every known release's DLL set in one directory.
+static const FFmpegLibSet* ffmpeg_load_from_dir(FFmpegAPI* api, const WCHAR* dir)
+{
+    for (size_t i = 0; i < sizeof(ffmpeg_known_sets) / sizeof(ffmpeg_known_sets[0]); i++)
+    {
+        const FFmpegLibSet* s = &ffmpeg_known_sets[i];
+        // Load in dependency order so each library finds the previous ones.
+        api->hAvutil     = ffmpeg_load_dll(dir, L"avutil", s->avutil);
+        api->hSwresample = api->hAvutil     ? ffmpeg_load_dll(dir, L"swresample", s->swresample) : NULL;
+        api->hAvcodec    = api->hSwresample ? ffmpeg_load_dll(dir, L"avcodec", s->avcodec)       : NULL;
+        api->hAvformat   = api->hAvcodec    ? ffmpeg_load_dll(dir, L"avformat", s->avformat)     : NULL;
+        if (api->hAvformat)
+        {
+            CP_LOG_INFO("FFmpeg: using DLLs from %ls\n", dir);
+            return s;
+        }
+        ffmpeg_unload(api);
+    }
+    return NULL;
+}
+
+// Looks for the DLLs in ffmpeg\, ffmpeg\bin\, and ffmpeg\<subfolder>\bin\ or
+// ffmpeg\<subfolder>\ - release archives (e.g. gyan.dev, BtbN) unpack as
+// <name>\bin\*.dll, so extracting one into the ffmpeg folder just works.
+static const FFmpegLibSet* ffmpeg_find_and_load(FFmpegAPI* api, const WCHAR* base)
+{
+    WCHAR dir[MAX_PATH];
+    const FFmpegLibSet* set = ffmpeg_load_from_dir(api, base);
+    if (set)
+        return set;
+
+    if (_snwprintf(dir, MAX_PATH, L"%ls\\bin", base) > 0 && (set = ffmpeg_load_from_dir(api, dir)) != NULL)
+        return set;
+
+    WCHAR pattern[MAX_PATH];
+    if (_snwprintf(pattern, MAX_PATH, L"%ls\\*", base) < 0)
+        return NULL;
+    WIN32_FIND_DATAW fd;
+    HANDLE hFind = FindFirstFileW(pattern, &fd);
+    if (hFind == INVALID_HANDLE_VALUE)
+        return NULL;
+    do
+    {
+        if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
+            wcscmp(fd.cFileName, L".") == 0 || wcscmp(fd.cFileName, L"..") == 0 ||
+            _wcsicmp(fd.cFileName, L"bin") == 0)
+            continue;
+        if (_snwprintf(dir, MAX_PATH, L"%ls\\%ls\\bin", base, fd.cFileName) > 0 &&
+            (set = ffmpeg_load_from_dir(api, dir)) != NULL)
+            break;
+        if (_snwprintf(dir, MAX_PATH, L"%ls\\%ls", base, fd.cFileName) > 0 &&
+            (set = ffmpeg_load_from_dir(api, dir)) != NULL)
+            break;
+    } while (FindNextFileW(hFind, &fd));
+    FindClose(hFind);
+    return set;
+}
+
+static BOOL ffmpeg_load(FFmpegAPI* api)
+{
+    memset(api, 0, sizeof(*api));
+
+    WCHAR dir[MAX_PATH];
+    DWORD len = GetModuleFileNameW(NULL, dir, MAX_PATH);
+    if (len == 0 || len >= MAX_PATH)
+        return FALSE;
+    WCHAR* slash = wcsrchr(dir, L'\\');
+    if (!slash)
+        return FALSE;
+    *slash = L'\0';
+    if (wcslen(dir) + 8 >= MAX_PATH)
+        return FALSE;
+    wcscat(dir, L"\\ffmpeg");
+
+    if (GetFileAttributesW(dir) == INVALID_FILE_ATTRIBUTES)
+    {
+        CP_LOG_VERBOSE("FFmpeg: no ffmpeg folder next to the executable, codec disabled\n");
+        return FALSE;
+    }
+
+    const FFmpegLibSet* set = ffmpeg_find_and_load(api, dir);
+    if (!set)
+    {
+        CP_LOG_INFO("FFmpeg: ffmpeg folder present but no supported DLL set (FFmpeg 7.x-9.x) found\n");
+        return FALSE;
+    }
+
+    const char* missing = NULL;
+    FF_SYM(hAvutil, avutil_version);
+    FF_SYM(hAvutil, av_malloc);
+    FF_SYM(hAvutil, av_freep);
+    FF_SYM(hAvutil, av_strerror);
+    FF_SYM(hAvutil, av_log_set_level);
+    FF_SYM(hAvutil, av_frame_alloc);
+    FF_SYM(hAvutil, av_frame_free);
+    FF_SYM(hAvutil, av_frame_unref);
+    FF_SYM(hAvutil, av_opt_get_int);
+    FF_SYM(hAvutil, av_opt_get_chlayout);
+    FF_SYM(hAvutil, av_channel_layout_default);
+    FF_SYM(hAvutil, av_channel_layout_uninit);
+    FF_SYM(hSwresample, swresample_version);
+    FF_SYM(hSwresample, swr_alloc_set_opts2);
+    FF_SYM(hSwresample, swr_init);
+    FF_SYM(hSwresample, swr_free);
+    FF_SYM(hSwresample, swr_convert);
+    FF_SYM(hSwresample, swr_get_out_samples);
+    FF_SYM(hAvcodec, avcodec_version);
+    FF_SYM(hAvcodec, avcodec_alloc_context3);
+    FF_SYM(hAvcodec, avcodec_free_context);
+    FF_SYM(hAvcodec, avcodec_parameters_to_context);
+    FF_SYM(hAvcodec, avcodec_open2);
+    FF_SYM(hAvcodec, avcodec_send_packet);
+    FF_SYM(hAvcodec, avcodec_receive_frame);
+    FF_SYM(hAvcodec, avcodec_flush_buffers);
+    FF_SYM(hAvcodec, av_packet_alloc);
+    FF_SYM(hAvcodec, av_packet_free);
+    FF_SYM(hAvcodec, av_packet_unref);
+    FF_SYM(hAvformat, avformat_version);
+    FF_SYM(hAvformat, avformat_alloc_context);
+    FF_SYM(hAvformat, avformat_open_input);
+    FF_SYM(hAvformat, avformat_find_stream_info);
+    FF_SYM(hAvformat, av_find_best_stream);
+    FF_SYM(hAvformat, av_read_frame);
+    FF_SYM(hAvformat, av_seek_frame);
+    FF_SYM(hAvformat, avformat_close_input);
+    FF_SYM(hAvformat, avio_alloc_context);
+    FF_SYM(hAvformat, avio_context_free);
+
+    // The file names matched; make sure the binaries agree (a renamed DLL
+    // from another release would otherwise be trusted with the wrong ABI).
+    if ((api->avutil_version() >> 16)     != set->avutil ||
+        (api->swresample_version() >> 16) != set->swresample ||
+        (api->avcodec_version() >> 16)    != set->avcodec ||
+        (api->avformat_version() >> 16)   != set->avformat)
+    {
+        CP_LOG_WARNING("FFmpeg: DLL file names say %s but the library versions disagree, codec disabled\n",
+                       set->release);
+        ffmpeg_unload(api);
+        return FALSE;
+    }
+
+    api->av_log_set_level(FF_LOG_QUIET);
+    CP_LOG_INFO("FFmpeg: loaded FFmpeg %s runtime (avformat %u.%u)\n", set->release,
+                api->avformat_version() >> 16, (api->avformat_version() >> 8) & 0xFF);
+    return TRUE;
+
+fail:
+    CP_LOG_WARNING("FFmpeg: %s not exported by the FFmpeg %s DLLs, codec disabled\n", missing, set->release);
+    ffmpeg_unload(api);
+    return FALSE;
+}
+
+#undef FF_SYM
+
+////////////////////////////////////////////////////////////////////////////////
+// Decoder state
+
+#define FFMPEG_IO_BUFFER_SIZE 65536
+#define FFMPEG_OUT_CHANNELS   2
+
 typedef struct FFmpegContext {
-    // FFmpeg components
-    alignas(16) AVFormatContext* format_ctx;
-    AVCodecContext* codec_ctx;
-    const AVCodec* codec;
-    SwrContext* swr_ctx;
-    
-    // Stream interface
+    FFmpegAPI api;
+
     CPs_InStream* stream;
-    
-    // Audio stream information
+    FF_FormatContext* format_ctx;
+    FF_CodecContext* codec_ctx;
+    FF_SwrContext* swr_ctx;
+    FF_Frame* frame;
+    FF_Packet* packet;
     int audio_stream_index;
-    uint32_t sample_rate;
-    uint8_t channels;
-    uint8_t bits_per_sample;
-    uint64_t total_samples;
-    uint64_t current_sample;
-    
-    // State management
-    FFmpegDecoderState state;
+    bool draining;
     bool end_of_stream;
-    bool mutex_initialized;  // Track if mutex was initialized
-    
-    // PCM buffer management with enhanced alignment
-    alignas(16) int16_t* pcm_buffer;
-    size_t buffer_size;
-    size_t buffer_position;
-    size_t samples_in_buffer;
-    
-    // Thread synchronization
-    mtx_t context_mutex;
-    
-    // Error handling
-    char error_message[256];
-    int last_error;
-    
-    // File path for FFmpeg
-    char* file_path;
-    
-    // Frame and packet for decoding
-    AVFrame* frame;
-    AVPacket* packet;
-    
-    // Original codec sample rate (before resampling) - needed for seek calculations
-    uint32_t codec_sample_rate;
+
+    // Resampler input config, so a mid-stream format change rebuilds it
+    int swr_in_format;
+    int swr_in_rate;
+    int swr_in_channels;
+
+    // Output is always 16-bit stereo at the source's opening sample rate
+    int out_rate;
+    int64_t duration_us;    // 0 when unknown
+    int64_t bit_rate;
+    uint64_t current_sample;
+
+    // Demuxers seek to the nearest seek point at or before the target, which
+    // for some formats (TTA, WMA) is up to a second early. After a seek the
+    // first packet's pts says where decoding really resumed; output up to
+    // seek_target_sample is then dropped.
+    FF_Stream* audio_stream;
+    bool seek_pts_pending;
+    uint64_t seek_target_sample;
+
+    // Converted PCM not yet handed to the engine
+    int16_t* pcm;
+    int pcm_capacity;       // in sample frames
+    int pcm_frames;
+    int pcm_pos;
 } FFmpegContext;
 
-// C23 constexpr configuration
-#define FFMPEG_BUFFER_SIZE 8192
-#define FFMPEG_MAX_CHANNELS 8
-#define FFMPEG_OUTPUT_SAMPLE_RATE 44100
-#define FFMPEG_OUTPUT_CHANNELS 2
-#define FFMPEG_OUTPUT_FORMAT AV_SAMPLE_FMT_S16
-
 ////////////////////////////////////////////////////////////////////////////////
-// Helper Functions
+// AVIO callbacks (bridging CPs_InStream)
 
-static void ffmpeg_log_error(FFmpegContext* context, int error_code, const char* message) {
-    if (context && message) {
-        char err_buf[AV_ERROR_MAX_STRING_SIZE];
-        av_strerror(error_code, err_buf, sizeof(err_buf));
-        snprintf(context->error_message, sizeof(context->error_message),
-                 "%s: %s", message, err_buf);
-    }
-}
-
-// If already_locked is true, caller already holds context_mutex
-static void ffmpeg_cleanup_context_locked(FFmpegContext* context, bool already_locked) {
-    if (!context) return;
-    
-    // Only lock if the mutex was initialized and we don't already hold it
-    if (context->mutex_initialized && !already_locked) {
-        mtx_lock(&context->context_mutex);
-    }
-    
-    // Free FFmpeg resources
-    if (context->frame) {
-        av_frame_free(&context->frame);
-        context->frame = NULL;
-    }
-    
-    if (context->packet) {
-        av_packet_free(&context->packet);
-        context->packet = NULL;
-    }
-    
-    if (context->swr_ctx) {
-        swr_free(&context->swr_ctx);
-        context->swr_ctx = NULL;
-    }
-    
-    if (context->codec_ctx) {
-        avcodec_free_context(&context->codec_ctx);
-        context->codec_ctx = NULL;
-    }
-    
-    if (context->format_ctx) {
-        avformat_close_input(&context->format_ctx);
-        context->format_ctx = NULL;
-    }
-    
-    // Free PCM buffer
-    if (context->pcm_buffer) {
-        free(context->pcm_buffer);
-        context->pcm_buffer = NULL;
-    }
-    
-    // Free file path
-    if (context->file_path) {
-        free(context->file_path);
-        context->file_path = NULL;
-    }
-    
-    context->state = FFMPEG_STATE_UNINITIALIZED;
-    
-    if (context->mutex_initialized && !already_locked) {
-        mtx_unlock(&context->context_mutex);
-    }
-}
-
-static void ffmpeg_cleanup_context(FFmpegContext* context) {
-    ffmpeg_cleanup_context_locked(context, false);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Codec Module Functions
-
-static void ffmpeg_Uninitialise(CP_HCODECMODULE hModule) {
-    FFmpegContext* context = (FFmpegContext*)hModule->m_pModuleCookie;
-    
-    if (context) {
-        ffmpeg_cleanup_context(context);
-        
-        // Destroy mutex only if it was initialized
-        if (context->mutex_initialized) {
-            mtx_destroy(&context->context_mutex);
-        }
-        
-        free(context);
-        hModule->m_pModuleCookie = NULL;
-    }
-    
-    CPFA_EmptyFileAssociations(hModule);
-}
-
-static BOOL ffmpeg_OpenFile(CP_HCODECMODULE hModule, const char* pcFilename, 
-                           DWORD_PTR dwCookie, HWND hWndOwner) {
-    (void)dwCookie;
-    (void)hWndOwner;
-    
-    FFmpegContext* context = (FFmpegContext*)hModule->m_pModuleCookie;
-    if (!context || !pcFilename) {
-        return FALSE;
-    }
-    
-    mtx_lock(&context->context_mutex);
-    
-    // Clean up any previous file (we already hold the mutex)
-    if (context->state != FFMPEG_STATE_UNINITIALIZED) {
-        ffmpeg_cleanup_context_locked(context, true);
-    }
-    
-    BOOL result = FALSE;
-    
-    // Store file path
-    context->file_path = _strdup(pcFilename);
-    if (!context->file_path) {
-        goto cleanup;
-    }
-    
-    // Open input file
-    int ret = avformat_open_input(&context->format_ctx, pcFilename, NULL, NULL);
-    if (ret < 0) {
-        ffmpeg_log_error(context, ret, "Failed to open file");
-        goto cleanup;
-    }
-    
-    // Retrieve stream information
-    ret = avformat_find_stream_info(context->format_ctx, NULL);
-    if (ret < 0) {
-        ffmpeg_log_error(context, ret, "Failed to find stream info");
-        goto cleanup;
-    }
-    
-    // Find the best audio stream
-    context->audio_stream_index = av_find_best_stream(
-        context->format_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, &context->codec, 0);
-    
-    if (context->audio_stream_index < 0) {
-        snprintf(context->error_message, sizeof(context->error_message),
-                 "No audio stream found");
-        goto cleanup;
-    }
-    
-    // Allocate codec context
-    context->codec_ctx = avcodec_alloc_context3(context->codec);
-    if (!context->codec_ctx) {
-        snprintf(context->error_message, sizeof(context->error_message),
-                 "Failed to allocate codec context");
-        goto cleanup;
-    }
-    
-    // Copy codec parameters
-    AVStream* audio_stream = context->format_ctx->streams[context->audio_stream_index];
-    ret = avcodec_parameters_to_context(context->codec_ctx, audio_stream->codecpar);
-    if (ret < 0) {
-        ffmpeg_log_error(context, ret, "Failed to copy codec parameters");
-        goto cleanup;
-    }
-    
-    // Open codec
-    ret = avcodec_open2(context->codec_ctx, context->codec, NULL);
-    if (ret < 0) {
-        ffmpeg_log_error(context, ret, "Failed to open codec");
-        goto cleanup;
-    }
-    
-    // Store audio format information
-    context->sample_rate = context->codec_ctx->sample_rate;
-    context->codec_sample_rate = context->codec_ctx->sample_rate;  // Preserve original rate for seek
-    context->channels = context->codec_ctx->ch_layout.nb_channels;
-    context->bits_per_sample = 16; // We'll convert to 16-bit
-    
-    // Calculate total samples with better fallback handling
-    // Try multiple methods to get duration, as some formats (like APE) may not report it correctly
-    context->total_samples = 0;
-    
-    // Method 1: Try stream duration
-    if (audio_stream->duration != AV_NOPTS_VALUE && audio_stream->duration > 0) {
-        context->total_samples = av_rescale(audio_stream->duration,
-                                           audio_stream->time_base.num * context->sample_rate,
-                                           audio_stream->time_base.den);
-    }
-    
-    // Method 2: Try format context duration
-    if (context->total_samples == 0 && context->format_ctx->duration != AV_NOPTS_VALUE && context->format_ctx->duration > 0) {
-        context->total_samples = av_rescale(context->format_ctx->duration,
-                                           context->sample_rate,
-                                           AV_TIME_BASE);
-    }
-    
-    // Method 3: For APE and other formats, try to estimate from file size and bitrate
-    if (context->total_samples == 0 && context->codec_ctx->bit_rate > 0) {
-        int64_t file_size = avio_size(context->format_ctx->pb);
-        if (file_size > 0) {
-            int64_t duration_secs = (file_size * 8) / context->codec_ctx->bit_rate;
-            context->total_samples = duration_secs * context->sample_rate;
-        }
-    }
-    
-    // Method 4: If still no duration, set to 0 (unknown) - let it play to the end
-    if (context->total_samples == 0) {
-        CP_LOG_WARNING("Could not determine file duration for %s, will play until EOF\n", pcFilename);
-    }
-    
-    context->current_sample = 0;
-    
-    // Initialize resampler if needed
-    if (context->codec_ctx->sample_fmt != FFMPEG_OUTPUT_FORMAT ||
-        context->sample_rate != FFMPEG_OUTPUT_SAMPLE_RATE ||
-        context->channels != FFMPEG_OUTPUT_CHANNELS) {
-        
-        ret = swr_alloc_set_opts2(&context->swr_ctx,
-                                  &(AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO,
-                                  FFMPEG_OUTPUT_FORMAT,
-                                  FFMPEG_OUTPUT_SAMPLE_RATE,
-                                  &context->codec_ctx->ch_layout,
-                                  context->codec_ctx->sample_fmt,
-                                  context->codec_ctx->sample_rate,
-                                  0, NULL);
-        
-        if (ret < 0) {
-            ffmpeg_log_error(context, ret, "Failed to allocate resampler");
-            goto cleanup;
-        }
-        
-        ret = swr_init(context->swr_ctx);
-        if (ret < 0) {
-            ffmpeg_log_error(context, ret, "Failed to initialize resampler");
-            goto cleanup;
-        }
-        
-        // Update output parameters
-        context->sample_rate = FFMPEG_OUTPUT_SAMPLE_RATE;
-        context->channels = FFMPEG_OUTPUT_CHANNELS;
-    }
-    
-    // Allocate frame and packet
-    context->frame = av_frame_alloc();
-    context->packet = av_packet_alloc();
-    
-    if (!context->frame || !context->packet) {
-        snprintf(context->error_message, sizeof(context->error_message),
-                 "Failed to allocate frame/packet");
-        goto cleanup;
-    }
-    
-    // Allocate PCM buffer
-    context->buffer_size = FFMPEG_BUFFER_SIZE * context->channels;
-    context->pcm_buffer = CALLOC_TYPE(int16_t, context->buffer_size);
-    if (!context->pcm_buffer) {
-        goto cleanup;
-    }
-    
-    context->buffer_position = 0;
-    context->samples_in_buffer = 0;
-    context->end_of_stream = false;
-    context->state = FFMPEG_STATE_READY;
-    result = TRUE;
-    
-cleanup:
-    if (!result) {
-        // We already hold the mutex, use locked variant
-        ffmpeg_cleanup_context_locked(context, true);
-    }
-    mtx_unlock(&context->context_mutex);
-    return result;
-}
-
-static void ffmpeg_CloseFile(CP_HCODECMODULE hModule) {
-    FFmpegContext* context = (FFmpegContext*)hModule->m_pModuleCookie;
-    
-    if (context) {
-        ffmpeg_cleanup_context(context);
-    }
-}
-
-static void ffmpeg_Seek(CP_HCODECMODULE hModule, const int iNumerator, const int iDenominator) {
-    FFmpegContext* context = (FFmpegContext*)hModule->m_pModuleCookie;
-    
-    if (!context || context->state == FFMPEG_STATE_UNINITIALIZED) {
-        return;
-    }
-    
-    mtx_lock(&context->context_mutex);
-    
-    if (iDenominator == 0) {
-        mtx_unlock(&context->context_mutex);
-        return;
-    }
-    
-    int ret;
-    double seek_fraction = (double)iNumerator / (double)iDenominator;
-    
-    if (context->total_samples > 0) {
-        // Known duration: calculate target sample and convert to stream timestamp
-        uint64_t target_sample = (uint64_t)(seek_fraction * context->total_samples);
-        
-        AVStream* audio_stream = context->format_ctx->streams[context->audio_stream_index];
-        int64_t timestamp = av_rescale(target_sample,
-                                       audio_stream->time_base.den,
-                                       audio_stream->time_base.num * context->codec_sample_rate);
-        
-        ret = av_seek_frame(context->format_ctx, context->audio_stream_index,
-                           timestamp, AVSEEK_FLAG_BACKWARD);
-        
-        if (ret >= 0) {
-            context->current_sample = target_sample;
-        }
-    } else {
-        // Unknown duration: use time-based seek via format context duration estimate
-        // GetFileInfo reports 86400 secs for unknown duration, so the UI slider
-        // will send proportional seek values based on that
-        int64_t seek_target_us;
-        if (context->format_ctx->duration != AV_NOPTS_VALUE && context->format_ctx->duration > 0) {
-            seek_target_us = (int64_t)(seek_fraction * context->format_ctx->duration);
-        } else {
-            // No duration at all, estimate based on reported 86400s
-            seek_target_us = (int64_t)(seek_fraction * 86400.0 * AV_TIME_BASE);
-        }
-        
-        ret = avformat_seek_file(context->format_ctx, -1,
-                                INT64_MIN, seek_target_us, INT64_MAX, 0);
-        
-        if (ret >= 0 && context->sample_rate > 0) {
-            context->current_sample = (uint64_t)(seek_fraction * 86400.0 * context->sample_rate);
-        }
-    }
-    
-    if (ret >= 0) {
-        // Flush codec buffers
-        avcodec_flush_buffers(context->codec_ctx);
-        
-        // Reset buffer and re-enable decoding
-        context->buffer_position = 0;
-        context->samples_in_buffer = 0;
-        context->end_of_stream = false;
-        context->state = FFMPEG_STATE_READY;
-    }
-    
-    mtx_unlock(&context->context_mutex);
-}
-
-static void ffmpeg_GetFileInfo(CP_HCODECMODULE hModule, CPs_FileInfo* pInfo) {
-    FFmpegContext* context = (FFmpegContext*)hModule->m_pModuleCookie;
-    
-    if (!context || !pInfo) {
-        return;
-    }
-    
-    mtx_lock(&context->context_mutex);
-    
-    if (context->state == FFMPEG_STATE_UNINITIALIZED) {
-        mtx_unlock(&context->context_mutex);
-        return;
-    }
-    
-    pInfo->m_iFreq_Hz = context->sample_rate;
-    pInfo->m_b16bit = (context->bits_per_sample == 16);
-    pInfo->m_bStereo = (context->channels == 2);
-    
-    // Calculate bitrate in Kbps
-    if (context->codec_ctx->bit_rate > 0) {
-        pInfo->m_iBitRate_Kbs = (UINT)(context->codec_ctx->bit_rate / 1000);
-    } else {
-        // Try to estimate from file size and duration
-        int64_t file_size = avio_size(context->format_ctx->pb);
-        if (file_size > 0 && context->total_samples > 0 && context->sample_rate > 0) {
-            int duration_secs = (int)(context->total_samples / context->sample_rate);
-            if (duration_secs > 0) {
-                pInfo->m_iBitRate_Kbs = (UINT)((file_size * 8) / (duration_secs * 1000));
-            } else {
-                pInfo->m_iBitRate_Kbs = 0;
-            }
-        } else {
-            pInfo->m_iBitRate_Kbs = 0;
-        }
-    }
-    
-    if (context->total_samples > 0 && context->sample_rate > 0) {
-        pInfo->m_iFileLength_Secs = (int)(context->total_samples / context->sample_rate);
-    } else {
-        // If we don't know duration, report a very large value so playback continues until EOF
-        // This is better than reporting 0 which causes immediate skip
-        pInfo->m_iFileLength_Secs = 86400; // 24 hours - essentially unlimited
-    }
-    
-    CP_LOG_VERBOSE("FFmpeg GetFileInfo: total_samples=%llu, sample_rate=%u, duration_secs=%d\n",
-           context->total_samples, context->sample_rate, pInfo->m_iFileLength_Secs);
-    
-    mtx_unlock(&context->context_mutex);
-}
-
-static BOOL ffmpeg_GetPCMBlock(CP_HCODECMODULE hModule, void* pBlock, DWORD* pdwBlockSize) {
-    FFmpegContext* context = (FFmpegContext*)hModule->m_pModuleCookie;
-    
-    if (!context || !pBlock || !pdwBlockSize) {
-        if (pdwBlockSize) *pdwBlockSize = 0;
-        return FALSE;
-    }
-    
-    mtx_lock(&context->context_mutex);
-    
-    if (context->state != FFMPEG_STATE_READY && context->state != FFMPEG_STATE_DECODING) {
-        *pdwBlockSize = 0;
-        mtx_unlock(&context->context_mutex);
-        return FALSE;
-    }
-    
-    context->state = FFMPEG_STATE_DECODING;
-    
-    DWORD bytes_to_copy = *pdwBlockSize;
-    DWORD bytes_copied = 0;
-    int16_t* output = (int16_t*)pBlock;
-    
-    while (bytes_copied < bytes_to_copy && !context->end_of_stream) {
-        // If buffer has data, copy it
-        if (context->samples_in_buffer > 0) {
-            size_t samples_to_copy = (bytes_to_copy - bytes_copied) / (sizeof(int16_t) * context->channels);
-            if (samples_to_copy > context->samples_in_buffer) {
-                samples_to_copy = context->samples_in_buffer;
-            }
-            
-            size_t bytes = samples_to_copy * context->channels * sizeof(int16_t);
-            memcpy(output + (bytes_copied / sizeof(int16_t)),
-                   context->pcm_buffer + context->buffer_position,
-                   bytes);
-            
-            bytes_copied += (DWORD)bytes;
-            context->buffer_position += samples_to_copy * context->channels;
-            context->samples_in_buffer -= samples_to_copy;
-            context->current_sample += samples_to_copy;
-            
-            if (context->samples_in_buffer == 0) {
-                context->buffer_position = 0;
-            }
-            
-            continue;
-        }
-        
-        // Buffer is empty, decode more data
-        int ret = av_read_frame(context->format_ctx, context->packet);
-        
-        if (ret == AVERROR_EOF) {
-            // Drain the decoder: send a NULL packet to flush remaining frames
-            avcodec_send_packet(context->codec_ctx, NULL);
-            ret = avcodec_receive_frame(context->codec_ctx, context->frame);
-            if (ret == 0) {
-                // Got a flushed frame, process it below via the resample path
-                goto process_frame;
-            }
-            // No more frames to drain
-            context->end_of_stream = true;
-            context->state = FFMPEG_STATE_END_OF_STREAM;
-            break;
-        } else if (ret < 0) {
-            ffmpeg_log_error(context, ret, "Error reading frame");
-            context->end_of_stream = true;
-            context->state = FFMPEG_STATE_ERROR;
-            break;
-        }
-        
-        // Skip non-audio packets
-        if (context->packet->stream_index != context->audio_stream_index) {
-            av_packet_unref(context->packet);
-            continue;
-        }
-        
-        // Send packet to decoder
-        ret = avcodec_send_packet(context->codec_ctx, context->packet);
-        av_packet_unref(context->packet);
-        
-        if (ret < 0) {
-            ffmpeg_log_error(context, ret, "Error sending packet");
-            continue;
-        }
-        
-        // Receive decoded frame
-        ret = avcodec_receive_frame(context->codec_ctx, context->frame);
-        
-        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-            continue;
-        } else if (ret < 0) {
-            ffmpeg_log_error(context, ret, "Error receiving frame");
-            continue;
-        }
-        
-process_frame:
-        // Resample if needed
-        int out_samples;
-        // Maximum output samples that fit in pcm_buffer
-        int max_out_samples = (int)(context->buffer_size / context->channels);
-        
-        if (context->swr_ctx) {
-            uint8_t* output_buffer = (uint8_t*)context->pcm_buffer;
-            out_samples = swr_convert(context->swr_ctx,
-                                     &output_buffer,
-                                     max_out_samples,
-                                     (const uint8_t**)context->frame->data,
-                                     context->frame->nb_samples);
-            
-            if (out_samples < 0) {
-                av_frame_unref(context->frame);
-                continue;
-            }
-        } else {
-            // Direct copy (no resampling needed)
-            out_samples = context->frame->nb_samples;
-            // Clamp to buffer capacity to prevent overflow
-            if (out_samples > max_out_samples) {
-                out_samples = max_out_samples;
-            }
-            memcpy(context->pcm_buffer,
-                   context->frame->data[0],
-                   out_samples * context->channels * sizeof(int16_t));
-        }
-        
-        context->samples_in_buffer = out_samples;
-        context->buffer_position = 0;
-        
-        av_frame_unref(context->frame);
-    }
-    
-    *pdwBlockSize = bytes_copied;
-    
-    mtx_unlock(&context->context_mutex);
-    
-    return (bytes_copied > 0 || !context->end_of_stream);
-}
-
-static int ffmpeg_GetCurrentPos_secs(CP_HCODECMODULE hModule) {
-    FFmpegContext* context = (FFmpegContext*)hModule->m_pModuleCookie;
-    
-    if (!context || context->state == FFMPEG_STATE_UNINITIALIZED) {
+static int ffmpeg_io_read(void* opaque, uint8_t* buf, int buf_size)
+{
+    FFmpegContext* ctx = (FFmpegContext*)opaque;
+    size_t bytes_read = 0;
+    if (buf_size <= 0)
         return 0;
-    }
-    
-    mtx_lock(&context->context_mutex);
-    
-    int pos_secs = 0;
-    if (context->sample_rate > 0) {
-        pos_secs = (int)(context->current_sample / context->sample_rate);
-    }
-    
-    mtx_unlock(&context->context_mutex);
-    
-    return pos_secs;
+    ctx->stream->Read(ctx->stream, buf, (size_t)buf_size, &bytes_read);
+    return bytes_read > 0 ? (int)bytes_read : FF_AVERROR_EOF;
+}
+
+static int64_t ffmpeg_io_seek(void* opaque, int64_t offset, int whence)
+{
+    FFmpegContext* ctx = (FFmpegContext*)opaque;
+    if (whence & FF_AVSEEK_SIZE)
+        return (int64_t)ctx->stream->GetLength(ctx->stream);
+    if (CP_StreamSeek(ctx->stream, (long long)offset, whence & ~FF_AVSEEK_FORCE) != 0)
+        return -1;
+    return (int64_t)CP_StreamTell(ctx->stream);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Module Initialization
+// Helpers
 
-void CP_InitialiseCodec_FFmpeg(CPs_CoDecModule* codec) {
-    if (!codec) return;
-    
-    // Allocate context
-    FFmpegContext* context = CALLOC_TYPE(FFmpegContext, 1);
-    if (!context) return;
-    
-    // Initialize mutex
-    if (mtx_init(&context->context_mutex, mtx_plain) == thrd_success) {
-        context->mutex_initialized = true;
-    } else {
-        free(context);
+static void ffmpeg_log_error(FFmpegContext* ctx, int err, const char* what)
+{
+    char buf[128];
+    if (ctx->api.av_strerror(err, buf, sizeof(buf)) < 0)
+        snprintf(buf, sizeof(buf), "error %d", err);
+    CP_LOG_WARNING("FFmpeg: %s: %s\n", what, buf);
+}
+
+static void ffmpeg_CloseFile(CPs_CoDecModule* module)
+{
+    if (!module || !module->m_pModuleCookie) return;
+    FFmpegContext* ctx = (FFmpegContext*)module->m_pModuleCookie;
+    FFmpegAPI* api = &ctx->api;
+
+    if (ctx->frame)     api->av_frame_free(&ctx->frame);
+    if (ctx->packet)    api->av_packet_free(&ctx->packet);
+    if (ctx->swr_ctx)   api->swr_free(&ctx->swr_ctx);
+    if (ctx->codec_ctx) api->avcodec_free_context(&ctx->codec_ctx);
+
+    if (ctx->format_ctx)
+    {
+        // A caller-supplied pb is not freed by avformat_close_input; its
+        // buffer may have been reallocated by FFmpeg, so free it via pb.
+        FF_IOContext* pb = ctx->format_ctx->pb;
+        api->avformat_close_input(&ctx->format_ctx);
+        if (pb)
+        {
+            api->av_freep(&pb->buffer);
+            api->avio_context_free(&pb);
+        }
+    }
+
+    if (ctx->stream)
+    {
+        ctx->stream->Uninitialise(ctx->stream);
+        ctx->stream = NULL;
+    }
+
+    free(ctx->pcm);
+
+    // Keep the loaded API, reset everything else
+    FFmpegAPI saved = ctx->api;
+    memset(ctx, 0, sizeof(*ctx));
+    ctx->api = saved;
+}
+
+static void ffmpeg_Uninitialise(CPs_CoDecModule* module)
+{
+    if (!module || !module->m_pModuleCookie) return;
+
+    ffmpeg_CloseFile(module);
+
+    FFmpegContext* ctx = (FFmpegContext*)module->m_pModuleCookie;
+    ffmpeg_unload(&ctx->api);
+    free(ctx);
+    module->m_pModuleCookie = NULL;
+
+    CPFA_EmptyFileAssociations(module);
+}
+
+// Returns 1 with a frame in ctx->frame, 0 at end of stream.
+static int ffmpeg_decode_frame(FFmpegContext* ctx)
+{
+    FFmpegAPI* api = &ctx->api;
+
+    for (;;)
+    {
+        int ret = api->avcodec_receive_frame(ctx->codec_ctx, ctx->frame);
+        if (ret == 0)
+            return 1;
+        if (ret == FF_AVERROR_EOF)
+            return 0;
+        if (ret != FF_AVERROR_EAGAIN)
+        {
+            ffmpeg_log_error(ctx, ret, "decode failed");
+            return 0;
+        }
+
+        // Decoder wants input
+        if (ctx->draining)
+            return 0;
+
+        ret = api->av_read_frame(ctx->format_ctx, ctx->packet);
+        if (ret < 0)
+        {
+            if (ret != FF_AVERROR_EOF)
+                ffmpeg_log_error(ctx, ret, "read failed");
+            // Flush whatever the decoder still holds
+            api->avcodec_send_packet(ctx->codec_ctx, NULL);
+            ctx->draining = true;
+            continue;
+        }
+
+        if (ctx->packet->stream_index == ctx->audio_stream_index)
+        {
+            if (ctx->seek_pts_pending && ctx->packet->pts != FF_NOPTS_VALUE)
+            {
+                const FF_Stream* st = ctx->audio_stream;
+                int64_t pts = ctx->packet->pts;
+                if (st->start_time != FF_NOPTS_VALUE)
+                    pts -= st->start_time;
+                if (pts < 0)
+                    pts = 0;
+                ctx->current_sample = (uint64_t)((double)pts * st->time_base.num * ctx->out_rate / st->time_base.den);
+                ctx->seek_pts_pending = false;
+            }
+            ret = api->avcodec_send_packet(ctx->codec_ctx, ctx->packet);
+            // A corrupt packet is skipped rather than ending playback
+            if (ret < 0 && ret != FF_AVERROR_EAGAIN)
+                ffmpeg_log_error(ctx, ret, "bad packet skipped");
+        }
+        api->av_packet_unref(ctx->packet);
+    }
+}
+
+// Converts ctx->frame into ctx->pcm. Returns FALSE on a fatal error.
+static BOOL ffmpeg_convert_frame(FFmpegContext* ctx)
+{
+    FFmpegAPI* api = &ctx->api;
+    FF_Frame* frame = ctx->frame;
+
+    // The decoder keeps the codec context in sync with the frame it just
+    // returned, so it's the ABI-safe place to read the input layout from.
+    int64_t in_rate = 0;
+    FF_ChannelLayout in_layout;
+    memset(&in_layout, 0, sizeof(in_layout));
+    api->av_opt_get_int(ctx->codec_ctx, "ar", 0, &in_rate);
+    if (api->av_opt_get_chlayout(ctx->codec_ctx, "ch_layout", 0, &in_layout) < 0 || in_rate <= 0)
+        return FALSE;
+
+    if (!ctx->swr_ctx ||
+        ctx->swr_in_format != frame->format ||
+        ctx->swr_in_rate != (int)in_rate ||
+        ctx->swr_in_channels != in_layout.nb_channels)
+    {
+        FF_ChannelLayout out_layout;
+        memset(&out_layout, 0, sizeof(out_layout));
+        api->av_channel_layout_default(&out_layout, FFMPEG_OUT_CHANNELS);
+
+        if (ctx->swr_ctx)
+            api->swr_free(&ctx->swr_ctx);
+        int ret = api->swr_alloc_set_opts2(&ctx->swr_ctx,
+                                           &out_layout, FF_SAMPLE_FMT_S16, ctx->out_rate,
+                                           &in_layout, frame->format, (int)in_rate,
+                                           0, NULL);
+        if (ret >= 0)
+            ret = api->swr_init(ctx->swr_ctx);
+        api->av_channel_layout_uninit(&out_layout);
+        if (ret < 0)
+        {
+            ffmpeg_log_error(ctx, ret, "resampler setup failed");
+            api->av_channel_layout_uninit(&in_layout);
+            if (ctx->swr_ctx)
+                api->swr_free(&ctx->swr_ctx);
+            return FALSE;
+        }
+        ctx->swr_in_format = frame->format;
+        ctx->swr_in_rate = (int)in_rate;
+        ctx->swr_in_channels = in_layout.nb_channels;
+    }
+    api->av_channel_layout_uninit(&in_layout);
+
+    int needed = api->swr_get_out_samples(ctx->swr_ctx, frame->nb_samples);
+    if (needed < 0)
+        return FALSE;
+    if (needed > ctx->pcm_capacity)
+    {
+        int16_t* grown = (int16_t*)realloc(ctx->pcm, (size_t)needed * FFMPEG_OUT_CHANNELS * sizeof(int16_t));
+        if (!grown)
+            return FALSE;
+        ctx->pcm = grown;
+        ctx->pcm_capacity = needed;
+    }
+
+    uint8_t* out = (uint8_t*)ctx->pcm;
+    int got = api->swr_convert(ctx->swr_ctx, &out, ctx->pcm_capacity,
+                               (const uint8_t* const*)frame->extended_data, frame->nb_samples);
+    if (got < 0)
+    {
+        ffmpeg_log_error(ctx, got, "resample failed");
+        got = 0;
+    }
+    ctx->pcm_frames = got;
+    ctx->pcm_pos = 0;
+    return TRUE;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Module functions
+
+static BOOL ffmpeg_OpenFile(CPs_CoDecModule* module, const char* filename, DWORD_PTR cookie, HWND owner)
+{
+    (void)cookie; (void)owner;
+    if (!module || !filename || !module->m_pModuleCookie) return FALSE;
+
+    FFmpegContext* ctx = (FFmpegContext*)module->m_pModuleCookie;
+    FFmpegAPI* api = &ctx->api;
+    unsigned char* io_buffer = NULL;
+    FF_IOContext* pb = NULL;
+    int ret;
+
+    ffmpeg_CloseFile(module);
+
+    // Go through the player's own stream layer (Unicode paths, internet
+    // streams) rather than letting FFmpeg open the name itself.
+    ctx->stream = CP_CreateInStream(filename, NULL);
+    if (!ctx->stream)
+        return FALSE;
+
+    io_buffer = (unsigned char*)api->av_malloc(FFMPEG_IO_BUFFER_SIZE);
+    if (!io_buffer)
+        goto fail;
+    pb = api->avio_alloc_context(io_buffer, FFMPEG_IO_BUFFER_SIZE, 0, ctx, ffmpeg_io_read, NULL,
+                                 ctx->stream->IsSeekable(ctx->stream) ? ffmpeg_io_seek : NULL);
+    if (!pb)
+        goto fail;
+    io_buffer = NULL;   // owned by pb now
+
+    ctx->format_ctx = api->avformat_alloc_context();
+    if (!ctx->format_ctx)
+        goto fail;
+    ctx->format_ctx->pb = pb;
+    pb = NULL;          // freed through format_ctx->pb from here on
+
+    // The name is only a probing hint (extension) since I/O is ours.
+    // On failure avformat_open_input frees format_ctx but not the custom pb.
+    {
+        FF_IOContext* custom_pb = ctx->format_ctx->pb;
+        ret = api->avformat_open_input(&ctx->format_ctx, filename, NULL, NULL);
+        if (ret < 0)
+        {
+            ffmpeg_log_error(ctx, ret, "could not open input");
+            api->av_freep(&custom_pb->buffer);
+            api->avio_context_free(&custom_pb);
+            goto fail;
+        }
+    }
+
+    ret = api->avformat_find_stream_info(ctx->format_ctx, NULL);
+    if (ret < 0)
+    {
+        ffmpeg_log_error(ctx, ret, "could not read stream info");
+        goto fail;
+    }
+
+    const FF_Codec* codec = NULL;
+    ctx->audio_stream_index = api->av_find_best_stream(ctx->format_ctx, FF_MEDIA_TYPE_AUDIO, -1, -1, &codec, 0);
+    if (ctx->audio_stream_index < 0 || !codec ||
+        (unsigned)ctx->audio_stream_index >= ctx->format_ctx->nb_streams)
+    {
+        CP_LOG_VERBOSE("FFmpeg: no decodable audio stream in %s\n", filename);
+        goto fail;
+    }
+    FF_Stream* st = ctx->format_ctx->streams[ctx->audio_stream_index];
+    ctx->audio_stream = st;
+
+    ctx->codec_ctx = api->avcodec_alloc_context3(codec);
+    if (!ctx->codec_ctx)
+        goto fail;
+    ret = api->avcodec_parameters_to_context(ctx->codec_ctx, st->codecpar);
+    if (ret >= 0)
+        ret = api->avcodec_open2(ctx->codec_ctx, codec, NULL);
+    if (ret < 0)
+    {
+        ffmpeg_log_error(ctx, ret, "could not open decoder");
+        goto fail;
+    }
+
+    int64_t rate = 0;
+    api->av_opt_get_int(ctx->codec_ctx, "ar", 0, &rate);
+    if (rate <= 0 || rate > 768000)
+    {
+        CP_LOG_WARNING("FFmpeg: unusable sample rate %lld in %s\n", (long long)rate, filename);
+        goto fail;
+    }
+    ctx->out_rate = (int)rate;
+    api->av_opt_get_int(ctx->codec_ctx, "b", 0, &ctx->bit_rate);
+
+    // Prefer the audio stream's own duration; the container's may include
+    // other streams.
+    if (st->duration != FF_NOPTS_VALUE && st->duration > 0 && st->time_base.den > 0)
+        ctx->duration_us = (int64_t)((double)st->duration * st->time_base.num * FF_TIME_BASE / st->time_base.den);
+    else if (ctx->format_ctx->duration != FF_NOPTS_VALUE && ctx->format_ctx->duration > 0)
+        ctx->duration_us = ctx->format_ctx->duration;
+
+    if (ctx->bit_rate <= 0 && ctx->duration_us > 0)
+    {
+        UINT length = ctx->stream->GetLength(ctx->stream);
+        if (length > 0)
+            ctx->bit_rate = (int64_t)((double)length * 8.0 * FF_TIME_BASE / (double)ctx->duration_us);
+    }
+
+    ctx->frame = api->av_frame_alloc();
+    ctx->packet = api->av_packet_alloc();
+    if (!ctx->frame || !ctx->packet)
+        goto fail;
+
+    return TRUE;
+
+fail:
+    if (io_buffer)
+        api->av_freep(&io_buffer);
+    if (pb)
+    {
+        api->av_freep(&pb->buffer);
+        api->avio_context_free(&pb);
+    }
+    ffmpeg_CloseFile(module);
+    return FALSE;
+}
+
+static BOOL ffmpeg_GetPCMBlock(CPs_CoDecModule* module, void* block, DWORD* block_size)
+{
+    if (!module || !block || !block_size || !module->m_pModuleCookie)
+        return FALSE;
+
+    FFmpegContext* ctx = (FFmpegContext*)module->m_pModuleCookie;
+    if (!ctx->codec_ctx)
+    {
+        *block_size = 0;
+        return FALSE;
+    }
+
+    const size_t frame_bytes = FFMPEG_OUT_CHANNELS * sizeof(int16_t);
+    const DWORD requested = *block_size;
+    DWORD filled = 0;
+
+    while (requested - filled >= frame_bytes)
+    {
+        if (ctx->pcm_pos < ctx->pcm_frames && ctx->current_sample < ctx->seek_target_sample)
+        {
+            // Pre-roll from an early seek point: discard up to the target
+            uint64_t skip = ctx->seek_target_sample - ctx->current_sample;
+            int frames = ctx->pcm_frames - ctx->pcm_pos;
+            if ((uint64_t)frames > skip)
+                frames = (int)skip;
+            ctx->pcm_pos += frames;
+            ctx->current_sample += (uint64_t)frames;
+            continue;
+        }
+
+        if (ctx->pcm_pos < ctx->pcm_frames)
+        {
+            int frames = (int)((requested - filled) / frame_bytes);
+            if (frames > ctx->pcm_frames - ctx->pcm_pos)
+                frames = ctx->pcm_frames - ctx->pcm_pos;
+
+            memcpy((char*)block + filled, ctx->pcm + (size_t)ctx->pcm_pos * FFMPEG_OUT_CHANNELS,
+                   (size_t)frames * frame_bytes);
+            filled += (DWORD)(frames * frame_bytes);
+            ctx->pcm_pos += frames;
+            ctx->current_sample += (uint64_t)frames;
+            continue;
+        }
+
+        if (ctx->end_of_stream)
+            break;
+
+        if (!ffmpeg_decode_frame(ctx))
+        {
+            ctx->end_of_stream = true;
+            break;
+        }
+        BOOL converted = ffmpeg_convert_frame(ctx);
+        ctx->api.av_frame_unref(ctx->frame);
+        if (!converted)
+        {
+            ctx->end_of_stream = true;
+            break;
+        }
+    }
+
+    *block_size = filled;
+    return filled > 0 ? TRUE : FALSE;
+}
+
+static void ffmpeg_Seek(CPs_CoDecModule* module, const int numerator, const int denominator)
+{
+    if (!module || !module->m_pModuleCookie || denominator == 0) return;
+
+    FFmpegContext* ctx = (FFmpegContext*)module->m_pModuleCookie;
+    if (!ctx->codec_ctx || ctx->duration_us <= 0)
+        return;
+
+    int64_t target_us = (int64_t)((double)ctx->duration_us * numerator / denominator);
+    int64_t ts = target_us;
+    if (ctx->format_ctx->start_time != FF_NOPTS_VALUE)
+        ts += ctx->format_ctx->start_time;
+
+    int ret = ctx->api.av_seek_frame(ctx->format_ctx, -1, ts, FF_SEEK_FLAG_BACKWARD);
+    if (ret < 0)
+    {
+        ffmpeg_log_error(ctx, ret, "seek failed");
         return;
     }
-    
-    context->state = FFMPEG_STATE_UNINITIALIZED;
-    
-    // Set up codec module
-    codec->m_pModuleCookie = context;
-    
-    codec->Uninitialise = ffmpeg_Uninitialise;
-    codec->OpenFile = ffmpeg_OpenFile;
-    codec->CloseFile = ffmpeg_CloseFile;
-    codec->Seek = ffmpeg_Seek;
-    codec->GetFileInfo = ffmpeg_GetFileInfo;
-    codec->GetPCMBlock = ffmpeg_GetPCMBlock;
+
+    ctx->api.avcodec_flush_buffers(ctx->codec_ctx);
+    if (ctx->swr_ctx)
+        ctx->api.swr_free(&ctx->swr_ctx);   // drop buffered pre-seek samples
+    ctx->pcm_frames = ctx->pcm_pos = 0;
+    ctx->draining = false;
+    ctx->end_of_stream = false;
+    ctx->current_sample = (uint64_t)((double)target_us * ctx->out_rate / FF_TIME_BASE);
+    ctx->seek_target_sample = ctx->current_sample;
+    ctx->seek_pts_pending = true;
+}
+
+static void ffmpeg_GetFileInfo(CPs_CoDecModule* module, CPs_FileInfo* info)
+{
+    if (!module || !info || !module->m_pModuleCookie) return;
+
+    FFmpegContext* ctx = (FFmpegContext*)module->m_pModuleCookie;
+    if (!ctx->codec_ctx) return;
+
+    info->m_iFreq_Hz = (UINT)ctx->out_rate;
+    info->m_bStereo = TRUE;
+    info->m_b16bit = TRUE;
+    info->m_iBitRate_Kbs = ctx->bit_rate > 0 ? (UINT)(ctx->bit_rate / 1000) : 0;
+    // Unknown length (e.g. a live stream): report a day rather than 0, which
+    // the engine treats as an instantly finished track.
+    info->m_iFileLength_Secs = ctx->duration_us > 0 ? (UINT)(ctx->duration_us / FF_TIME_BASE) : 86400;
+}
+
+static int ffmpeg_GetCurrentPos_secs(CPs_CoDecModule* module)
+{
+    if (!module || !module->m_pModuleCookie) return 0;
+
+    FFmpegContext* ctx = (FFmpegContext*)module->m_pModuleCookie;
+    return ctx->out_rate > 0 ? (int)(ctx->current_sample / (uint64_t)ctx->out_rate) : 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Module Registration
+
+void CP_InitialiseCodec_FFmpeg(CPs_CoDecModule* codec)
+{
+    if (!codec) return;
+    memset(codec, 0, sizeof(*codec));
+
+    FFmpegContext* ctx = (FFmpegContext*)calloc(1, sizeof(FFmpegContext));
+    if (!ctx) return;
+
+    if (!ffmpeg_load(&ctx->api))
+    {
+        free(ctx);
+        return;   // codec stays zeroed: no associations, engine skips it
+    }
+
+    codec->Uninitialise       = ffmpeg_Uninitialise;
+    codec->OpenFile           = ffmpeg_OpenFile;
+    codec->CloseFile          = ffmpeg_CloseFile;
+    codec->Seek               = ffmpeg_Seek;
+    codec->GetFileInfo        = ffmpeg_GetFileInfo;
+    codec->GetPCMBlock        = ffmpeg_GetPCMBlock;
     codec->GetCurrentPos_secs = ffmpeg_GetCurrentPos_secs;
-    
-    // Initialize file associations
+
+    codec->m_pModuleCookie = ctx;
+
     CPFA_InitialiseFileAssociations(codec);
-    
-    // Add comprehensive audio format associations supported by FFmpeg
-    
-    // MPEG Audio Layer formats
-    CPFA_AddFileAssociation(codec, "mp3", 0);   // MPEG-1/2 Layer III
-    CPFA_AddFileAssociation(codec, "mp2", 0);   // MPEG-1/2 Layer II
-    CPFA_AddFileAssociation(codec, "mp1", 0);   // MPEG-1/2 Layer I
-    CPFA_AddFileAssociation(codec, "mpa", 0);   // MPEG Audio
-    
-    // AAC formats
-    CPFA_AddFileAssociation(codec, "aac", 0);   // Advanced Audio Coding
-    CPFA_AddFileAssociation(codec, "m4a", 0);   // MPEG-4 Audio
-    CPFA_AddFileAssociation(codec, "m4b", 0);   // MPEG-4 Audiobook
-    CPFA_AddFileAssociation(codec, "m4p", 0);   // MPEG-4 Protected
-    CPFA_AddFileAssociation(codec, "m4r", 0);   // MPEG-4 Ringtone
-    CPFA_AddFileAssociation(codec, "mp4", 0);   // MPEG-4 Container
-    CPFA_AddFileAssociation(codec, "3gp", 0);   // 3GPP Mobile
-    CPFA_AddFileAssociation(codec, "3g2", 0);   // 3GPP2 Mobile
-    
-    // Lossless formats
-    CPFA_AddFileAssociation(codec, "flac", 0);  // Free Lossless Audio Codec
-    CPFA_AddFileAssociation(codec, "fla", 0);   // FLAC alternate extension
-    CPFA_AddFileAssociation(codec, "ape", 0);   // Monkey's Audio - disabled due to duration detection issues
-    CPFA_AddFileAssociation(codec, "wv", 0);    // WavPack
-    CPFA_AddFileAssociation(codec, "tta", 0);   // True Audio
-    CPFA_AddFileAssociation(codec, "tak", 0);   // Tom's lossless Audio Kompressor
-    CPFA_AddFileAssociation(codec, "alac", 0);  // Apple Lossless
-    
-    // Ogg container formats
-    CPFA_AddFileAssociation(codec, "ogg", 0);   // Ogg Vorbis
-    CPFA_AddFileAssociation(codec, "oga", 0);   // Ogg Audio
-    CPFA_AddFileAssociation(codec, "ogx", 0);   // Ogg Multiplex
-    CPFA_AddFileAssociation(codec, "ogm", 0);   // Ogg Media
-    CPFA_AddFileAssociation(codec, "opus", 0);  // Opus Audio (in Ogg)
-    CPFA_AddFileAssociation(codec, "spx", 0);   // Speex (in Ogg)
-    
-    // Windows Media formats
-    CPFA_AddFileAssociation(codec, "wma", 0);   // Windows Media Audio
-    CPFA_AddFileAssociation(codec, "asf", 0);   // Advanced Systems Format
-    CPFA_AddFileAssociation(codec, "wmv", 0);   // Windows Media Video (audio stream)
-    
-    // Musepack
-    CPFA_AddFileAssociation(codec, "mpc", 0);   // Musepack
-    CPFA_AddFileAssociation(codec, "mp+", 0);   // Musepack old extension
-    CPFA_AddFileAssociation(codec, "mpp", 0);   // Musepack old extension
-    
-    // Professional/surround formats
-    CPFA_AddFileAssociation(codec, "ac3", 0);   // Dolby Digital
-    CPFA_AddFileAssociation(codec, "eac3", 0);  // Dolby Digital Plus
-    CPFA_AddFileAssociation(codec, "dts", 0);   // DTS Coherent Acoustics
-    CPFA_AddFileAssociation(codec, "dtshd", 0); // DTS-HD
-    CPFA_AddFileAssociation(codec, "mlp", 0);   // Meridian Lossless Packing
-    CPFA_AddFileAssociation(codec, "thd", 0);   // Dolby TrueHD
-    
-    // Uncompressed/PCM formats
-    CPFA_AddFileAssociation(codec, "wav", 0);   // Waveform Audio
-    CPFA_AddFileAssociation(codec, "wave", 0);  // Waveform Audio alternate
-    CPFA_AddFileAssociation(codec, "aiff", 0);  // Audio Interchange File Format
-    CPFA_AddFileAssociation(codec, "aif", 0);   // AIFF short extension
-    CPFA_AddFileAssociation(codec, "aifc", 0);  // AIFF Compressed
-    CPFA_AddFileAssociation(codec, "au", 0);    // Sun Audio
-    CPFA_AddFileAssociation(codec, "snd", 0);   // Sound file
-    CPFA_AddFileAssociation(codec, "pcm", 0);   // Raw PCM
-    CPFA_AddFileAssociation(codec, "raw", 0);   // Raw audio data
-    
-    // Adaptive bitrate formats
-    CPFA_AddFileAssociation(codec, "ra", 0);    // RealAudio
-    CPFA_AddFileAssociation(codec, "rm", 0);    // RealMedia
-    CPFA_AddFileAssociation(codec, "ram", 0);   // RealAudio Metadata
-    
-    // Tracker/module formats
-    CPFA_AddFileAssociation(codec, "mod", 0);   // ProTracker Module
-    CPFA_AddFileAssociation(codec, "s3m", 0);   // ScreamTracker 3 Module
-    CPFA_AddFileAssociation(codec, "xm", 0);    // FastTracker 2 Extended Module
-    CPFA_AddFileAssociation(codec, "it", 0);    // Impulse Tracker
-    
-    // Other formats
-    CPFA_AddFileAssociation(codec, "amr", 0);   // Adaptive Multi-Rate
-    CPFA_AddFileAssociation(codec, "awb", 0);   // AMR Wideband
-    CPFA_AddFileAssociation(codec, "voc", 0);   // Creative Voice
-    CPFA_AddFileAssociation(codec, "vqf", 0);   // TwinVQ
-    CPFA_AddFileAssociation(codec, "w64", 0);   // Sony Wave64
-    CPFA_AddFileAssociation(codec, "caf", 0);   // Apple Core Audio Format
-    CPFA_AddFileAssociation(codec, "dff", 0);   // DSD Storage Facility
-    CPFA_AddFileAssociation(codec, "dsf", 0);   // DSD Stream File
-    CPFA_AddFileAssociation(codec, "webm", 0);  // WebM Audio
-    CPFA_AddFileAssociation(codec, "mka", 0);   // Matroska Audio
-    //CPFA_AddFileAssociation(codec, "ofr", 0);   // OptimFROG
-    //CPFA_AddFileAssociation(codec, "ofs", 0);   // OptimFROG DualStream
-    // spx (Speex) already registered under Ogg container formats
-    CPFA_AddFileAssociation(codec, "gsm", 0);   // GSM Audio
-    CPFA_AddFileAssociation(codec, "iff", 0);   // Interchange File Format
-    CPFA_AddFileAssociation(codec, "svx", 0);   // 8SVX/16SV Amiga
+
+    // Native codecs sit earlier in the engine's codec order, so for formats
+    // they handle (wav, mp3, ogg, flac, aac/m4a, opus) FFmpeg only acts as
+    // the fallback when they fail to open a file.
+    static const char* const extensions[] = {
+        // MPEG audio
+        "mp3", "mp2", "mp1", "mpa",
+        // AAC / MPEG-4
+        "aac", "m4a", "m4b", "m4p", "m4r", "mp4", "3gp", "3g2",
+        // Lossless
+        "flac", "fla", "ape", "wv", "tta", "tak", "alac",
+        // Ogg family
+        "ogg", "oga", "ogx", "ogm", "opus", "spx",
+        // Windows Media
+        "wma", "asf", "wmv",
+        // Musepack
+        "mpc", "mpp",
+        // Dolby / DTS / surround
+        "ac3", "eac3", "dts", "dtshd", "mlp", "thd",
+        // PCM containers
+        "wav", "wave", "aiff", "aif", "aifc", "au", "snd", "w64", "caf",
+        // RealMedia
+        "ra", "rm",
+        // Tracker modules (only if the FFmpeg build includes libopenmpt)
+        "mod", "s3m", "xm", "it",
+        // Other
+        "amr", "awb", "voc", "vqf", "dff", "dsf", "webm", "mka", "gsm", "iff", "svx",
+    };
+    for (size_t i = 0; i < sizeof(extensions) / sizeof(extensions[0]); i++)
+        CPFA_AddFileAssociation(codec, extensions[i], 0);
 }

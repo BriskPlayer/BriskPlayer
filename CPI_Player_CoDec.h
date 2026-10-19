@@ -115,6 +115,7 @@ void CPFA_EmptyFileAssociations(CPs_CoDecModule* pCoDec);
 void CPFA_AddFileAssociation(CPs_CoDecModule* pCoDec, const char* pcExtension, DWORD_PTR dwCookie);
 BOOL CPFA_IsAssociated(CPs_CoDecModule* pCoDec, const char* pcExtension, DWORD_PTR* pdwCookie);
 void CPFA_AssociateWithEXE(CPs_CoDecModule* pCoDec);
+void CPFA_AppendFilterPatterns(CPs_CoDecModule* pCoDec, WCHAR* pwcPatterns, size_t cchPatterns);
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -123,14 +124,11 @@ void CPFA_AssociateWithEXE(CPs_CoDecModule* pCoDec);
 // CoDec initialisers
 void CP_InitialiseCodec_WAV(CPs_CoDecModule* pCoDec);
 void CP_InitialiseCodec_WinAmpPlugin(CPs_CoDecModule* pCoDec);
-#ifdef HAVE_FFMPEG_CODEC
-void CP_InitialiseCodec_FFmpeg(CPs_CoDecModule* pCoDec);
-#else
-// Native codec initialisers (used when FFmpeg is not available, e.g. MinGW builds)
 void CP_InitialiseCodec_MPEG(CPs_CoDecModule* pCoDec);
 void CP_InitialiseCodec_OGG(CPs_CoDecModule* pCoDec);
 void CP_InitialiseCodec_FLAC(CPs_CoDecModule* pCoDec);
 void CP_InitialiseCodec_AAC(CPs_CoDecModule* pCoDec);
 void CP_InitialiseCodec_OPUS(CPs_CoDecModule* pCoDec);
-#endif
+// Runtime-loaded from <exe dir>\ffmpeg; leaves pCoDec zeroed if not available
+void CP_InitialiseCodec_FFmpeg(CPs_CoDecModule* pCoDec);
 ////////////////////////////////////////////////////////////////////////////////
