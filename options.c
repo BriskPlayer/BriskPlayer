@@ -29,50 +29,6 @@
 #include "CPI_DiscordRPC.h"
 #endif
 
-// Helper function to translate static text controls that have ID -1
-static void TranslateStaticControls(HWND hwndDlg)
-{
-    HWND hChild = GetWindow(hwndDlg, GW_CHILD);
-    char buffer[256];
-    
-    while (hChild) {
-        // Get the window text
-        GetWindowTextA(hChild, buffer, sizeof(buffer));
-        
-        // Check if this is one of our static texts that needs translation
-        if (strcmp(buffer, "Track Delay (sec)") == 0) {
-            SetWindowTextA(hChild, T(STR_OPTIONS_TRACK_DELAY_SEC));
-        }
-        else if (strcmp(buffer, "Skinlist length") == 0) {
-            SetWindowTextA(hChild, T(STR_OPTIONS_SKINLIST_LENGTH));
-        }
-        else if (strcmp(buffer, "Output") == 0) {
-            SetWindowTextA(hChild, T(STR_OPTIONS_OUTPUT));
-        }
-        else if (strcmp(buffer, "Volume controls") == 0) {
-            SetWindowTextA(hChild, T(STR_OPTIONS_VOLUME_CONTROLS));
-        }
-        else if (strcmp(buffer, "Skin") == 0) {
-            SetWindowTextA(hChild, T(STR_OPTIONS_SKIN));
-        }
-        else if (strcmp(buffer, "Skins Folder") == 0) {
-            SetWindowTextA(hChild, T(STR_OPTIONS_SKINS_FOLDER));
-        }
-        else if (strcmp(buffer, "ReplayGain") == 0) {
-            SetWindowTextA(hChild, T("ReplayGain"));
-        }
-        else if (strcmp(buffer, "Mode") == 0) {
-            SetWindowTextA(hChild, T("Mode"));
-        }
-        else if (strcmp(buffer, "Preamp (dB)") == 0) {
-            SetWindowTextA(hChild, T("Preamp (dB)"));
-        }
-        
-        // Move to next child window
-        hChild = GetWindow(hChild, GW_HWNDNEXT);
-    }
-}
-
 //
 //
 //
@@ -84,12 +40,7 @@ url_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 	
 		case WM_INITDIALOG:
-			// Set translated dialog title and text
-			SetWindowText(hwndDlg, T(STR_DLG_URL_TITLE));
-			SetDlgItemText(hwndDlg, IDC_URL_DESCRIPTION, T(STR_URL_DESCRIPTION));
-			SetDlgItemText(hwndDlg, IDC_URL_STATIC, T(STR_URL_LABEL));
-			SetDlgItemText(hwndDlg, IDOK, T(STR_OPTIONS_OK));
-			SetDlgItemText(hwndDlg, IDCANCEL, T(STR_OPTIONS_CANCEL));
+			CPG_TranslateDialog(hwndDlg);
 			return TRUE;
 			
 		case WM_CLOSE:
@@ -142,36 +93,8 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			// this is needed as the options dialog is created with DialogBox
 			windows.dlg_options = hwndDlg;
 			
-			// Set translated dialog title and control text
-			SetWindowText(hwndDlg, T(STR_DLG_OPTIONS_TITLE));
-			SetDlgItemText(hwndDlg, IDC_ONTOP, T(STR_OPTIONS_ALWAYS_ON_TOP));
-			SetDlgItemText(hwndDlg, IDC_AUTOEXIT, T(STR_OPTIONS_EXIT_AFTER_PLAYING));
-			SetDlgItemText(hwndDlg, IDC_ROTATE, T(STR_OPTIONS_ROTATE_SYSTRAY));
-			SetDlgItemText(hwndDlg, IDC_SCROLLTITLE, T(STR_OPTIONS_SCROLL_TITLE));
-			SetDlgItemText(hwndDlg, IDC_FILEONCE, T(STR_OPTIONS_FILE_ONCE_PLAYLIST));
-			SetDlgItemText(hwndDlg, IDC_AUTOPLAY, T(STR_OPTIONS_AUTOPLAY_STARTUP));
-			SetDlgItemText(hwndDlg, IDC_MULTIPLEINSTANCES, T(STR_OPTIONS_MULTIPLE_INSTANCES));
-			SetDlgItemText(hwndDlg, IDC_REMAINING, T(STR_OPTIONS_SHOW_REMAINING_TIME));
-			SetDlgItemText(hwndDlg, IDC_TASKBAR, T(STR_OPTIONS_SHOW_ON_TASKBAR));
-			SetDlgItemText(hwndDlg, IDC_STICKYWINDOWS, T(STR_OPTIONS_STICKY_WINDOWS));
-			SetDlgItemText(hwndDlg, IDC_DISCORDRPC, T(STR_OPTIONS_DISCORD_RPC));
-			SetDlgItemText(hwndDlg, IDC_REGFILETYPE, T(STR_OPTIONS_REGISTER_FILETYPES));
-			SetDlgItemText(hwndDlg, IDC_ADDICONS, T(STR_OPTIONS_ADD_START_MENU));
-			SetDlgItemText(hwndDlg, IDC_READTAG, T(STR_OPTIONS_READ_ID3_TAG));
-			SetDlgItemText(hwndDlg, IDC_READSELTAG, T(STR_OPTIONS_READ_ID3_SELECTED));
-			SetDlgItemText(hwndDlg, IDC_SUPPORTID3_V2, T(STR_OPTIONS_SUPPORT_ID3V2));
-			SetDlgItemText(hwndDlg, IDC_READID3INBACKGROUND, T(STR_OPTIONS_READ_ID3_BACKGROUND));
-			SetDlgItemText(hwndDlg, IDC_READTRACKTIME, T(STR_OPTIONS_WORK_OUT_LENGTHS));
-			SetDlgItemText(hwndDlg, IDC_EASYMOVE, T(STR_OPTIONS_EASY_MOVE));
-			SetDlgItemText(hwndDlg, IDC_REMEMBERPLS, T(STR_OPTIONS_REMEMBER_PLAYLIST));
-			SetDlgItemText(hwndDlg, IDC_REMSONG, T(STR_OPTIONS_REMEMBER_LAST_PLAYED));
-			SetDlgItemText(hwndDlg, IDC_SKINSFOLDER_BROWSE, T(STR_OPTIONS_BROWSE));
+			CPG_TranslateDialog(hwndDlg);
 			SetDlgItemText(hwndDlg, IDC_SKINSFOLDER, options.skins_folder_path);
-			SetDlgItemText(hwndDlg, IDOK, T(STR_OPTIONS_OK));
-			SetDlgItemText(hwndDlg, IDCANCEL, T(STR_OPTIONS_CANCEL));
-
-			// Translate static text controls (these have ID -1, so we need to find them by text)
-			TranslateStaticControls(hwndDlg);
 
 			SendDlgItemMessage(hwndDlg, IDC_EASYMOVE, BM_SETCHECK,
 							   options.easy_move, 0);
@@ -238,10 +161,8 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			SendDlgItemMessage(hwndDlg, IDC_REPLAYGAIN_PREAMP_SPIN, UDM_SETRANGE, 0, MAKELONG(12, -12));
 			SetDlgItemInt(hwndDlg, IDC_REPLAYGAIN_PREAMP_VAL, options.replaygain_preamp_db, TRUE);
 			SendDlgItemMessage(hwndDlg, IDC_REPLAYGAIN_NOCLIP, BM_SETCHECK, options.replaygain_prevent_clipping, 0);
-			SetDlgItemText(hwndDlg, IDC_REPLAYGAIN_NOCLIP, T(STR_REPLAYGAIN_PREVENT_CLIPPING));
 			
 			SendDlgItemMessage(hwndDlg, IDC_GAPLESS, BM_SETCHECK, options.gapless_playback, 0);
-			SetDlgItemText(hwndDlg, IDC_GAPLESS, T(STR_GAPLESS_PLAYBACK));
 
 			SendDlgItemMessage(hwndDlg, IDC_DELAYTIMES, UDM_SETRANGE, 0,
 							   MAKELONG(10, 0));
@@ -476,260 +397,6 @@ options_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 						SetDlgItemText(hwndDlg, IDC_SKINSFOLDER, pathbuf);
 					}
 
-					break;
-				}
-
-				case IDC_REGFILETYPE:
-				{
-					HKEY    result;
-					DWORD   lpdwDisposition;
-					char    pathbuf[MAX_PATH];
-					char    stringval[MAX_PATH + 32];
-					
-					SAFE_PLAYER_CALL(CPI_Player__AssociateFileExtensions);
-					
-					GetModuleFileName(NULL, pathbuf, MAX_PATH);
-					snprintf(stringval, sizeof(stringval), "%s,%1d", pathbuf, 1);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT, CIC_BRISKPLAYER_FILETYPE,
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					RegSetValueEx(result, NULL, 0, REG_SZ,
-								  (const BYTE*)T(STR_APP_AUDIO_FILE_DESC), strlen(T(STR_APP_AUDIO_FILE_DESC)) + 1);
-					RegCloseKey(result);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_BRISKPLAYER_FILETYPE "\\DefaultIcon",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
-								  strlen(stringval) + 1);
-					RegCloseKey(result);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_BRISKPLAYER_FILETYPE "\\Shell", 0,
-								   NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					RegCloseKey(result);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_BRISKPLAYER_FILETYPE "\\Shell\\Open",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					RegCloseKey(result);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-							   CIC_BRISKPLAYER_FILETYPE "\\Shell\\Open\\command",
-							   0, NULL, REG_OPTION_NON_VOLATILE,
-							   KEY_ALL_ACCESS, NULL, &result,
-							   &lpdwDisposition);
-				snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\"", pathbuf);
-				RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
-								  strlen(stringval) + 1);
-					RegCloseKey(result);
-					
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_BRISKPLAYER_FILETYPE "\\Shell\\BriskPlayer Queue",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					RegCloseKey(result);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_BRISKPLAYER_FILETYPE "\\Shell\\BriskPlayer Queue\\command",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\" -add", pathbuf);
-					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
-								  strlen(stringval) + 1);
-					RegCloseKey(result);
-					
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_BRISKPLAYER_FILETYPE "\\Shell\\BriskPlayer Play",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					RegCloseKey(result);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_BRISKPLAYER_FILETYPE "\\Shell\\BriskPlayer Play\\command",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\"", pathbuf);
-					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
-								  strlen(stringval) + 1);
-					RegCloseKey(result);
-					
-					
-					RegCreateKeyEx(HKEY_CLASSES_ROOT, ".m3u", 0, NULL,
-								   REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					RegSetValueEx(result, NULL, 0, REG_SZ,
-								  (const BYTE*)CIC_BRISKPLAYER_PLAYLISTFILETYPE, strlen(CIC_BRISKPLAYER_PLAYLISTFILETYPE) + 1);
-					RegCloseKey(result);
-					
-					RegCreateKeyEx(HKEY_CLASSES_ROOT, ".pls", 0, NULL,
-								   REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					RegSetValueEx(result, NULL, 0, REG_SZ,
-								  (const BYTE*)CIC_BRISKPLAYER_PLAYLISTFILETYPE, strlen(CIC_BRISKPLAYER_PLAYLISTFILETYPE) + 1);
-					RegCloseKey(result);
-					
-					RegCreateKeyEx(HKEY_CLASSES_ROOT, CIC_BRISKPLAYER_PLAYLISTFILETYPE,
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					RegSetValueEx(result, NULL, 0, REG_SZ,
-								  (const BYTE*)T(STR_APP_PLAYLIST_DESC), strlen(T(STR_APP_PLAYLIST_DESC)) + 1);
-					RegCloseKey(result);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\DefaultIcon",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					snprintf(stringval, sizeof(stringval), "%s,%d", pathbuf, 2);
-					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
-								  strlen(stringval) + 1);
-					RegCloseKey(result);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell", 0,
-								   NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					RegCloseKey(result);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\Open",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					RegCloseKey(result);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\Open\\command",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\"", pathbuf);
-					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
-								  strlen(stringval) + 1);
-					RegCloseKey(result);
-					
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\BriskPlayer Queue",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					RegCloseKey(result);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\BriskPlayer Queue\\command",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\" -add", pathbuf);
-					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
-								  strlen(stringval) + 1);
-					RegCloseKey(result);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\BriskPlayer Play",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					RegCloseKey(result);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\BriskPlayer Play\\command",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\"", pathbuf);
-					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
-								  strlen(stringval) + 1);
-					RegCloseKey(result);
-					
-					// Folder handlers
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   "Folder\\Shell\\BriskPlayer Play",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					RegCloseKey(result);
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   "Folder\\Shell\\BriskPlayer Play\\command",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\"", pathbuf);
-					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
-								  strlen(stringval) + 1);
-					RegCloseKey(result);
-					
-					RegCreateKeyEx(HKEY_CLASSES_ROOT,
-								   "Folder\\Shell\\BriskPlayer Queue\\command",
-								   0, NULL, REG_OPTION_NON_VOLATILE,
-								   KEY_ALL_ACCESS, NULL, &result,
-								   &lpdwDisposition);
-					snprintf(stringval, sizeof(stringval), "\"%s\" \"%%1\" -add", pathbuf);
-					RegSetValueEx(result, NULL, 0, REG_SZ, (const BYTE*)stringval,
-								  strlen(stringval) + 1);
-					RegCloseKey(result);
-					
-					
-					RegDeleteKey(HKEY_CLASSES_ROOT, CIC_BRISKPLAYER_FILETYPE "\\Shell\\Enqueue in BriskPlayer\\command");
-					RegDeleteKey(HKEY_CLASSES_ROOT, CIC_BRISKPLAYER_FILETYPE "\\Shell\\Enqueue in BriskPlayer\\");
-					RegDeleteKey(HKEY_CLASSES_ROOT, CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\Enqueue in BriskPlayer\\command");
-					RegDeleteKey(HKEY_CLASSES_ROOT, CIC_BRISKPLAYER_PLAYLISTFILETYPE "\\Shell\\Enqueue in BriskPlayer\\");
-					
-				// Convert translated strings to Unicode
-				WCHAR* pwcMsg = STR_ConvertToUnicode(T(STR_MSG_FILETYPES_REGISTERED));
-				WCHAR* pwcTitle = STR_ConvertToUnicode(T(STR_APP_NAME));
-				MessageBoxW(hwndDlg, pwcMsg, pwcTitle, MB_ICONINFORMATION);
-				free(pwcMsg);
-				free(pwcTitle);					break;
-				}
-				
-				case IDC_ADDICONS:
-				{
-					char    pathname[MAX_PATH];
-					char    startmenu[MAX_PATH];
-					char    linkname[MAX_PATH];
-					char    linkname2[MAX_PATH];
-					
-					LPITEMIDLIST ppidl;
-					// int     buflen = MAX_PATH;
-					// long    vartype = REG_SZ;
-					
-					GetModuleFileName(NULL, pathname, MAX_PATH);
-					CoInitialize(NULL);
-					
-					SHGetSpecialFolderLocation(hwndDlg, CSIDL_STARTMENU,
-											   &ppidl);
-					                           
-					SHGetPathFromIDList(ppidl, startmenu);
-					
-					snprintf(linkname, sizeof(linkname), "%s\\BriskPlayer.lnk", startmenu);
-					ExpandEnvironmentStrings(linkname, // pointer to string with environment variables
-											 linkname2, // pointer to string with expanded environment
-											 // variables
-											 MAX_PATH);
-					                         
-					path_create_link(pathname, linkname2, NULL);
-					SHGetSpecialFolderLocation(hwndDlg, CSIDL_DESKTOP, &ppidl);
-					
-					SHGetPathFromIDList(ppidl, startmenu);
-					
-					snprintf(linkname, sizeof(linkname), "%s\\BriskPlayer.lnk", startmenu);
-					ExpandEnvironmentStrings(linkname, // pointer to string with environment variables
-											 linkname2, // pointer to string with expanded environment
-											 // variables
-											 MAX_PATH);
-					                         
-					path_create_link(pathname, linkname2, NULL);
-				CoUninitialize();
-				// Convert translated strings to Unicode
-				WCHAR* pwcMsg = STR_ConvertToUnicode(T(STR_MSG_ICONS_CREATED));
-				WCHAR* pwcTitle = STR_ConvertToUnicode(T(STR_APP_NAME));
-				MessageBoxW(hwndDlg, pwcMsg, pwcTitle, MB_ICONINFORMATION);
-				free(pwcMsg);
-				free(pwcTitle);
 					break;
 				}
 			}

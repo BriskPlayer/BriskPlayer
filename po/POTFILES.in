@@ -46,6 +46,7 @@ CPI_Stream_Internet.c
 CPI_TagLib.c
 
 # Utilities
+CPI_Gettext.h
 CPI_Translation.c
 CPI_Gettext.c
 CPI_Verbs.c
@@ -54,6 +55,7 @@ CPString.c
 
 # Dialog boxes
 DLG_Find.c
+DLG_Equalizer.c
 about.c
 
 # Windows-specific
@@ -67,6 +69,3 @@ CPSK_Skin.c
 
 # List view component
 CLV_ListView.c
-
-# Resource files (for string table extraction)
-res/

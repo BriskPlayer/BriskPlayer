@@ -45,8 +45,6 @@
 #define IDC_COMMENT                     1017
 #define IDC_ONTOP                       1018
 #define IDC_TRACK                       1018
-#define IDC_REGFILETYPE                 1019
-#define IDC_ADDICONS                    1020
 #define IDC_OUTPUT                      1026
 #define IDC_MIXER                       1027
 #define IDC_AUTOEXIT                    1029

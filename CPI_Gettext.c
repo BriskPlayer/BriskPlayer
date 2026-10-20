@@ -569,6 +569,41 @@ wchar_t* CPG_GetTranslationW(const char* msgid)
     
     return L"Translation Error";
 }
+
+// Replaces a window's text with its translation, if there is one.
+static void CPG_TranslateWindowText(HWND hWnd)
+{
+    wchar_t wcText[512];
+    char utf8[1024];
+
+    if (GetWindowTextW(hWnd, wcText, (int)(sizeof(wcText) / sizeof(wcText[0]))) <= 0)
+        return;
+    if (WideCharToMultiByte(CP_UTF8, 0, wcText, -1, utf8, sizeof(utf8), NULL, NULL) <= 0)
+        return;
+
+    const char* translated = _(utf8);
+    if (translated == utf8 || strcmp(translated, utf8) == 0)
+        return;
+    SetWindowTextW(hWnd, CPG_GetTranslationW(utf8));
+}
+
+void CPG_TranslateDialog(HWND hDlg)
+{
+    HWND hChild;
+
+    CPG_TranslateWindowText(hDlg);
+
+    // Only labels and buttons (checkboxes, radios, group boxes): edit boxes,
+    // combo boxes and lists hold user data, not .rc text.
+    for (hChild = GetWindow(hDlg, GW_CHILD); hChild; hChild = GetWindow(hChild, GW_HWNDNEXT))
+    {
+        wchar_t wcClass[32];
+        if (GetClassNameW(hChild, wcClass, (int)(sizeof(wcClass) / sizeof(wcClass[0]))) == 0)
+            continue;
+        if (_wcsicmp(wcClass, L"Static") == 0 || _wcsicmp(wcClass, L"Button") == 0)
+            CPG_TranslateWindowText(hChild);
+    }
+}
 #endif
 
 // Cleanup function

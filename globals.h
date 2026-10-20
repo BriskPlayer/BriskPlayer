@@ -69,8 +69,6 @@ typedef void* CP_HSYSICON;
 
 // Translatable application constants - use T() macro for runtime translation
 #define CP_BRISKPLAYER					T(STR_APP_NAME)
-#define CIC_BRISKPLAYER_FILEDESC		T(STR_APP_AUDIO_FILE_DESC)
-#define CIC_BRISKPLAYER_PLAYLISTFILEDESC	T(STR_APP_PLAYLIST_DESC)
 
 // Non-translatable constants
 #define CIC_HTTPHEADER					"http://"
@@ -90,9 +88,7 @@ BOOL    CP_IsURL(const char* pcPath);
 #define NOTIFY_ICON_ID					4567
 #define CPC_INVALIDCHAR					-1
 
-// Registry
-#define CIC_BRISKPLAYER_FILETYPE					"BriskPlayer.Audio"
-#define CIC_BRISKPLAYER_PLAYLISTFILETYPE			"BriskPlayer.Playlist"
+// Window classes
 #define CLC_BRISKPLAYER_INTERFACECLASSNAME			"BriskPlayer_Interface"
 #define CLC_BRISKPLAYER_WINDOWCLASSNAME				"BriskPlayer"
 #define CLC_BRISKPLAYER_PLAYLIST_WINDOWCLASSNAME	"BriskPlayer_Playlist"
@@ -342,8 +338,6 @@ DWORD   main_get_program_file_path(const char* pcFilename, char* pszBuffer, DWOR
 HMODULE LoadLibrarySafeA(const char* pcDllPath);
 NODISCARD HBITMAP systray_rotate_bmp(HBITMAP hBitmap, float radians,
 						   COLORREF clrBack);
-HRESULT path_create_link(LPCSTR lpszPathObj, LPSTR lpszPathLink,
-					 LPSTR lpszDesc);
 NODISCARD HRGN    main_bitmap_to_region(HBITMAP hBmp, COLORREF cTransparentColor);
 NODISCARD HRGN    main_bitmap_to_region_1bit(HBITMAP hBmp, COLORREF cTransparentColor);
 NODISCARD HWND    about_create(HWND hWnd);

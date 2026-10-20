@@ -100,7 +100,6 @@ void CPI_Player__SendSyncCookie(CP_HPLAYER hPlayer, const int iCookie);
 void CPI_Player__SetPositionRange(CP_HPLAYER hPlayer, const int iRange);
 //
 // Get the engine to perform file assiciations (as it knows what file types we support)
-void CPI_Player__AssociateFileExtensions(CP_HPLAYER hPlayer);
 ////////////////////////////////////////////////////////////////////////////////
 
 

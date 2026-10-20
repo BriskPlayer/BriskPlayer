@@ -24,6 +24,10 @@
 // Open (or focus) the modeless equalizer settings dialog.
 void eq_create(HWND hWndParent);
 
+// English (untranslated) name of preset iPreset, matching the
+// MENU_EQ_PRESET_FLAT + iPreset menu item; NULL past the last preset.
+const char* eq_get_preset_name(int iPreset);
+
 // Dialog procedure - registered via CreateDialog.
 INT_PTR CALLBACK eq_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 

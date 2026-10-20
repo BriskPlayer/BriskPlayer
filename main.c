@@ -332,6 +332,15 @@ void main_translate_menu(void)
                 if (GetMenuItemInfo(subMenu, 0, TRUE, &mii) && mii.wID == ID_PLAY) {
                     ModifyMenu(globals.main_menu_popup, i, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT_PTR)subMenu, T(STR_MENU_PLAY_CONTROL));
                 }
+                else if (mii.wID == MENU_EQ_PRESET_FLAT) {
+                    // Translated from the English preset names rather than
+                    // the items' current text, which is already translated
+                    // when this runs again after a language switch.
+                    const char* pcPreset;
+                    ModifyMenuW(globals.main_menu_popup, i, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT_PTR)subMenu, TW(STR_MENU_EQUALIZER));
+                    for (int k = 0; (pcPreset = eq_get_preset_name(k)) != NULL; k++)
+                        ModifyMenuW(subMenu, MENU_EQ_PRESET_FLAT + k, MF_BYCOMMAND | MF_STRING, MENU_EQ_PRESET_FLAT + k, TW(pcPreset));
+                }
             }
         }
     }

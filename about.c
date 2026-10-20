@@ -52,8 +52,9 @@ INT_PTR CALLBACK about_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 	{
 		case WM_INITDIALOG:
 		{
-			char cTitle[100];
-			sprintf_s(cTitle, sizeof(cTitle), "About BriskPlayer %d.%d.%d", CP_VERSION_MAJOR, CP_VERSION_MINOR, CP_VERSION_BUILD);
+			char cTitle[160];
+			CPG_TranslateDialog(hwndDlg);
+			sprintf_s(cTitle, sizeof(cTitle), "%s %d.%d.%d", T("About BriskPlayer"), CP_VERSION_MAJOR, CP_VERSION_MINOR, CP_VERSION_BUILD);
 			SetWindowText(hwndDlg, cTitle);
 
 			// Setup up jumping head timer

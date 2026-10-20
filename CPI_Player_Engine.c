@@ -46,7 +46,6 @@ void EnumOutputDevices(CPs_PlayerContext* pContext);
 CPs_CoDecModule* OpenCoDec(CPs_PlayerContext* pContext, const char* pcFilename);
 void CleanupCoDecs(CPs_PlayerContext* pContext);
 void SetCurrentOutputModule(CPs_PlayerContext* pContext, CPs_OutputModule* pNewOuputModule, BOOL* pbForceRefill);
-void AssociateFileExtensions(CPs_PlayerContext* pContext);
 
 // Playlist support
 char* ExtractStreamURLFromPlaylist(const char* pcPlaylistURL);
@@ -503,10 +502,6 @@ DWORD WINAPI CPI_Player__EngineEP(void* pCookie)
 				
 				break;
 				
-				case CPTM_ASSOCIATEFILEEXTENSIONS:
-					AssociateFileExtensions(&playercontext);
-					break;
-					
 				case CPTM_SETINTERNALVOLUME:
 					playercontext.m_iInternalVolume = (int)msg.wParam;
 					
@@ -925,17 +920,6 @@ void SetCurrentOutputModule(CPs_PlayerContext* pContext, CPs_OutputModule* pNewO
 		StartPlay(pContext->m_pCurrentOutputModule->m_pCoDec, pContext);
 		*pbForceRefill = TRUE;
 	}
-}
-
-//
-//
-//
-void AssociateFileExtensions(CPs_PlayerContext* pContext)
-{
-	int iCoDecIDX;
-	
-	for (iCoDecIDX = 0; iCoDecIDX <= CP_CODEC_last; iCoDecIDX++)
-		CPFA_AssociateWithEXE(&pContext->m_CoDecs[iCoDecIDX]);
 }
 
 //

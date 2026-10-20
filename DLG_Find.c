@@ -47,9 +47,10 @@ INT_PTR CALLBACK wp_FindDialog(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM l
 	{
 	
 		case WM_INITDIALOG:
-		
+
 			// Setup type initial state
 		{
+			CPG_TranslateDialog(hWnd);
 			UINT uiDlgItemToSet;
 			
 			if (options.m_enQuickFindTerm == qftTitle)

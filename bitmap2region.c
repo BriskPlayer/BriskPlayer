@@ -22,36 +22,6 @@
 #include "globals.h"
 #define CPC_RECT_QUANTISE	4096
 
-HRESULT path_create_link(LPCSTR lpszPathObj, LPSTR lpszPathLink, LPSTR lpszDesc)
-{
-	HRESULT hres;
-	IShellLink *psl;
-	
-	// Get a pointer to the IShellLink interface.
-	hres = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, &IID_IShellLink, (void **) &psl);
-	if (SUCCEEDED(hres)) 
-	{
-		IPersistFile *ppf;
-		// Set the path to the shortcut target and add the
-		// description.
-		psl->lpVtbl->SetPath(psl, lpszPathObj);
-		psl->lpVtbl->SetDescription(psl, lpszDesc);
-		// Query IShellLink for the IPersistFile interface for saving the
-		// shortcut in persistent storage.
-		hres = psl->lpVtbl->QueryInterface(psl, &IID_IPersistFile, (PVOID *) &ppf);
-		if (SUCCEEDED(hres)) 
-		{
-			WORD    wsz[MAX_PATH];	// Ensure that the string is ANSI.
-			MultiByteToWideChar(CP_ACP, 0, lpszPathLink, -1, wsz,
-			MAX_PATH);
-			// Save the link by calling IPersistFile::Save.
-			hres = ppf->lpVtbl->Save(ppf, wsz, TRUE);
-			ppf->lpVtbl->Release(ppf);
-		}
-		psl->lpVtbl->Release(psl);
-	}
-	return hres;
-}
 //
 //
 //

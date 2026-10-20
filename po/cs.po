@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: BriskPlayer 3.0.0\n"
-"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
-"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"Report-Msgid-Bugs-To: zachbacon@proton.me\n"
+"POT-Creation-Date: 2026-10-19 19:27-0400\n"
 "PO-Revision-Date: 2025-11-03 12:00+0000\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: Czech\n"
@@ -16,542 +16,845 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 
-#. Context: Application name and description
+#: CPI_Gettext.h:100
 #, fuzzy
-msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#: CPI_Gettext.h:103
 #, fuzzy
-msgctxt "app"
-msgid "BriskPlayer - Blazing fast audio player"
-msgstr "BriskPlayer – Bleskově rychlý hudební přehrávač"
-
-#, fuzzy
-msgctxt "app"
-msgid "BriskPlayer Audio file"
-msgstr "Zvukový soubor BriskPlayer"
-
-#, fuzzy
-msgctxt "app"
-msgid "BriskPlayer Playlist"
-msgstr "Playlist BriskPlayer"
-
-#. Context: Menu items
-#, fuzzy
-msgctxt "menu"
 msgid "Open File..."
 msgstr "Otevřít soubor..."
 
+#: CPI_Gettext.h:104
 #, fuzzy
-msgctxt "menu"
 msgid "Open URL..."
 msgstr "Otevřít URL..."
 
+#: CPI_Gettext.h:105
 #, fuzzy
-msgctxt "menu"
 msgid "Add Files..."
 msgstr "Přidat soubory..."
 
+#: CPI_Gettext.h:106
 #, fuzzy
-msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "Editor playlistu"
 
+#: CPI_Gettext.h:107
 #, fuzzy
-msgctxt "menu"
-msgid "Skin"
-msgstr "Motiv"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Default"
-msgstr "Výchozí"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Language"
-msgstr "Jazyk"
-
-#, fuzzy
-msgctxt "menu"
-msgid "English"
-msgstr "Angličtina"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Deutsch"
-msgstr "Němčina"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Playback"
-msgstr "Přehrávání"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Play"
-msgstr "Přehrát"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Stop"
-msgstr "Zastavit"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Pause"
-msgstr "Pozastavit"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Next"
-msgstr "Další"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Previous"
-msgstr "Předchozí"
-
-#, fuzzy
-msgctxt "menu"
 msgid "Options..."
 msgstr "Možnosti..."
 
+#: CPI_Gettext.h:108
 #, fuzzy
-msgctxt "menu"
 msgid "About"
 msgstr "O aplikaci"
 
+#: CPI_Gettext.h:109
 #, fuzzy
-msgctxt "menu"
 msgid "Exit"
 msgstr "Konec"
 
-#. Context: Dialog titles
+#: CPI_Gettext.h:110
 #, fuzzy
-msgctxt "dialog"
-msgid "About BriskPlayer"
-msgstr "O aplikaci BriskPlayer"
+msgid "Play"
+msgstr "Přehrát"
 
+#: CPI_Gettext.h:111
 #, fuzzy
-msgctxt "dialog"
-msgid "BriskPlayer Options"
-msgstr "Možnosti BriskPlayer"
+msgid "Stop"
+msgstr "Zastavit"
 
+#: CPI_Gettext.h:112
 #, fuzzy
-msgctxt "dialog"
-msgid "Open URL"
-msgstr "Otevřít URL"
+msgid "Pause"
+msgstr "Pozastavit"
 
+#: CPI_Gettext.h:113
 #, fuzzy
-msgctxt "dialog"
-msgid "Quick Find"
-msgstr "Rychlé hledání"
+msgid "Next"
+msgstr "Další"
 
-#. Context: About dialog
+#: CPI_Gettext.h:114
 #, fuzzy
-msgctxt "dialog"
-msgid "&About"
-msgstr "&O aplikaci"
+msgid "Previous"
+msgstr "Předchozí"
 
+#: CPI_Gettext.h:115
 #, fuzzy
-msgctxt "dialog"
-msgid "&Keyboard Shortcuts"
-msgstr "&Klávesové zkratky"
+msgid "Default"
+msgstr "Výchozí"
 
+#: CPI_Gettext.h:116
 #, fuzzy
-msgctxt "dialog"
-msgid "C&hanges"
-msgstr "&Změny"
-
-#, fuzzy
-msgctxt "dialog"
-msgid "C&lose"
-msgstr "&Zavřít"
-
-#. Context: Options dialog
-#, fuzzy
-msgctxt "options"
-msgid "General"
-msgstr "Obecné"
-
-#, fuzzy
-msgctxt "options"
-msgid "Always on top"
-msgstr "Vždy nahoře"
-
-#, fuzzy
-msgctxt "options"
-msgid "Exit after playing"
-msgstr "Ukončit po přehrání"
-
-#, fuzzy
-msgctxt "options"
-msgid "Rotate systemtray icon"
-msgstr "Otáčet ikonu v oznamovací oblasti"
-
-#, fuzzy
-msgctxt "options"
-msgid "Scroll Songtitle"
-msgstr "Posouvat název skladby"
-
-#, fuzzy
-msgctxt "options"
-msgid "Allow file once in playlist"
-msgstr "Povolit soubor jen jednou v playlistu"
-
-#, fuzzy
-msgctxt "options"
-msgid "Autoplay on startup"
-msgstr "Automaticky přehrávat při spuštění"
-
-#, fuzzy
-msgctxt "options"
-msgid "Allow multiple instances"
-msgstr "Povolit více instancí"
-
-#, fuzzy
-msgctxt "options"
-msgid "Show remaining time"
-msgstr "Zobrazit zbývající čas"
-
-#, fuzzy
-msgctxt "options"
-msgid "Show on taskbar"
-msgstr "Zobrazit na hlavním panelu"
-
-#, fuzzy
-msgctxt "options"
-msgid "Sticky windows"
-msgstr "Přilepující se okna"
-
-#, fuzzy
-msgctxt "options"
-msgid "Discord Rich Presence"
-msgstr "Discord Rich Presence"
-
-msgctxt "replaygain"
-msgid "Off"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Track"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Album"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Prevent clipping"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "ReplayGain"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Mode"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Preamp (dB)"
-msgstr ""
-
-msgctxt "playback"
-msgid "Gapless playback"
-msgstr ""
-
-#, fuzzy
-msgctxt "options"
-msgid "Register Filetypes"
-msgstr "Zaregistrovat typy souborů"
-
-#, fuzzy
-msgctxt "options"
-msgid "Add to Start Menu"
-msgstr "Přidat do nabídky Start"
-
-#, fuzzy
-msgctxt "options"
-msgid "Read ID3 Tag (if any)"
-msgstr "Číst ID3 tag (pokud existuje)"
-
-#, fuzzy
-msgctxt "options"
-msgid "Read ID3 Tag of selected"
-msgstr "Číst ID3 tag vybraného"
-
-#, fuzzy
-msgctxt "options"
-msgid "Support ID3v2"
-msgstr "Podpora ID3v2"
-
-#, fuzzy
-msgctxt "options"
-msgid "Prefer native OGG tags"
-msgstr "Preferovat nativní OGG tagy"
-
-#, fuzzy
-msgctxt "options"
-msgid "Load ID3 tags in background"
-msgstr "Načítat ID3 tagy na pozadí"
-
-#, fuzzy
-msgctxt "options"
-msgid "Work out track lengths"
-msgstr "Vypočítat délky skladeb"
-
-#, fuzzy
-msgctxt "options"
-msgid "Easy move"
-msgstr "Snadné přesouvání"
-
-#, fuzzy
-msgctxt "options"
-msgid "Remember playlist"
-msgstr "Zapamatovat playlist"
-
-#, fuzzy
-msgctxt "options"
-msgid "Remember last played"
-msgstr "Zapamatovat naposledy přehrané"
-
-#, fuzzy
-msgctxt "options"
-msgid "Track Delay (sec)"
-msgstr "Prodleva mezi skladbami (sek)"
-
-#, fuzzy
-msgctxt "options"
-msgid "Skinlist length"
-msgstr "Délka seznamu motivů"
-
-#, fuzzy
-msgctxt "options"
-msgid "Flush"
-msgstr "Vyprázdnit"
-
-#, fuzzy
-msgctxt "options"
-msgid "Output"
-msgstr "Výstup"
-
-#, fuzzy
-msgctxt "options"
-msgid "Volume controls"
-msgstr "Ovládání hlasitosti"
-
-#, fuzzy
-msgctxt "options"
 msgid "Skin"
 msgstr "Motiv"
 
+#: CPI_Gettext.h:117
 #, fuzzy
-msgctxt "options"
-msgid "Player"
-msgstr "Přehrávač"
+msgid "Language"
+msgstr "Jazyk"
 
+#: CPI_Gettext.h:118
 #, fuzzy
-msgctxt "options"
-msgid "Open"
-msgstr "Otevřít"
+msgid "Playback"
+msgstr "Přehrávání"
 
+#: CPI_Gettext.h:119
+msgid "DSP Plugins"
+msgstr "DSP zásuvné moduly"
+
+#. TRANSLATORS: IDD_EQUALIZER
+#: CPI_Gettext.h:120 briskplayer_rc.c:176
+msgid "Equalizer"
+msgstr ""
+
+#: CPI_Gettext.h:121
+msgid "None (Disabled)"
+msgstr "Žádný (Zakázáno)"
+
+#: CPI_Gettext.h:122
+msgid "Configure..."
+msgstr "Konfigurovat..."
+
+#: CPI_Gettext.h:125
+msgid "Off"
+msgstr ""
+
+#: CPI_Gettext.h:126
+msgid "Track"
+msgstr ""
+
+#: CPI_Gettext.h:127
+msgid "Album"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: CPI_Gettext.h:128 briskplayer_rc.c:74
+msgid "Skins Folder"
+msgstr ""
+
+#: CPI_Gettext.h:131
 #, fuzzy
-msgctxt "options"
+msgid "System Master Volume"
+msgstr "Systémová MASTER hlasitost"
+
+#: CPI_Gettext.h:132
+#, fuzzy
+msgid "System Wave Volume"
+msgstr "Systémová WAVE hlasitost"
+
+#: CPI_Gettext.h:133
+#, fuzzy
+msgid "Internal Volume"
+msgstr "Interní hlasitost"
+
+#: CPI_Gettext.h:142
+#, fuzzy
+msgid "Not a valid BriskPlayer Skin file"
+msgstr "Zvukový soubor BriskPlayer"
+
+#: CPI_Gettext.h:143
+msgid "Can't load bitmaps!"
+msgstr ""
+
+#: CPI_Gettext.h:144
+msgid "No audio devices in this system"
+msgstr ""
+
+#: CPI_Gettext.h:145
+#, fuzzy
+msgid "Failed to create playlist"
+msgstr "Přidat soubor do seznamu jen jednou"
+
+#: CPI_Gettext.h:146
+msgid "Could not open file"
+msgstr ""
+
+#: CPI_Gettext.h:147
+msgid "Not a valid directory."
+msgstr ""
+
+#: CPI_Gettext.h:148
+msgid "Could not perform scan"
+msgstr ""
+
+#: CPI_Gettext.h:149
+msgid ""
+"This file's ID3 tag cannot be updated. This is because BriskPlayer cannot "
+"write to this file."
+msgstr ""
+
+#: CPI_Gettext.h:150
+msgid "Cannot update tag"
+msgstr ""
+
+#: CPI_Gettext.h:151
+#, fuzzy
+msgid "Error"
+msgstr "Chyba souboru"
+
+#: CPI_Gettext.h:152
+msgid ""
+"Some files could not be renamed.\n"
+"\n"
+"This could be because they are either currently playing or are read-only."
+msgstr ""
+
+#: CPI_Gettext.h:161
+#, fuzzy
+msgid "BriskPlayer command line options"
+msgstr "Možnosti BriskPlayer"
+
+#. TRANSLATORS: IDD_EQUALIZER
+#: DLG_Equalizer.c:82 briskplayer_rc.c:182
+msgid "Flat"
+msgstr ""
+
+#: DLG_Equalizer.c:83
+msgid "Bass Boost"
+msgstr ""
+
+#: DLG_Equalizer.c:84
+msgid "Treble Boost"
+msgstr ""
+
+#: DLG_Equalizer.c:85
+msgid "Rock"
+msgstr ""
+
+#: DLG_Equalizer.c:86
+msgid "Classical"
+msgstr ""
+
+#: DLG_Equalizer.c:87
+msgid "Pop"
+msgstr ""
+
+#: DLG_Equalizer.c:88
+msgid "Jazz"
+msgstr ""
+
+#: DLG_Equalizer.c:89
+#, fuzzy
+msgid "Dance"
+msgstr "Zrušit"
+
+#. TRANSLATORS: IDD_ABOUT
+#: about.c:57 briskplayer_rc.c:4
+#, fuzzy
+msgid "About BriskPlayer"
+msgstr "O aplikaci BriskPlayer"
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:6
+#, fuzzy
+msgid "&About"
+msgstr "&O aplikaci"
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:8
+#, fuzzy
+msgid "&Keyboard Shortcuts"
+msgstr "&Klávesové zkratky"
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:10
+msgid "&License"
+msgstr ""
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:12
+msgid "Github"
+msgstr ""
+
+#. TRANSLATORS: IDD_ABOUT
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:14 briskplayer_rc.c:104
+#, fuzzy
+msgid "C&lose"
+msgstr "&Zavřít"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:16
+#, fuzzy
+msgid "Options"
+msgstr "Možnosti..."
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:18
+#, fuzzy
+msgid "General"
+msgstr "Obecné"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:20
+#, fuzzy
+msgid "Always on top"
+msgstr "Vždy nahoře"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:22
+#, fuzzy
+msgid "Exit after playing"
+msgstr "Ukončit po přehrání"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:24
+msgid "Rotate system tray icon"
+msgstr "Otáčet ikonu v systémové liště"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:26
+msgid "Scroll title"
+msgstr "Posouvat název"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:28
+msgid "Only add file once to playlist"
+msgstr "Přidat soubor do seznamu jen jednou"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:30
+#, fuzzy
+msgid "Autoplay on startup"
+msgstr "Automaticky přehrávat při spuštění"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:32
+#, fuzzy
+msgid "Allow multiple instances"
+msgstr "Povolit více instancí"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:34
+#, fuzzy
+msgid "Show remaining time"
+msgstr "Zobrazit zbývající čas"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:36
+#, fuzzy
+msgid "Show on taskbar"
+msgstr "Zobrazit na hlavním panelu"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:38
+#, fuzzy
+msgid "Sticky windows"
+msgstr "Přilepující se okna"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:40
+#, fuzzy
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:42
+msgid "Read ID3 tags"
+msgstr "Číst ID3 tagy"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:44
+msgid "Read ID3 for selected files"
+msgstr "Číst ID3 tagy vybraných souborů"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:46
+#, fuzzy
+msgid "Support ID3v2"
+msgstr "Podpora ID3v2"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:48
+msgid "Read ID3 in background"
+msgstr "Číst ID3 tagy na pozadí"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:50
+msgid "Calculate track lengths"
+msgstr "Vypočítat délky skladeb"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:52
+msgid "Easy move mode"
+msgstr "Snadný režim přesouvání"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:54
+#, fuzzy
+msgid "Remember playlist"
+msgstr "Zapamatovat playlist"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:56
+#, fuzzy
+msgid "Remember last played"
+msgstr "Zapamatovat naposledy přehrané"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:58
+msgid "Track delay (seconds)"
+msgstr "Zpoždění skladby (sekundy)"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:60
+#, fuzzy
+msgid "Output"
+msgstr "Výstup"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:62
+#, fuzzy
+msgid "Volume controls"
+msgstr "Ovládání hlasitosti"
+
+#. TRANSLATORS: IDD_OPTIONS
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:64 briskplayer_rc.c:156
+msgid "ReplayGain"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:66
+msgid "Mode"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:68
+msgid "Preamp (dB)"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:70
+msgid "Prevent clipping"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:72
+msgid "Gapless playback"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:76
+msgid "Browse..."
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:78 briskplayer_rc.c:88
+#, fuzzy
 msgid "OK"
 msgstr "OK"
 
+#. TRANSLATORS: IDD_OPTIONS
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:80 briskplayer_rc.c:90
 #, fuzzy
-msgctxt "options"
 msgid "Cancel"
 msgstr "Zrušit"
 
-#. Context: URL dialog
-msgid ""
-"Type the URL you would like to play. Supported formats are MP3 and OGG "
-"streaming, and M3U playlists."
-msgstr ""
-"Zadejte URL, kterou chcete přehrát. Podporované formáty jsou streaming MP3 a "
-"OGG a playlisty M3U."
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:82
+#, fuzzy
+msgid "Open URL"
+msgstr "Otevřít URL"
 
-msgid "&URL:"
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:84
+msgid "Enter the URL of the stream to play"
+msgstr ""
+
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:86
+#, fuzzy
+msgid "URL:"
 msgstr "&URL:"
 
-#. Context: Quick Find dialog
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:92
+#, fuzzy
+msgid "Quick Find"
+msgstr "Rychlé hledání"
+
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:94
 msgid "Find Text"
 msgstr "Najít text"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:96
 msgid "Look in"
 msgstr "Hledat v"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:98
 msgid "&Titles"
 msgstr "&Názvy"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:100
 msgid "Artist &Names"
 msgstr "&Jména umělců"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:102
 msgid "&Album Names"
 msgstr "Názvy &alb"
 
-#. Context: Volume control options
-#, fuzzy
-msgctxt "audio"
-msgid "System MASTER volume"
-msgstr "Systémová MASTER hlasitost"
-
-#, fuzzy
-msgctxt "audio"
-msgid "System WAVE volume"
-msgstr "Systémová WAVE hlasitost"
-
-#, fuzzy
-msgctxt "audio"
-msgid "Internal volume"
-msgstr "Interní hlasitost"
-
-#. Context: Status messages
-#, fuzzy
-msgctxt "status"
-msgid ""
-"Filetypes are registered.\n"
-"You can doubleclick a supported file to run BriskPlayer."
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:106
+msgid "Track Properties"
 msgstr ""
-"Typy souborů jsou zaregistrovány.\n"
-"Můžete poklepat na podporovaný soubor a spustit BriskPlayer."
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:108
+msgid "Album Art"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:110
+msgid "File Information"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:112
+msgid "File:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:114
+msgid "Size:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:116
+msgid "Basic Metadata"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:118
 #, fuzzy
-msgctxt "status"
-msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
-msgstr "Zástupce BriskPlayer byl vytvořen v nabídce Start a na ploše."
+msgid "Title:"
+msgstr "&Názvy"
 
-#. Context: File filters
-msgid "BriskPlayer Skin Initialization Files (*.ini)"
-msgstr "Inicializační soubory motivu BriskPlayer (*.ini)"
-
-msgid "All Files (*.*)"
-msgstr "Všechny soubory (*.*)"
-
-#. Context: Audio format strings
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:120
 #, fuzzy
-msgctxt "audio"
-msgid "Bitrate: %d kbps"
-msgstr "Datový tok: %d kbps"
+msgid "Artist:"
+msgstr "&Jména umělců"
 
-#, fuzzy
-msgctxt "audio"
-msgid "Sample rate: %.1f kHz"
-msgstr "Vzorkovací frekvence: %.1f kHz"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:122
+msgid "Album:"
+msgstr ""
 
-#. Context: Time format (plural forms example)
-#, fuzzy
-msgctxt "time"
-msgid "Found %d file"
-msgid_plural "Found %d files"
-msgstr[0] "Nalezen %d soubor"
-msgstr[1] "Nalezeny %d soubory"
-msgstr[2] "Nalezeno %d souborů"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:124
+msgid "Year:"
+msgstr ""
 
-#, fuzzy
-msgctxt "time"
-msgid "%d second"
-msgid_plural "%d seconds"
-msgstr[0] "%d sekunda"
-msgstr[1] "%d sekundy"
-msgstr[2] "%d sekund"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:126
+msgid "Genre:"
+msgstr ""
 
-#, fuzzy
-msgctxt "time"
-msgid "%d minute"
-msgid_plural "%d minutes"
-msgstr[0] "%d minuta"
-msgstr[1] "%d minuty"
-msgstr[2] "%d minut"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:128
+msgid "Track:"
+msgstr ""
 
-#. Context: Error messages
-#, fuzzy
-msgctxt "error"
-msgid "Failed to initialize audio device"
-msgstr "Nepodařilo se inicializovat zvukové zařízení"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:130
+msgid "Disc:"
+msgstr ""
 
-#, fuzzy
-msgctxt "error"
-msgid "Unable to load audio file"
-msgstr "Nelze načíst zvukový soubor"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:132
+msgid "Comment:"
+msgstr ""
 
-#, fuzzy
-msgctxt "error"
-msgid "Invalid String ID"
-msgstr "Neplatné ID řetězce"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:134
+msgid "Extended Metadata"
+msgstr ""
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:136
+msgid "Composer:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:138
+msgid "Album Artist:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:140
+msgid "Grouping:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:142
+msgid "BPM:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:144
 #, fuzzy
-msgctxt "error"
-msgid "Audio Error"
+msgid "Audio Properties"
 msgstr "Chyba zvuku"
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:146
+msgid "Codec:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:148
 #, fuzzy
-msgctxt "error"
-msgid "File Error"
-msgstr "Chyba souboru"
+msgid "Bitrate:"
+msgstr "Datový tok: %d kbps"
 
-#. Context: Processing messages
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:150
 #, fuzzy
-msgctxt "status"
-msgid "Processing audio..."
-msgstr "Zpracování zvuku..."
+msgid "Sample Rate:"
+msgstr "Vzorkovací frekvence: %.1f kHz"
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:152
+msgid "Bit Depth:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:154
+msgid "Channels:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:158
+msgid "Track Gain:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:160
 #, fuzzy
-msgctxt "status"
-msgid "Loading..."
-msgstr "Načítání..."
+msgid "Album Gain:"
+msgstr "Názvy &alb"
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:162
+msgid "File Information (Extended)"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:164
+msgid "Track ID:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:166
+msgid "Release ID:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:168
 #, fuzzy
-msgctxt "status"
-msgid "Ready"
-msgstr "Připraven"
+msgid "Artist ID:"
+msgstr "&Jména umělců"
 
-#~ msgid "Rotate system tray icon"
-#~ msgstr "Otáčet ikonu v systémové liště"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:170
+msgid "MusicBrainz:"
+msgstr ""
 
-#~ msgid "Scroll title"
-#~ msgstr "Posouvat název"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:172
+msgid "Update"
+msgstr ""
 
-#~ msgid "Only add file once to playlist"
-#~ msgstr "Přidat soubor do seznamu jen jednou"
+#. TRANSLATORS: IDD_PROPERTIES
+#. TRANSLATORS: IDD_EQUALIZER
+#: briskplayer_rc.c:174 briskplayer_rc.c:184
+#, fuzzy
+msgid "Close"
+msgstr "&Zavřít"
 
-#~ msgid "Read ID3 tags"
-#~ msgstr "Číst ID3 tagy"
+#. TRANSLATORS: IDD_EQUALIZER
+#: briskplayer_rc.c:178
+msgid "Enable Equalizer"
+msgstr ""
 
-#~ msgid "Read ID3 for selected files"
-#~ msgstr "Číst ID3 tagy vybraných souborů"
-
-#~ msgid "Read ID3 in background"
-#~ msgstr "Číst ID3 tagy na pozadí"
-
-#~ msgid "Calculate track lengths"
-#~ msgstr "Vypočítat délky skladeb"
-
-#~ msgid "Easy move mode"
-#~ msgstr "Snadný režim přesouvání"
-
-#~ msgid "Register file types"
-#~ msgstr "Registrovat typy souborů"
-
-#~ msgid "Track delay (seconds)"
-#~ msgstr "Zpoždění skladby (sekundy)"
+#. TRANSLATORS: IDD_EQUALIZER
+#: briskplayer_rc.c:180
+msgid "Preset:"
+msgstr ""
 
 #~ msgid "Skin list length"
 #~ msgstr "Délka seznamu vzhledů"
 
+#, fuzzy
+#~ msgid "BriskPlayer - Blazing fast audio player"
+#~ msgstr "BriskPlayer – Bleskově rychlý hudební přehrávač"
+
+#, fuzzy
+#~ msgid "BriskPlayer Playlist"
+#~ msgstr "Playlist BriskPlayer"
+
+#, fuzzy
+#~ msgid "English"
+#~ msgstr "Angličtina"
+
+#, fuzzy
+#~ msgid "Deutsch"
+#~ msgstr "Němčina"
+
+#, fuzzy
+#~ msgid "C&hanges"
+#~ msgstr "&Změny"
+
+#, fuzzy
+#~ msgid "Rotate systemtray icon"
+#~ msgstr "Otáčet ikonu v oznamovací oblasti"
+
+#, fuzzy
+#~ msgid "Scroll Songtitle"
+#~ msgstr "Posouvat název skladby"
+
+#, fuzzy
+#~ msgid "Allow file once in playlist"
+#~ msgstr "Povolit soubor jen jednou v playlistu"
+
+#, fuzzy
+#~ msgid "Read ID3 Tag (if any)"
+#~ msgstr "Číst ID3 tag (pokud existuje)"
+
+#, fuzzy
+#~ msgid "Read ID3 Tag of selected"
+#~ msgstr "Číst ID3 tag vybraného"
+
+#, fuzzy
+#~ msgid "Prefer native OGG tags"
+#~ msgstr "Preferovat nativní OGG tagy"
+
+#, fuzzy
+#~ msgid "Load ID3 tags in background"
+#~ msgstr "Načítat ID3 tagy na pozadí"
+
+#, fuzzy
+#~ msgid "Work out track lengths"
+#~ msgstr "Vypočítat délky skladeb"
+
+#, fuzzy
+#~ msgid "Easy move"
+#~ msgstr "Snadné přesouvání"
+
+#, fuzzy
+#~ msgid "Track Delay (sec)"
+#~ msgstr "Prodleva mezi skladbami (sek)"
+
+#, fuzzy
+#~ msgid "Skinlist length"
+#~ msgstr "Délka seznamu motivů"
+
+#, fuzzy
+#~ msgid "Flush"
+#~ msgstr "Vyprázdnit"
+
+#, fuzzy
+#~ msgid "Player"
+#~ msgstr "Přehrávač"
+
+#, fuzzy
+#~ msgid "Open"
+#~ msgstr "Otevřít"
+
+#~ msgid ""
+#~ "Type the URL you would like to play. Supported formats are MP3 and OGG "
+#~ "streaming, and M3U playlists."
+#~ msgstr ""
+#~ "Zadejte URL, kterou chcete přehrát. Podporované formáty jsou streaming "
+#~ "MP3 a OGG a playlisty M3U."
+
+#, fuzzy
+#~ msgid ""
+#~ "Filetypes are registered.\n"
+#~ "You can doubleclick a supported file to run BriskPlayer."
+#~ msgstr ""
+#~ "Typy souborů jsou zaregistrovány.\n"
+#~ "Můžete poklepat na podporovaný soubor a spustit BriskPlayer."
+
+#, fuzzy
+#~ msgid ""
+#~ "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+#~ msgstr "Zástupce BriskPlayer byl vytvořen v nabídce Start a na ploše."
+
+#~ msgid "BriskPlayer Skin Initialization Files (*.ini)"
+#~ msgstr "Inicializační soubory motivu BriskPlayer (*.ini)"
+
+#~ msgid "All Files (*.*)"
+#~ msgstr "Všechny soubory (*.*)"
+
+#, fuzzy
+#~ msgid "Found %d file"
+#~ msgid_plural "Found %d files"
+#~ msgstr[0] "Nalezen %d soubor"
+#~ msgstr[1] "Nalezeny %d soubory"
+#~ msgstr[2] "Nalezeno %d souborů"
+
+#, fuzzy
+#~ msgid "%d second"
+#~ msgid_plural "%d seconds"
+#~ msgstr[0] "%d sekunda"
+#~ msgstr[1] "%d sekundy"
+#~ msgstr[2] "%d sekund"
+
+#, fuzzy
+#~ msgid "%d minute"
+#~ msgid_plural "%d minutes"
+#~ msgstr[0] "%d minuta"
+#~ msgstr[1] "%d minuty"
+#~ msgstr[2] "%d minut"
+
+#, fuzzy
+#~ msgid "Failed to initialize audio device"
+#~ msgstr "Nepodařilo se inicializovat zvukové zařízení"
+
+#, fuzzy
+#~ msgid "Unable to load audio file"
+#~ msgstr "Nelze načíst zvukový soubor"
+
+#, fuzzy
+#~ msgid "Invalid String ID"
+#~ msgstr "Neplatné ID řetězce"
+
+#, fuzzy
+#~ msgid "Processing audio..."
+#~ msgstr "Zpracování zvuku..."
+
+#, fuzzy
+#~ msgid "Loading..."
+#~ msgstr "Načítání..."
+
+#, fuzzy
+#~ msgid "Ready"
+#~ msgstr "Připraven"
+
+#~ msgid "Register file types"
+#~ msgstr "Registrovat typy souborů"
+
 #~ msgid "Open..."
 #~ msgstr "Otevřít..."
 
-#~ msgid "DSP Plugins"
-#~ msgstr "DSP zásuvné moduly"
+#, fuzzy
+#~ msgctxt "options"
+#~ msgid "Register Filetypes"
+#~ msgstr "Zaregistrovat typy souborů"
 
-#~ msgid "None (Disabled)"
-#~ msgstr "Žádný (Zakázáno)"
-
-#~ msgid "Configure..."
-#~ msgstr "Konfigurovat..."
+#, fuzzy
+#~ msgctxt "options"
+#~ msgid "Add to Start Menu"
+#~ msgstr "Přidat do nabídky Start"

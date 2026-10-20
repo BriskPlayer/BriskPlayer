@@ -96,131 +96,69 @@
 #define CPT_SetDefaultLanguage(lang) CPG_SetLanguage(lang)
 #define CPT_Cleanup() CPG_Cleanup()
 
-// Translation context constants for better organization
-#define CTX_MENU "menu"
-#define CTX_DIALOG "dialog"
-#define CTX_OPTIONS "options"
-#define CTX_STATUS "status"
-#define CTX_ERROR "error"
-#define CTX_AUDIO "audio"
-
 // String constants for translation compatibility
-#define STR_APP_NAME "BriskPlayer"
-#define STR_OPTIONS_TRACK_DELAY_SEC "Track delay (seconds)"
-#define STR_OPTIONS_SKINLIST_LENGTH "Skin list length"
-#define STR_OPTIONS_OUTPUT "Output"
-#define STR_OPTIONS_VOLUME_CONTROLS "Volume controls"
-#define STR_OPTIONS_SKIN "Skin"
-#define STR_DLG_URL_TITLE "Open URL"
-#define STR_URL_DESCRIPTION "Enter the URL of the stream to play"
-#define STR_URL_LABEL "URL:"
-#define STR_OPTIONS_OK "OK"
-#define STR_OPTIONS_CANCEL "Cancel"
+#define STR_APP_NAME N_("BriskPlayer")
 
 // Menu strings
-#define STR_MENU_OPEN "Open File..."
-#define STR_MENU_OPEN_URL "Open URL..."
-#define STR_MENU_ADD "Add Files..."
-#define STR_MENU_PLAYLIST_EDITOR "Playlist Editor"
-#define STR_MENU_OPTIONS "Options..."
-#define STR_MENU_ABOUT "About"
-#define STR_MENU_EXIT "Exit"
-#define STR_MENU_PLAY "Play"
-#define STR_MENU_STOP "Stop"
-#define STR_MENU_PAUSE "Pause"
-#define STR_MENU_NEXT "Next"
-#define STR_MENU_PREVIOUS "Previous"
-#define STR_MENU_SKIN_DEFAULT "Default"
-#define STR_MENU_SKIN "Skin"
-#define STR_MENU_LANGUAGE "Language"
-#define STR_MENU_PLAY_CONTROL "Playback"
-#define STR_MENU_DSP_PLUGINS "DSP Plugins"
-#define STR_DSP_NONE "None (Disabled)"
-#define STR_DSP_CONFIGURE "Configure..."
+#define STR_MENU_OPEN N_("Open File...")
+#define STR_MENU_OPEN_URL N_("Open URL...")
+#define STR_MENU_ADD N_("Add Files...")
+#define STR_MENU_PLAYLIST_EDITOR N_("Playlist Editor")
+#define STR_MENU_OPTIONS N_("Options...")
+#define STR_MENU_ABOUT N_("About")
+#define STR_MENU_EXIT N_("Exit")
+#define STR_MENU_PLAY N_("Play")
+#define STR_MENU_STOP N_("Stop")
+#define STR_MENU_PAUSE N_("Pause")
+#define STR_MENU_NEXT N_("Next")
+#define STR_MENU_PREVIOUS N_("Previous")
+#define STR_MENU_SKIN_DEFAULT N_("Default")
+#define STR_MENU_SKIN N_("Skin")
+#define STR_MENU_LANGUAGE N_("Language")
+#define STR_MENU_PLAY_CONTROL N_("Playback")
+#define STR_MENU_DSP_PLUGINS N_("DSP Plugins")
+#define STR_MENU_EQUALIZER N_("Equalizer")
+#define STR_DSP_NONE N_("None (Disabled)")
+#define STR_DSP_CONFIGURE N_("Configure...")
 
 // Dialog strings
-#define STR_DLG_OPTIONS_TITLE "Options"
-#define STR_OPTIONS_ALWAYS_ON_TOP "Always on top"
-#define STR_OPTIONS_EXIT_AFTER_PLAYING "Exit after playing"
-#define STR_OPTIONS_ROTATE_SYSTRAY "Rotate system tray icon"
-#define STR_OPTIONS_SCROLL_TITLE "Scroll title"
-#define STR_OPTIONS_FILE_ONCE_PLAYLIST "Only add file once to playlist"
-#define STR_OPTIONS_AUTOPLAY_STARTUP "Autoplay on startup"
-#define STR_OPTIONS_MULTIPLE_INSTANCES "Allow multiple instances"
-#define STR_OPTIONS_SHOW_REMAINING_TIME "Show remaining time"
-#define STR_OPTIONS_SHOW_ON_TASKBAR "Show on taskbar"
-#define STR_OPTIONS_STICKY_WINDOWS "Sticky windows"
-#define STR_OPTIONS_DISCORD_RPC "Discord Rich Presence"
-#define STR_REPLAYGAIN_OFF "Off"
-#define STR_REPLAYGAIN_TRACK "Track"
-#define STR_REPLAYGAIN_ALBUM "Album"
-#define STR_REPLAYGAIN_PREVENT_CLIPPING "Prevent clipping"
-#define STR_GAPLESS_PLAYBACK "Gapless playback"
-#define STR_OPTIONS_REGISTER_FILETYPES "Register file types"
-#define STR_OPTIONS_ADD_START_MENU "Add to Start Menu"
-#define STR_OPTIONS_READ_ID3_TAG "Read ID3 tags"
-#define STR_OPTIONS_READ_ID3_SELECTED "Read ID3 for selected files"
-#define STR_OPTIONS_SUPPORT_ID3V2 "Support ID3v2"
-#define STR_OPTIONS_READ_ID3_BACKGROUND "Read ID3 in background"
-#define STR_OPTIONS_WORK_OUT_LENGTHS "Calculate track lengths"
-#define STR_OPTIONS_EASY_MOVE "Easy move mode"
-#define STR_OPTIONS_REMEMBER_PLAYLIST "Remember playlist"
-#define STR_OPTIONS_REMEMBER_LAST_PLAYED "Remember last played"
-#define STR_OPTIONS_FLUSH "Flush"
-#define STR_OPTIONS_PLAYER "Player"
-#define STR_OPTIONS_OPEN "Open..."
-#define STR_OPTIONS_SKINS_FOLDER "Skins Folder"
-#define STR_OPTIONS_BROWSE "Browse..."
+#define STR_REPLAYGAIN_OFF N_("Off")
+#define STR_REPLAYGAIN_TRACK N_("Track")
+#define STR_REPLAYGAIN_ALBUM N_("Album")
+#define STR_OPTIONS_SKINS_FOLDER N_("Skins Folder")
 
 // Volume control strings
-#define STR_VOLUME_SYSTEM_MASTER "System Master Volume"
-#define STR_VOLUME_SYSTEM_WAVE "System Wave Volume"
-#define STR_VOLUME_INTERNAL "Internal Volume"
+#define STR_VOLUME_SYSTEM_MASTER N_("System Master Volume")
+#define STR_VOLUME_SYSTEM_WAVE N_("System Wave Volume")
+#define STR_VOLUME_INTERNAL N_("Internal Volume")
 
 // Filter strings
-#define STR_FILTER_SKIN_FILES "Skin Files (*.ini)"
-#define STR_FILTER_ALL_FILES "All Files (*.*)"
 
 // Application descriptions
-#define STR_APP_AUDIO_FILE_DESC "Audio File"
-#define STR_APP_PLAYLIST_DESC "Playlist File"
 
 // Message strings
-#define STR_MSG_FILETYPES_REGISTERED "File types registered successfully"
-#define STR_MSG_ICONS_CREATED "Icons created successfully"
 
 // Error messages
-#define STR_ERR_NO_SKIN_SELECTED "No Skin file selected!"
-#define STR_ERR_INVALID_SKIN "Not a valid BriskPlayer Skin file"
-#define STR_ERR_CANT_LOAD_BITMAPS "Can't load bitmaps!"
-#define STR_ERR_NO_AUDIO_DEVICES "No audio devices in this system"
-#define STR_ERR_FAILED_CREATE_PLAYLIST "Failed to create playlist"
-#define STR_ERR_COULD_NOT_OPEN_FILE "Could not open file"
-#define STR_ERR_NOT_VALID_DIRECTORY "Not a valid directory."
-#define STR_ERR_COULD_NOT_SCAN "Could not perform scan"
-#define STR_ERR_CANNOT_UPDATE_TAG "This file's ID3 tag cannot be updated. This is because BriskPlayer cannot write to this file."
-#define STR_ERR_CANNOT_UPDATE_TAG_TITLE "Cannot update tag"
-#define STR_ERR_NO_ITEMS_SELECTED "No items are selected in the playlist"
-#define STR_ERR_ERROR "Error"
-#define STR_ERR_RENAME_FAILED "Some files could not be renamed.\n\nThis could be because they are either currently playing or are read-only."
+#define STR_ERR_INVALID_SKIN N_("Not a valid BriskPlayer Skin file")
+#define STR_ERR_CANT_LOAD_BITMAPS N_("Can't load bitmaps!")
+#define STR_ERR_NO_AUDIO_DEVICES N_("No audio devices in this system")
+#define STR_ERR_FAILED_CREATE_PLAYLIST N_("Failed to create playlist")
+#define STR_ERR_COULD_NOT_OPEN_FILE N_("Could not open file")
+#define STR_ERR_NOT_VALID_DIRECTORY N_("Not a valid directory.")
+#define STR_ERR_COULD_NOT_SCAN N_("Could not perform scan")
+#define STR_ERR_CANNOT_UPDATE_TAG N_("This file's ID3 tag cannot be updated. This is because BriskPlayer cannot write to this file.")
+#define STR_ERR_CANNOT_UPDATE_TAG_TITLE N_("Cannot update tag")
+#define STR_ERR_ERROR N_("Error")
+#define STR_ERR_RENAME_FAILED N_("Some files could not be renamed.\n\nThis could be because they are either currently playing or are read-only.")
 
 // File filter strings for file dialogs
-#define STR_FILTER_ALL_SUPPORTED "All Supported files"
-#define STR_FILTER_AAC_FILES "AAC audio files"
-#define STR_FILTER_MPEG_FILES "MPEG audio files"
-#define STR_FILTER_VORBIS_FILES "Vorbis files"
-#define STR_FILTER_FLAC_FILES "FLAC files"
-#define STR_FILTER_PLAYLIST_FILES "Playlist files"
-#define STR_FILTER_WAV_FILES "WAV files"
 
 // Browse dialog strings
-#define STR_BROWSE_CHOOSE_DIR "Choose a directory to add"
 
 // Language menu
-#define STR_LANG_ENGLISH_FALLBACK "English (Fallback)"
 
 // Command line help
-#define STR_CMDLINE_HELP_TITLE "BriskPlayer command line options"
+#define STR_CMDLINE_HELP_TITLE N_("BriskPlayer command line options")
 
 // Enhanced gettext initialization with C23 features
 typedef struct {
@@ -274,6 +212,10 @@ BOOL CPG_IsLanguageAvailable(const char* languageCode);
     const char* CPG_GetSystemLanguage(void);
     BOOL CPG_SetWindowsLocale(const char* languageCode);
     wchar_t* CPG_GetTranslationW(const char* msgid);
+    // Translates a dialog's title and its label/button text in place, using
+    // the English text from briskplayer.rc as msgid. Call first thing in
+    // WM_INITDIALOG, before any control is filled with runtime data.
+    void CPG_TranslateDialog(HWND hDlg);
 #endif
 
 // Thread-safe translation with thread_local storage
@@ -283,23 +225,5 @@ BOOL CPG_IsLanguageAvailable(const char* languageCode);
     extern _Thread_local char* tl_translation_buffer;
 #endif
 const char* CPG_GetTranslationThreadSafe(const char* msgid);
-
-// Audio-specific translation helpers
-#define AUDIO_FMT_TIME(hours, minutes, seconds) \
-    P_("Time format", "%d:%02d:%02d", hours > 0 ? 3 : 2), hours, minutes, seconds
-
-#define AUDIO_FMT_BITRATE(bitrate) \
-    C_("audio", "Bitrate: %d kbps"), bitrate
-
-#define AUDIO_FMT_SAMPLERATE(rate) \
-    C_("audio", "Sample rate: %.1f kHz"), (float)rate / 1000.0f
-
-// Error handling with context
-#define ERROR_MSG(context, msg) DC_(BRISKPLAYER_DOMAIN, C_(context, msg), LC_MESSAGES)
-
-// Menu translation helpers with keyboard shortcuts
-#define MENU_ITEM(key, label) C_(CTX_MENU, label "\t" key)
-#define DIALOG_TITLE(title) C_(CTX_DIALOG, title)
-#define OPTION_LABEL(label) C_(CTX_OPTIONS, label)
 
 #endif // CPI_GETTEXT_H

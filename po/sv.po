@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: BriskPlayer 3.0.0\n"
-"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
-"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"Report-Msgid-Bugs-To: zachbacon@proton.me\n"
+"POT-Creation-Date: 2026-10-19 19:27-0400\n"
 "PO-Revision-Date: 2025-11-03 12:00+0000\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: Swedish\n"
@@ -16,539 +16,843 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#. Context: Application name and description
+#: CPI_Gettext.h:100
 #, fuzzy
-msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#: CPI_Gettext.h:103
 #, fuzzy
-msgctxt "app"
-msgid "BriskPlayer - Blazing fast audio player"
-msgstr "BriskPlayer – Blixtsnabb mediaspelare"
-
-#, fuzzy
-msgctxt "app"
-msgid "BriskPlayer Audio file"
-msgstr "BriskPlayer-ljudfil"
-
-#, fuzzy
-msgctxt "app"
-msgid "BriskPlayer Playlist"
-msgstr "BriskPlayer-spellista"
-
-#. Context: Menu items
-#, fuzzy
-msgctxt "menu"
 msgid "Open File..."
 msgstr "Öppna fil..."
 
+#: CPI_Gettext.h:104
 #, fuzzy
-msgctxt "menu"
 msgid "Open URL..."
 msgstr "Öppna URL..."
 
+#: CPI_Gettext.h:105
 #, fuzzy
-msgctxt "menu"
 msgid "Add Files..."
 msgstr "Lägg till filer..."
 
+#: CPI_Gettext.h:106
 #, fuzzy
-msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "Spellisteredaktör"
 
+#: CPI_Gettext.h:107
 #, fuzzy
-msgctxt "menu"
-msgid "Skin"
-msgstr "Skal"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Default"
-msgstr "Standard"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Language"
-msgstr "Språk"
-
-#, fuzzy
-msgctxt "menu"
-msgid "English"
-msgstr "Engelska"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Deutsch"
-msgstr "Tyska"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Playback"
-msgstr "Uppspelning"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Play"
-msgstr "Spela"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Stop"
-msgstr "Stoppa"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Pause"
-msgstr "Pausa"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Next"
-msgstr "Nästa"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Previous"
-msgstr "Föregående"
-
-#, fuzzy
-msgctxt "menu"
 msgid "Options..."
 msgstr "Alternativ..."
 
+#: CPI_Gettext.h:108
 #, fuzzy
-msgctxt "menu"
 msgid "About"
 msgstr "Om"
 
+#: CPI_Gettext.h:109
 #, fuzzy
-msgctxt "menu"
 msgid "Exit"
 msgstr "Avsluta"
 
-#. Context: Dialog titles
+#: CPI_Gettext.h:110
 #, fuzzy
-msgctxt "dialog"
-msgid "About BriskPlayer"
-msgstr "Om BriskPlayer"
+msgid "Play"
+msgstr "Spela"
 
+#: CPI_Gettext.h:111
 #, fuzzy
-msgctxt "dialog"
-msgid "BriskPlayer Options"
-msgstr "BriskPlayer-alternativ"
+msgid "Stop"
+msgstr "Stoppa"
 
+#: CPI_Gettext.h:112
 #, fuzzy
-msgctxt "dialog"
-msgid "Open URL"
-msgstr "Öppna URL"
+msgid "Pause"
+msgstr "Pausa"
 
+#: CPI_Gettext.h:113
 #, fuzzy
-msgctxt "dialog"
-msgid "Quick Find"
-msgstr "Snabbsökning"
+msgid "Next"
+msgstr "Nästa"
 
-#. Context: About dialog
+#: CPI_Gettext.h:114
 #, fuzzy
-msgctxt "dialog"
-msgid "&About"
-msgstr "&Om"
+msgid "Previous"
+msgstr "Föregående"
 
+#: CPI_Gettext.h:115
 #, fuzzy
-msgctxt "dialog"
-msgid "&Keyboard Shortcuts"
-msgstr "&Tangentbordsgenvägar"
+msgid "Default"
+msgstr "Standard"
 
+#: CPI_Gettext.h:116
 #, fuzzy
-msgctxt "dialog"
-msgid "C&hanges"
-msgstr "Ä&ndringar"
-
-#, fuzzy
-msgctxt "dialog"
-msgid "C&lose"
-msgstr "&Stäng"
-
-#. Context: Options dialog
-#, fuzzy
-msgctxt "options"
-msgid "General"
-msgstr "Allmänt"
-
-#, fuzzy
-msgctxt "options"
-msgid "Always on top"
-msgstr "Alltid överst"
-
-#, fuzzy
-msgctxt "options"
-msgid "Exit after playing"
-msgstr "Avsluta efter uppspelning"
-
-#, fuzzy
-msgctxt "options"
-msgid "Rotate systemtray icon"
-msgstr "Rotera systemfältsikon"
-
-#, fuzzy
-msgctxt "options"
-msgid "Scroll Songtitle"
-msgstr "Scrolla låttitel"
-
-#, fuzzy
-msgctxt "options"
-msgid "Allow file once in playlist"
-msgstr "Tillåt varje fil en gång i spellistan"
-
-#, fuzzy
-msgctxt "options"
-msgid "Autoplay on startup"
-msgstr "Spela automatiskt vid start"
-
-#, fuzzy
-msgctxt "options"
-msgid "Allow multiple instances"
-msgstr "Tillåt flera instanser"
-
-#, fuzzy
-msgctxt "options"
-msgid "Show remaining time"
-msgstr "Visa återstående tid"
-
-#, fuzzy
-msgctxt "options"
-msgid "Show on taskbar"
-msgstr "Visa i aktivitetsfältet"
-
-#, fuzzy
-msgctxt "options"
-msgid "Sticky windows"
-msgstr "Fästande fönster"
-
-#, fuzzy
-msgctxt "options"
-msgid "Discord Rich Presence"
-msgstr "Discord Rich Presence"
-
-msgctxt "replaygain"
-msgid "Off"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Track"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Album"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Prevent clipping"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "ReplayGain"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Mode"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Preamp (dB)"
-msgstr ""
-
-msgctxt "playback"
-msgid "Gapless playback"
-msgstr ""
-
-#, fuzzy
-msgctxt "options"
-msgid "Register Filetypes"
-msgstr "Registrera filtyper"
-
-#, fuzzy
-msgctxt "options"
-msgid "Add to Start Menu"
-msgstr "Lägg till i Startmenyn"
-
-#, fuzzy
-msgctxt "options"
-msgid "Read ID3 Tag (if any)"
-msgstr "Läs ID3-tagg (om någon)"
-
-#, fuzzy
-msgctxt "options"
-msgid "Read ID3 Tag of selected"
-msgstr "Läs ID3-tagg för valt spår"
-
-#, fuzzy
-msgctxt "options"
-msgid "Support ID3v2"
-msgstr "Stöd ID3v2"
-
-#, fuzzy
-msgctxt "options"
-msgid "Prefer native OGG tags"
-msgstr "Föredra inbyggda OGG-taggar"
-
-#, fuzzy
-msgctxt "options"
-msgid "Load ID3 tags in background"
-msgstr "Läs in ID3-taggar i bakgrunden"
-
-#, fuzzy
-msgctxt "options"
-msgid "Work out track lengths"
-msgstr "Beräkna spårlängder"
-
-#, fuzzy
-msgctxt "options"
-msgid "Easy move"
-msgstr "Enkel flytt"
-
-#, fuzzy
-msgctxt "options"
-msgid "Remember playlist"
-msgstr "Kom ihåg spellistan"
-
-#, fuzzy
-msgctxt "options"
-msgid "Remember last played"
-msgstr "Kom ihåg senast spelade"
-
-#, fuzzy
-msgctxt "options"
-msgid "Track Delay (sec)"
-msgstr "Fördröjning mellan spår (sek)"
-
-#, fuzzy
-msgctxt "options"
-msgid "Skinlist length"
-msgstr "Skallistas längd"
-
-#, fuzzy
-msgctxt "options"
-msgid "Flush"
-msgstr "Töm"
-
-#, fuzzy
-msgctxt "options"
-msgid "Output"
-msgstr "Utdata"
-
-#, fuzzy
-msgctxt "options"
-msgid "Volume controls"
-msgstr "Volymkontroller"
-
-#, fuzzy
-msgctxt "options"
 msgid "Skin"
 msgstr "Skal"
 
+#: CPI_Gettext.h:117
 #, fuzzy
-msgctxt "options"
-msgid "Player"
-msgstr "Spelare"
+msgid "Language"
+msgstr "Språk"
 
+#: CPI_Gettext.h:118
 #, fuzzy
-msgctxt "options"
-msgid "Open"
-msgstr "Öppna"
+msgid "Playback"
+msgstr "Uppspelning"
 
+#: CPI_Gettext.h:119
+msgid "DSP Plugins"
+msgstr "DSP-insticksprogram"
+
+#. TRANSLATORS: IDD_EQUALIZER
+#: CPI_Gettext.h:120 briskplayer_rc.c:176
+msgid "Equalizer"
+msgstr ""
+
+#: CPI_Gettext.h:121
+msgid "None (Disabled)"
+msgstr "Ingen (Inaktiverad)"
+
+#: CPI_Gettext.h:122
+msgid "Configure..."
+msgstr "Konfigurera..."
+
+#: CPI_Gettext.h:125
+msgid "Off"
+msgstr ""
+
+#: CPI_Gettext.h:126
+msgid "Track"
+msgstr ""
+
+#: CPI_Gettext.h:127
+msgid "Album"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: CPI_Gettext.h:128 briskplayer_rc.c:74
+msgid "Skins Folder"
+msgstr ""
+
+#: CPI_Gettext.h:131
 #, fuzzy
-msgctxt "options"
+msgid "System Master Volume"
+msgstr "System-MASTER-volym"
+
+#: CPI_Gettext.h:132
+#, fuzzy
+msgid "System Wave Volume"
+msgstr "System-WAVE-volym"
+
+#: CPI_Gettext.h:133
+#, fuzzy
+msgid "Internal Volume"
+msgstr "Intern volym"
+
+#: CPI_Gettext.h:142
+#, fuzzy
+msgid "Not a valid BriskPlayer Skin file"
+msgstr "BriskPlayer-ljudfil"
+
+#: CPI_Gettext.h:143
+msgid "Can't load bitmaps!"
+msgstr ""
+
+#: CPI_Gettext.h:144
+msgid "No audio devices in this system"
+msgstr ""
+
+#: CPI_Gettext.h:145
+#, fuzzy
+msgid "Failed to create playlist"
+msgstr "Lägg bara till filen en gång i spellistan"
+
+#: CPI_Gettext.h:146
+msgid "Could not open file"
+msgstr ""
+
+#: CPI_Gettext.h:147
+msgid "Not a valid directory."
+msgstr ""
+
+#: CPI_Gettext.h:148
+msgid "Could not perform scan"
+msgstr ""
+
+#: CPI_Gettext.h:149
+msgid ""
+"This file's ID3 tag cannot be updated. This is because BriskPlayer cannot "
+"write to this file."
+msgstr ""
+
+#: CPI_Gettext.h:150
+msgid "Cannot update tag"
+msgstr ""
+
+#: CPI_Gettext.h:151
+#, fuzzy
+msgid "Error"
+msgstr "Filfel"
+
+#: CPI_Gettext.h:152
+msgid ""
+"Some files could not be renamed.\n"
+"\n"
+"This could be because they are either currently playing or are read-only."
+msgstr ""
+
+#: CPI_Gettext.h:161
+#, fuzzy
+msgid "BriskPlayer command line options"
+msgstr "BriskPlayer-alternativ"
+
+#. TRANSLATORS: IDD_EQUALIZER
+#: DLG_Equalizer.c:82 briskplayer_rc.c:182
+msgid "Flat"
+msgstr ""
+
+#: DLG_Equalizer.c:83
+msgid "Bass Boost"
+msgstr ""
+
+#: DLG_Equalizer.c:84
+msgid "Treble Boost"
+msgstr ""
+
+#: DLG_Equalizer.c:85
+msgid "Rock"
+msgstr ""
+
+#: DLG_Equalizer.c:86
+msgid "Classical"
+msgstr ""
+
+#: DLG_Equalizer.c:87
+msgid "Pop"
+msgstr ""
+
+#: DLG_Equalizer.c:88
+msgid "Jazz"
+msgstr ""
+
+#: DLG_Equalizer.c:89
+#, fuzzy
+msgid "Dance"
+msgstr "Avbryt"
+
+#. TRANSLATORS: IDD_ABOUT
+#: about.c:57 briskplayer_rc.c:4
+#, fuzzy
+msgid "About BriskPlayer"
+msgstr "Om BriskPlayer"
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:6
+#, fuzzy
+msgid "&About"
+msgstr "&Om"
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:8
+#, fuzzy
+msgid "&Keyboard Shortcuts"
+msgstr "&Tangentbordsgenvägar"
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:10
+msgid "&License"
+msgstr ""
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:12
+msgid "Github"
+msgstr ""
+
+#. TRANSLATORS: IDD_ABOUT
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:14 briskplayer_rc.c:104
+#, fuzzy
+msgid "C&lose"
+msgstr "&Stäng"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:16
+#, fuzzy
+msgid "Options"
+msgstr "Alternativ..."
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:18
+#, fuzzy
+msgid "General"
+msgstr "Allmänt"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:20
+#, fuzzy
+msgid "Always on top"
+msgstr "Alltid överst"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:22
+#, fuzzy
+msgid "Exit after playing"
+msgstr "Avsluta efter uppspelning"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:24
+msgid "Rotate system tray icon"
+msgstr "Rotera systemfältsikonen"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:26
+msgid "Scroll title"
+msgstr "Scrolla titel"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:28
+msgid "Only add file once to playlist"
+msgstr "Lägg bara till filen en gång i spellistan"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:30
+#, fuzzy
+msgid "Autoplay on startup"
+msgstr "Spela automatiskt vid start"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:32
+#, fuzzy
+msgid "Allow multiple instances"
+msgstr "Tillåt flera instanser"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:34
+#, fuzzy
+msgid "Show remaining time"
+msgstr "Visa återstående tid"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:36
+#, fuzzy
+msgid "Show on taskbar"
+msgstr "Visa i aktivitetsfältet"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:38
+#, fuzzy
+msgid "Sticky windows"
+msgstr "Fästande fönster"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:40
+#, fuzzy
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:42
+msgid "Read ID3 tags"
+msgstr "Läs ID3-taggar"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:44
+msgid "Read ID3 for selected files"
+msgstr "Läs ID3-taggar för valda filer"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:46
+#, fuzzy
+msgid "Support ID3v2"
+msgstr "Stöd ID3v2"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:48
+msgid "Read ID3 in background"
+msgstr "Läs ID3-taggar i bakgrunden"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:50
+msgid "Calculate track lengths"
+msgstr "Beräkna spårlängder"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:52
+msgid "Easy move mode"
+msgstr "Enkelt rörelsläge"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:54
+#, fuzzy
+msgid "Remember playlist"
+msgstr "Kom ihåg spellistan"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:56
+#, fuzzy
+msgid "Remember last played"
+msgstr "Kom ihåg senast spelade"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:58
+msgid "Track delay (seconds)"
+msgstr "Spårfördröjning (sekunder)"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:60
+#, fuzzy
+msgid "Output"
+msgstr "Utdata"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:62
+#, fuzzy
+msgid "Volume controls"
+msgstr "Volymkontroller"
+
+#. TRANSLATORS: IDD_OPTIONS
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:64 briskplayer_rc.c:156
+msgid "ReplayGain"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:66
+msgid "Mode"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:68
+msgid "Preamp (dB)"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:70
+msgid "Prevent clipping"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:72
+msgid "Gapless playback"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:76
+msgid "Browse..."
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:78 briskplayer_rc.c:88
+#, fuzzy
 msgid "OK"
 msgstr "OK"
 
+#. TRANSLATORS: IDD_OPTIONS
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:80 briskplayer_rc.c:90
 #, fuzzy
-msgctxt "options"
 msgid "Cancel"
 msgstr "Avbryt"
 
-#. Context: URL dialog
-msgid ""
-"Type the URL you would like to play. Supported formats are MP3 and OGG "
-"streaming, and M3U playlists."
-msgstr ""
-"Ange URL:en du vill spela. Stödda format är MP3- och OGG-streaming samt M3U-"
-"spellistor."
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:82
+#, fuzzy
+msgid "Open URL"
+msgstr "Öppna URL"
 
-msgid "&URL:"
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:84
+msgid "Enter the URL of the stream to play"
+msgstr ""
+
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:86
+#, fuzzy
+msgid "URL:"
 msgstr "&URL:"
 
-#. Context: Quick Find dialog
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:92
+#, fuzzy
+msgid "Quick Find"
+msgstr "Snabbsökning"
+
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:94
 msgid "Find Text"
 msgstr "Sök text"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:96
 msgid "Look in"
 msgstr "Sök i"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:98
 msgid "&Titles"
 msgstr "&Titlar"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:100
 msgid "Artist &Names"
 msgstr "Artistn&amn"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:102
 msgid "&Album Names"
 msgstr "&Albumnamn"
 
-#. Context: Volume control options
-#, fuzzy
-msgctxt "audio"
-msgid "System MASTER volume"
-msgstr "System-MASTER-volym"
-
-#, fuzzy
-msgctxt "audio"
-msgid "System WAVE volume"
-msgstr "System-WAVE-volym"
-
-#, fuzzy
-msgctxt "audio"
-msgid "Internal volume"
-msgstr "Intern volym"
-
-#. Context: Status messages
-#, fuzzy
-msgctxt "status"
-msgid ""
-"Filetypes are registered.\n"
-"You can doubleclick a supported file to run BriskPlayer."
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:106
+msgid "Track Properties"
 msgstr ""
-"Filtyper är registrerade.\n"
-"Du kan dubbelklicka på en filen som stöds för att köra BriskPlayer."
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:108
+msgid "Album Art"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:110
+msgid "File Information"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:112
+msgid "File:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:114
+msgid "Size:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:116
+msgid "Basic Metadata"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:118
 #, fuzzy
-msgctxt "status"
-msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
-msgstr "En ikon för BriskPlayer har skapats i Startmenyn och på Skrivbordet."
+msgid "Title:"
+msgstr "&Titlar"
 
-#. Context: File filters
-msgid "BriskPlayer Skin Initialization Files (*.ini)"
-msgstr "BriskPlayer-skalinitieringsfiler (*.ini)"
-
-msgid "All Files (*.*)"
-msgstr "Alla filer (*.*)"
-
-#. Context: Audio format strings
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:120
 #, fuzzy
-msgctxt "audio"
-msgid "Bitrate: %d kbps"
-msgstr "Bithastighet: %d kbps"
+msgid "Artist:"
+msgstr "Artistn&amn"
 
-#, fuzzy
-msgctxt "audio"
-msgid "Sample rate: %.1f kHz"
-msgstr "Samplingsfrekvens: %.1f kHz"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:122
+msgid "Album:"
+msgstr ""
 
-#. Context: Time format (plural forms example)
-#, fuzzy
-msgctxt "time"
-msgid "Found %d file"
-msgid_plural "Found %d files"
-msgstr[0] "%d fil hittades"
-msgstr[1] "%d filer hittades"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:124
+msgid "Year:"
+msgstr ""
 
-#, fuzzy
-msgctxt "time"
-msgid "%d second"
-msgid_plural "%d seconds"
-msgstr[0] "%d sekund"
-msgstr[1] "%d sekunder"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:126
+msgid "Genre:"
+msgstr ""
 
-#, fuzzy
-msgctxt "time"
-msgid "%d minute"
-msgid_plural "%d minutes"
-msgstr[0] "%d minut"
-msgstr[1] "%d minuter"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:128
+msgid "Track:"
+msgstr ""
 
-#. Context: Error messages
-#, fuzzy
-msgctxt "error"
-msgid "Failed to initialize audio device"
-msgstr "Det gick inte att initiera ljudenheten"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:130
+msgid "Disc:"
+msgstr ""
 
-#, fuzzy
-msgctxt "error"
-msgid "Unable to load audio file"
-msgstr "Det gick inte att läsa in ljudfilen"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:132
+msgid "Comment:"
+msgstr ""
 
-#, fuzzy
-msgctxt "error"
-msgid "Invalid String ID"
-msgstr "Ogiltigt sträng-ID"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:134
+msgid "Extended Metadata"
+msgstr ""
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:136
+msgid "Composer:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:138
+msgid "Album Artist:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:140
+msgid "Grouping:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:142
+msgid "BPM:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:144
 #, fuzzy
-msgctxt "error"
-msgid "Audio Error"
+msgid "Audio Properties"
 msgstr "Ljudfel"
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:146
+msgid "Codec:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:148
 #, fuzzy
-msgctxt "error"
-msgid "File Error"
-msgstr "Filfel"
+msgid "Bitrate:"
+msgstr "Bithastighet: %d kbps"
 
-#. Context: Processing messages
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:150
 #, fuzzy
-msgctxt "status"
-msgid "Processing audio..."
-msgstr "Bearbetar ljud..."
+msgid "Sample Rate:"
+msgstr "Samplingsfrekvens: %.1f kHz"
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:152
+msgid "Bit Depth:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:154
+msgid "Channels:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:158
+msgid "Track Gain:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:160
 #, fuzzy
-msgctxt "status"
-msgid "Loading..."
-msgstr "Läser in..."
+msgid "Album Gain:"
+msgstr "&Albumnamn"
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:162
+msgid "File Information (Extended)"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:164
+msgid "Track ID:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:166
+msgid "Release ID:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:168
 #, fuzzy
-msgctxt "status"
-msgid "Ready"
-msgstr "Redo"
+msgid "Artist ID:"
+msgstr "Artistn&amn"
 
-#~ msgid "Rotate system tray icon"
-#~ msgstr "Rotera systemfältsikonen"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:170
+msgid "MusicBrainz:"
+msgstr ""
 
-#~ msgid "Scroll title"
-#~ msgstr "Scrolla titel"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:172
+msgid "Update"
+msgstr ""
 
-#~ msgid "Only add file once to playlist"
-#~ msgstr "Lägg bara till filen en gång i spellistan"
+#. TRANSLATORS: IDD_PROPERTIES
+#. TRANSLATORS: IDD_EQUALIZER
+#: briskplayer_rc.c:174 briskplayer_rc.c:184
+#, fuzzy
+msgid "Close"
+msgstr "&Stäng"
 
-#~ msgid "Read ID3 tags"
-#~ msgstr "Läs ID3-taggar"
+#. TRANSLATORS: IDD_EQUALIZER
+#: briskplayer_rc.c:178
+msgid "Enable Equalizer"
+msgstr ""
 
-#~ msgid "Read ID3 for selected files"
-#~ msgstr "Läs ID3-taggar för valda filer"
-
-#~ msgid "Read ID3 in background"
-#~ msgstr "Läs ID3-taggar i bakgrunden"
-
-#~ msgid "Calculate track lengths"
-#~ msgstr "Beräkna spårlängder"
-
-#~ msgid "Easy move mode"
-#~ msgstr "Enkelt rörelsläge"
-
-#~ msgid "Register file types"
-#~ msgstr "Registrera filtyper"
-
-#~ msgid "Track delay (seconds)"
-#~ msgstr "Spårfördröjning (sekunder)"
+#. TRANSLATORS: IDD_EQUALIZER
+#: briskplayer_rc.c:180
+msgid "Preset:"
+msgstr ""
 
 #~ msgid "Skin list length"
 #~ msgstr "Skinlistans längd"
 
+#, fuzzy
+#~ msgid "BriskPlayer - Blazing fast audio player"
+#~ msgstr "BriskPlayer – Blixtsnabb mediaspelare"
+
+#, fuzzy
+#~ msgid "BriskPlayer Playlist"
+#~ msgstr "BriskPlayer-spellista"
+
+#, fuzzy
+#~ msgid "English"
+#~ msgstr "Engelska"
+
+#, fuzzy
+#~ msgid "Deutsch"
+#~ msgstr "Tyska"
+
+#, fuzzy
+#~ msgid "C&hanges"
+#~ msgstr "Ä&ndringar"
+
+#, fuzzy
+#~ msgid "Rotate systemtray icon"
+#~ msgstr "Rotera systemfältsikon"
+
+#, fuzzy
+#~ msgid "Scroll Songtitle"
+#~ msgstr "Scrolla låttitel"
+
+#, fuzzy
+#~ msgid "Allow file once in playlist"
+#~ msgstr "Tillåt varje fil en gång i spellistan"
+
+#, fuzzy
+#~ msgid "Read ID3 Tag (if any)"
+#~ msgstr "Läs ID3-tagg (om någon)"
+
+#, fuzzy
+#~ msgid "Read ID3 Tag of selected"
+#~ msgstr "Läs ID3-tagg för valt spår"
+
+#, fuzzy
+#~ msgid "Prefer native OGG tags"
+#~ msgstr "Föredra inbyggda OGG-taggar"
+
+#, fuzzy
+#~ msgid "Load ID3 tags in background"
+#~ msgstr "Läs in ID3-taggar i bakgrunden"
+
+#, fuzzy
+#~ msgid "Work out track lengths"
+#~ msgstr "Beräkna spårlängder"
+
+#, fuzzy
+#~ msgid "Easy move"
+#~ msgstr "Enkel flytt"
+
+#, fuzzy
+#~ msgid "Track Delay (sec)"
+#~ msgstr "Fördröjning mellan spår (sek)"
+
+#, fuzzy
+#~ msgid "Skinlist length"
+#~ msgstr "Skallistas längd"
+
+#, fuzzy
+#~ msgid "Flush"
+#~ msgstr "Töm"
+
+#, fuzzy
+#~ msgid "Player"
+#~ msgstr "Spelare"
+
+#, fuzzy
+#~ msgid "Open"
+#~ msgstr "Öppna"
+
+#~ msgid ""
+#~ "Type the URL you would like to play. Supported formats are MP3 and OGG "
+#~ "streaming, and M3U playlists."
+#~ msgstr ""
+#~ "Ange URL:en du vill spela. Stödda format är MP3- och OGG-streaming samt "
+#~ "M3U-spellistor."
+
+#, fuzzy
+#~ msgid ""
+#~ "Filetypes are registered.\n"
+#~ "You can doubleclick a supported file to run BriskPlayer."
+#~ msgstr ""
+#~ "Filtyper är registrerade.\n"
+#~ "Du kan dubbelklicka på en filen som stöds för att köra BriskPlayer."
+
+#, fuzzy
+#~ msgid ""
+#~ "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+#~ msgstr ""
+#~ "En ikon för BriskPlayer har skapats i Startmenyn och på Skrivbordet."
+
+#~ msgid "BriskPlayer Skin Initialization Files (*.ini)"
+#~ msgstr "BriskPlayer-skalinitieringsfiler (*.ini)"
+
+#~ msgid "All Files (*.*)"
+#~ msgstr "Alla filer (*.*)"
+
+#, fuzzy
+#~ msgid "Found %d file"
+#~ msgid_plural "Found %d files"
+#~ msgstr[0] "%d fil hittades"
+#~ msgstr[1] "%d filer hittades"
+
+#, fuzzy
+#~ msgid "%d second"
+#~ msgid_plural "%d seconds"
+#~ msgstr[0] "%d sekund"
+#~ msgstr[1] "%d sekunder"
+
+#, fuzzy
+#~ msgid "%d minute"
+#~ msgid_plural "%d minutes"
+#~ msgstr[0] "%d minut"
+#~ msgstr[1] "%d minuter"
+
+#, fuzzy
+#~ msgid "Failed to initialize audio device"
+#~ msgstr "Det gick inte att initiera ljudenheten"
+
+#, fuzzy
+#~ msgid "Unable to load audio file"
+#~ msgstr "Det gick inte att läsa in ljudfilen"
+
+#, fuzzy
+#~ msgid "Invalid String ID"
+#~ msgstr "Ogiltigt sträng-ID"
+
+#, fuzzy
+#~ msgid "Processing audio..."
+#~ msgstr "Bearbetar ljud..."
+
+#, fuzzy
+#~ msgid "Loading..."
+#~ msgstr "Läser in..."
+
+#, fuzzy
+#~ msgid "Ready"
+#~ msgstr "Redo"
+
+#~ msgid "Register file types"
+#~ msgstr "Registrera filtyper"
+
 #~ msgid "Open..."
 #~ msgstr "Öppna..."
 
-#~ msgid "DSP Plugins"
-#~ msgstr "DSP-insticksprogram"
+#, fuzzy
+#~ msgctxt "options"
+#~ msgid "Register Filetypes"
+#~ msgstr "Registrera filtyper"
 
-#~ msgid "None (Disabled)"
-#~ msgstr "Ingen (Inaktiverad)"
-
-#~ msgid "Configure..."
-#~ msgstr "Konfigurera..."
+#, fuzzy
+#~ msgctxt "options"
+#~ msgid "Add to Start Menu"
+#~ msgstr "Lägg till i Startmenyn"

@@ -11,6 +11,12 @@ if(NOT GETTEXT_FOUND)
     return()
 endif()
 
+# FindGettext only locates msgmerge/msgfmt; update-pot needs xgettext too.
+# Same search path as those (the vcpkg host-tools directory added to
+# CMAKE_PROGRAM_PATH by the top-level CMakeLists.txt).
+get_filename_component(_gettext_bin_dir "${GETTEXT_MSGFMT_EXECUTABLE}" DIRECTORY)
+find_program(GETTEXT_XGETTEXT_EXECUTABLE xgettext HINTS "${_gettext_bin_dir}")
+
 # Languages currently supported
 set(LANGUAGES ar bg cs da de el es fi fr he hu id it ja ko nb nl pl pt pt_BR ro ru sk sv tr uk vi zh_CN zh_TW)
 
@@ -27,33 +33,48 @@ foreach(line ${POTFILES_CONTENT})
     string(STRIP "${line}" line)
     # Skip empty lines and comments
     if(line AND NOT line MATCHES "^#")
-        # Convert relative path to absolute
-        if(NOT IS_ABSOLUTE "${line}")
-            set(line "${CMAKE_SOURCE_DIR}/${line}")
-        endif()
-        if(EXISTS "${line}")
+        # Kept relative to the source root (update-pot runs there) so the
+        # .pot's "#: file:line" references don't embed the local checkout path
+        if(EXISTS "${CMAKE_SOURCE_DIR}/${line}")
             list(APPEND TRANSLATABLE_SOURCES "${line}")
+        else()
+            message(WARNING "po/POTFILES.in lists missing file: ${line}")
         endif()
     endif()
 endforeach()
 
+# Dialog text lives in briskplayer.rc, which xgettext can't parse; it is
+# extracted into a generated C file first (see ExtractRcStrings.cmake).
+set(RC_STRINGS_FILE "briskplayer_rc.c")
+
 # Custom target to update the POT file
 add_custom_target(update-pot
+    COMMAND ${CMAKE_COMMAND}
+        -DRC_FILE=${CMAKE_SOURCE_DIR}/briskplayer.rc
+        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/${RC_STRINGS_FILE}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/ExtractRcStrings.cmake
     COMMAND ${GETTEXT_XGETTEXT_EXECUTABLE}
+        # Inputs are named relative to these, keeping "#: file:line"
+        # references free of local paths
+        --directory=${CMAKE_SOURCE_DIR}
+        --directory=${CMAKE_CURRENT_BINARY_DIR}
         --keyword=_
         --keyword=N_
         --keyword=T
         --keyword=TW
-        --keyword=C_:1c,2
-        --keyword=NC_:1c,2
+        # C_/NC_ take a context argument but look up by string alone
+        # (see CPI_Gettext.h), so extract without msgctxt to match.
+        --keyword=C_:2
+        --keyword=NC_:2
         --from-code=UTF-8
         --add-comments=TRANSLATORS:
         --package-name=BriskPlayer
         --package-version=${PROJECT_VERSION}
         --msgid-bugs-address=zachbacon@proton.me
-        --copyright-holder="Zach Bacon"
+        "--copyright-holder=Zach Bacon"
         --output=${POT_FILE}
         ${TRANSLATABLE_SOURCES}
+        ${RC_STRINGS_FILE}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Extracting translatable strings to ${GETTEXT_DOMAIN}.pot"
     VERBATIM

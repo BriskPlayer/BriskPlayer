@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: BriskPlayer 3.0.0\n"
-"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
-"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"Report-Msgid-Bugs-To: zachbacon@proton.me\n"
+"POT-Creation-Date: 2026-10-19 19:27-0400\n"
 "PO-Revision-Date: 2025-11-03 12:00+0000\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: Japanese\n"
@@ -16,537 +16,840 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#. Context: Application name and description
+#: CPI_Gettext.h:100
 #, fuzzy
-msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#: CPI_Gettext.h:103
 #, fuzzy
-msgctxt "app"
-msgid "BriskPlayer - Blazing fast audio player"
-msgstr "BriskPlayer – 超高速オーディオプレーヤー"
-
-#, fuzzy
-msgctxt "app"
-msgid "BriskPlayer Audio file"
-msgstr "BriskPlayer オーディオファイル"
-
-#, fuzzy
-msgctxt "app"
-msgid "BriskPlayer Playlist"
-msgstr "BriskPlayer プレイリスト"
-
-#. Context: Menu items
-#, fuzzy
-msgctxt "menu"
 msgid "Open File..."
 msgstr "ファイルを開く..."
 
+#: CPI_Gettext.h:104
 #, fuzzy
-msgctxt "menu"
 msgid "Open URL..."
 msgstr "URLを開く..."
 
+#: CPI_Gettext.h:105
 #, fuzzy
-msgctxt "menu"
 msgid "Add Files..."
 msgstr "ファイルを追加..."
 
+#: CPI_Gettext.h:106
 #, fuzzy
-msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "プレイリストエディタ"
 
+#: CPI_Gettext.h:107
 #, fuzzy
-msgctxt "menu"
-msgid "Skin"
-msgstr "スキン"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Default"
-msgstr "デフォルト"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Language"
-msgstr "言語"
-
-#, fuzzy
-msgctxt "menu"
-msgid "English"
-msgstr "英語"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Deutsch"
-msgstr "ドイツ語"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Playback"
-msgstr "再生"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Play"
-msgstr "再生"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Stop"
-msgstr "停止"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Pause"
-msgstr "一時停止"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Next"
-msgstr "次へ"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Previous"
-msgstr "前へ"
-
-#, fuzzy
-msgctxt "menu"
 msgid "Options..."
 msgstr "オプション..."
 
+#: CPI_Gettext.h:108
 #, fuzzy
-msgctxt "menu"
 msgid "About"
 msgstr "バージョン情報"
 
+#: CPI_Gettext.h:109
 #, fuzzy
-msgctxt "menu"
 msgid "Exit"
 msgstr "終了"
 
-#. Context: Dialog titles
+#: CPI_Gettext.h:110
 #, fuzzy
-msgctxt "dialog"
-msgid "About BriskPlayer"
-msgstr "BriskPlayer について"
+msgid "Play"
+msgstr "再生"
 
+#: CPI_Gettext.h:111
 #, fuzzy
-msgctxt "dialog"
-msgid "BriskPlayer Options"
-msgstr "BriskPlayer オプション"
+msgid "Stop"
+msgstr "停止"
 
+#: CPI_Gettext.h:112
 #, fuzzy
-msgctxt "dialog"
-msgid "Open URL"
-msgstr "URLを開く"
+msgid "Pause"
+msgstr "一時停止"
 
+#: CPI_Gettext.h:113
 #, fuzzy
-msgctxt "dialog"
-msgid "Quick Find"
-msgstr "クイック検索"
+msgid "Next"
+msgstr "次へ"
 
-#. Context: About dialog
+#: CPI_Gettext.h:114
 #, fuzzy
-msgctxt "dialog"
-msgid "&About"
-msgstr "バージョン情報(&A)"
+msgid "Previous"
+msgstr "前へ"
 
+#: CPI_Gettext.h:115
 #, fuzzy
-msgctxt "dialog"
-msgid "&Keyboard Shortcuts"
-msgstr "キーボードショートカット(&K)"
+msgid "Default"
+msgstr "デフォルト"
 
+#: CPI_Gettext.h:116
 #, fuzzy
-msgctxt "dialog"
-msgid "C&hanges"
-msgstr "変更履歴(&H)"
-
-#, fuzzy
-msgctxt "dialog"
-msgid "C&lose"
-msgstr "閉じる(&L)"
-
-#. Context: Options dialog
-#, fuzzy
-msgctxt "options"
-msgid "General"
-msgstr "一般"
-
-#, fuzzy
-msgctxt "options"
-msgid "Always on top"
-msgstr "常に最前面"
-
-#, fuzzy
-msgctxt "options"
-msgid "Exit after playing"
-msgstr "再生後に終了"
-
-#, fuzzy
-msgctxt "options"
-msgid "Rotate systemtray icon"
-msgstr "システムトレイアイコンを回転"
-
-#, fuzzy
-msgctxt "options"
-msgid "Scroll Songtitle"
-msgstr "曲名をスクロール"
-
-#, fuzzy
-msgctxt "options"
-msgid "Allow file once in playlist"
-msgstr "各ファイルをプレイリストに1回のみ追加"
-
-#, fuzzy
-msgctxt "options"
-msgid "Autoplay on startup"
-msgstr "起動時に自動再生"
-
-#, fuzzy
-msgctxt "options"
-msgid "Allow multiple instances"
-msgstr "複数のインスタンスを許可"
-
-#, fuzzy
-msgctxt "options"
-msgid "Show remaining time"
-msgstr "残り時間を表示"
-
-#, fuzzy
-msgctxt "options"
-msgid "Show on taskbar"
-msgstr "タスクバーに表示"
-
-#, fuzzy
-msgctxt "options"
-msgid "Sticky windows"
-msgstr "ウィンドウの吸着"
-
-#, fuzzy
-msgctxt "options"
-msgid "Discord Rich Presence"
-msgstr "Discord Rich Presence"
-
-msgctxt "replaygain"
-msgid "Off"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Track"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Album"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Prevent clipping"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "ReplayGain"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Mode"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Preamp (dB)"
-msgstr ""
-
-msgctxt "playback"
-msgid "Gapless playback"
-msgstr ""
-
-#, fuzzy
-msgctxt "options"
-msgid "Register Filetypes"
-msgstr "ファイルタイプを登録"
-
-#, fuzzy
-msgctxt "options"
-msgid "Add to Start Menu"
-msgstr "スタートメニューに追加"
-
-#, fuzzy
-msgctxt "options"
-msgid "Read ID3 Tag (if any)"
-msgstr "ID3タグを読む（あれば）"
-
-#, fuzzy
-msgctxt "options"
-msgid "Read ID3 Tag of selected"
-msgstr "選択したファイルのID3タグを読む"
-
-#, fuzzy
-msgctxt "options"
-msgid "Support ID3v2"
-msgstr "ID3v2をサポート"
-
-#, fuzzy
-msgctxt "options"
-msgid "Prefer native OGG tags"
-msgstr "ネイティブOGGタグを優先"
-
-#, fuzzy
-msgctxt "options"
-msgid "Load ID3 tags in background"
-msgstr "バックグラウンドでID3タグを読み込む"
-
-#, fuzzy
-msgctxt "options"
-msgid "Work out track lengths"
-msgstr "トラック長を計算"
-
-#, fuzzy
-msgctxt "options"
-msgid "Easy move"
-msgstr "簡単移動"
-
-#, fuzzy
-msgctxt "options"
-msgid "Remember playlist"
-msgstr "プレイリストを記憶"
-
-#, fuzzy
-msgctxt "options"
-msgid "Remember last played"
-msgstr "最後に再生したトラックを記憶"
-
-#, fuzzy
-msgctxt "options"
-msgid "Track Delay (sec)"
-msgstr "トラック間の遅延（秒）"
-
-#, fuzzy
-msgctxt "options"
-msgid "Skinlist length"
-msgstr "スキンリストの長さ"
-
-#, fuzzy
-msgctxt "options"
-msgid "Flush"
-msgstr "フラッシュ"
-
-#, fuzzy
-msgctxt "options"
-msgid "Output"
-msgstr "出力"
-
-#, fuzzy
-msgctxt "options"
-msgid "Volume controls"
-msgstr "音量コントロール"
-
-#, fuzzy
-msgctxt "options"
 msgid "Skin"
 msgstr "スキン"
 
+#: CPI_Gettext.h:117
 #, fuzzy
-msgctxt "options"
-msgid "Player"
-msgstr "プレーヤー"
+msgid "Language"
+msgstr "言語"
 
+#: CPI_Gettext.h:118
 #, fuzzy
-msgctxt "options"
-msgid "Open"
-msgstr "開く"
+msgid "Playback"
+msgstr "再生"
 
+#: CPI_Gettext.h:119
+msgid "DSP Plugins"
+msgstr "DSPプラグイン"
+
+#. TRANSLATORS: IDD_EQUALIZER
+#: CPI_Gettext.h:120 briskplayer_rc.c:176
+msgid "Equalizer"
+msgstr ""
+
+#: CPI_Gettext.h:121
+msgid "None (Disabled)"
+msgstr "なし（無効）"
+
+#: CPI_Gettext.h:122
+msgid "Configure..."
+msgstr "設定..."
+
+#: CPI_Gettext.h:125
+msgid "Off"
+msgstr ""
+
+#: CPI_Gettext.h:126
+msgid "Track"
+msgstr ""
+
+#: CPI_Gettext.h:127
+msgid "Album"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: CPI_Gettext.h:128 briskplayer_rc.c:74
+msgid "Skins Folder"
+msgstr ""
+
+#: CPI_Gettext.h:131
 #, fuzzy
-msgctxt "options"
+msgid "System Master Volume"
+msgstr "システムMASTER音量"
+
+#: CPI_Gettext.h:132
+#, fuzzy
+msgid "System Wave Volume"
+msgstr "システムWAVE音量"
+
+#: CPI_Gettext.h:133
+#, fuzzy
+msgid "Internal Volume"
+msgstr "内部音量"
+
+#: CPI_Gettext.h:142
+#, fuzzy
+msgid "Not a valid BriskPlayer Skin file"
+msgstr "BriskPlayer オーディオファイル"
+
+#: CPI_Gettext.h:143
+msgid "Can't load bitmaps!"
+msgstr ""
+
+#: CPI_Gettext.h:144
+msgid "No audio devices in this system"
+msgstr ""
+
+#: CPI_Gettext.h:145
+#, fuzzy
+msgid "Failed to create playlist"
+msgstr "ファイルをプレイリストに一度だけ追加"
+
+#: CPI_Gettext.h:146
+msgid "Could not open file"
+msgstr ""
+
+#: CPI_Gettext.h:147
+msgid "Not a valid directory."
+msgstr ""
+
+#: CPI_Gettext.h:148
+msgid "Could not perform scan"
+msgstr ""
+
+#: CPI_Gettext.h:149
+msgid ""
+"This file's ID3 tag cannot be updated. This is because BriskPlayer cannot "
+"write to this file."
+msgstr ""
+
+#: CPI_Gettext.h:150
+msgid "Cannot update tag"
+msgstr ""
+
+#: CPI_Gettext.h:151
+#, fuzzy
+msgid "Error"
+msgstr "ファイルエラー"
+
+#: CPI_Gettext.h:152
+msgid ""
+"Some files could not be renamed.\n"
+"\n"
+"This could be because they are either currently playing or are read-only."
+msgstr ""
+
+#: CPI_Gettext.h:161
+#, fuzzy
+msgid "BriskPlayer command line options"
+msgstr "BriskPlayer オプション"
+
+#. TRANSLATORS: IDD_EQUALIZER
+#: DLG_Equalizer.c:82 briskplayer_rc.c:182
+msgid "Flat"
+msgstr ""
+
+#: DLG_Equalizer.c:83
+msgid "Bass Boost"
+msgstr ""
+
+#: DLG_Equalizer.c:84
+msgid "Treble Boost"
+msgstr ""
+
+#: DLG_Equalizer.c:85
+msgid "Rock"
+msgstr ""
+
+#: DLG_Equalizer.c:86
+msgid "Classical"
+msgstr ""
+
+#: DLG_Equalizer.c:87
+msgid "Pop"
+msgstr ""
+
+#: DLG_Equalizer.c:88
+msgid "Jazz"
+msgstr ""
+
+#: DLG_Equalizer.c:89
+#, fuzzy
+msgid "Dance"
+msgstr "キャンセル"
+
+#. TRANSLATORS: IDD_ABOUT
+#: about.c:57 briskplayer_rc.c:4
+#, fuzzy
+msgid "About BriskPlayer"
+msgstr "BriskPlayer について"
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:6
+#, fuzzy
+msgid "&About"
+msgstr "バージョン情報(&A)"
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:8
+#, fuzzy
+msgid "&Keyboard Shortcuts"
+msgstr "キーボードショートカット(&K)"
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:10
+msgid "&License"
+msgstr ""
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:12
+msgid "Github"
+msgstr ""
+
+#. TRANSLATORS: IDD_ABOUT
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:14 briskplayer_rc.c:104
+#, fuzzy
+msgid "C&lose"
+msgstr "閉じる(&L)"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:16
+#, fuzzy
+msgid "Options"
+msgstr "オプション..."
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:18
+#, fuzzy
+msgid "General"
+msgstr "一般"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:20
+#, fuzzy
+msgid "Always on top"
+msgstr "常に最前面"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:22
+#, fuzzy
+msgid "Exit after playing"
+msgstr "再生後に終了"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:24
+msgid "Rotate system tray icon"
+msgstr "システムトレイアイコンを回転"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:26
+msgid "Scroll title"
+msgstr "タイトルをスクロール"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:28
+msgid "Only add file once to playlist"
+msgstr "ファイルをプレイリストに一度だけ追加"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:30
+#, fuzzy
+msgid "Autoplay on startup"
+msgstr "起動時に自動再生"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:32
+#, fuzzy
+msgid "Allow multiple instances"
+msgstr "複数のインスタンスを許可"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:34
+#, fuzzy
+msgid "Show remaining time"
+msgstr "残り時間を表示"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:36
+#, fuzzy
+msgid "Show on taskbar"
+msgstr "タスクバーに表示"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:38
+#, fuzzy
+msgid "Sticky windows"
+msgstr "ウィンドウの吸着"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:40
+#, fuzzy
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:42
+msgid "Read ID3 tags"
+msgstr "ID3タグを読み込む"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:44
+msgid "Read ID3 for selected files"
+msgstr "選択したファイルのID3タグを読み込む"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:46
+#, fuzzy
+msgid "Support ID3v2"
+msgstr "ID3v2をサポート"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:48
+msgid "Read ID3 in background"
+msgstr "バックグラウンドでID3タグを読み込む"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:50
+msgid "Calculate track lengths"
+msgstr "トラックの長さを計算"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:52
+msgid "Easy move mode"
+msgstr "イージームーブモード"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:54
+#, fuzzy
+msgid "Remember playlist"
+msgstr "プレイリストを記憶"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:56
+#, fuzzy
+msgid "Remember last played"
+msgstr "最後に再生したトラックを記憶"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:58
+msgid "Track delay (seconds)"
+msgstr "トラックの遅延（秒）"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:60
+#, fuzzy
+msgid "Output"
+msgstr "出力"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:62
+#, fuzzy
+msgid "Volume controls"
+msgstr "音量コントロール"
+
+#. TRANSLATORS: IDD_OPTIONS
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:64 briskplayer_rc.c:156
+msgid "ReplayGain"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:66
+msgid "Mode"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:68
+msgid "Preamp (dB)"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:70
+msgid "Prevent clipping"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:72
+msgid "Gapless playback"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:76
+msgid "Browse..."
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:78 briskplayer_rc.c:88
+#, fuzzy
 msgid "OK"
 msgstr "OK"
 
+#. TRANSLATORS: IDD_OPTIONS
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:80 briskplayer_rc.c:90
 #, fuzzy
-msgctxt "options"
 msgid "Cancel"
 msgstr "キャンセル"
 
-#. Context: URL dialog
-msgid ""
-"Type the URL you would like to play. Supported formats are MP3 and OGG "
-"streaming, and M3U playlists."
-msgstr ""
-"再生するURLを入力してください。対応形式はMP3・OGGストリーミングとM3Uプレイリ"
-"ストです。"
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:82
+#, fuzzy
+msgid "Open URL"
+msgstr "URLを開く"
 
-msgid "&URL:"
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:84
+msgid "Enter the URL of the stream to play"
+msgstr ""
+
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:86
+#, fuzzy
+msgid "URL:"
 msgstr "URL(&U):"
 
-#. Context: Quick Find dialog
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:92
+#, fuzzy
+msgid "Quick Find"
+msgstr "クイック検索"
+
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:94
 msgid "Find Text"
 msgstr "テキストを検索"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:96
 msgid "Look in"
 msgstr "検索対象"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:98
 msgid "&Titles"
 msgstr "タイトル(&T)"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:100
 msgid "Artist &Names"
 msgstr "アーティスト名(&N)"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:102
 msgid "&Album Names"
 msgstr "アルバム名(&A)"
 
-#. Context: Volume control options
-#, fuzzy
-msgctxt "audio"
-msgid "System MASTER volume"
-msgstr "システムMASTER音量"
-
-#, fuzzy
-msgctxt "audio"
-msgid "System WAVE volume"
-msgstr "システムWAVE音量"
-
-#, fuzzy
-msgctxt "audio"
-msgid "Internal volume"
-msgstr "内部音量"
-
-#. Context: Status messages
-#, fuzzy
-msgctxt "status"
-msgid ""
-"Filetypes are registered.\n"
-"You can doubleclick a supported file to run BriskPlayer."
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:106
+msgid "Track Properties"
 msgstr ""
-"ファイルタイプが登録されました。\n"
-"サポートされているファイルをダブルクリックするとBriskPlayerが起動します。"
 
-#, fuzzy
-msgctxt "status"
-msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:108
+msgid "Album Art"
 msgstr ""
-"BriskPlayerのアイコンがスタートメニューとデスクトップに作成されました。"
 
-#. Context: File filters
-msgid "BriskPlayer Skin Initialization Files (*.ini)"
-msgstr "BriskPlayer スキン初期化ファイル (*.ini)"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:110
+msgid "File Information"
+msgstr ""
 
-msgid "All Files (*.*)"
-msgstr "すべてのファイル (*.*)"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:112
+msgid "File:"
+msgstr ""
 
-#. Context: Audio format strings
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:114
+msgid "Size:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:116
+msgid "Basic Metadata"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:118
 #, fuzzy
-msgctxt "audio"
-msgid "Bitrate: %d kbps"
-msgstr "ビットレート: %d kbps"
+msgid "Title:"
+msgstr "タイトル(&T)"
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:120
 #, fuzzy
-msgctxt "audio"
-msgid "Sample rate: %.1f kHz"
-msgstr "サンプルレート: %.1f kHz"
+msgid "Artist:"
+msgstr "アーティスト名(&N)"
 
-#. Context: Time format (plural forms example)
-#, fuzzy
-msgctxt "time"
-msgid "Found %d file"
-msgid_plural "Found %d files"
-msgstr[0] "%d 個のファイルが見つかりました"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:122
+msgid "Album:"
+msgstr ""
 
-#, fuzzy
-msgctxt "time"
-msgid "%d second"
-msgid_plural "%d seconds"
-msgstr[0] "%d 秒"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:124
+msgid "Year:"
+msgstr ""
 
-#, fuzzy
-msgctxt "time"
-msgid "%d minute"
-msgid_plural "%d minutes"
-msgstr[0] "%d 分"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:126
+msgid "Genre:"
+msgstr ""
 
-#. Context: Error messages
-#, fuzzy
-msgctxt "error"
-msgid "Failed to initialize audio device"
-msgstr "オーディオデバイスの初期化に失敗しました"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:128
+msgid "Track:"
+msgstr ""
 
-#, fuzzy
-msgctxt "error"
-msgid "Unable to load audio file"
-msgstr "オーディオファイルを読み込めません"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:130
+msgid "Disc:"
+msgstr ""
 
-#, fuzzy
-msgctxt "error"
-msgid "Invalid String ID"
-msgstr "無効な文字列ID"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:132
+msgid "Comment:"
+msgstr ""
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:134
+msgid "Extended Metadata"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:136
+msgid "Composer:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:138
+msgid "Album Artist:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:140
+msgid "Grouping:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:142
+msgid "BPM:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:144
 #, fuzzy
-msgctxt "error"
-msgid "Audio Error"
+msgid "Audio Properties"
 msgstr "オーディオエラー"
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:146
+msgid "Codec:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:148
 #, fuzzy
-msgctxt "error"
-msgid "File Error"
-msgstr "ファイルエラー"
+msgid "Bitrate:"
+msgstr "ビットレート: %d kbps"
 
-#. Context: Processing messages
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:150
 #, fuzzy
-msgctxt "status"
-msgid "Processing audio..."
-msgstr "オーディオを処理中..."
+msgid "Sample Rate:"
+msgstr "サンプルレート: %.1f kHz"
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:152
+msgid "Bit Depth:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:154
+msgid "Channels:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:158
+msgid "Track Gain:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:160
 #, fuzzy
-msgctxt "status"
-msgid "Loading..."
-msgstr "読み込み中..."
+msgid "Album Gain:"
+msgstr "アルバム名(&A)"
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:162
+msgid "File Information (Extended)"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:164
+msgid "Track ID:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:166
+msgid "Release ID:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:168
 #, fuzzy
-msgctxt "status"
-msgid "Ready"
-msgstr "準備完了"
+msgid "Artist ID:"
+msgstr "アーティスト名(&N)"
 
-#~ msgid "Rotate system tray icon"
-#~ msgstr "システムトレイアイコンを回転"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:170
+msgid "MusicBrainz:"
+msgstr ""
 
-#~ msgid "Scroll title"
-#~ msgstr "タイトルをスクロール"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:172
+msgid "Update"
+msgstr ""
 
-#~ msgid "Only add file once to playlist"
-#~ msgstr "ファイルをプレイリストに一度だけ追加"
+#. TRANSLATORS: IDD_PROPERTIES
+#. TRANSLATORS: IDD_EQUALIZER
+#: briskplayer_rc.c:174 briskplayer_rc.c:184
+#, fuzzy
+msgid "Close"
+msgstr "閉じる(&L)"
 
-#~ msgid "Read ID3 tags"
-#~ msgstr "ID3タグを読み込む"
+#. TRANSLATORS: IDD_EQUALIZER
+#: briskplayer_rc.c:178
+msgid "Enable Equalizer"
+msgstr ""
 
-#~ msgid "Read ID3 for selected files"
-#~ msgstr "選択したファイルのID3タグを読み込む"
-
-#~ msgid "Read ID3 in background"
-#~ msgstr "バックグラウンドでID3タグを読み込む"
-
-#~ msgid "Calculate track lengths"
-#~ msgstr "トラックの長さを計算"
-
-#~ msgid "Easy move mode"
-#~ msgstr "イージームーブモード"
-
-#~ msgid "Register file types"
-#~ msgstr "ファイルの種類を登録"
-
-#~ msgid "Track delay (seconds)"
-#~ msgstr "トラックの遅延（秒）"
+#. TRANSLATORS: IDD_EQUALIZER
+#: briskplayer_rc.c:180
+msgid "Preset:"
+msgstr ""
 
 #~ msgid "Skin list length"
 #~ msgstr "スキンリストの長さ"
 
+#, fuzzy
+#~ msgid "BriskPlayer - Blazing fast audio player"
+#~ msgstr "BriskPlayer – 超高速オーディオプレーヤー"
+
+#, fuzzy
+#~ msgid "BriskPlayer Playlist"
+#~ msgstr "BriskPlayer プレイリスト"
+
+#, fuzzy
+#~ msgid "English"
+#~ msgstr "英語"
+
+#, fuzzy
+#~ msgid "Deutsch"
+#~ msgstr "ドイツ語"
+
+#, fuzzy
+#~ msgid "C&hanges"
+#~ msgstr "変更履歴(&H)"
+
+#, fuzzy
+#~ msgid "Rotate systemtray icon"
+#~ msgstr "システムトレイアイコンを回転"
+
+#, fuzzy
+#~ msgid "Scroll Songtitle"
+#~ msgstr "曲名をスクロール"
+
+#, fuzzy
+#~ msgid "Allow file once in playlist"
+#~ msgstr "各ファイルをプレイリストに1回のみ追加"
+
+#, fuzzy
+#~ msgid "Read ID3 Tag (if any)"
+#~ msgstr "ID3タグを読む（あれば）"
+
+#, fuzzy
+#~ msgid "Read ID3 Tag of selected"
+#~ msgstr "選択したファイルのID3タグを読む"
+
+#, fuzzy
+#~ msgid "Prefer native OGG tags"
+#~ msgstr "ネイティブOGGタグを優先"
+
+#, fuzzy
+#~ msgid "Load ID3 tags in background"
+#~ msgstr "バックグラウンドでID3タグを読み込む"
+
+#, fuzzy
+#~ msgid "Work out track lengths"
+#~ msgstr "トラック長を計算"
+
+#, fuzzy
+#~ msgid "Easy move"
+#~ msgstr "簡単移動"
+
+#, fuzzy
+#~ msgid "Track Delay (sec)"
+#~ msgstr "トラック間の遅延（秒）"
+
+#, fuzzy
+#~ msgid "Skinlist length"
+#~ msgstr "スキンリストの長さ"
+
+#, fuzzy
+#~ msgid "Flush"
+#~ msgstr "フラッシュ"
+
+#, fuzzy
+#~ msgid "Player"
+#~ msgstr "プレーヤー"
+
+#, fuzzy
+#~ msgid "Open"
+#~ msgstr "開く"
+
+#~ msgid ""
+#~ "Type the URL you would like to play. Supported formats are MP3 and OGG "
+#~ "streaming, and M3U playlists."
+#~ msgstr ""
+#~ "再生するURLを入力してください。対応形式はMP3・OGGストリーミングとM3Uプレイ"
+#~ "リストです。"
+
+#, fuzzy
+#~ msgid ""
+#~ "Filetypes are registered.\n"
+#~ "You can doubleclick a supported file to run BriskPlayer."
+#~ msgstr ""
+#~ "ファイルタイプが登録されました。\n"
+#~ "サポートされているファイルをダブルクリックするとBriskPlayerが起動します。"
+
+#, fuzzy
+#~ msgid ""
+#~ "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+#~ msgstr ""
+#~ "BriskPlayerのアイコンがスタートメニューとデスクトップに作成されました。"
+
+#~ msgid "BriskPlayer Skin Initialization Files (*.ini)"
+#~ msgstr "BriskPlayer スキン初期化ファイル (*.ini)"
+
+#~ msgid "All Files (*.*)"
+#~ msgstr "すべてのファイル (*.*)"
+
+#, fuzzy
+#~ msgid "Found %d file"
+#~ msgid_plural "Found %d files"
+#~ msgstr[0] "%d 個のファイルが見つかりました"
+
+#, fuzzy
+#~ msgid "%d second"
+#~ msgid_plural "%d seconds"
+#~ msgstr[0] "%d 秒"
+
+#, fuzzy
+#~ msgid "%d minute"
+#~ msgid_plural "%d minutes"
+#~ msgstr[0] "%d 分"
+
+#, fuzzy
+#~ msgid "Failed to initialize audio device"
+#~ msgstr "オーディオデバイスの初期化に失敗しました"
+
+#, fuzzy
+#~ msgid "Unable to load audio file"
+#~ msgstr "オーディオファイルを読み込めません"
+
+#, fuzzy
+#~ msgid "Invalid String ID"
+#~ msgstr "無効な文字列ID"
+
+#, fuzzy
+#~ msgid "Processing audio..."
+#~ msgstr "オーディオを処理中..."
+
+#, fuzzy
+#~ msgid "Loading..."
+#~ msgstr "読み込み中..."
+
+#, fuzzy
+#~ msgid "Ready"
+#~ msgstr "準備完了"
+
+#~ msgid "Register file types"
+#~ msgstr "ファイルの種類を登録"
+
 #~ msgid "Open..."
 #~ msgstr "開く..."
 
-#~ msgid "DSP Plugins"
-#~ msgstr "DSPプラグイン"
+#, fuzzy
+#~ msgctxt "options"
+#~ msgid "Register Filetypes"
+#~ msgstr "ファイルタイプを登録"
 
-#~ msgid "None (Disabled)"
-#~ msgstr "なし（無効）"
-
-#~ msgid "Configure..."
-#~ msgstr "設定..."
+#, fuzzy
+#~ msgctxt "options"
+#~ msgid "Add to Start Menu"
+#~ msgstr "スタートメニューに追加"

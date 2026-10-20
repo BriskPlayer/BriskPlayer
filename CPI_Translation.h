@@ -28,10 +28,14 @@
  * All translations are handled through standard gettext functions.
  * 
  * Usage:
- * - Basic translation: _(u8"Text to translate")
- * - Context-aware: C_(CTX_MENU, u8"Menu item")
- * - Plural forms: P_(u8"1 file", u8"%d files", count)
- * 
+ * - Define the string in CPI_Gettext.h as #define STR_X N_("Text")
+ *   (N_ is what lets xgettext find it) and display it with T(STR_X)
+ * - Or translate a literal directly: T("Text to translate")
+ * - Lookups never use a context (C_ ignores its first argument), so
+ *   .po entries must not have a msgctxt
+ * - Regenerate po/briskplayer.pot with the update-pot build target, then
+ *   merge it into every language with update-po
+ *
  * See CPI_Gettext.h for full documentation.
  */
 

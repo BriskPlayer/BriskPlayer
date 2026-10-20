@@ -10,6 +10,7 @@
 #include "CPI_PlaylistItem.h"
 #include "CPI_TagLib.h"
 #include "CPString.h"
+#include "CPI_Gettext.h"
 #include <stdio.h>
 #include <shellapi.h>
 
@@ -68,6 +69,7 @@ INT_PTR CALLBACK DlgProc_Properties(HWND hWnd, UINT uiMessage, WPARAM wParam, LP
 		case WM_INITDIALOG:
 			SetWindowLongPtr(hWnd, DWLP_USER, lParam);
 			pData = (CPDlgProperties_Data*)lParam;
+			CPG_TranslateDialog(hWnd);
 			Properties_OnInit(hWnd, pData->m_hItem);
 			return TRUE;
 			

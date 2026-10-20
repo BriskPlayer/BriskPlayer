@@ -114,7 +114,6 @@ void CPFA_InitialiseFileAssociations(CPs_CoDecModule* pCoDec);
 void CPFA_EmptyFileAssociations(CPs_CoDecModule* pCoDec);
 void CPFA_AddFileAssociation(CPs_CoDecModule* pCoDec, const char* pcExtension, DWORD_PTR dwCookie);
 BOOL CPFA_IsAssociated(CPs_CoDecModule* pCoDec, const char* pcExtension, DWORD_PTR* pdwCookie);
-void CPFA_AssociateWithEXE(CPs_CoDecModule* pCoDec);
 void CPFA_AppendFilterPatterns(CPs_CoDecModule* pCoDec, WCHAR* pwcPatterns, size_t cchPatterns);
 //
 ////////////////////////////////////////////////////////////////////////////////

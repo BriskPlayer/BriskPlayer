@@ -493,18 +493,6 @@ void CPI_Player__SetPositionRange(CP_HPLAYER hPlayer, const int iRange)
 //
 //
 //
-void CPI_Player__AssociateFileExtensions(CP_HPLAYER hPlayer)
-{
-	CPs_PlayEngine* pPlayEngine = (CPs_PlayEngine*)hPlayer;
-	CP_CHECKOBJECT(pPlayEngine);
-	
-	// Send message
-	PostThreadMessage(pPlayEngine->m_dwThreadID, CPTM_ASSOCIATEFILEEXTENSIONS, 0, 0);
-}
-
-//
-//
-//
 BOOL CPI_Player__HandleNotifyMessages(CP_HPLAYER hPlayer, UINT uiMessage, WPARAM wParam, LPARAM lParam, LRESULT* plResult)
 {
 	(void)plResult;  // Suppress unused parameter warning

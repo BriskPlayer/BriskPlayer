@@ -79,17 +79,22 @@ typedef struct
 
 static const CPs_EQPreset g_Presets[] =
 {
-    { "Flat",         {   0,   0,   0,   0,   0,   0,   0,   0 } },
-    { "Bass Boost",   {  85,  64,  21,   0,   0,   0,   0,   0 } },
-    { "Treble Boost", {   0,   0,   0,   0,  21,  64,  85, 106 } },
-    { "Rock",         {  74,  53, -32, -42,  11,  53,  74,  74 } },
-    { "Classical",    {  64,  53,  21,   0,   0,  11,  42,  53 } },
-    { "Pop",          { -11,  42,  64,  53,   0, -21, -21, -21 } },
-    { "Jazz",         {  42,  32,  11,  32, -21, -21,  11,  32 } },
-    { "Dance",        {  85,  64,  21, -42, -21,   0,  64,  64 } },
+    { N_("Flat"),         {   0,   0,   0,   0,   0,   0,   0,   0 } },
+    { N_("Bass Boost"),   {  85,  64,  21,   0,   0,   0,   0,   0 } },
+    { N_("Treble Boost"), {   0,   0,   0,   0,  21,  64,  85, 106 } },
+    { N_("Rock"),         {  74,  53, -32, -42,  11,  53,  74,  74 } },
+    { N_("Classical"),    {  64,  53,  21,   0,   0,  11,  42,  53 } },
+    { N_("Pop"),          { -11,  42,  64,  53,   0, -21, -21, -21 } },
+    { N_("Jazz"),         {  42,  32,  11,  32, -21, -21,  11,  32 } },
+    { N_("Dance"),        {  85,  64,  21, -42, -21,   0,  64,  64 } },
 };
 
 #define EQ_PRESET_COUNT  ((int)(sizeof(g_Presets) / sizeof(g_Presets[0])))
+
+const char* eq_get_preset_name(int iPreset)
+{
+    return (iPreset >= 0 && iPreset < EQ_PRESET_COUNT) ? g_Presets[iPreset].name : NULL;
+}
 
 // Slider logical range: -127 (cut) to +127 (boost).
 // TBM_SETPOS receives this directly because we configured the range as such.
@@ -183,6 +188,8 @@ INT_PTR CALLBACK eq_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPa
     {
         case WM_INITDIALOG:
         {
+            CPG_TranslateDialog(hwndDlg);
+
             // Configure each trackbar
             for (int i = 0; i < 8; i++)
             {
@@ -199,7 +206,7 @@ INT_PTR CALLBACK eq_windowproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPa
             // Populate preset combo
             HWND hCombo = GetDlgItem(hwndDlg, IDC_EQ_PRESET);
             for (int i = 0; i < EQ_PRESET_COUNT; i++)
-                SendMessageA(hCombo, CB_ADDSTRING, 0, (LPARAM)g_Presets[i].name);
+                SendMessageW(hCombo, CB_ADDSTRING, 0, (LPARAM)TW(g_Presets[i].name));
             SendMessage(hCombo, CB_SETCURSEL, 0, 0);  // Select "Flat" initially
 
             // Set the enable checkbox

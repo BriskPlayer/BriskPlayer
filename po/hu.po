@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: BriskPlayer 3.0.0\n"
-"Report-Msgid-Bugs-To: thatzachbacon@gmail.com\n"
-"POT-Creation-Date: 2025-11-03 12:00+0000\n"
+"Report-Msgid-Bugs-To: zachbacon@proton.me\n"
+"POT-Creation-Date: 2026-10-19 19:27-0400\n"
 "PO-Revision-Date: 2025-11-03 12:00+0000\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: Hungarian\n"
@@ -16,539 +16,842 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#. Context: Application name and description
+#: CPI_Gettext.h:100
 #, fuzzy
-msgctxt "app"
 msgid "BriskPlayer"
 msgstr "BriskPlayer"
 
+#: CPI_Gettext.h:103
 #, fuzzy
-msgctxt "app"
-msgid "BriskPlayer - Blazing fast audio player"
-msgstr "BriskPlayer – Villámgyors médialejátszó"
-
-#, fuzzy
-msgctxt "app"
-msgid "BriskPlayer Audio file"
-msgstr "BriskPlayer Hangfájl"
-
-#, fuzzy
-msgctxt "app"
-msgid "BriskPlayer Playlist"
-msgstr "BriskPlayer Lejátszási lista"
-
-#. Context: Menu items
-#, fuzzy
-msgctxt "menu"
 msgid "Open File..."
 msgstr "Fájl megnyitása..."
 
+#: CPI_Gettext.h:104
 #, fuzzy
-msgctxt "menu"
 msgid "Open URL..."
 msgstr "URL megnyitása..."
 
+#: CPI_Gettext.h:105
 #, fuzzy
-msgctxt "menu"
 msgid "Add Files..."
 msgstr "Fájlok hozzáadása..."
 
+#: CPI_Gettext.h:106
 #, fuzzy
-msgctxt "menu"
 msgid "Playlist Editor"
 msgstr "Lejátszási lista szerkesztő"
 
+#: CPI_Gettext.h:107
 #, fuzzy
-msgctxt "menu"
-msgid "Skin"
-msgstr "Téma"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Default"
-msgstr "Alapértelmezett"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Language"
-msgstr "Nyelv"
-
-#, fuzzy
-msgctxt "menu"
-msgid "English"
-msgstr "Angol"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Deutsch"
-msgstr "Német"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Playback"
-msgstr "Lejátszás"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Play"
-msgstr "Lejátszás"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Stop"
-msgstr "Leállítás"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Pause"
-msgstr "Szünet"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Next"
-msgstr "Következő"
-
-#, fuzzy
-msgctxt "menu"
-msgid "Previous"
-msgstr "Előző"
-
-#, fuzzy
-msgctxt "menu"
 msgid "Options..."
 msgstr "Beállítások..."
 
+#: CPI_Gettext.h:108
 #, fuzzy
-msgctxt "menu"
 msgid "About"
 msgstr "Névjegy"
 
+#: CPI_Gettext.h:109
 #, fuzzy
-msgctxt "menu"
 msgid "Exit"
 msgstr "Kilépés"
 
-#. Context: Dialog titles
+#: CPI_Gettext.h:110
 #, fuzzy
-msgctxt "dialog"
-msgid "About BriskPlayer"
-msgstr "A BriskPlayer névjegye"
+msgid "Play"
+msgstr "Lejátszás"
 
+#: CPI_Gettext.h:111
 #, fuzzy
-msgctxt "dialog"
-msgid "BriskPlayer Options"
-msgstr "BriskPlayer beállítások"
+msgid "Stop"
+msgstr "Leállítás"
 
+#: CPI_Gettext.h:112
 #, fuzzy
-msgctxt "dialog"
-msgid "Open URL"
-msgstr "URL megnyitása"
+msgid "Pause"
+msgstr "Szünet"
 
+#: CPI_Gettext.h:113
 #, fuzzy
-msgctxt "dialog"
-msgid "Quick Find"
-msgstr "Gyorskeresés"
+msgid "Next"
+msgstr "Következő"
 
-#. Context: About dialog
+#: CPI_Gettext.h:114
 #, fuzzy
-msgctxt "dialog"
-msgid "&About"
-msgstr "&Névjegy"
+msgid "Previous"
+msgstr "Előző"
 
+#: CPI_Gettext.h:115
 #, fuzzy
-msgctxt "dialog"
-msgid "&Keyboard Shortcuts"
-msgstr "&Billentyűparancsok"
+msgid "Default"
+msgstr "Alapértelmezett"
 
+#: CPI_Gettext.h:116
 #, fuzzy
-msgctxt "dialog"
-msgid "C&hanges"
-msgstr "&Változások"
-
-#, fuzzy
-msgctxt "dialog"
-msgid "C&lose"
-msgstr "&Bezárás"
-
-#. Context: Options dialog
-#, fuzzy
-msgctxt "options"
-msgid "General"
-msgstr "Általános"
-
-#, fuzzy
-msgctxt "options"
-msgid "Always on top"
-msgstr "Mindig felül"
-
-#, fuzzy
-msgctxt "options"
-msgid "Exit after playing"
-msgstr "Kilépés lejátszás után"
-
-#, fuzzy
-msgctxt "options"
-msgid "Rotate systemtray icon"
-msgstr "Rendszertálca ikon forgatása"
-
-#, fuzzy
-msgctxt "options"
-msgid "Scroll Songtitle"
-msgstr "Dalocím görgetése"
-
-#, fuzzy
-msgctxt "options"
-msgid "Allow file once in playlist"
-msgstr "Minden fájl csak egyszer szerepelhet a listában"
-
-#, fuzzy
-msgctxt "options"
-msgid "Autoplay on startup"
-msgstr "Automatikus lejátszás indításkor"
-
-#, fuzzy
-msgctxt "options"
-msgid "Allow multiple instances"
-msgstr "Több példány engedélyezése"
-
-#, fuzzy
-msgctxt "options"
-msgid "Show remaining time"
-msgstr "Hátralévő idő megjelenítése"
-
-#, fuzzy
-msgctxt "options"
-msgid "Show on taskbar"
-msgstr "Megjelenítés a tálcán"
-
-#, fuzzy
-msgctxt "options"
-msgid "Sticky windows"
-msgstr "Ragadós ablakok"
-
-#, fuzzy
-msgctxt "options"
-msgid "Discord Rich Presence"
-msgstr "Discord Rich Presence"
-
-msgctxt "replaygain"
-msgid "Off"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Track"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Album"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Prevent clipping"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "ReplayGain"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Mode"
-msgstr ""
-
-msgctxt "replaygain"
-msgid "Preamp (dB)"
-msgstr ""
-
-msgctxt "playback"
-msgid "Gapless playback"
-msgstr ""
-
-#, fuzzy
-msgctxt "options"
-msgid "Register Filetypes"
-msgstr "Fájltípusok regisztrálása"
-
-#, fuzzy
-msgctxt "options"
-msgid "Add to Start Menu"
-msgstr "Hozzáadás a Start menühöz"
-
-#, fuzzy
-msgctxt "options"
-msgid "Read ID3 Tag (if any)"
-msgstr "ID3 tag olvasása (ha van)"
-
-#, fuzzy
-msgctxt "options"
-msgid "Read ID3 Tag of selected"
-msgstr "Kijelölt ID3 tagjának olvasása"
-
-#, fuzzy
-msgctxt "options"
-msgid "Support ID3v2"
-msgstr "ID3v2 támogatás"
-
-#, fuzzy
-msgctxt "options"
-msgid "Prefer native OGG tags"
-msgstr "Natív OGG tagek előnyben részesítése"
-
-#, fuzzy
-msgctxt "options"
-msgid "Load ID3 tags in background"
-msgstr "ID3 tagek háttérben való betöltése"
-
-#, fuzzy
-msgctxt "options"
-msgid "Work out track lengths"
-msgstr "Számhosszak kiszámítása"
-
-#, fuzzy
-msgctxt "options"
-msgid "Easy move"
-msgstr "Könnyű mozgatás"
-
-#, fuzzy
-msgctxt "options"
-msgid "Remember playlist"
-msgstr "Lejátszási lista megjegyzése"
-
-#, fuzzy
-msgctxt "options"
-msgid "Remember last played"
-msgstr "Utoljára lejátszott megjegyzése"
-
-#, fuzzy
-msgctxt "options"
-msgid "Track Delay (sec)"
-msgstr "Szám késleltetés (mp)"
-
-#, fuzzy
-msgctxt "options"
-msgid "Skinlist length"
-msgstr "Témalista hossza"
-
-#, fuzzy
-msgctxt "options"
-msgid "Flush"
-msgstr "Törlés"
-
-#, fuzzy
-msgctxt "options"
-msgid "Output"
-msgstr "Kimenet"
-
-#, fuzzy
-msgctxt "options"
-msgid "Volume controls"
-msgstr "Hangerő vezérlők"
-
-#, fuzzy
-msgctxt "options"
 msgid "Skin"
 msgstr "Téma"
 
+#: CPI_Gettext.h:117
 #, fuzzy
-msgctxt "options"
-msgid "Player"
-msgstr "Lejátszó"
+msgid "Language"
+msgstr "Nyelv"
 
+#: CPI_Gettext.h:118
 #, fuzzy
-msgctxt "options"
-msgid "Open"
-msgstr "Megnyitás"
+msgid "Playback"
+msgstr "Lejátszás"
 
+#: CPI_Gettext.h:119
+msgid "DSP Plugins"
+msgstr "DSP bővítmények"
+
+#. TRANSLATORS: IDD_EQUALIZER
+#: CPI_Gettext.h:120 briskplayer_rc.c:176
+msgid "Equalizer"
+msgstr ""
+
+#: CPI_Gettext.h:121
+msgid "None (Disabled)"
+msgstr "Nincs (Letiltva)"
+
+#: CPI_Gettext.h:122
+msgid "Configure..."
+msgstr "Beállítás..."
+
+#: CPI_Gettext.h:125
+msgid "Off"
+msgstr ""
+
+#: CPI_Gettext.h:126
+msgid "Track"
+msgstr ""
+
+#: CPI_Gettext.h:127
+msgid "Album"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: CPI_Gettext.h:128 briskplayer_rc.c:74
+msgid "Skins Folder"
+msgstr ""
+
+#: CPI_Gettext.h:131
 #, fuzzy
-msgctxt "options"
+msgid "System Master Volume"
+msgstr "Rendszer FŐHANGERŐ"
+
+#: CPI_Gettext.h:132
+#, fuzzy
+msgid "System Wave Volume"
+msgstr "Rendszer WAVE hangerő"
+
+#: CPI_Gettext.h:133
+#, fuzzy
+msgid "Internal Volume"
+msgstr "Belső hangerő"
+
+#: CPI_Gettext.h:142
+#, fuzzy
+msgid "Not a valid BriskPlayer Skin file"
+msgstr "BriskPlayer Hangfájl"
+
+#: CPI_Gettext.h:143
+msgid "Can't load bitmaps!"
+msgstr ""
+
+#: CPI_Gettext.h:144
+msgid "No audio devices in this system"
+msgstr ""
+
+#: CPI_Gettext.h:145
+#, fuzzy
+msgid "Failed to create playlist"
+msgstr "Fájl csak egyszer kerüljön a lejátszási listára"
+
+#: CPI_Gettext.h:146
+msgid "Could not open file"
+msgstr ""
+
+#: CPI_Gettext.h:147
+msgid "Not a valid directory."
+msgstr ""
+
+#: CPI_Gettext.h:148
+msgid "Could not perform scan"
+msgstr ""
+
+#: CPI_Gettext.h:149
+msgid ""
+"This file's ID3 tag cannot be updated. This is because BriskPlayer cannot "
+"write to this file."
+msgstr ""
+
+#: CPI_Gettext.h:150
+msgid "Cannot update tag"
+msgstr ""
+
+#: CPI_Gettext.h:151
+#, fuzzy
+msgid "Error"
+msgstr "Fájlhiba"
+
+#: CPI_Gettext.h:152
+msgid ""
+"Some files could not be renamed.\n"
+"\n"
+"This could be because they are either currently playing or are read-only."
+msgstr ""
+
+#: CPI_Gettext.h:161
+#, fuzzy
+msgid "BriskPlayer command line options"
+msgstr "BriskPlayer beállítások"
+
+#. TRANSLATORS: IDD_EQUALIZER
+#: DLG_Equalizer.c:82 briskplayer_rc.c:182
+msgid "Flat"
+msgstr ""
+
+#: DLG_Equalizer.c:83
+msgid "Bass Boost"
+msgstr ""
+
+#: DLG_Equalizer.c:84
+msgid "Treble Boost"
+msgstr ""
+
+#: DLG_Equalizer.c:85
+msgid "Rock"
+msgstr ""
+
+#: DLG_Equalizer.c:86
+msgid "Classical"
+msgstr ""
+
+#: DLG_Equalizer.c:87
+msgid "Pop"
+msgstr ""
+
+#: DLG_Equalizer.c:88
+msgid "Jazz"
+msgstr ""
+
+#: DLG_Equalizer.c:89
+#, fuzzy
+msgid "Dance"
+msgstr "Mégse"
+
+#. TRANSLATORS: IDD_ABOUT
+#: about.c:57 briskplayer_rc.c:4
+#, fuzzy
+msgid "About BriskPlayer"
+msgstr "A BriskPlayer névjegye"
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:6
+#, fuzzy
+msgid "&About"
+msgstr "&Névjegy"
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:8
+#, fuzzy
+msgid "&Keyboard Shortcuts"
+msgstr "&Billentyűparancsok"
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:10
+msgid "&License"
+msgstr ""
+
+#. TRANSLATORS: IDD_ABOUT
+#: briskplayer_rc.c:12
+msgid "Github"
+msgstr ""
+
+#. TRANSLATORS: IDD_ABOUT
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:14 briskplayer_rc.c:104
+#, fuzzy
+msgid "C&lose"
+msgstr "&Bezárás"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:16
+#, fuzzy
+msgid "Options"
+msgstr "Beállítások..."
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:18
+#, fuzzy
+msgid "General"
+msgstr "Általános"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:20
+#, fuzzy
+msgid "Always on top"
+msgstr "Mindig felül"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:22
+#, fuzzy
+msgid "Exit after playing"
+msgstr "Kilépés lejátszás után"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:24
+msgid "Rotate system tray icon"
+msgstr "Tálcaikon forgatása"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:26
+msgid "Scroll title"
+msgstr "Cím gördítése"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:28
+msgid "Only add file once to playlist"
+msgstr "Fájl csak egyszer kerüljön a lejátszási listára"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:30
+#, fuzzy
+msgid "Autoplay on startup"
+msgstr "Automatikus lejátszás indításkor"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:32
+#, fuzzy
+msgid "Allow multiple instances"
+msgstr "Több példány engedélyezése"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:34
+#, fuzzy
+msgid "Show remaining time"
+msgstr "Hátralévő idő megjelenítése"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:36
+#, fuzzy
+msgid "Show on taskbar"
+msgstr "Megjelenítés a tálcán"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:38
+#, fuzzy
+msgid "Sticky windows"
+msgstr "Ragadós ablakok"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:40
+#, fuzzy
+msgid "Discord Rich Presence"
+msgstr "Discord Rich Presence"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:42
+msgid "Read ID3 tags"
+msgstr "ID3 címkék olvasása"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:44
+msgid "Read ID3 for selected files"
+msgstr "Kijelölt fájlok ID3 címkéinek olvasása"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:46
+#, fuzzy
+msgid "Support ID3v2"
+msgstr "ID3v2 támogatás"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:48
+msgid "Read ID3 in background"
+msgstr "ID3 címkék olvasása a háttérben"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:50
+msgid "Calculate track lengths"
+msgstr "Műsorszám hosszak kiszámítása"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:52
+msgid "Easy move mode"
+msgstr "Egyszerű mozgatás módja"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:54
+#, fuzzy
+msgid "Remember playlist"
+msgstr "Lejátszási lista megjegyzése"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:56
+#, fuzzy
+msgid "Remember last played"
+msgstr "Utoljára lejátszott megjegyzése"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:58
+msgid "Track delay (seconds)"
+msgstr "Műsor késleltetése (másodpercek)"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:60
+#, fuzzy
+msgid "Output"
+msgstr "Kimenet"
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:62
+#, fuzzy
+msgid "Volume controls"
+msgstr "Hangerő vezérlők"
+
+#. TRANSLATORS: IDD_OPTIONS
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:64 briskplayer_rc.c:156
+msgid "ReplayGain"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:66
+msgid "Mode"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:68
+msgid "Preamp (dB)"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:70
+msgid "Prevent clipping"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:72
+msgid "Gapless playback"
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#: briskplayer_rc.c:76
+msgid "Browse..."
+msgstr ""
+
+#. TRANSLATORS: IDD_OPTIONS
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:78 briskplayer_rc.c:88
+#, fuzzy
 msgid "OK"
 msgstr "OK"
 
+#. TRANSLATORS: IDD_OPTIONS
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:80 briskplayer_rc.c:90
 #, fuzzy
-msgctxt "options"
 msgid "Cancel"
 msgstr "Mégse"
 
-#. Context: URL dialog
-msgid ""
-"Type the URL you would like to play. Supported formats are MP3 and OGG "
-"streaming, and M3U playlists."
-msgstr ""
-"Írja be a lejátszani kívánt URL-t. Támogatott formátumok: MP3 és OGG "
-"streaming, valamint M3U lejátszási listák."
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:82
+#, fuzzy
+msgid "Open URL"
+msgstr "URL megnyitása"
 
-msgid "&URL:"
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:84
+msgid "Enter the URL of the stream to play"
+msgstr ""
+
+#. TRANSLATORS: IDD_URL
+#: briskplayer_rc.c:86
+#, fuzzy
+msgid "URL:"
 msgstr "&URL:"
 
-#. Context: Quick Find dialog
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:92
+#, fuzzy
+msgid "Quick Find"
+msgstr "Gyorskeresés"
+
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:94
 msgid "Find Text"
 msgstr "Szöveg keresése"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:96
 msgid "Look in"
 msgstr "Keresés itt"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:98
 msgid "&Titles"
 msgstr "&Címek"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:100
 msgid "Artist &Names"
 msgstr "Előadó &nevek"
 
+#. TRANSLATORS: IDD_QUICKFIND
+#: briskplayer_rc.c:102
 msgid "&Album Names"
 msgstr "&Album nevek"
 
-#. Context: Volume control options
-#, fuzzy
-msgctxt "audio"
-msgid "System MASTER volume"
-msgstr "Rendszer FŐHANGERŐ"
-
-#, fuzzy
-msgctxt "audio"
-msgid "System WAVE volume"
-msgstr "Rendszer WAVE hangerő"
-
-#, fuzzy
-msgctxt "audio"
-msgid "Internal volume"
-msgstr "Belső hangerő"
-
-#. Context: Status messages
-#, fuzzy
-msgctxt "status"
-msgid ""
-"Filetypes are registered.\n"
-"You can doubleclick a supported file to run BriskPlayer."
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:106
+msgid "Track Properties"
 msgstr ""
-"A fájltípusok regisztrálva vannak.\n"
-"Kattintson duplán egy támogatott fájlra a BriskPlayer indításához."
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:108
+msgid "Album Art"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:110
+msgid "File Information"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:112
+msgid "File:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:114
+msgid "Size:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:116
+msgid "Basic Metadata"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:118
 #, fuzzy
-msgctxt "status"
-msgid "An icon for BriskPlayer has been created in the StartMenu and Desktop."
-msgstr "A BriskPlayer ikonja létrejött a Start menüben és az Asztalon."
+msgid "Title:"
+msgstr "&Címek"
 
-#. Context: File filters
-msgid "BriskPlayer Skin Initialization Files (*.ini)"
-msgstr "BriskPlayer Téma inicializálási fájlok (*.ini)"
-
-msgid "All Files (*.*)"
-msgstr "Minden fájl (*.*)"
-
-#. Context: Audio format strings
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:120
 #, fuzzy
-msgctxt "audio"
-msgid "Bitrate: %d kbps"
-msgstr "Bitsebességr: %d kbps"
+msgid "Artist:"
+msgstr "Előadó &nevek"
 
-#, fuzzy
-msgctxt "audio"
-msgid "Sample rate: %.1f kHz"
-msgstr "Mintavételi frekvencia: %.1f kHz"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:122
+msgid "Album:"
+msgstr ""
 
-#. Context: Time format (plural forms example)
-#, fuzzy
-msgctxt "time"
-msgid "Found %d file"
-msgid_plural "Found %d files"
-msgstr[0] "Találat: %d fájl"
-msgstr[1] "Találat: %d fájl"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:124
+msgid "Year:"
+msgstr ""
 
-#, fuzzy
-msgctxt "time"
-msgid "%d second"
-msgid_plural "%d seconds"
-msgstr[0] "%d másodperc"
-msgstr[1] "%d másodperc"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:126
+msgid "Genre:"
+msgstr ""
 
-#, fuzzy
-msgctxt "time"
-msgid "%d minute"
-msgid_plural "%d minutes"
-msgstr[0] "%d perc"
-msgstr[1] "%d perc"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:128
+msgid "Track:"
+msgstr ""
 
-#. Context: Error messages
-#, fuzzy
-msgctxt "error"
-msgid "Failed to initialize audio device"
-msgstr "Nem sikerült inicializálni a hangeszközt"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:130
+msgid "Disc:"
+msgstr ""
 
-#, fuzzy
-msgctxt "error"
-msgid "Unable to load audio file"
-msgstr "Nem sikerült betölteni a hangfájlt"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:132
+msgid "Comment:"
+msgstr ""
 
-#, fuzzy
-msgctxt "error"
-msgid "Invalid String ID"
-msgstr "Érvénytelen karakterlánc-azonosító"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:134
+msgid "Extended Metadata"
+msgstr ""
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:136
+msgid "Composer:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:138
+msgid "Album Artist:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:140
+msgid "Grouping:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:142
+msgid "BPM:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:144
 #, fuzzy
-msgctxt "error"
-msgid "Audio Error"
+msgid "Audio Properties"
 msgstr "Hanghiba"
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:146
+msgid "Codec:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:148
 #, fuzzy
-msgctxt "error"
-msgid "File Error"
-msgstr "Fájlhiba"
+msgid "Bitrate:"
+msgstr "Bitsebességr: %d kbps"
 
-#. Context: Processing messages
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:150
 #, fuzzy
-msgctxt "status"
-msgid "Processing audio..."
-msgstr "Hang feldolgozása..."
+msgid "Sample Rate:"
+msgstr "Mintavételi frekvencia: %.1f kHz"
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:152
+msgid "Bit Depth:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:154
+msgid "Channels:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:158
+msgid "Track Gain:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:160
 #, fuzzy
-msgctxt "status"
-msgid "Loading..."
-msgstr "Betöltés..."
+msgid "Album Gain:"
+msgstr "&Album nevek"
 
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:162
+msgid "File Information (Extended)"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:164
+msgid "Track ID:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:166
+msgid "Release ID:"
+msgstr ""
+
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:168
 #, fuzzy
-msgctxt "status"
-msgid "Ready"
-msgstr "Kész"
+msgid "Artist ID:"
+msgstr "Előadó &nevek"
 
-#~ msgid "Rotate system tray icon"
-#~ msgstr "Tálcaikon forgatása"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:170
+msgid "MusicBrainz:"
+msgstr ""
 
-#~ msgid "Scroll title"
-#~ msgstr "Cím gördítése"
+#. TRANSLATORS: IDD_PROPERTIES
+#: briskplayer_rc.c:172
+msgid "Update"
+msgstr ""
 
-#~ msgid "Only add file once to playlist"
-#~ msgstr "Fájl csak egyszer kerüljön a lejátszási listára"
+#. TRANSLATORS: IDD_PROPERTIES
+#. TRANSLATORS: IDD_EQUALIZER
+#: briskplayer_rc.c:174 briskplayer_rc.c:184
+#, fuzzy
+msgid "Close"
+msgstr "&Bezárás"
 
-#~ msgid "Read ID3 tags"
-#~ msgstr "ID3 címkék olvasása"
+#. TRANSLATORS: IDD_EQUALIZER
+#: briskplayer_rc.c:178
+msgid "Enable Equalizer"
+msgstr ""
 
-#~ msgid "Read ID3 for selected files"
-#~ msgstr "Kijelölt fájlok ID3 címkéinek olvasása"
-
-#~ msgid "Read ID3 in background"
-#~ msgstr "ID3 címkék olvasása a háttérben"
-
-#~ msgid "Calculate track lengths"
-#~ msgstr "Műsorszám hosszak kiszámítása"
-
-#~ msgid "Easy move mode"
-#~ msgstr "Egyszerű mozgatás módja"
-
-#~ msgid "Register file types"
-#~ msgstr "Fájltípusok regisztrálása"
-
-#~ msgid "Track delay (seconds)"
-#~ msgstr "Műsor késleltetése (másodpercek)"
+#. TRANSLATORS: IDD_EQUALIZER
+#: briskplayer_rc.c:180
+msgid "Preset:"
+msgstr ""
 
 #~ msgid "Skin list length"
 #~ msgstr "Megjelenés lista hossza"
 
+#, fuzzy
+#~ msgid "BriskPlayer - Blazing fast audio player"
+#~ msgstr "BriskPlayer – Villámgyors médialejátszó"
+
+#, fuzzy
+#~ msgid "BriskPlayer Playlist"
+#~ msgstr "BriskPlayer Lejátszási lista"
+
+#, fuzzy
+#~ msgid "English"
+#~ msgstr "Angol"
+
+#, fuzzy
+#~ msgid "Deutsch"
+#~ msgstr "Német"
+
+#, fuzzy
+#~ msgid "C&hanges"
+#~ msgstr "&Változások"
+
+#, fuzzy
+#~ msgid "Rotate systemtray icon"
+#~ msgstr "Rendszertálca ikon forgatása"
+
+#, fuzzy
+#~ msgid "Scroll Songtitle"
+#~ msgstr "Dalocím görgetése"
+
+#, fuzzy
+#~ msgid "Allow file once in playlist"
+#~ msgstr "Minden fájl csak egyszer szerepelhet a listában"
+
+#, fuzzy
+#~ msgid "Read ID3 Tag (if any)"
+#~ msgstr "ID3 tag olvasása (ha van)"
+
+#, fuzzy
+#~ msgid "Read ID3 Tag of selected"
+#~ msgstr "Kijelölt ID3 tagjának olvasása"
+
+#, fuzzy
+#~ msgid "Prefer native OGG tags"
+#~ msgstr "Natív OGG tagek előnyben részesítése"
+
+#, fuzzy
+#~ msgid "Load ID3 tags in background"
+#~ msgstr "ID3 tagek háttérben való betöltése"
+
+#, fuzzy
+#~ msgid "Work out track lengths"
+#~ msgstr "Számhosszak kiszámítása"
+
+#, fuzzy
+#~ msgid "Easy move"
+#~ msgstr "Könnyű mozgatás"
+
+#, fuzzy
+#~ msgid "Track Delay (sec)"
+#~ msgstr "Szám késleltetés (mp)"
+
+#, fuzzy
+#~ msgid "Skinlist length"
+#~ msgstr "Témalista hossza"
+
+#, fuzzy
+#~ msgid "Flush"
+#~ msgstr "Törlés"
+
+#, fuzzy
+#~ msgid "Player"
+#~ msgstr "Lejátszó"
+
+#, fuzzy
+#~ msgid "Open"
+#~ msgstr "Megnyitás"
+
+#~ msgid ""
+#~ "Type the URL you would like to play. Supported formats are MP3 and OGG "
+#~ "streaming, and M3U playlists."
+#~ msgstr ""
+#~ "Írja be a lejátszani kívánt URL-t. Támogatott formátumok: MP3 és OGG "
+#~ "streaming, valamint M3U lejátszási listák."
+
+#, fuzzy
+#~ msgid ""
+#~ "Filetypes are registered.\n"
+#~ "You can doubleclick a supported file to run BriskPlayer."
+#~ msgstr ""
+#~ "A fájltípusok regisztrálva vannak.\n"
+#~ "Kattintson duplán egy támogatott fájlra a BriskPlayer indításához."
+
+#, fuzzy
+#~ msgid ""
+#~ "An icon for BriskPlayer has been created in the StartMenu and Desktop."
+#~ msgstr "A BriskPlayer ikonja létrejött a Start menüben és az Asztalon."
+
+#~ msgid "BriskPlayer Skin Initialization Files (*.ini)"
+#~ msgstr "BriskPlayer Téma inicializálási fájlok (*.ini)"
+
+#~ msgid "All Files (*.*)"
+#~ msgstr "Minden fájl (*.*)"
+
+#, fuzzy
+#~ msgid "Found %d file"
+#~ msgid_plural "Found %d files"
+#~ msgstr[0] "Találat: %d fájl"
+#~ msgstr[1] "Találat: %d fájl"
+
+#, fuzzy
+#~ msgid "%d second"
+#~ msgid_plural "%d seconds"
+#~ msgstr[0] "%d másodperc"
+#~ msgstr[1] "%d másodperc"
+
+#, fuzzy
+#~ msgid "%d minute"
+#~ msgid_plural "%d minutes"
+#~ msgstr[0] "%d perc"
+#~ msgstr[1] "%d perc"
+
+#, fuzzy
+#~ msgid "Failed to initialize audio device"
+#~ msgstr "Nem sikerült inicializálni a hangeszközt"
+
+#, fuzzy
+#~ msgid "Unable to load audio file"
+#~ msgstr "Nem sikerült betölteni a hangfájlt"
+
+#, fuzzy
+#~ msgid "Invalid String ID"
+#~ msgstr "Érvénytelen karakterlánc-azonosító"
+
+#, fuzzy
+#~ msgid "Processing audio..."
+#~ msgstr "Hang feldolgozása..."
+
+#, fuzzy
+#~ msgid "Loading..."
+#~ msgstr "Betöltés..."
+
+#, fuzzy
+#~ msgid "Ready"
+#~ msgstr "Kész"
+
+#~ msgid "Register file types"
+#~ msgstr "Fájltípusok regisztrálása"
+
 #~ msgid "Open..."
 #~ msgstr "Megnyitás..."
 
-#~ msgid "DSP Plugins"
-#~ msgstr "DSP bővítmények"
+#, fuzzy
+#~ msgctxt "options"
+#~ msgid "Register Filetypes"
+#~ msgstr "Fájltípusok regisztrálása"
 
-#~ msgid "None (Disabled)"
-#~ msgstr "Nincs (Letiltva)"
-
-#~ msgid "Configure..."
-#~ msgstr "Beállítás..."
+#, fuzzy
+#~ msgctxt "options"
+#~ msgid "Add to Start Menu"
+#~ msgstr "Hozzáadás a Start menühöz"
