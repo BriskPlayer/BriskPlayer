@@ -281,18 +281,13 @@ void CPAAT_UpdateContent(CP_HPLAYLISTITEM hItem)
 	g_Tooltip.m_cArtists[0] = '\0';
 	if (pcFeaturedArtist || pcRemixer)
 	{
-		if (pcFeaturedArtist)
-		{
-			sprintf_s(g_Tooltip.m_cArtists, sizeof(g_Tooltip.m_cArtists),
-			          "feat. %s", pcFeaturedArtist);
-		}
-		if (pcRemixer)
-		{
-			if (g_Tooltip.m_cArtists[0])
-				strcat_s(g_Tooltip.m_cArtists, sizeof(g_Tooltip.m_cArtists), " - ");
-			strcat_s(g_Tooltip.m_cArtists, sizeof(g_Tooltip.m_cArtists), "Remix: ");
-			strcat_s(g_Tooltip.m_cArtists, sizeof(g_Tooltip.m_cArtists), pcRemixer);
-		}
+		// Tag text of any length: truncate rather than abort the process
+		_snprintf_s(g_Tooltip.m_cArtists, sizeof(g_Tooltip.m_cArtists), _TRUNCATE,
+		            "%s%s%s%s",
+		            pcFeaturedArtist ? "feat. " : "",
+		            pcFeaturedArtist ? pcFeaturedArtist : "",
+		            pcRemixer ? (pcFeaturedArtist ? " - Remix: " : "Remix: ") : "",
+		            pcRemixer ? pcRemixer : "");
 	}
 	
 	// Load album art from cache (don't delete old one - it's cache-owned)

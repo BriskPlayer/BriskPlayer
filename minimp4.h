@@ -49,8 +49,10 @@ extern "C" {
 // Enable code, which prints to stdout supplementary MP4 information:
 #define MP4D_PRINT_INFO_SUPPORTED 0
 
-#define MP4D_AVC_SUPPORTED        1
-#define MP4D_HEVC_SUPPORTED       1
+// BriskPlayer: video sample entries are never decoded, and avcC parsing has
+// historically been a source of overflows, so video config parsing is off.
+#define MP4D_AVC_SUPPORTED        0
+#define MP4D_HEVC_SUPPORTED       0
 #define MP4D_TIMESTAMPS_SUPPORTED 1
 
 // Enable TrackFragmentBaseMediaDecodeTimeBox support
@@ -271,6 +273,7 @@ typedef struct
 #if MP4D_TIMESTAMPS_SUPPORTED
     unsigned *timestamp;
     unsigned *duration;
+    unsigned timestamp_count;   // entries in timestamp[]/duration[] (BriskPlayer)
 #endif
 
 } MP4D_track_t;
@@ -2527,6 +2530,23 @@ static void my_fseek(MP4D_demux_t *mp4, boxsize_t pos, int *eof_flag)
 #define SKIP(n) { boxsize_t t = MINIMP4_MIN(payload_bytes, n); my_fseek(mp4, t, &eof_flag); payload_bytes -= t; }
 #define MALLOC(t, p, size) p = (t)malloc(size); if (!(p)) { ERROR("out of memory"); }
 
+// BriskPlayer hardening: allocate a sample table whose entry count comes from
+// the file. A table can't hold more entries than its box has bytes for
+// (entry_bytes per entry; 0 when entries aren't stored per item), nor more
+// than the file has bytes, and the byte size is computed without 32-bit
+// wraparound (a count of 0x40000000 * 4 used to allocate 0 bytes and then
+// write a billion entries). Fails the whole open via RETURN_ERROR, which,
+// unlike ERROR, also stops at depth 0 and inside loops.
+#define MALLOC_TABLE(t, p, count, entry_bytes, elem_size)                          \
+    if (((entry_bytes) && (boxsize_t)(count) > payload_bytes / (entry_bytes)) ||   \
+        (uint64_t)(count) > (uint64_t)mp4->read_size ||                            \
+        (uint64_t)(count) > (uint64_t)(SIZE_MAX / (elem_size)))                    \
+    {                                                                              \
+        RETURN_ERROR("sample table larger than its box/file");                     \
+    }                                                                              \
+    p = (t)malloc((count) ? (size_t)(count) * (elem_size) : 1);                    \
+    if (!(p)) { RETURN_ERROR("out of memory"); }
+
 /*
 *   On error: release resources.
 */
@@ -2806,8 +2826,15 @@ broken_android_meta_hack:
             {
                 int size = 0;
                 uint32_t sample_size = READ(4);
+                unsigned entry_bytes = 0;
                 tr->sample_count = READ(4);
-                MALLOC(unsigned int*, tr->entry_size, tr->sample_count*4);
+                if (box_name == BOX_stsz)
+                    entry_bytes = sample_size ? 0 : 4;
+                else if ((sample_size & 0xFF) == 16 || (sample_size & 0xFF) == 8)
+                    entry_bytes = (sample_size & 0xFF) / 8;
+                free(tr->entry_size);   // a repeated box must not leak the first table
+                MALLOC_TABLE(unsigned int*, tr->entry_size, tr->sample_count, entry_bytes, sizeof(unsigned int));
+                memset(tr->entry_size, 0, tr->sample_count ? (size_t)tr->sample_count * sizeof(unsigned int) : 1);
                 for (i = 0; i < tr->sample_count; i++)
                 {
                     if (box_name == BOX_stsz)
@@ -2841,7 +2868,8 @@ broken_android_meta_hack:
 
         case BOX_stsc:  //ISO/IEC 14496-12 Page 38. Section 8.18 - Sample To Chunk Box.
             tr->sample_to_chunk_count = READ(4);
-            MALLOC(MP4D_sample_to_chunk_t*, tr->sample_to_chunk, tr->sample_to_chunk_count*sizeof(tr->sample_to_chunk[0]));
+            free(tr->sample_to_chunk);
+            MALLOC_TABLE(MP4D_sample_to_chunk_t*, tr->sample_to_chunk, tr->sample_to_chunk_count, 12, sizeof(tr->sample_to_chunk[0]));
             for (i = 0; i < tr->sample_to_chunk_count; i++)
             {
                 tr->sample_to_chunk[i].first_chunk = READ(4);
@@ -2855,8 +2883,12 @@ broken_android_meta_hack:
                 unsigned count = READ(4);
                 unsigned j, k = 0, ts = 0, ts_count = count;
 #if MP4D_TIMESTAMPS_SUPPORTED
-                MALLOC(unsigned int*, tr->timestamp, ts_count*4);
-                MALLOC(unsigned int*, tr->duration, ts_count*4);
+                free(tr->timestamp);
+                free(tr->duration);
+                tr->timestamp = tr->duration = NULL;
+                tr->timestamp_count = 0;
+                MALLOC_TABLE(unsigned int*, tr->timestamp, ts_count, 8, sizeof(unsigned int));
+                MALLOC_TABLE(unsigned int*, tr->duration, ts_count, 8, sizeof(unsigned int));
 #endif
 
                 for (i = 0; i < count; i++)
@@ -2865,11 +2897,23 @@ broken_android_meta_hack:
                     int d =  READ(4);
                     TRACE(("sample %8d count %8d duration %8d\n", i, sc, d));
 #if MP4D_TIMESTAMPS_SUPPORTED
+                    // Total samples can't exceed the file's byte count; this
+                    // also rules out k + sc wrapping around.
+                    if ((uint64_t)k + sc > (uint64_t)mp4->read_size ||
+                        (uint64_t)k + sc > (uint64_t)(SIZE_MAX / sizeof(unsigned)))
+                    {
+                        RETURN_ERROR("stts sample count too large");
+                    }
                     if (k + sc > ts_count)
                     {
+                        unsigned int *grown;
                         ts_count = k + sc;
-                        tr->timestamp = (unsigned int*)realloc(tr->timestamp, ts_count * sizeof(unsigned));
-                        tr->duration  = (unsigned int*)realloc(tr->duration,  ts_count * sizeof(unsigned));
+                        grown = (unsigned int*)realloc(tr->timestamp, (size_t)ts_count * sizeof(unsigned));
+                        if (!grown) RETURN_ERROR("out of memory");
+                        tr->timestamp = grown;
+                        grown = (unsigned int*)realloc(tr->duration, (size_t)ts_count * sizeof(unsigned));
+                        if (!grown) RETURN_ERROR("out of memory");
+                        tr->duration = grown;
                     }
                     for (j = 0; j < sc; j++)
                     {
@@ -2877,6 +2921,7 @@ broken_android_meta_hack:
                         tr->timestamp[k++] = ts;
                         ts += d;
                     }
+                    tr->timestamp_count = k;
 #endif
                 }
             }
@@ -2898,7 +2943,8 @@ broken_android_meta_hack:
         case BOX_stco:  //ISO/IEC 14496-12 Page 39. Section 8.19 - Chunk Offset Box.
         case BOX_co64:
             tr->chunk_count = READ(4);
-            MALLOC(MP4D_file_offset_t*, tr->chunk_offset, tr->chunk_count*sizeof(MP4D_file_offset_t));
+            free(tr->chunk_offset);
+            MALLOC_TABLE(MP4D_file_offset_t*, tr->chunk_offset, tr->chunk_count, box_name == BOX_co64 ? 8 : 4, sizeof(MP4D_file_offset_t));
             for (i = 0; i < tr->chunk_count; i++)
             {
                 tr->chunk_offset[i] = READ(4);
@@ -3028,12 +3074,24 @@ broken_android_meta_hack:
         case BOX_avcC:  // AVCDecoderConfigurationRecord()
             // hack: AAC-specific DSI field reused (for it have same purpoose as sps/pps)
             // TODO: check this hack if BOX_esds co-exist with BOX_avcC
+            if (!tr || tr->dsi || (uint64_t)box_bytes > (uint64_t)mp4->read_size)
+            {
+                RETURN_ERROR("broken avcC box");
+            }
             tr->object_type_indication = MP4_OBJECT_TYPE_AVC;
             tr->dsi = (unsigned char*)malloc((size_t)box_bytes);
+            if (!tr->dsi)
+            {
+                RETURN_ERROR("out of memory");
+            }
             tr->dsi_bytes = (unsigned)box_bytes;
             {
                 int spspps;
                 unsigned char *p = tr->dsi;
+                unsigned char *const dsi_end = tr->dsi + box_bytes;
+                // Every byte written below must fit in the box-sized buffer;
+                // the counts and lengths come from the file.
+#define DSI_PUT(v) do { if (p >= dsi_end) RETURN_ERROR("avcC larger than its box"); *p++ = (unsigned char)(v); } while (0)
                 unsigned int configurationVersion = READ(1);
                 unsigned int AVCProfileIndication = READ(1);
                 unsigned int profile_compatibility = READ(1);
@@ -3054,18 +3112,20 @@ broken_android_meta_hack:
                     {
                          numOfSequenceParameterSets &= 31;  // clears 3 msb for SPS
                     }
-                    *p++ = numOfSequenceParameterSets;
+                    DSI_PUT(numOfSequenceParameterSets);
                     for (i = 0; i < numOfSequenceParameterSets; i++)
                     {
                         unsigned k, sequenceParameterSetLength = READ(2);
-                        *p++ = sequenceParameterSetLength >> 8;
-                        *p++ = sequenceParameterSetLength ;
+                        DSI_PUT(sequenceParameterSetLength >> 8);
+                        DSI_PUT(sequenceParameterSetLength);
                         for (k = 0; k < sequenceParameterSetLength; k++)
                         {
-                            *p++ = READ(1);
+                            DSI_PUT(READ(1));
                         }
                     }
                 }
+#undef DSI_PUT
+                tr->dsi_bytes = (unsigned)(p - tr->dsi);
             }
             break;
 #endif  // MP4D_AVC_SUPPORTED
@@ -3106,7 +3166,11 @@ broken_android_meta_hack:
             assert(tr);     // ensured by g_fullbox[] check
             if (!tr->dsi && payload_bytes)
             {
-                MALLOC(unsigned char*, tr->dsi, (int)payload_bytes);
+                if ((uint64_t)payload_bytes > (uint64_t)mp4->read_size)
+                {
+                    RETURN_ERROR("decoder config larger than file");
+                }
+                MALLOC(unsigned char*, tr->dsi, (size_t)payload_bytes);
                 for (i = 0; i < payload_bytes; i++)
                 {
                     tr->dsi[i] = minimp4_read(mp4, 1, &eof_flag);    // These bytes available due to check above
@@ -3215,9 +3279,17 @@ static int sample_to_chunk(MP4D_track_t *tr, unsigned nsample, unsigned *nfirst_
     unsigned chunk_group = 0, nc;
     unsigned sum = 0;
     *nfirst_sample_in_chunk = 0;
+    if (!tr->chunk_offset || !tr->chunk_count)
+    {
+        return -1;
+    }
     if (tr->chunk_count <= 1)
     {
         return 0;
+    }
+    if (!tr->sample_to_chunk || !tr->sample_to_chunk_count)
+    {
+        return -1;
     }
     for (nc = 0; nc < tr->chunk_count; nc++)
     {
@@ -3243,10 +3315,16 @@ MP4D_file_offset_t MP4D_frame_offset(const MP4D_demux_t *mp4, unsigned ntrack, u
 {
     MP4D_track_t *tr = mp4->track + ntrack;
     unsigned ns;
-    int nchunk = sample_to_chunk(tr, nsample, &ns);
+    int nchunk;
     MP4D_file_offset_t offset;
 
-    if (nchunk < 0)
+    if (ntrack >= mp4->track_count || !tr->entry_size || nsample >= tr->sample_count)
+    {
+        *frame_bytes = 0;
+        return 0;
+    }
+    nchunk = sample_to_chunk(tr, nsample, &ns);
+    if (nchunk < 0 || (unsigned)nchunk >= tr->chunk_count || ns > nsample)
     {
         *frame_bytes = 0;
         return 0;
@@ -3263,7 +3341,7 @@ MP4D_file_offset_t MP4D_frame_offset(const MP4D_demux_t *mp4, unsigned ntrack, u
     if (timestamp)
     {
 #if MP4D_TIMESTAMPS_SUPPORTED
-        *timestamp = tr->timestamp[ns];
+        *timestamp = (tr->timestamp && ns < tr->timestamp_count) ? tr->timestamp[ns] : 0;
 #else
         *timestamp = 0;
 #endif
@@ -3271,7 +3349,7 @@ MP4D_file_offset_t MP4D_frame_offset(const MP4D_demux_t *mp4, unsigned ntrack, u
     if (duration)
     {
 #if MP4D_TIMESTAMPS_SUPPORTED
-        *duration = tr->duration[ns];
+        *duration = (tr->duration && ns < tr->timestamp_count) ? tr->duration[ns] : 0;
 #else
         *duration = 0;
 #endif

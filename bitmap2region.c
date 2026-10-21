@@ -41,9 +41,14 @@ HRGN main_bitmap_to_region(HBITMAP hBmp, COLORREF cTransparentColor)
 
 	CP_ASSERT(hBmp);
 
-	// Get the size of the source
-	GetObject(hBmp, sizeof(bitmap), &bitmap);
-	pBitmapBits = (DWORD*)SAFE_MALLOC(sizeof(DWORD) * bitmap.bmWidth * bitmap.bmHeight);
+	// Get the size of the source. A failed GetObject (NULL/invalid bitmap)
+	// would leave `bitmap` uninitialised, and the size product must not
+	// wrap on 32-bit builds.
+	if (!hBmp || GetObject(hBmp, sizeof(bitmap), &bitmap) == 0
+			|| bitmap.bmWidth <= 0 || bitmap.bmHeight <= 0
+			|| (size_t)bitmap.bmWidth > SIZE_MAX / sizeof(DWORD) / (size_t)bitmap.bmHeight)
+		return NULL;
+	pBitmapBits = (DWORD*)SAFE_MALLOC(sizeof(DWORD) * (size_t)bitmap.bmWidth * (size_t)bitmap.bmHeight);
 	if (!pBitmapBits)
 		return NULL;
 

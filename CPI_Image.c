@@ -200,6 +200,9 @@ void CPIG_DrawStateImage(CPs_DrawContext* pDC, const int iX, const int iY, CPs_I
 	HDC dcCompat;
 	HBITMAP bmOld;
 	CP_CHECKOBJECT(pSource);
+	// A skin package can omit or break any image; draw nothing for it
+	if (!pSource || !pSource->m_pImage)
+		return;
 	
 	dcCompat = CreateCompatibleDC(pDC->m_dcDraw);
 	bmOld = (HBITMAP)SelectObject(dcCompat, pSource->m_pImage->m_hbmImage);
@@ -218,6 +221,8 @@ void CPIG_DrawImage(CPs_DrawContext* pDC, const int iX, const int iY, CPs_Image*
 	HDC dcCompat;
 	HBITMAP bmOld;
 	CP_CHECKOBJECT(pSource);
+	if (!pSource)
+		return;
 	
 	dcCompat = CreateCompatibleDC(pDC->m_dcDraw);
 	bmOld = (HBITMAP)SelectObject(dcCompat, pSource->m_hbmImage);
@@ -238,6 +243,8 @@ void CPIG_TiledFill(CPs_DrawContext* pDC, const RECT* _prTarget, const RECT* prS
 	RECT rTarget;
 	RECT rLocalClip;
 	CP_CHECKOBJECT(pSourceImage);
+	if (!pSourceImage)
+		return;
 	
 	// Skip this draw if we are totally clipped
 	

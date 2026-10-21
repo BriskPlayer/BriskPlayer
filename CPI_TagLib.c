@@ -44,6 +44,7 @@ extern "C" {
 
 // For image decoding (WIC - Windows Imaging Component)
 #include <wincodec.h>
+#include "WinModern.h"
 #include <objbase.h>
 
 extern "C" {
@@ -621,6 +622,10 @@ HBITMAP CPTL_CreateBitmapFromImageData(const BYTE* pImageData,
     void* pBits = NULL;
     HDC  hScreenDC = NULL;
 
+    // Album art comes straight from the file's tags
+    if (!WIC_IsAllowedImageData(pImageData, iImageSize))
+        return NULL;
+
     HRESULT hrCoInit = CoInitialize(NULL);
 
     HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, NULL,
@@ -634,7 +639,7 @@ HBITMAP CPTL_CreateBitmapFromImageData(const BYTE* pImageData,
     hr = pStream->InitializeFromMemory((BYTE*)pImageData, iImageSize);
     if (FAILED(hr)) goto cleanup;
 
-    hr = pFactory->CreateDecoderFromStream((IStream*)pStream, NULL,
+    hr = pFactory->CreateDecoderFromStream((IStream*)pStream, &CP_GUID_VendorMicrosoftBuiltIn,
                                             WICDecodeMetadataCacheOnDemand, &pDecoder);
     if (FAILED(hr) || !pDecoder) goto cleanup;
 

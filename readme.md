@@ -18,7 +18,7 @@
 * Continuous play
 * 8 band convolution equalizer 
 * Translation Engine using gettext
-* id3 support made possible using [taglib](https://taglib.org/)
+* Metadata tag support (ID3, Vorbis comments, MP4, APE) made possible using [lofty](https://github.com/Serial-ATA/lofty-rs)
 * Modernized codebase fork of the [CoolPlayer media player ](https://coolplayer.sourceforge.net/)
 
 ## **Optional FFmpeg support**

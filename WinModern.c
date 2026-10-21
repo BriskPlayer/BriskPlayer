@@ -255,7 +255,7 @@ HBITMAP WIC_LoadImageFromFile(const wchar_t* pwcFilePath, int* pWidth, int* pHei
     HRESULT hr = g_pWICFactory->lpVtbl->CreateDecoderFromFilename(
         g_pWICFactory,
         pwcFilePath,
-        NULL,
+        &CP_GUID_VendorMicrosoftBuiltIn,
         GENERIC_READ,
         WICDecodeMetadataCacheOnDemand,
         &pDecoder
@@ -345,7 +345,10 @@ cleanup:
 
 HBITMAP WIC_LoadImageFromMemory(const void* pData, size_t dataSize, int* pWidth, int* pHeight)
 {
-    if (!WIC_Initialize() || !pData || dataSize == 0)
+    if (!WIC_Initialize() || !pData || dataSize == 0 || dataSize > MAXDWORD)
+        return NULL;
+    // Skin images come from user-installable packages
+    if (!WIC_IsAllowedImageData(pData, dataSize))
         return NULL;
     
     HBITMAP hBitmap = NULL;
@@ -367,7 +370,7 @@ HBITMAP WIC_LoadImageFromMemory(const void* pData, size_t dataSize, int* pWidth,
     hr = g_pWICFactory->lpVtbl->CreateDecoderFromStream(
         g_pWICFactory,
         pStream,
-        NULL,
+        &CP_GUID_VendorMicrosoftBuiltIn,
         WICDecodeMetadataCacheOnDemand,
         &pDecoder
     );
@@ -691,7 +694,7 @@ wchar_t* FileDialog_OpenFile(HWND hWndOwner,
     ofn.lpstrInitialDir = pwcInitialDir;
     
     // Set flags
-    ofn.Flags = OFN_EXPLORER | OFN_HIDEREADONLY;
+    ofn.Flags = OFN_EXPLORER | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
     if (options & CP_FD_MULTISELECT)
         ofn.Flags |= OFN_ALLOWMULTISELECT;
     if (options & CP_FD_MUST_EXIST)
@@ -828,7 +831,7 @@ wchar_t* FileDialog_SaveFile(HWND hWndOwner,
     ofn.lpstrDefExt = pwcDefaultExt;
     
     // Set flags
-    ofn.Flags = OFN_EXPLORER | OFN_HIDEREADONLY;
+    ofn.Flags = OFN_EXPLORER | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
     if (options & CP_FD_OVERWRITE_PROMPT)
         ofn.Flags |= OFN_OVERWRITEPROMPT;
     if (options & CP_FD_PATH_MUST_EXIST)

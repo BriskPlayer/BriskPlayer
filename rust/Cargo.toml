@@ -9,3 +9,10 @@ opt-level     = 3        # Maximum speed
 lto           = "fat"    # Cross-crate inlining; slower link, faster runtime
 codegen-units = 1        # Required for fat LTO; single CGU for best optimization
 panic         = "abort"  # No unwinding machinery → smaller static lib
+
+# Arithmetic overflow aborts (panic = "abort") instead of silently wrapping in
+# our own crate, where file-derived sizes and offsets feed unsafe FFI code.
+# Not profile-wide: dependencies such as the c2rust-translated MP3 decoder may
+# rely on wrapping arithmetic.
+[profile.release.package.brisk-codecs]
+overflow-checks = true

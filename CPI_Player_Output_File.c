@@ -248,7 +248,7 @@ void CPP_OMFL_RefillBuffers(CPs_OutputModule* pModule)
 			fn.lpstrInitialDir = pwcInitialDir;
 			fn.lpstrTitle = NULL;
 			fn.Flags = OFN_ENABLESIZING |
-					   OFN_HIDEREADONLY | OFN_EXPLORER;
+					   OFN_HIDEREADONLY | OFN_EXPLORER | OFN_NOCHANGEDIR;
 			fn.nFileOffset = 0;
 			fn.nFileExtension = 0;
 			fn.lpstrDefExt = NULL;

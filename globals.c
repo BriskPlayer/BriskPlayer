@@ -14,20 +14,37 @@ options_t options;
 globals_t globals;
 CoolSkin Skin;
 
+#ifndef LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR
+#define LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR 0x00000100
+#endif
+#ifndef LOAD_LIBRARY_SEARCH_DEFAULT_DIRS
+#define LOAD_LIBRARY_SEARCH_DEFAULT_DIRS 0x00001000
+#endif
+
+// Loads a plugin DLL by absolute path. Its own dependencies resolve from the
+// plugin's folder, System32 and the app folder - never the current directory.
 HMODULE LoadLibrarySafeA(const char* pcDllPath)
 {
-	char szDir[MAX_PATH];
-	char* pSlash;
+	WCHAR* pwcPath;
 	HMODULE hMod;
+	int iChars;
 
-	cp_strcpy_s(szDir, sizeof(szDir), pcDllPath);
-	pSlash = strrchr(szDir, '\\');
-	if (!pSlash) pSlash = strrchr(szDir, '/');
-	if (pSlash) *pSlash = '\0';
+	if (!pcDllPath)
+		return NULL;
+	iChars = MultiByteToWideChar(CP_ACP, 0, pcDllPath, -1, NULL, 0);
+	if (iChars <= 0)
+		return NULL;
+	pwcPath = (WCHAR*)malloc((size_t)iChars * sizeof(WCHAR));
+	if (!pwcPath)
+		return NULL;
+	MultiByteToWideChar(CP_ACP, 0, pcDllPath, -1, pwcPath, iChars);
 
-	SetDllDirectoryA(szDir);
-	hMod = LoadLibraryA(pcDllPath);
-	SetDllDirectoryA("");
+	hMod = LoadLibraryExW(pwcPath, NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+	// Windows 7 without KB2533623 rejects the LOAD_LIBRARY_SEARCH_* flags
+	if (!hMod && GetLastError() == ERROR_INVALID_PARAMETER)
+		hMod = LoadLibraryExW(pwcPath, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+
+	free(pwcPath);
 	return hMod;
 }
 

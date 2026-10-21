@@ -56,7 +56,8 @@ BOOL CPSK_Initialise(void)
 
 	glb_pSkin = CPSK_LoadSkin(hComposite, pcSkinFile, iFileSize);
 
-	CPSK_ApplyDpiScaling(glb_pSkin);
+	if (glb_pSkin)
+		CPSK_ApplyDpiScaling(glb_pSkin);
 
 	free(pcSkinFile);
 	CF_Destroy(hComposite);
@@ -507,16 +508,25 @@ void CPSK_ReadSkinCommand_AddVerb(CP_COMPOSITEFILE hComposite, CPs_CommandTarget
 	// Build the align flags
 	dwAlignFlag = CPSK_DecodeAlign(cAlign);
 	
-	// Load state image
-	pNext = *ppCommandTarget;
-	
-	*ppCommandTarget = MALLOC_TYPE(CPs_CommandTarget);
-	if (!*ppCommandTarget)
+	// Load state image. A button whose image is missing from the package or
+	// fails to decode is skipped: the playlist sizes and draws each button
+	// from its image.
 	{
-		*ppCommandTarget = pNext;
-		return;
+		CPs_Image_WithState* pStateImage = CPIG_CreateStateImage(CPIG_CreateImage_FromSubFile(hComposite, cFile), iNumStates);
+		if (!pStateImage)
+			return;
+
+		pNext = *ppCommandTarget;
+
+		*ppCommandTarget = MALLOC_TYPE(CPs_CommandTarget);
+		if (!*ppCommandTarget)
+		{
+			*ppCommandTarget = pNext;
+			CPIG_DestroyImage_WithState(pStateImage);
+			return;
+		}
+		(*ppCommandTarget)->m_pStateImage = pStateImage;
 	}
-	(*ppCommandTarget)->m_pStateImage = CPIG_CreateStateImage(CPIG_CreateImage_FromSubFile(hComposite, cFile), iNumStates);
 	(*ppCommandTarget)->m_ptOffset = ptOffset;
 	(*ppCommandTarget)->m_dwAlign = dwAlignFlag;
 	(*ppCommandTarget)->m_pfnVerb = pfnVerb;
@@ -590,8 +600,18 @@ void CPSK_ReadSkinLine(CP_COMPOSITEFILE hComposite, CPs_Skin* pSkin, const char*
 	// Skip comments
 	if (cCommand[0] == '#')
 		return;
-		
-	cParams = pcLine + strlen(cCommand) + 1;
+
+	// Parameters start after the command word and one separator. Found by
+	// scanning rather than strlen(cCommand) + 1, which was wrong after
+	// leading whitespace and pointed past the terminator on a line holding
+	// just the command word.
+	cParams = pcLine;
+	while (*cParams == ' ' || *cParams == '\t')
+		cParams++;
+	while (*cParams && *cParams != ' ' && *cParams != '\t')
+		cParams++;
+	if (*cParams)
+		cParams++;
 	
 	CP_TRACE2("Command:\"%s\" Params:\"%s\"", cCommand, cParams);
 	
@@ -614,16 +634,18 @@ CPs_Skin* CPSK_LoadSkin(CP_COMPOSITEFILE hComposite, const char* pcSkinFile, con
 {
 	unsigned int iLastLineStartIDX, iCharIDX;
 	CPs_Skin* pNewSkin = CALLOC_TYPE(CPs_Skin, 1);
-	memset(pNewSkin, 0, sizeof(*pNewSkin));
-	
-	// Read in the file line by line
+	if (!pNewSkin)
+		return NULL;
+
+	// Read in the file line by line. pcSkinFile is exactly iFileSize bytes
+	// with no terminator: test for the end before reading a byte.
 	iLastLineStartIDX = 0;
-	
-	for (iCharIDX = 0; iCharIDX < iFileSize + 1; iCharIDX++)
+
+	for (iCharIDX = 0; iCharIDX <= iFileSize; iCharIDX++)
 	{
-		if ((pcSkinFile[iCharIDX] == '\r'
-				|| pcSkinFile[iCharIDX] == '\n'
-				|| iCharIDX == iFileSize)
+		if ((iCharIDX == iFileSize
+				|| pcSkinFile[iCharIDX] == '\r'
+				|| pcSkinFile[iCharIDX] == '\n')
 				&& iLastLineStartIDX < iCharIDX)
 		{
 			char cBuffer[512];
@@ -641,7 +663,7 @@ CPs_Skin* CPSK_LoadSkin(CP_COMPOSITEFILE hComposite, const char* pcSkinFile, con
 			CPSK_ReadSkinLine(hComposite, pNewSkin, cBuffer);
 			
 			// Set the line start for the next line
-			if (pcSkinFile[iCharIDX + 1] == '\n')
+			if (iCharIDX + 1 < iFileSize && pcSkinFile[iCharIDX + 1] == '\n')
 				iCharIDX++;
 				
 			iLastLineStartIDX = iCharIDX + 1;

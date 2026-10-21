@@ -21,6 +21,7 @@
 #include "stdafx.h"
 #include "CPI_DiscordRPC.h"
 #include "CPI_PlaylistItem.h"
+#include "globals.h"
 #include <discord_rpc.h>
 #include <time.h>
 
@@ -41,7 +42,8 @@
 static void drpc_log(const char* msg)
 {
     OutputDebugStringA(msg);
-    FILE* f = fopen("discord_rpc_debug.log", "a");
+    char path[MAX_PATH];
+    FILE* f = main_get_program_file_path("discord_rpc_debug.log", path, MAX_PATH) ? fopen(path, "a") : NULL;
     if (f) { fputs(msg, f); fclose(f); }
 }
 #endif

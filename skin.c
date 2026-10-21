@@ -303,22 +303,23 @@ void main_skin_switch(const char* pcSkinPath)
 	strcpy_s(options.active_skin_path, sizeof(options.active_skin_path),
 			 (pcSkinPath && pcSkinPath[0]) ? pcSkinPath : "");
 
+	// The playlist window is created once at startup and otherwise never
+	// rebuilt - it's not just holding a glb_pSkin pointer, its subparts
+	// (IF_AddSubPart_CommandButton, etc.) were wired up at creation time
+	// against the current glb_pSkin's CPs_CommandTarget/CPs_Image_WithState
+	// objects, which CPSK_Uninitialise() frees. It must be destroyed
+	// *before* that, not after: loading the new skin can fail with an error
+	// MessageBox (main_skin_load_builtin_variant), whose modal loop would
+	// otherwise repaint and hit-test the still-open window against freed
+	// skin objects. It is recreated below against whichever glb_pSkin ends
+	// up active.
+	CPlaylistWindow_Destroy();
+
 	CPSK_Uninitialise();
 	bSuccess = CPSK_Initialise();
 
 	if (bSuccess)
 		bSuccess = main_skin_load_builtin_variant(globals.builtin_skin_variant);
-
-	// The playlist window is created once at startup and otherwise never
-	// rebuilt - it's not just holding a glb_pSkin pointer, its subparts
-	// (IF_AddSubPart_CommandButton, etc.) were wired up at creation time
-	// against the *old* glb_pSkin's CPs_CommandTarget/CPs_Image_WithState
-	// objects, which CPSK_Uninitialise() just freed. Destroying and
-	// recreating it rebuilds those subparts against whichever glb_pSkin
-	// ends up active below - without this, the window keeps referencing
-	// freed memory (visually looks unchanged, then crashes on the next
-	// hover/hit-test against a dangling pointer).
-	CPlaylistWindow_Destroy();
 
 	if (!bSuccess)
 	{
@@ -409,9 +410,20 @@ main_skin_set_struct_value(int object, int x, int y, int w, int h, int maxw, int
 	return TRUE;
 }
 
+// Copies a Skin.ini value into a fixed field; a value that doesn't fit is
+// dropped (the field is left empty) rather than aborting via strcpy_s.
+static void main_skin_copy_param(char* pcDest, size_t iDestSize, const char* pcValue)
+{
+	if ((size_t)strlen(pcValue) < iDestSize)
+		strcpy_s(pcDest, iDestSize, pcValue);
+	else
+		pcDest[0] = '\0';
+}
+
 void    main_skin_check_ini_value(char *textposition,
 								  Associate * associate)
 {
+	const char* pcParam;
 	char    name[128] = "";
 	int     x = 0, y = 0, w = 0, h = 0, maxw = 0, x2 = 0, y2 = 0, w2 =
 										 0, h2 = 0;
@@ -429,6 +441,13 @@ void    main_skin_check_ini_value(char *textposition,
 	// sscanf(textposition, "%s %d %d %d %d %d %d %d %d %d %[^\0]",
 	sscanf_s(textposition, "%s %d %d %d %d %d %d %d %d %d %s",
 		   name, (unsigned)sizeof(name), &x, &y, &w, &h, &maxw, &x2, &y2, &w2, &h2, tooltip, (unsigned)sizeof(tooltip));
+
+	// The value follows the key and one separator (lines arrive with
+	// leading whitespace stripped). A key-only line has no separator, and
+	// strlen(name) + 1 used to point past its terminator.
+	pcParam = textposition + strlen(name);
+	if (*pcParam)
+		pcParam++;
 
 	// Bounded by ReducedSize, not Lastone: `associate[]` (built in the
 	// caller) has exactly ReducedSize entries (PlaySwitch..FreqText);
@@ -456,27 +475,27 @@ void    main_skin_check_ini_value(char *textposition,
 
 	if (stricmp(name, "BmpCoolUp") == 0)
 	{
-		strcpy_s(Skin.CoolUp, sizeof(Skin.CoolUp), textposition + strlen(name) + 1);
+		main_skin_copy_param(Skin.CoolUp, sizeof(Skin.CoolUp), pcParam);
 	}
 	if (stricmp(name, "BmpCoolDown") == 0)
 	{
-		strcpy_s(Skin.CoolDown, sizeof(Skin.CoolDown), textposition + strlen(name) + 1);
+		main_skin_copy_param(Skin.CoolDown, sizeof(Skin.CoolDown), pcParam);
 	}
 	if (stricmp(name, "BmpCoolSwitch") == 0)
 	{
-		strcpy_s(Skin.CoolSwitch, sizeof(Skin.CoolSwitch), textposition + strlen(name) + 1);
+		main_skin_copy_param(Skin.CoolSwitch, sizeof(Skin.CoolSwitch), pcParam);
 	}
 	if (stricmp(name, "BmpTextFont") == 0)
 	{
-		strcpy_s(Skin.aTextFont, sizeof(Skin.aTextFont), textposition + strlen(name) + 1);
+		main_skin_copy_param(Skin.aTextFont, sizeof(Skin.aTextFont), pcParam);
 	}
 	if (stricmp(name, "BmpTimeFont") == 0)
 	{
-		strcpy_s(Skin.aTimeFont, sizeof(Skin.aTimeFont), textposition + strlen(name) + 1);
+		main_skin_copy_param(Skin.aTimeFont, sizeof(Skin.aTimeFont), pcParam);
 	}
 	if (stricmp(name, "BmpTrackFont") == 0)
 	{
-		strcpy_s(Skin.aTrackFont, sizeof(Skin.aTrackFont), textposition + strlen(name) + 1);
+		main_skin_copy_param(Skin.aTrackFont, sizeof(Skin.aTrackFont), pcParam);
 	}
 	}
 }

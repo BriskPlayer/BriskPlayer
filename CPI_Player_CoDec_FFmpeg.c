@@ -153,6 +153,7 @@ typedef struct FFmpegAPI {
     void (*av_frame_free)(FF_Frame** frame);
     void (*av_frame_unref)(FF_Frame* frame);
     int (*av_opt_get_int)(void* obj, const char* name, int search_flags, int64_t* out_val);
+    int (*av_opt_set)(void* obj, const char* name, const char* val, int search_flags);
     int (*av_opt_get_chlayout)(void* obj, const char* name, int search_flags, FF_ChannelLayout* layout);
     void (*av_channel_layout_default)(FF_ChannelLayout* ch_layout, int nb_channels);
     void (*av_channel_layout_uninit)(FF_ChannelLayout* channel_layout);
@@ -358,6 +359,7 @@ static BOOL ffmpeg_load(FFmpegAPI* api)
     FF_SYM(hAvutil, av_frame_free);
     FF_SYM(hAvutil, av_frame_unref);
     FF_SYM(hAvutil, av_opt_get_int);
+    FF_SYM(hAvutil, av_opt_set);
     FF_SYM(hAvutil, av_opt_get_chlayout);
     FF_SYM(hAvutil, av_channel_layout_default);
     FF_SYM(hAvutil, av_channel_layout_uninit);
@@ -709,6 +711,18 @@ static BOOL ffmpeg_OpenFile(CPs_CoDecModule* module, const char* filename, DWORD
         goto fail;
     ctx->format_ctx->pb = pb;
     pb = NULL;          // freed through format_ctx->pb from here on
+
+    // All input arrives through the custom pb above. Demuxers that open
+    // further resources themselves (HLS/DASH segment lists, concat, ...)
+    // would do so through FFmpeg's own protocols, letting a crafted file
+    // make the player fetch arbitrary URLs or read local files. An allow
+    // list naming no real protocol blocks every such nested open.
+    ret = api->av_opt_set(ctx->format_ctx, "protocol_whitelist", "none", 0);
+    if (ret < 0)
+    {
+        ffmpeg_log_error(ctx, ret, "could not restrict protocols");
+        goto fail;
+    }
 
     // The name is only a probing hint (extension) since I/O is ours.
     // On failure avformat_open_input frees format_ctx but not the custom pb.

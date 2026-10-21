@@ -45,6 +45,31 @@
 #include <commdlg.h>
 
 ////////////////////////////////////////////////////////////////////////////////
+// Images from untrusted sources (embedded album art, skin packages) are only
+// decoded if they are JPEG, PNG, GIF or BMP, and with Windows' built-in WIC
+// decoders. Left to WIC's auto-detection, any installed third-party codec
+// (RAW, HEIF, vendor plugins) that claims the data would parse it in-process.
+
+static const GUID CP_GUID_VendorMicrosoftBuiltIn =
+    { 0x257a30fd, 0x06b6, 0x462b, { 0xae, 0xa4, 0x63, 0xf7, 0x0b, 0x86, 0xe5, 0x33 } };
+
+static inline BOOL WIC_IsAllowedImageData(const void* pData, size_t dataSize)
+{
+    const unsigned char* p = (const unsigned char*)pData;
+    if (!p || dataSize < 4)
+        return FALSE;
+    if (p[0] == 0xFF && p[1] == 0xD8 && p[2] == 0xFF)                    // JPEG
+        return TRUE;
+    if (p[0] == 0x89 && p[1] == 'P' && p[2] == 'N' && p[3] == 'G')       // PNG
+        return TRUE;
+    if (p[0] == 'G' && p[1] == 'I' && p[2] == 'F' && p[3] == '8')        // GIF
+        return TRUE;
+    if (p[0] == 'B' && p[1] == 'M')                                      // BMP
+        return TRUE;
+    return FALSE;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // WIC Image Loading (Windows Vista+)
 //
 // Loads images using Windows Imaging Component for PNG, JPEG, GIF, BMP support.

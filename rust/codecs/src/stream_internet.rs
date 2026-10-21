@@ -25,8 +25,19 @@ use windows_sys::Win32::Networking::WinInet::{
     InternetSetOptionA, HTTP_QUERY_CUSTOM, INTERNET_FLAG_NO_CACHE_WRITE,
     INTERNET_FLAG_PRAGMA_NOCACHE, INTERNET_FLAG_RELOAD, INTERNET_OPEN_TYPE_PRECONFIG,
     INTERNET_OPTION_CONNECT_TIMEOUT, INTERNET_OPTION_RECEIVE_TIMEOUT,
-    INTERNET_OPTION_SEND_TIMEOUT,
+    INTERNET_OPTION_SEND_TIMEOUT, INTERNET_FLAG_NO_AUTH, INTERNET_FLAG_NO_COOKIES,
+    INTERNET_FLAG_NO_UI,
 };
+
+// No caching, and nothing of the user's sent to stream hosts or the hosts
+// they redirect to: no shared WinINet cookies, no automatic (NTLM/Negotiate)
+// credentials, no authentication dialogs.
+const STREAM_URL_FLAGS: u32 = INTERNET_FLAG_NO_CACHE_WRITE
+    | INTERNET_FLAG_PRAGMA_NOCACHE
+    | INTERNET_FLAG_RELOAD
+    | INTERNET_FLAG_NO_COOKIES
+    | INTERNET_FLAG_NO_AUTH
+    | INTERNET_FLAG_NO_UI;
 use windows_sys::Win32::System::Threading::Sleep;
 use windows_sys::Win32::UI::WindowsAndMessaging::{PeekMessageA, PostMessageA, MSG, PM_NOREMOVE};
 
@@ -222,7 +233,7 @@ fn download_playlist(url: &str) -> Option<Vec<u8>> {
             url_c.as_ptr() as _,
             std::ptr::null(),
             0,
-            INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD,
+            STREAM_URL_FLAGS,
             0,
         )
     };
@@ -392,7 +403,7 @@ fn run_filler(mut ctx: FillerContext) {
             url_c.as_ptr() as _,
             headers.as_ptr() as _,
             headers.to_bytes().len() as u32,
-            INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD,
+            STREAM_URL_FLAGS,
             0,
         )
     };

@@ -153,11 +153,22 @@ void CPFA_AppendFilterPatterns(CPs_CoDecModule* pCoDec, WCHAR* pwcPatterns, size
 	while (pCursor)
 	{
 		WCHAR wcPattern[32];
+		const char* pcCheck;
+		BOOL bValidExt = pCursor->m_pcExtension[0] != '\0';
+		int iLen;
 		CP_CHECKOBJECT(pCursor);
 
-		if (_snwprintf(wcPattern, 32, L"*.%hs;", pCursor->m_pcExtension) > 0 &&
+		// Winamp plugins supply their own extensions: only plain
+		// alphanumeric ones may go into the dialog's filter string
+		for (pcCheck = pCursor->m_pcExtension; *pcCheck && bValidExt; pcCheck++)
+			bValidExt = isalnum((unsigned char)*pcCheck) != 0;
+
+		// _snwprintf returns the full count (no terminator) when the output
+		// exactly fills the buffer, and -1 when it doesn't fit
+		iLen = bValidExt ? _snwprintf(wcPattern, 32, L"*.%hs;", pCursor->m_pcExtension) : -1;
+		if (iLen > 0 && iLen < 32 &&
 				!wcsstr(pwcPatterns, wcPattern) &&
-				wcslen(pwcPatterns) + wcslen(wcPattern) < cchPatterns)
+				wcslen(pwcPatterns) + (size_t)iLen < cchPatterns)
 			wcscat(pwcPatterns, wcPattern);
 
 		pCursor = (CPs_FileAssociation*)pCursor->m_pNext;

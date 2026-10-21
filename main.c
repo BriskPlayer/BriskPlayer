@@ -410,7 +410,11 @@ DWORD   main_get_program_path(HINSTANCE hInst, LPTSTR pszBuffer,
 //      Return the size of the path in bytes.
 {
 	DWORD   dwLength = GetModuleFileName(hInst, pszBuffer, dwSize);
-	
+
+	// A path that doesn't fit is truncated and unterminated
+	if (dwLength >= dwSize)
+		return 0;
+
 	if (dwLength)
 	{
 		while (dwLength && pszBuffer[dwLength] != '\\')
@@ -454,6 +458,7 @@ int playlist_write(void)
 	fn.lpstrTitle = NULL;
 	fn.Flags = OFN_HIDEREADONLY
 			   | OFN_EXPLORER
+			   | OFN_NOCHANGEDIR
 			   | OFN_OVERWRITEPROMPT
 			   | OFN_PATHMUSTEXIST
 			   | OFN_ENABLESIZING;
@@ -825,7 +830,7 @@ int     playlist_open_file(BOOL clearlist)
 	fn.lpstrTitle = NULL;
 	fn.Flags =
 		OFN_ALLOWMULTISELECT | OFN_HIDEREADONLY | OFN_EXPLORER |
-		OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_ENABLESIZING;
+		OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_ENABLESIZING | OFN_NOCHANGEDIR;
 	fn.nFileOffset = 0;
 	fn.nFileExtension = 0;
 	fn.lpstrDefExt = NULL;
@@ -1605,22 +1610,39 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		
 		case WM_COPYDATA:
 		{
+			// Sent by a second BriskPlayer instance with its command line
+			// (NUL-separated strings, dwData = count), but any process on the
+			// desktop can send it, so nothing in it is trusted: strings are
+			// only read within cbData, which must end in a NUL, dwData is just
+			// an upper bound, and argv is sized from what is actually there.
 			PCOPYDATASTRUCT copydata = (PCOPYDATASTRUCT) lParam;
-			int   count = 0;
+			const char *pcCursor, *pcEnd;
+			char **argv;
+			int argc = 0, iStrings = 0;
 			BOOL    wegotsome;
-			char *string = copydata->lpData;
-			int argc = (int)copydata->dwData;
-			char *argv[255] = {0};
-			
-			while (count < argc)
-			{
-				argv[count++] = string;
-				string += strlen(string) + 1;
-			}
-			
+
+			if (!copydata || !copydata->lpData || copydata->cbData == 0
+					|| ((const char*)copydata->lpData)[copydata->cbData - 1] != '\0')
+				return FALSE;
+
+			pcEnd = (const char*)copydata->lpData + copydata->cbData;
+			for (pcCursor = (const char*)copydata->lpData; pcCursor < pcEnd; pcCursor += strlen(pcCursor) + 1)
+				iStrings++;
+			if ((ULONG_PTR)iStrings > copydata->dwData)
+				iStrings = (int)copydata->dwData;
+			if (iStrings <= 0)
+				return FALSE;
+
+			argv = (char**)calloc((size_t)iStrings, sizeof(char*));
+			if (!argv)
+				return FALSE;
+			for (pcCursor = (const char*)copydata->lpData; argc < iStrings; pcCursor += strlen(pcCursor) + 1)
+				argv[argc++] = (char*)pcCursor;
+
 			cmdline_parse_options(argc, argv, hWnd);
-			
+
 			wegotsome = cmdline_parse_files(argc, argv);
+			free(argv);
 			
 			if (globals.playlist_bool_addsong == FALSE
 					&& wegotsome == TRUE)
@@ -1706,7 +1728,11 @@ main_windowproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					"[BriskPlayer] discord_rpc_enabled=%d (WM_CREATE)\n",
 					options.discord_rpc_enabled);
 				OutputDebugStringA(_drpc_buf);
-				_drpc_f = fopen("discord_rpc_debug.log", "a");
+				{
+					char _drpc_path[MAX_PATH];
+					_drpc_f = main_get_program_file_path("discord_rpc_debug.log", _drpc_path, MAX_PATH)
+							  ? fopen(_drpc_path, "a") : NULL;
+				}
 				if (_drpc_f) { fputs(_drpc_buf, _drpc_f); fclose(_drpc_f); }
 			}
 #endif
@@ -2537,6 +2563,49 @@ int     cmdline_parse_files(int argc, char **argv)
 	return wegotsome;
 }
 
+// Process-wide mitigations, applied before anything else runs or loads.
+static void main_harden_process(void)
+{
+	typedef BOOL (WINAPI *pfnSetDefaultDllDirectories)(DWORD);
+	typedef BOOL (WINAPI *pfnSetSearchPathMode)(DWORD);
+	typedef BOOL (WINAPI *pfnSetProcessMitigationPolicy)(int, PVOID, SIZE_T);
+	HMODULE hKernel = GetModuleHandleW(L"kernel32.dll");
+	FARPROC proc;
+
+	// Heap corruption ends the process instead of being survivable
+	HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
+
+	// Keep the current directory out of DLL searches: it follows wherever
+	// files are opened or dropped from. Where supported, implicit searches
+	// are also limited to System32, the app folder and explicitly added
+	// folders (LOAD_LIBRARY_SEARCH_DEFAULT_DIRS).
+	SetDllDirectoryW(L"");
+	if (hKernel && (proc = GetProcAddress(hKernel, "SetDefaultDllDirectories")) != NULL)
+		((pfnSetDefaultDllDirectories)(void (*)(void))proc)(0x00001000);
+	if (hKernel && (proc = GetProcAddress(hKernel, "SetSearchPathMode")) != NULL)
+		((pfnSetSearchPathMode)(void (*)(void))proc)(0x00000001 | 0x00008000);  // SAFE_SEARCHMODE | PERMANENT
+
+	// Windows 8+: prefer System32 copies of DLLs, and never load DLLs from
+	// network locations - unless the player itself runs from one, which
+	// that policy would break.
+	if (hKernel && (proc = GetProcAddress(hKernel, "SetProcessMitigationPolicy")) != NULL)
+	{
+		const DWORD dwNoRemoteImages = 0x1, dwPreferSystem32Images = 0x4;
+		DWORD dwImageLoadPolicy = dwPreferSystem32Images;
+		WCHAR wcExe[MAX_PATH];
+		DWORD dwLen = GetModuleFileNameW(NULL, wcExe, MAX_PATH);
+
+		if (dwLen > 2 && dwLen < MAX_PATH && wcExe[0] != L'\\' && wcExe[1] == L':')
+		{
+			WCHAR wcRoot[4] = { wcExe[0], L':', L'\\', L'\0' };
+			if (GetDriveTypeW(wcRoot) != DRIVE_REMOTE)
+				dwImageLoadPolicy |= dwNoRemoteImages;
+		}
+		((pfnSetProcessMitigationPolicy)(void (*)(void))proc)(10 /* ProcessImageLoadPolicy */,
+				&dwImageLoadPolicy, sizeof(dwImageLoadPolicy));
+	}
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	(void)hPrevInstance;  // Suppress unused parameter warning
@@ -2549,7 +2618,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HMENU   hpopup;
 	BOOL    bAlreadyRuning;
 	HWND hWndCoolPlayer = NULL;
-	
+
+	main_harden_process();
+
 	// Add diagnostic output for debugging 32-bit build issues
 	#ifdef _DEBUG
 	OutputDebugStringA("BriskPlayer: Starting initialization...\n");
@@ -2597,24 +2668,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if (lpCmdLine[0] != '\0')
 			{
 				int i;
-				int size = 0;
+				size_t size = 0;
+				char* pcPacked;
 				COPYDATASTRUCT cds;
-				
-				for (i = 0;i < __argc;i++)
+
+				// Pack the arguments into one NUL-separated buffer (the CRT
+				// doesn't guarantee __argv's strings are contiguous)
+				for (i = 0; i < __argc; i++)
 					size += strlen(__argv[i]) + 1;
-					
-				//    cds.cbData = strlen(lpCmdLine) + 1;
-				//    cds.dwData = strlen(lpCmdLine) + 1;
-				//    cds.lpData = lpCmdLine;
-				
-				cds.cbData = size;
-				
-				cds.dwData = __argc;
-				
-				cds.lpData = __argv[0];
-				
-				
-				SendMessage(hWndCoolPlayer, WM_COPYDATA, (WPARAM)hWndCoolPlayer, (LPARAM)&cds);
+				pcPacked = (char*)malloc(size);
+				if (pcPacked && size <= MAXDWORD)
+				{
+					char* pcCursor = pcPacked;
+					for (i = 0; i < __argc; i++)
+					{
+						size_t len = strlen(__argv[i]) + 1;
+						memcpy(pcCursor, __argv[i], len);
+						pcCursor += len;
+					}
+
+					cds.cbData = (DWORD)size;
+					cds.dwData = (ULONG_PTR)__argc;
+					cds.lpData = pcPacked;
+					SendMessage(hWndCoolPlayer, WM_COPYDATA, (WPARAM)hWndCoolPlayer, (LPARAM)&cds);
+				}
+				free(pcPacked);
 			}
 			
 			else

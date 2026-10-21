@@ -24,7 +24,8 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// TagLib-based metadata handling
+// Metadata handling (tag reading implemented in Rust via lofty, see
+// rust/codecs/src/tags.rs)
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -32,7 +33,6 @@
 #define _CPI_TAGLIB_H_
 
 #include <windows.h>
-// #include <taglib/tag_c.h>  // Temporarily commented for compilation
 
 #ifdef __cplusplus
 extern "C" {

@@ -219,13 +219,17 @@ void CPSYSICON_SetTipText(CP_HSYSICON hSysIconData, const char* pcNewTipText)
 	CPs_SysIcon* pSysIconData = (CPs_SysIcon*)hSysIconData;
 	NOTIFYICONDATA nic;
 	CP_CHECKOBJECT(pSysIconData);
-	
+
+	memset(&nic, 0, sizeof(nic));
 	nic.cbSize = sizeof(NOTIFYICONDATA);
 	nic.hWnd = pSysIconData->m_hWnd;
 	nic.uID = NOTIFY_ICON_ID;
 	nic.uFlags = NIF_TIP;
-	
-	strncpy(nic.szTip, pcNewTipText, sizeof(nic.szTip));
+
+	// The text comes from track tags and is often longer than szTip:
+	// truncate, always leaving a terminator (strncpy didn't)
+	if (pcNewTipText)
+		_snprintf_s(nic.szTip, sizeof(nic.szTip), _TRUNCATE, "%s", pcNewTipText);
 	Shell_NotifyIcon(NIM_MODIFY, &nic);
 }
 

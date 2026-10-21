@@ -247,6 +247,48 @@ else()
     endif()
 endif()
 
+# ---------------------------------------------------------------------------
+# Exploit mitigations
+# The player parses untrusted media, playlists, skins and stream data, so
+# these make memory-safety bugs harder to turn into code execution. Each flag
+# is probed first so toolchains that lack one still build.
+# ---------------------------------------------------------------------------
+include(CheckCCompilerFlag)
+include(CheckLinkerFlag)
+if(MSVC)
+    # /GS, /DYNAMICBASE, /NXCOMPAT and /HIGHENTROPYVA are MSVC defaults
+    add_compile_options(/guard:cf)
+    add_link_options(/guard:cf)
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64|x86|X86|i[3-6]86")
+        add_link_options(/CETCOMPAT)
+    endif()
+else()
+    check_c_compiler_flag(-fstack-protector-strong BRISK_HAVE_STACK_PROTECTOR)
+    if(BRISK_HAVE_STACK_PROTECTOR)
+        # Also on the link line so the driver links the stack-check support
+        add_compile_options(-fstack-protector-strong)
+        add_link_options(-fstack-protector-strong)
+    endif()
+    # Checked memcpy/strcpy/sprintf variants; needs optimisation to work
+    add_compile_definitions($<$<CONFIG:Release,RelWithDebInfo,MinSizeRel>:_FORTIFY_SOURCE=2>)
+
+    # ASLR and DEP are binutils defaults today; stated explicitly so an
+    # older or cross toolchain can't silently ship without them
+    set(_brisk_link_hardening -Wl,--dynamicbase -Wl,--nxcompat -Wl,--cetcompat)
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        list(APPEND _brisk_link_hardening -Wl,--high-entropy-va)
+    else()
+        list(APPEND _brisk_link_hardening -Wl,--large-address-aware)
+    endif()
+    foreach(_flag IN LISTS _brisk_link_hardening)
+        string(MAKE_C_IDENTIFIER "BRISK_LINKER_HAS${_flag}" _flag_var)
+        check_linker_flag(C "${_flag}" ${_flag_var})
+        if(${_flag_var})
+            add_link_options(${_flag})
+        endif()
+    endforeach()
+endif()
+
 # Source files
 set(BRISK_SOURCES
     about.c

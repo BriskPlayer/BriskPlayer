@@ -552,9 +552,11 @@ void CPLI_DecodeLength(CPs_PlaylistItem* pItem, unsigned int iNewLength)
 	
 	if (iHours > 0)
 	{
-		pItem->m_pcTrackLength_AsText = CALLOC_TYPE(char, 9);
+		// Up to 7 hour digits (UINT_MAX / 3600) + ":mm:ss" + NUL; a length
+		// from a malformed file must not overflow the buffer and abort
+		pItem->m_pcTrackLength_AsText = CALLOC_TYPE(char, 16);
 		if (pItem->m_pcTrackLength_AsText)
-			sprintf_s(pItem->m_pcTrackLength_AsText, 9, "%02d:%02d:%02d", iHours, iMins, iSecs);
+			sprintf_s(pItem->m_pcTrackLength_AsText, 16, "%02d:%02d:%02d", iHours, iMins, iSecs);
 	}
 	
 	else
@@ -1599,7 +1601,9 @@ void CPLI_CalculateLength_MP3(CPs_PlaylistItem* pItem)
 	// Work out layer
 	iLayer = 0x4 - ((pbBuffer[iBufferCursor+1] >> 1) & 0x3);
 	
-	if (iLayer == 0)
+	// Layer bits 00 are "reserved" and give 4 here, which would index past
+	// aryBitRates below
+	if (iLayer < 1 || iLayer > 3)
 		return;
 		
 	// Work out stereo
@@ -1650,7 +1654,11 @@ void CPLI_CalculateLength_MP3(CPs_PlaylistItem* pItem)
 			
 		iFreq = aryFrequencies[iDetailedVersion-1][(pbBuffer[iBufferCursor+2] >> 2) & 0x3];
 		
-		CPLI_DecodeLength(pItem, (8 * iNumberOfFrames * 144) / iFreq);
+		// 64-bit: the frame count is an arbitrary 32-bit value from the file
+		{
+			unsigned long long ullSecs = (8ULL * (unsigned)iNumberOfFrames * 144) / (unsigned)iFreq;
+			CPLI_DecodeLength(pItem, ullSecs > INT_MAX ? INT_MAX : (int)ullSecs);
+		}
 	}
 	
 	// Work out the bit rate for a CBR file
@@ -1673,7 +1681,7 @@ void CPLI_CalculateLength_MP3(CPs_PlaylistItem* pItem)
 		iBitRate = aryBitRates[2-iMPEG_version][iLayer-1][pbBuffer[iBufferCursor+2] >> 4];
 		
 		if (iBitRate)
-			CPLI_DecodeLength(pItem, (dwFileSize*8) / (iBitRate*1000));
+			CPLI_DecodeLength(pItem, (int)(((unsigned long long)dwFileSize * 8) / ((unsigned)iBitRate * 1000)));
 	}
 }
 
@@ -1690,7 +1698,11 @@ BOOL CPLI_RenameTrack(CP_HPLAYLISTITEM hItem, const CPe_FilenameFormat enFormat)
 	
 	CP_CHECKOBJECT(pItem);
 	
-	strncpy(cPath, pItem->m_pcPath, MAX_PATH);
+	// Only local files can be renamed, and only ones whose path fits the
+	// fixed buffers below (strncpy would leave cPath unterminated)
+	if (!pItem->m_pcPath || CP_IsURL(pItem->m_pcPath) || strlen(pItem->m_pcPath) >= MAX_PATH)
+		return FALSE;
+	cp_strcpy_s(cPath, sizeof(cPath), pItem->m_pcPath);
 	
 	// Remove the filename from the path
 	{
@@ -1826,8 +1838,13 @@ void CPLI_SetPath(CPs_PlaylistItem* pItem, const char* pcPath)
 	// Store the full path to the file if this isn't a stream
 	if (!CP_IsURL(pcPath))
 	{
-		_fullpath(cFullPath, pcPath, MAX_PATH);
-		uPathSize = STR_AllocSetString(&pItem->m_pcPath, cFullPath, FALSE);
+		// _fullpath fails (leaving cFullPath unset) for paths that don't fit
+		// in MAX_PATH, e.g. a long entry in a downloaded playlist; keep the
+		// path as given then rather than copying an uninitialised buffer
+		if (_fullpath(cFullPath, pcPath, MAX_PATH))
+			uPathSize = STR_AllocSetString(&pItem->m_pcPath, cFullPath, FALSE);
+		else
+			uPathSize = STR_AllocSetString(&pItem->m_pcPath, pcPath, FALSE);
 	}
 	
 	else

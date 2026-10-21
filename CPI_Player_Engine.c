@@ -108,7 +108,8 @@ char* DownloadPlaylistToTempFile(const char* pcPlaylistURL)
 	}
 	
 	HINTERNET hURL = InternetOpenUrl(hInternet, pcPlaylistURL, NULL, 0, 
-					   INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD, 0);
+					   INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD
+					   | INTERNET_FLAG_NO_COOKIES | INTERNET_FLAG_NO_AUTH | INTERNET_FLAG_NO_UI, 0);
 	if (!hURL)
 	{
 		CP_LOG_ERROR("DownloadPlaylistToTempFile: InternetOpenUrl failed\n");

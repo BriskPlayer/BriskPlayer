@@ -602,7 +602,12 @@ void CPVERB_AddDirectory(const CPe_VerbAction enAction, void* _pParam)
 		if (itemlist == NULL)
 			return;
 			
-		SHGetPathFromIDList(itemlist, (char*)globals.main_text_last_browsed_dir);
+		// Fails for virtual folders (This PC, Libraries, Network)
+		if (!SHGetPathFromIDList(itemlist, (char*)globals.main_text_last_browsed_dir))
+		{
+			CoTaskMemFree(itemlist);
+			return;
+		}
 		
 		SAFE_PLAYLIST_CALL(CPL_SyncLoadNextFile);
 		

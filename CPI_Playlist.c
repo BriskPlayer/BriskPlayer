@@ -731,8 +731,13 @@ void CPL_ExportPlaylist(CP_HPLAYLIST hPlaylist, const char* pcOutputName)
 
 		for (hCursor = CPL_GetFirstItem(hPlaylist); hCursor; hCursor = CPLI_Next(hCursor), iFileNumber++)
 		{
-			char cRelPath[MAX_PATH];
+			// Room for stream URLs (capped at 8192 by CP_CreateInStream) and
+			// a "..\" per directory level of the playlist's own path
+			char cRelPath[8192 + 1024];
 			const char* pcFilename = CPLI_GetPath(hCursor);
+
+			if (!pcFilename || (size_t)strlen(pcFilename) >= 8192)
+				continue;
 
 			if (_strnicmp(pcFilename, pcOutputName, iPlaylist_VolumeBytes) == 0)
 			{
@@ -868,7 +873,8 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 			InternetSetOption(hInternet, INTERNET_OPTION_CONNECT_TIMEOUT, &dwTimeout, sizeof(dwTimeout));
 
 			hURLStream = InternetOpenUrl(hInternet, pcFilename, NULL, 0,
-				INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE, 0);
+				INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE
+				| INTERNET_FLAG_NO_COOKIES | INTERNET_FLAG_NO_AUTH | INTERNET_FLAG_NO_UI, 0);
 
 			if (!hURLStream) { CP_LOG_ERROR("CPL_AddFile: InternetOpenUrl failed\n"); InternetCloseHandle(hInternet); CPL_cb_LockWindowUpdates(FALSE); return; }
 
@@ -977,7 +983,8 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 			InternetSetOption(hInternet, INTERNET_OPTION_CONNECT_TIMEOUT, &dwTimeout, sizeof(dwTimeout));
 
 			hURLStream = InternetOpenUrl(hInternet, pcFilename, NULL, 0,
-				INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE, 0);
+				INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_PRAGMA_NOCACHE
+				| INTERNET_FLAG_NO_COOKIES | INTERNET_FLAG_NO_AUTH | INTERNET_FLAG_NO_UI, 0);
 
 			if (!hURLStream) { InternetCloseHandle(hInternet); CP_TRACE1("CPL_AddFile::NoOpenURL %s", pcFilename); CPL_cb_LockWindowUpdates(FALSE); return; }
 
@@ -1033,13 +1040,22 @@ void CPL_AddFile(CP_HPLAYLIST hPlaylist, const char* pcFilename)
 
 			if (hFile == INVALID_HANDLE_VALUE) { CP_TRACE1("CPL_AddFile::OpenFailed %s", pcFilename); CPL_cb_LockWindowUpdates(FALSE); return; }
 
-			dwFileLen = GetFileSize(hFile, NULL);
-			if (dwFileLen == 0) { CloseHandle(hFile); CPL_cb_LockWindowUpdates(FALSE); return; }
+			// GetFileSizeEx + a cap: GetFileSize's low DWORD of a 4 GB - 1
+			// byte file made dwFileLen + 1 wrap to a zero-byte allocation
+			{
+				LARGE_INTEGER liSize;
+				if (!GetFileSizeEx(hFile, &liSize) || liSize.QuadPart == 0 || liSize.QuadPart > CPC_MAX_PLAYLIST_FILE_BYTES)
+				{
+					CloseHandle(hFile); CPL_cb_LockWindowUpdates(FALSE); return;
+				}
+				dwFileLen = (DWORD)liSize.QuadPart;
+			}
 
 			pcPlaylistBuffer = CALLOC_TYPE(char, dwFileLen + 1);
 			if (!pcPlaylistBuffer) { CloseHandle(hFile); CPL_cb_LockWindowUpdates(FALSE); return; }
 
-			ReadFile(hFile, pcPlaylistBuffer, dwFileLen, &dwBytesRead, NULL);
+			if (!ReadFile(hFile, pcPlaylistBuffer, dwFileLen, &dwBytesRead, NULL))
+				dwBytesRead = 0;
 			CloseHandle(hFile);
 
 			iLastLineStartIDX = 0;
@@ -1110,9 +1126,18 @@ void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char* pDir)
 	WIN32_FIND_DATA finddata;
 	HANDLE hFileFind;
 
+	// Leave room for the "\*.*" wildcard; an empty or over-long path (a
+	// virtual folder pick, or a long-path folder drop) would otherwise make
+	// cFullPath[iDirStrLen-1] index outside the buffer
+	if (iDirStrLen <= 0 || iDirStrLen >= MAX_PATH - 4)
+	{
+		MessageBoxA(NULL, T(STR_ERR_NOT_VALID_DIRECTORY), pDir, MB_ICONERROR);
+		return;
+	}
+
 	cp_strcpy_s(cFullPath, sizeof(cFullPath), pDir);
 
-	if (cFullPath[iDirStrLen-1] == '\\' && iDirStrLen > 1)
+	if (iDirStrLen > 1 && cFullPath[iDirStrLen-1] == '\\')
 		cFullPath[iDirStrLen-1] = '\0';
 
 	if (cFullPath[0] == '\0' || path_is_directory(cFullPath) == FALSE)
@@ -1142,6 +1167,9 @@ void CPL_AddDirectory_Recurse(CP_HPLAYLIST hPlaylist, const char* pDir)
 	{
 		char pcFullPath[MAX_PATH];
 		if (finddata.cFileName[0] == '.') continue;
+		// Skip entries whose path won't fit: a failed concatenation would
+		// otherwise leave the parent path, recursing into the same folder
+		if ((size_t)strlen(cFullPath) + (size_t)strlen(finddata.cFileName) >= sizeof(pcFullPath)) continue;
 
 		cp_strcpy_s(pcFullPath, sizeof(pcFullPath), cFullPath);
 		cp_strcat_s(pcFullPath, sizeof(pcFullPath), finddata.cFileName);
